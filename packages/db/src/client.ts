@@ -2,6 +2,7 @@
 import { sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import * as schema from "./schema/index.ts";
 
 let cached: ReturnType<typeof create> | undefined;
 
@@ -11,7 +12,7 @@ function create() {
 
   // postgres.js keeps a pool of up to `max` connections and lends one to each query.
   const client = postgres(url, { max: 10 });
-  return drizzle(client);
+  return drizzle(client, { schema });
 }
 
 /** Lazy, so importing this package never opens a connection by itself. */
@@ -19,6 +20,8 @@ export function getDb() {
   cached ??= create();
   return cached;
 }
+
+export function closeD() {}
 
 /**
  * Closes the pool. Open sockets keep the Node process alive, so scripts and the server's

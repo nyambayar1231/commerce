@@ -4,14 +4,18 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./schema": "./src/schema/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "db:ping": "node --env-file-if-exists=../../.env src/ping-cli.ts"
+    "db:ping": "node --env-file-if-exists=../../.env src/ping-cli.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "devDependencies": {
-    "@commerce/tsconfig": "workspace:*"
+    "@commerce/tsconfig": "workspace:*",
+    "drizzle-kit": "0.31.11"
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",

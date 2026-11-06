@@ -102,8 +102,8 @@ each starts.
 
 | Step | What | New files (approx.) | Status |
 |---|---|---|---|
-| M0.2.1 | `packages/db`: Drizzle + postgres.js client, `Executor` type | `packages/db/src/{client,index,ping-cli}.ts` | Done — awaiting review |
-| M0.2.2 | First table in a Drizzle schema + generated migration | `packages/db/src/schema/shop.ts`, `drizzle.config.ts`, `drizzle/0000_*.sql` | Draft |
+| M0.2.1 | `packages/db`: Drizzle + postgres.js client, `Executor` type | `packages/db/src/{client,index,ping-cli}.ts` | Done |
+| M0.2.2 | First table in a Drizzle schema + generated migration | `packages/db/src/schema/shop.ts`, `drizzle.config.ts`, `drizzle/0000_*.sql` | In progress — migration generated, not yet applied |
 | M0.2.3 | Seed the shop row with a custom SQL migration | `packages/db/drizzle/0001_*.sql` | Draft |
 | M0.2.4 | Minimal GraphQL server: Yoga + Pothos + `shop` query | `src/server.ts`, `src/graphql/*`, `src/modules/shop/*` | Draft |
 | M0.2.5 | Request safety: CSRF protection, error masking, request-id logging | edits to `src/server.ts`, `src/logger.ts` | Draft |
