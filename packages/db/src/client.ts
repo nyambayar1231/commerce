@@ -21,8 +21,6 @@ export function getDb() {
   return cached;
 }
 
-export function closeD() {}
-
 /**
  * Closes the pool. Open sockets keep the Node process alive, so scripts and the server's
  * shutdown handler must call this. `timeout` lets running queries finish first.

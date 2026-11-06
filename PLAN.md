@@ -103,7 +103,7 @@ each starts.
 | Step | What | New files (approx.) | Status |
 |---|---|---|---|
 | M0.2.1 | `packages/db`: Drizzle + postgres.js client, `Executor` type | `packages/db/src/{client,index,ping-cli}.ts` | Done |
-| M0.2.2 | First table in a Drizzle schema + generated migration | `packages/db/src/schema/shop.ts`, `drizzle.config.ts`, `drizzle/0000_*.sql` | In progress — migration generated, not yet applied |
+| M0.2.2 | First table in a Drizzle schema + generated migration | `packages/db/src/schema/shop.ts`, `drizzle.config.ts`, `drizzle/0000_*.sql` | Done |
 | M0.2.3 | Seed the shop row with a custom SQL migration | `packages/db/drizzle/0001_*.sql` | Draft |
 | M0.2.4 | Minimal GraphQL server: Yoga + Pothos + `shop` query | `src/server.ts`, `src/graphql/*`, `src/modules/shop/*` | Draft |
 | M0.2.5 | Request safety: CSRF protection, error masking, request-id logging | edits to `src/server.ts`, `src/logger.ts` | Draft |
@@ -129,6 +129,11 @@ each starts.
   `drizzle.config.ts`; scripts `db:generate`, `db:migrate`.
 - **Acceptance:** generated SQL reviewed together; migrate applies it; running migrate again is a
   no-op; inserting a second row fails with the check constraint.
+
+- **Result (M0.2.2):** migration applied once (`drizzle.__drizzle_migrations` holds its SHA-256
+  and the journal's generation time); re-run is a no-op; second row rejected (`single_row` CHECK
+  or primary key), lowercase currency and empty name rejected. Code for this step written by the
+  owner by hand from the printed reference. drizzle-kit prints harmless `IF NOT EXISTS` NOTICEs.
 
 #### M0.2.3 Seed row via custom migration
 - **Concepts:** data inside migrations vs a separate seed script, and when each fits.
