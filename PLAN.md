@@ -108,7 +108,7 @@ each starts.
 | M0.2.4 | Minimal GraphQL server: Yoga + Pothos + `shop` query | `src/{app,server}.ts`, `src/graphql/*`, `src/modules/shop/*` | Done — awaiting review |
 | M0.2.5 | Request safety: CSRF protection, error masking, request-id logging | `src/app.ts` | Done — awaiting review |
 | M0.2.6 | `Money` contract + first unit tests (Vitest) | `packages/contracts/src/money{,.test}.ts` | Done — awaiting review |
-| M0.2.7 | Real-Postgres test harness + `shop` GraphQL test | `vitest.config.ts`, `test/*`, `shop.test.ts` | Draft |
+| M0.2.7 | Real-Postgres test harness + `shop` GraphQL test | `vitest.config.ts`, `test/global-setup.ts`, `shop.test.ts`, `packages/db/src/migrate.ts` | Done — awaiting review |
 | M0.2.8 | Print `schema.graphql` + Turborepo task | `src/scripts/printSchema.ts`, `schema.graphql` | Draft |
 
 #### M0.2.1 `packages/db` with a Drizzle client
@@ -167,9 +167,16 @@ each starts.
   ADR-0004 superseded). 9/9 tests; mutation check (weakened safe-integer guard) fails 2 tests.
 
 #### M0.2.7 Real-Postgres test harness
-- **Concepts:** why domain tests hit a real DB; per-file databases cloned from a migrated
-  template (`CREATE DATABASE … TEMPLATE`); calling the Yoga app in-process.
-- **Acceptance:** `shop` GraphQL test + single-row invariant test pass; test DBs are dropped.
+- **Concepts:** why domain tests hit a real DB; one shared test database pointed to through the
+  same env var production reads; a `_test` name guard; calling the Yoga app in-process.
+- **Acceptance:** `shop` GraphQL test + CSRF test + single-row invariant test pass against
+  `commerce_test`; the guard refuses a non-`_test` database.
+- **Decided (owner, 2026-11-06):** dino-publishing's single-test-DB strategy instead of the planned
+  per-file template databases (simpler; domain code reads `getDb()` unchanged).
+- **Result:** 3/3 pass; `commerce_test` auto-created and migrated (2 migrations); second run OK;
+  guard refused `commerce`; wrong constraint name → test fails; renaming the shop only in
+  `commerce_test` → test fails (proves tests read the test DB). No truncation yet: these tests
+  leave no data behind.
 
 #### M0.2.8 Schema file pipeline
 - **Concepts:** the printed SDL as the public contract; Turborepo caching of generated outputs.

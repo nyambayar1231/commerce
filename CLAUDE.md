@@ -85,7 +85,7 @@ pnpm dev            # turbo: dev task of every app
 pnpm typecheck      # turbo: tsc --noEmit per app (cached)
 pnpm lint           # biome check . (lint + format check + import order)
 pnpm format         # biome format --write .
-pnpm test           # turbo: test task per app (none yet)
+pnpm test           # turbo: unit tests + API tests on commerce_test (needs `pnpm db:up`)
 pnpm db:up          # start Postgres 18 on localhost:5433 and wait until healthy
 pnpm db:down        # stop it (data kept in the `postgres-data` volume)
 pnpm db:psql        # psql shell inside the container

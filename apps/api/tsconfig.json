@@ -1,4 +1,4 @@
 {
   "extends": "@commerce/tsconfig/node.json",
-  "include": ["src"]
+  "include": ["src", "test", "vitest.config.ts"]
 }

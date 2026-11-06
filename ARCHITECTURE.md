@@ -469,7 +469,7 @@ state lives in the URL (`before`/`after`).
 | Layer | Tool | What |
 |---|---|---|
 | Money and pure helpers | Vitest | unit |
-| Services and queries | Vitest + real Postgres | each test file runs in a fresh database created from a migrated template (`CREATE DATABASE … TEMPLATE`), which is fast and isolated |
+| Services and queries | Vitest + real Postgres | one `commerce_test` database (name must end in `_test`), created if missing and migrated once per run; `getDb()` points at it via `DATABASE_URL` in `vitest.config.ts`; files run sequentially; tests that write data truncate their tables (never seeded config like `shop_settings`) — pattern from dino-publishing |
 | GraphQL contract | Vitest + Yoga `fetch` | permissions, error shapes, pagination |
 | Concurrency | Vitest + parallel transactions | overselling and double-complete scenarios (M5.4) |
 | Dashboard | Vitest + Testing Library | variables builder, URL state, forms. The Glide canvas is not unit-tested |
