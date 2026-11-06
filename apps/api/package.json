@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@commerce/db": "workspace:*",
+    "@graphql-yoga/plugin-csrf-prevention": "4.0.1",
     "@pothos/core": "4.16.0",
     "graphql": "17.1.0",
     "graphql-yoga": "6.0.1"

@@ -26,6 +26,9 @@ importers:
       '@commerce/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@graphql-yoga/plugin-csrf-prevention':
+        specifier: 4.0.1
+        version: 4.0.1(graphql-yoga@6.0.1(graphql@17.1.0))(graphql@17.1.0)
       '@pothos/core':
         specifier: 4.16.0
         version: 4.16.0(graphql@17.1.0)
@@ -655,6 +658,13 @@ packages:
     peerDependencies:
       graphql: ^0.8.0 || ^0.9.0 || ^0.10.0 || ^0.11.0 || ^0.12.0 || ^0.13.0 || ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
 
+  '@graphql-yoga/plugin-csrf-prevention@4.0.1':
+    resolution: {integrity: sha512-kKt9FnHvSjP4mXrAjOwcDcxL37iSg8OwNHrr+j6XEPbNaoZ9Z1+WmZ1Z1Ai4+gj7TQthGrDD+LZ0nVdTntnmKg==}
+    engines: {node: '>=22.15.0'}
+    peerDependencies:
+      graphql: ^16.0.0 || ^17.0.0
+      graphql-yoga: ^6.0.1
+
   '@graphql-yoga/subscription@6.0.0':
     resolution: {integrity: sha512-7itRaKCigZXL5gbgtKg8+/xCB2NI5T/1p1yIcAx8fht2nEMmu/2RlQ8xtpsa25xKy/u5h4Y9nDSQo7kV/nCcBg==}
     engines: {node: '>=22.15.0'}
@@ -1236,6 +1246,11 @@ snapshots:
   '@graphql-typed-document-node/core@3.2.0(graphql@17.1.0)':
     dependencies:
       graphql: 17.1.0
+
+  '@graphql-yoga/plugin-csrf-prevention@4.0.1(graphql-yoga@6.0.1(graphql@17.1.0))(graphql@17.1.0)':
+    dependencies:
+      graphql: 17.1.0
+      graphql-yoga: 6.0.1(graphql@17.1.0)
 
   '@graphql-yoga/subscription@6.0.0':
     dependencies:

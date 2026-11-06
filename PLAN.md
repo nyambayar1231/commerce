@@ -106,7 +106,7 @@ each starts.
 | M0.2.2 | First table in a Drizzle schema + generated migration | `packages/db/src/schema/shop.ts`, `drizzle.config.ts`, `drizzle/0000_*.sql` | Done |
 | M0.2.3 | Seed the shop row with a custom SQL migration | `packages/db/drizzle/0001_*.sql` | Done — awaiting review |
 | M0.2.4 | Minimal GraphQL server: Yoga + Pothos + `shop` query | `src/{app,server}.ts`, `src/graphql/*`, `src/modules/shop/*` | Done — awaiting review |
-| M0.2.5 | Request safety: CSRF protection, error masking, request-id logging | edits to `src/server.ts`, `src/logger.ts` | Draft |
+| M0.2.5 | Request safety: CSRF protection, error masking, request-id logging | `src/app.ts` | Done — awaiting review |
 | M0.2.6 | `Money` value module + first unit tests (Vitest) | `src/money.ts`, `src/money.test.ts` | Draft |
 | M0.2.7 | Real-Postgres test harness + `shop` GraphQL test | `vitest.config.ts`, `test/*`, `shop.test.ts` | Draft |
 | M0.2.8 | Print `schema.graphql` + Turborepo task | `src/scripts/printSchema.ts`, `schema.graphql` | Draft |
@@ -149,6 +149,13 @@ each starts.
   preflight); masking unexpected errors; logs tagged with a request id.
 - **Acceptance:** JSON POST 200; `text/plain` POST and header-less GET 403; with the DB down the
   client sees `Unexpected error.` while the log shows the real error and request id.
+
+- **Result (M0.2.5):** written by the owner from the printed reference. Yoga 6 already provides
+  request ids (`x-request-id` in/out, on every log line) and error masking, so no logger library
+  was added (pino dropped). Added a custom `maskError` that delegates to Yoga's and logs the
+  masked error's `cause` chain (Drizzle wraps driver errors; Yoga's log omitted the cause).
+  Verified: CSRF 200/403/403/200, request id echoed, DB down → client `Unexpected error.`,
+  log `AggregateError [ECONNREFUSED]` under the request id; expected errors not logged.
 
 #### M0.2.6 Money module + unit tests
 - **Concepts:** integer minor units with `bigint` (ADR-0004); exact decimal parsing; Vitest basics.
