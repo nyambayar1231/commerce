@@ -8,6 +8,13 @@
       "when": 1793947761958,
       "tag": "0000_shop_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793955858297,
+      "tag": "0001_seed_shop_settings",
+      "breakpoints": true
     }
   ]
 }
