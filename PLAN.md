@@ -107,7 +107,7 @@ each starts.
 | M0.2.3 | Seed the shop row with a custom SQL migration | `packages/db/drizzle/0001_*.sql` | Done — awaiting review |
 | M0.2.4 | Minimal GraphQL server: Yoga + Pothos + `shop` query | `src/{app,server}.ts`, `src/graphql/*`, `src/modules/shop/*` | Done — awaiting review |
 | M0.2.5 | Request safety: CSRF protection, error masking, request-id logging | `src/app.ts` | Done — awaiting review |
-| M0.2.6 | `Money` value module + first unit tests (Vitest) | `src/money.ts`, `src/money.test.ts` | Draft |
+| M0.2.6 | `Money` contract + first unit tests (Vitest) | `packages/contracts/src/money{,.test}.ts` | Done — awaiting review |
 | M0.2.7 | Real-Postgres test harness + `shop` GraphQL test | `vitest.config.ts`, `test/*`, `shop.test.ts` | Draft |
 | M0.2.8 | Print `schema.graphql` + Turborepo task | `src/scripts/printSchema.ts`, `schema.graphql` | Draft |
 
@@ -158,8 +158,13 @@ each starts.
   log `AggregateError [ECONNREFUSED]` under the request id; expected errors not logged.
 
 #### M0.2.6 Money module + unit tests
-- **Concepts:** integer minor units with `bigint` (ADR-0004); exact decimal parsing; Vitest basics.
-- **Acceptance:** `pnpm test` runs pure unit tests (parse/format, currency mismatch, 0.1+0.2).
+- **Concepts:** integer minor units as safe-integer `number`s, MNT exponent 0 (ADR-0013); a
+  shared contracts package (ADR-0012); exact parsing; Vitest basics.
+- **Acceptance:** `pnpm test` runs the contracts unit tests (construction, parse/format,
+  currency mismatch, integer quantities, overflow).
+- **Result:** first written in `apps/api` (owner, by hand, MNT-only); then, by owner decision,
+  moved to `packages/contracts` with MNT exponent 0 and `number` amounts (ADR-0012, ADR-0013;
+  ADR-0004 superseded). 9/9 tests; mutation check (weakened safe-integer guard) fails 2 tests.
 
 #### M0.2.7 Real-Postgres test harness
 - **Concepts:** why domain tests hit a real DB; per-file databases cloned from a migrated

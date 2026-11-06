@@ -26,7 +26,8 @@ invariants enforced by PostgreSQL constraints, explicit transactions and row loc
 - **Query style:** Drizzle's SQL-like builder (`db.select().from(...)`) by default. The relational
   API (`db.query.x.findMany({ with })`) is fine for simple nested reads. Locks via `.for("update")`,
   and the `sql` template when raw SQL is clearer.
-- Money columns use `bigint(..., { mode: "bigint" })`, so values arrive as JS `bigint` (ADR-0004).
+- Money columns use `bigint(..., { mode: "number" })`, so values arrive as safe-integer
+  `number`s matching the `Money` contract (ADR-0013).
 - Pin the stable 0.x line; Drizzle 1.0 is in beta at the time of writing.
 
 ## Alternatives
@@ -36,7 +37,7 @@ invariants enforced by PostgreSQL constraints, explicit transactions and row loc
   (filters, sort, cursors), which are risky in M2.3's list filtering.
 
 ## Consequences
-- + Familiar API; types come directly from the schema; `bigint` mode removes the custom type parser.
+- + Familiar API; types come directly from the schema; no custom type parsers needed.
 - + Migrations remain plain SQL files under review, so constraints and indexes stay visible.
 - − Two representations of the schema to keep in mind (TS definition + generated SQL); a reviewer
   must read the generated SQL, not just the TS diff.

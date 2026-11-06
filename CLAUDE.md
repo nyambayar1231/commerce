@@ -61,8 +61,9 @@ When explaining a pattern, cite the reference file path, e.g.
   applied migration; never `drizzle-kit push`.
 - GraphQL schema is code-first in the API and printed to `apps/api/schema.graphql` (committed);
   clients generate types from that file.
-- Money is integer minor units + ISO currency code (ADR-0004). Never use floats for money in
-  the backend.
+- Money: use `@commerce/contracts` (`mnt`, `addMoney`, `parseDecimal`…), never ad-hoc math.
+  `amountMinor` is a safe integer; MNT has 0 decimal places (ADR-0013). Code shared by more
+  than one app goes in `packages/contracts` only if it is dependency-free (ADR-0012).
 - Lint + format: Biome, one root `biome.json` (2 spaces, double quotes, width 100). Markdown is
   excluded: Biome's Markdown formatter rewrites prose (e.g. `+`/`−` bullets in ADRs).
 - TypeScript 6.0 (last JS-based compiler; 7.x Go port deferred until our tools support it).

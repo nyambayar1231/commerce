@@ -1,0 +1,18 @@
+{
+  "name": "@commerce/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@commerce/tsconfig": "workspace:*",
+    "vite": "8.3.6",
+    "vitest": "5.1.0"
+  }
+}

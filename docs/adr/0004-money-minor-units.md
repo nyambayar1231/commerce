@@ -1,6 +1,6 @@
 # ADR-0004: Money = integer minor units + ISO 4217 currency
 
-Status: Accepted (2026-11-06)
+Status: Superseded by ADR-0013 (2026-11-06). Replaced before any money code was committed.
 
 ## Context
 Saleor stores `Decimal(12,3)` amounts with a separate `currency` column and uses the `prices`

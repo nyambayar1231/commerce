@@ -1,0 +1,11 @@
+{
+  "extends": "@commerce/tsconfig/base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
+    "types": []
+  },
+  "include": ["src"]
+}
