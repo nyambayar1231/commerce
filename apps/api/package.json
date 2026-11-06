@@ -4,13 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --experimental-strip-types src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "dev": "node --env-file-if-exists=../../.env --watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "start": "node --env-file-if-exists=../../.env src/server.ts"
   },
   "devDependencies": {
     "@commerce/tsconfig": "workspace:*"
   },
   "dependencies": {
-    "@commerce/db": "workspace:*"
+    "@commerce/db": "workspace:*",
+    "@pothos/core": "4.16.0",
+    "graphql": "17.1.0",
+    "graphql-yoga": "6.0.1"
   }
 }
