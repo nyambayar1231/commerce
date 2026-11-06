@@ -1,0 +1,4 @@
+{
+  "extends": "@commerce/tsconfig/react.json",
+  "include": ["src"]
+}

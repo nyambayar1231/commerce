@@ -1,0 +1,24 @@
+# Local infrastructure only. Apps run on the host (see ARCHITECTURE.md §11).
+name: commerce
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: commerce
+      POSTGRES_PASSWORD: commerce
+      POSTGRES_DB: commerce
+    ports:
+      - "5433:5432"
+    volumes:
+      # Postgres 18 images keep data in a versioned subdirectory
+      # (/var/lib/postgresql/18/docker), so the volume mounts the parent directory.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commerce -d commerce"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  postgres-data:
