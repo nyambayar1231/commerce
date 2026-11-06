@@ -10,7 +10,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | P0 | Planning: ARCHITECTURE.md, PLAN.md, CLAUDE.md, ADRs | Done |
 | M0 | Foundations | In progress |
 | M0.1 | Monorepo skeleton & local infrastructure | Done |
-| M0.2 | API skeleton: server, DB, migrations, schema pipeline, test harness | Draft |
+| M0.2 | API skeleton, in 8 small steps (M0.2.1–M0.2.8) | In progress |
 | M0.3 | Dashboard shell: Macaw theme, routing, faithful Saleor sidebar | Draft |
 | M1 | Identity: staff auth & permissions | Draft |
 | M1.1 | Users, sessions, login/logout/me | Draft |
@@ -89,30 +89,74 @@ each starts.
 
 ### M0.2 API skeleton
 
-- **Objective:** a running GraphQL API backed by Postgres, with the full schema→client type
-  pipeline and a real-DB test harness — exercised by one tiny feature: `shop { name currency }`.
-- **Scope:** Yoga + Pothos server on :4000, request context (db, request id), Kysely connection,
-  SQL migration runner, migration `0001_shop_settings.sql`, kysely-codegen DB types,
-  `schema:print`, `Money` value module + `Money` GraphQL type, Vitest with template-DB isolation,
-  structured logging (pino).
-- **Concepts:** GraphQL execution (parse/validate/execute, resolvers, context per request);
-  code-first schema with Pothos; connection pooling; forward-only migrations; why test against
-  real Postgres; bigint minor-unit money.
-- **Decisions requiring confirmation:**
-  - Migration runner: ~60-line in-repo script vs `node-pg-migrate`. *Recommend in-repo (fully inspectable).*
-  - ~~UUID generation~~ → **Decided** by the Postgres 18 choice: `id uuid DEFAULT uuidv7()` in the DB.
-- **Tasks:**
-  1. Kysely + pg pool; `db:migrate` runner + `schema_migrations` table.
-  2. `0001_shop_settings.sql` + seed row.
-  3. Pothos builder, `shop` query, Yoga server, CSRF plugin, error masking.
-  4. `money.ts` (+ unit tests) and `Money` type.
-  5. `schema:print` + `db:types` scripts; turbo wiring.
-  6. Test harness: template DB, `createTestContext()`, first GraphQL contract test.
-- **Acceptance:** `curl` POST `{ shop { name currency } }` returns seeded data; request without
-  CSRF header is rejected; `pnpm test` green (money units + one GraphQL test against real DB);
-  `schema.graphql` committed and regenerating it produces no diff.
-- **Exclusions:** auth, DataLoaders, Relay plugin/connections (arrive with first list in M2.1).
-- **Status:** Draft.
+- **Objective:** a running GraphQL API backed by Postgres, built up in small steps you approve
+  one at a time. It ends with one tiny feature, `shop { name currency }`, plus tests and the
+  schema file clients will generate types from.
+- **History:** a first attempt was delivered in one large batch, judged too big to follow, and
+  fully removed (never committed). It was also switched from Kysely to Drizzle (ADR-0011).
+- **Decided:** seed shop = Hantesi-Mongolia / MNT / MN (owner, 2026-11-06); IDs via Postgres 18
+  `uuidv7()` defaults; migrations via drizzle-kit (no in-repo runner).
+- **Exclusions:** auth, DataLoaders, Relay connections (M2.1), `Money` GraphQL type (added with
+  the first price field, M2.2), CI.
+- **Rule:** each sub-step is done in its own turn; I stop after it and wait for your approval.
+
+| Step | What | New files (approx.) | Status |
+|---|---|---|---|
+| M0.2.1 | `packages/db`: Drizzle + postgres.js client, `Executor` type | `packages/db/src/{client,index,ping-cli}.ts` | Done — awaiting review |
+| M0.2.2 | First table in a Drizzle schema + generated migration | `packages/db/src/schema/shop.ts`, `drizzle.config.ts`, `drizzle/0000_*.sql` | Draft |
+| M0.2.3 | Seed the shop row with a custom SQL migration | `packages/db/drizzle/0001_*.sql` | Draft |
+| M0.2.4 | Minimal GraphQL server: Yoga + Pothos + `shop` query | `src/server.ts`, `src/graphql/*`, `src/modules/shop/*` | Draft |
+| M0.2.5 | Request safety: CSRF protection, error masking, request-id logging | edits to `src/server.ts`, `src/logger.ts` | Draft |
+| M0.2.6 | `Money` value module + first unit tests (Vitest) | `src/money.ts`, `src/money.test.ts` | Draft |
+| M0.2.7 | Real-Postgres test harness + `shop` GraphQL test | `vitest.config.ts`, `test/*`, `shop.test.ts` | Draft |
+| M0.2.8 | Print `schema.graphql` + Turborepo task | `src/scripts/printSchema.ts`, `schema.graphql` | Draft |
+
+#### M0.2.1 `packages/db` with a Drizzle client
+- **Concepts:** a shared workspace package consumed as TS source; a connection pool; lazy
+  client creation and graceful `closeDb()`; `Executor = Db | Tx` and compile-time
+  "must run in a transaction" (pattern from dino-publishing).
+- **Tasks:** `@commerce/db` package (drizzle-orm 0.45.4, postgres 3.4.9); `client.ts`;
+  `db:ping` script; API depends on `@commerce/db`.
+- **Acceptance:** `pnpm --filter @commerce/db db:ping` prints the PostgreSQL 18 version; importing
+  `@commerce/db` from `apps/api` works at runtime; passing `Db` where `Tx` is required fails to
+  compile; `pnpm typecheck` and `pnpm lint` pass.
+- **History:** first done inside `apps/api` with `pg`; redone as a package after owner review.
+
+#### M0.2.2 First table + generated migration
+- **Concepts:** schema-as-code (`pgTable`, `check()`); `drizzle-kit generate` → reading the SQL it
+  produced; `drizzle-kit migrate` and its bookkeeping table (`drizzle.__drizzle_migrations`).
+- **Tasks:** `shop_settings` table (single-row `CHECK (id = 1)`, currency/country format checks);
+  `drizzle.config.ts`; scripts `db:generate`, `db:migrate`.
+- **Acceptance:** generated SQL reviewed together; migrate applies it; running migrate again is a
+  no-op; inserting a second row fails with the check constraint.
+
+#### M0.2.3 Seed row via custom migration
+- **Concepts:** data inside migrations vs a separate seed script, and when each fits.
+- **Acceptance:** fresh DB → migrate → exactly one row `Hantesi-Mongolia | MNT | MN`.
+
+#### M0.2.4 Minimal GraphQL server
+- **Concepts:** parse → validate → execute; resolvers and per-request context; code-first schema
+  with Pothos; non-null-by-default fields (matches Saleor).
+- **Acceptance:** `curl` POST `{ shop { name currency } }` returns the seeded row.
+
+#### M0.2.5 Request safety
+- **Concepts:** CSRF and CORS preflights (the plugin only demands its header on requests that skip a
+  preflight); masking unexpected errors; logs tagged with a request id.
+- **Acceptance:** JSON POST 200; `text/plain` POST and header-less GET 403; with the DB down the
+  client sees `Unexpected error.` while the log shows the real error and request id.
+
+#### M0.2.6 Money module + unit tests
+- **Concepts:** integer minor units with `bigint` (ADR-0004); exact decimal parsing; Vitest basics.
+- **Acceptance:** `pnpm test` runs pure unit tests (parse/format, currency mismatch, 0.1+0.2).
+
+#### M0.2.7 Real-Postgres test harness
+- **Concepts:** why domain tests hit a real DB; per-file databases cloned from a migrated
+  template (`CREATE DATABASE … TEMPLATE`); calling the Yoga app in-process.
+- **Acceptance:** `shop` GraphQL test + single-row invariant test pass; test DBs are dropped.
+
+#### M0.2.8 Schema file pipeline
+- **Concepts:** the printed SDL as the public contract; Turborepo caching of generated outputs.
+- **Acceptance:** `pnpm schema:print` writes `schema.graphql`; re-running produces no diff.
 
 ### M0.3 Dashboard shell
 

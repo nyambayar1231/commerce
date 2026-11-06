@@ -55,7 +55,10 @@ When explaining a pattern, cite the reference file path, e.g.
   actually exists).
 - Backend modules: `apps/api/src/modules/<module>/`; other modules import only from a module's
   `index.ts`. A module never writes another module's tables.
-- SQL migrations are hand-written, forward-only, in `apps/api/migrations/`.
+- Database: `packages/db` (`@commerce/db`), Drizzle ORM + postgres.js (ADR-0011). Domain
+  functions take an `Executor` (`Db | Tx`) parameter; never call `getDb()` inside them. Table definitions in TS; migrations are SQL files generated
+  by `drizzle-kit generate`, committed, and **read in review**. Forward-only; never edit an
+  applied migration; never `drizzle-kit push`.
 - GraphQL schema is code-first in the API and printed to `apps/api/schema.graphql` (committed);
   clients generate types from that file.
 - Money is integer minor units + ISO currency code (ADR-0004). Never use floats for money in
@@ -85,6 +88,7 @@ pnpm test           # turbo: test task per app (none yet)
 pnpm db:up          # start Postgres 18 on localhost:5433 and wait until healthy
 pnpm db:down        # stop it (data kept in the `postgres-data` volume)
 pnpm db:psql        # psql shell inside the container
+pnpm --filter @commerce/db db:ping   # check the app can reach Postgres
 ```
 
 Planned: `db:migrate` (M0.2), `schema:print` (M0.2), `codegen` (M0.3).

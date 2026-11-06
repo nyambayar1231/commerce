@@ -1,0 +1,20 @@
+{
+  "name": "@commerce/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "db:ping": "node --env-file-if-exists=../../.env src/ping-cli.ts"
+  },
+  "devDependencies": {
+    "@commerce/tsconfig": "workspace:*"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.4",
+    "postgres": "3.4.9"
+  }
+}

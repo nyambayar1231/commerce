@@ -1,6 +1,6 @@
 # ADR-0003: Database access = Kysely query builder + hand-written SQL migrations
 
-Status: Accepted (2026-11-06)
+Status: Superseded by ADR-0011 (2026-11-06). Accepted earlier the same day; replaced before any database code was committed.
 
 ## Context
 Inventory and checkout correctness depend on explicit transactions, row locks

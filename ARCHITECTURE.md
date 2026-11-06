@@ -22,7 +22,7 @@ Status: **Accepted** (2026-11-06). Decisions marked *(ADR-NNNN)* are explained i
  │  ── modules ───────────────────────────────────  │
  │  shop · identity · catalog · inventory ·         │
  │  checkout · payments · orders                    │
- │  ── Kysely ─────────────────────────────────────  │
+ │  ── Drizzle ORM ────────────────────────────────  │
  └─────────────────────────┬────────────────────────┘
                            ▼
                    PostgreSQL 18 (docker compose)
@@ -39,11 +39,13 @@ Status: **Accepted** (2026-11-06). Decisions marked *(ADR-NNNN)* are explained i
 
 ```
 apps/
-  api/          src/{server.ts, context.ts, schema.ts, modules/<m>/…}, migrations/*.sql, schema.graphql
+  api/          src/{server.ts, graphql/…, modules/<m>/…}, schema.graphql
   dashboard/    src/{app, components, <section>/{views,components,queries.ts,urls.ts}}
   storefront/   src/app/…
 packages/
-  tsconfig/     shared tsconfig bases (the only shared package at start)
+  db/           @commerce/db: Drizzle client (getDb, closeDb, Db/Tx/Executor), schema/<module>.ts,
+                drizzle/ migrations (ADR-0011). Consumed as TS source, no build step.
+  tsconfig/     shared tsconfig bases
 docs/adr/
 docker-compose.yml
 ```
@@ -84,11 +86,17 @@ GraphQL package: each one runs codegen against `apps/api/schema.graphql` itself.
 modules/catalog/
   index.ts         public API (re-exports selected service functions + types)
   service.ts       use cases: validation, business rules, transactions
-  queries.ts       Kysely queries (read models, filters, pagination)
+  queries.ts       Drizzle queries (read models, filters, pagination)
   graphql.ts       Pothos types/queries/mutations — thin: parse → authorize → call service → map
   errors.ts        error code enum for this module (ProductErrorCode, …)
   *.test.ts
 ```
+
+Table definitions live in `packages/db/src/schema/<module>.ts` (one file per module) so that
+migrations are generated in one place. Ownership is unchanged: only the owning module's code
+writes those tables. Every query and service function takes an `Executor` (`Db | Tx`) parameter
+rather than calling `getDb()` itself, so callers decide whether it runs inside a transaction;
+functions that must run in one take `Tx`, which the compiler enforces.
 
 Resolvers contain no business rules. Services know nothing about GraphQL. This matches Saleor's
 split between `saleor/<domain>/` (logic) and `saleor/graphql/<domain>/` (API), without the plugin
@@ -399,7 +407,7 @@ Storybook- and test-friendly.
    unit-tested. In Saleor this role is played by
    `src/components/ConditionalFilter/FiltersQueryBuilder/` and `queryVariables.ts`.
 4. **Server-side filtering**: a typed `ProductWhereInput` (Saleor's newer `where` API shape: per
-   field `{ eq | oneOf | range }`). The catalog module maps each field explicitly to a Kysely
+   field `{ eq | oneOf | range }`). The catalog module maps each field explicitly to a Drizzle
    condition, with no generic filter engine. Search is a separate `search: String` argument (ILIKE on
    name and SKU at first, backed by a `pg_trgm` index).
 5. **Grid rendering**: a `Datagrid` wrapper around Glide that is adapted from
@@ -465,7 +473,7 @@ state lives in the URL (`before`/`after`).
 | Dashboard | Vitest + Testing Library | variables builder, URL state, forms. The Glide canvas is not unit-tested |
 | End-to-end | Playwright | a few golden paths: staff creates a product → customer buys it → staff fulfills (M9) |
 
-**Checks:** `typecheck`, `lint`, `test`, a schema-print diff, and a DB-types diff, all orchestrated
+**Checks:** `typecheck`, `lint`, `test`, a schema-print diff, and a `drizzle-kit check` of the migrations, all orchestrated
 by Turborepo.
 
 ---
