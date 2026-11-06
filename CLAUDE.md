@@ -69,6 +69,8 @@ When explaining a pattern, cite the reference file path, e.g.
 - TypeScript 6.0 (last JS-based compiler; 7.x Go port deferred until our tools support it).
   Shared configs in `packages/tsconfig` (`base`, `node`, `react`).
 - Dependencies are pinned to exact versions (`pnpm add --save-exact`).
+- Generated, committed files — never edit by hand: `apps/api/schema.graphql` (`pnpm schema:print`),
+  `packages/db/drizzle/**` (drizzle-kit; custom migrations are written inside the generated file).
 - GraphQL naming: Saleor's names by default; any deviation goes in ARCHITECTURE §4's
   deviations table with its reason.
 - Tests: Vitest. API tests run against a real PostgreSQL (no DB mocks for domain logic).
@@ -89,11 +91,16 @@ pnpm test           # turbo: unit tests + API tests on commerce_test (needs `pnp
 pnpm db:up          # start Postgres 18 on localhost:5433 and wait until healthy
 pnpm db:down        # stop it (data kept in the `postgres-data` volume)
 pnpm db:psql        # psql shell inside the container
-pnpm --filter @commerce/db db:ping   # check the app can reach Postgres
+pnpm --filter @commerce/db db:ping                     # check the app can reach Postgres
+pnpm --filter @commerce/db db:generate --name <name>    # migration from schema changes
+pnpm --filter @commerce/db db:generate --custom --name <name>   # empty SQL migration (data)
+pnpm --filter @commerce/db db:migrate                   # apply migrations (needs db:up)
+pnpm --filter @commerce/api dev                         # API on :4000/graphql, watch mode
+pnpm schema:print   # regenerate apps/api/schema.graphql (commit it)
 ```
 
-Planned: `db:migrate` (M0.2), `schema:print` (M0.2), `codegen` (M0.3).
+Planned: `codegen` (M0.3).
 
 ## Current state
 
-M0.1 done. Next: M0.2 (API skeleton), awaiting owner approval. See `PLAN.md`.
+M0.1 and M0.2 done. Next: M0.3 (dashboard shell), awaiting owner approval. See `PLAN.md`.

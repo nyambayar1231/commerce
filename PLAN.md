@@ -10,7 +10,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | P0 | Planning: ARCHITECTURE.md, PLAN.md, CLAUDE.md, ADRs | Done |
 | M0 | Foundations | In progress |
 | M0.1 | Monorepo skeleton & local infrastructure | Done |
-| M0.2 | API skeleton, in 8 small steps (M0.2.1–M0.2.8) | In progress |
+| M0.2 | API skeleton, in 8 small steps (M0.2.1–M0.2.8) | Done |
 | M0.3 | Dashboard shell: Macaw theme, routing, faithful Saleor sidebar | Draft |
 | M1 | Identity: staff auth & permissions | Draft |
 | M1.1 | Users, sessions, login/logout/me | Draft |
@@ -104,12 +104,12 @@ each starts.
 |---|---|---|---|
 | M0.2.1 | `packages/db`: Drizzle + postgres.js client, `Executor` type | `packages/db/src/{client,index,ping-cli}.ts` | Done |
 | M0.2.2 | First table in a Drizzle schema + generated migration | `packages/db/src/schema/shop.ts`, `drizzle.config.ts`, `drizzle/0000_*.sql` | Done |
-| M0.2.3 | Seed the shop row with a custom SQL migration | `packages/db/drizzle/0001_*.sql` | Done — awaiting review |
-| M0.2.4 | Minimal GraphQL server: Yoga + Pothos + `shop` query | `src/{app,server}.ts`, `src/graphql/*`, `src/modules/shop/*` | Done — awaiting review |
-| M0.2.5 | Request safety: CSRF protection, error masking, request-id logging | `src/app.ts` | Done — awaiting review |
-| M0.2.6 | `Money` contract + first unit tests (Vitest) | `packages/contracts/src/money{,.test}.ts` | Done — awaiting review |
-| M0.2.7 | Real-Postgres test harness + `shop` GraphQL test | `vitest.config.ts`, `test/global-setup.ts`, `shop.test.ts`, `packages/db/src/migrate.ts` | Done — awaiting review |
-| M0.2.8 | Print `schema.graphql` + Turborepo task | `src/scripts/printSchema.ts`, `schema.graphql` | Draft |
+| M0.2.3 | Seed the shop row with a custom SQL migration | `packages/db/drizzle/0001_*.sql` | Done |
+| M0.2.4 | Minimal GraphQL server: Yoga + Pothos + `shop` query | `src/{app,server}.ts`, `src/graphql/*`, `src/modules/shop/*` | Done |
+| M0.2.5 | Request safety: CSRF protection, error masking, request-id logging | `src/app.ts` | Done |
+| M0.2.6 | `Money` contract + first unit tests (Vitest) | `packages/contracts/src/money{,.test}.ts` | Done |
+| M0.2.7 | Real-Postgres test harness + `shop` GraphQL test | `vitest.config.ts`, `test/global-setup.ts`, `shop.test.ts`, `packages/db/src/migrate.ts` | Done |
+| M0.2.8 | Print `schema.graphql` + Turborepo task | `src/print-schema-cli.ts`, `schema.graphql` | Done |
 
 #### M0.2.1 `packages/db` with a Drizzle client
 - **Concepts:** a shared workspace package consumed as TS source; a connection pool; lazy
@@ -181,6 +181,9 @@ each starts.
 #### M0.2.8 Schema file pipeline
 - **Concepts:** the printed SDL as the public contract; Turborepo caching of generated outputs.
 - **Acceptance:** `pnpm schema:print` writes `schema.graphql`; re-running produces no diff.
+- **Result:** cached re-run (FULL TURBO); forced re-run byte-identical; a temporary field showed up
+  as a one-line diff and reverting it replayed the cached output; printing works with no reachable
+  database (exit 0, ~0.3 s) because `getDb()` is lazy. `schema.graphql` excluded from Biome.
 
 ### M0.3 Dashboard shell
 

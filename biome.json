@@ -7,7 +7,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!**/*.md", "!packages/db/drizzle"]
+    "includes": ["**", "!**/*.md", "!packages/db/drizzle", "!apps/api/schema.graphql"]
   },
   "formatter": {
     "enabled": true,

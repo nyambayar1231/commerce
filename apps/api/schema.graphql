@@ -1,0 +1,15 @@
+type Query {
+  """Return information about the shop."""
+  shop: Shop!
+}
+
+"""
+Represents a shop resource containing general shop data and configuration.
+"""
+type Shop {
+  """The shop's single currency (ISO 4217). Saleor keeps this per channel."""
+  currency: String!
+
+  """Shop's name."""
+  name: String!
+}

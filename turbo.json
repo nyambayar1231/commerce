@@ -16,6 +16,10 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "schema:print": {
+      "inputs": ["src/**"],
+      "outputs": ["schema.graphql"]
     }
   }
 }
