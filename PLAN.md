@@ -219,11 +219,11 @@ each starts.
 | M0.3.2 | Macaw `ThemeProvider` + fonts, light/dark stored like Saleor | Done |
 | M0.3.3 | react-intl provider (en) + `defineMessages` | Done |
 | M0.3.4 | React Router 7, app layout, placeholder routes, NotFound | Done |
-| M0.3.5 | Sidebar inventory (copy / adapt / omit) → owner approval; no code | Planned |
-| M0.3.6 | Sidebar: menu definitions, expanded desktop view, license headers | Planned |
-| M0.3.7 | Sidebar: collapsed rail + persisted toggle | Planned |
-| M0.3.8 | Sidebar: mobile drawer | Planned |
-| M0.3.9 | Keyboard navigation + theme switcher | Planned |
+| M0.3.5 | Sidebar inventory (copy / adapt / omit) → owner approval; no code | Done |
+| M0.3.6 | Sidebar: full column (≥1024px), menu definitions, header; dashboard Vitest | Planned |
+| M0.3.7 | Sidebar: collapse the column to the rail, persisted, Mod+B | Planned |
+| M0.3.8 | Sidebar: rail layout (768–1023px) and drawer layout (<768px) | Planned |
+| M0.3.9 | Sidebar footer ⋯ menu with the theme switcher; keyboard pass | Planned |
 | M0.3.10 | Apollo Client + codegen + `shop { name }` in sidebar header | Planned |
 | M0.3.11 | Side-by-side comparison with real Saleor; screenshots; close M0.3 | Planned |
 
@@ -287,6 +287,43 @@ each starts.
   page is one centered column with no horizontal scroll; console clean.
   Noted: Macaw 3.1.0's `ThemeProvider` renders its own `<main>`, so the page has a nested `<main>`
   (same in Saleor).
+
+#### M0.3.5 Sidebar inventory
+Source: `../saleor-dashboard/src/components/Sidebar/` (87 files, ~7,200 lines, incl. tests and stories).
+Saleor has **three layouts** chosen by width (`useSidebarLayout.ts`): **column** ≥1024px (full
+sidebar the viewer can collapse to icons), **rail** 768–1023px (icons only; the logo opens the full
+menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3.7–M0.3.8 follow that.
+
+**Decided (owner, 2026-11-08; inventory approved):**
+- Orders and Customers are flat items (Saleor's "Fulfillment" and Customers groups have no
+  roadmap children; Saleor itself renders a childless section as an item, e.g. Translations).
+- Theme switcher: the footer ⋯ menu, as in Saleor, with only Dark/Light Mode until M1 adds the
+  avatar, name, Account Settings and Log out.
+- Header avatar: Macaw `Avatar.Store` with the shop name's initials instead of Saleor's logo images.
+- Port Saleor's unit tests for the logic we copy (Vitest + jsdom in the dashboard, from M0.3.6).
+
+| Step | Saleor files | Treatment |
+|---|---|---|
+| M0.3.6 | `Sidebar.module.css`, `SidebarIconSlot.tsx`, `menu/{Item,SingleItem,SubmenuItems,MenuItemLabel,types}.ts(x)`, `menu/hooks/useIsMenuActive.ts`, `src/icons/{Home,Products,Orders,Customers,Configuration}.tsx` + `createNavigationLucideIcon`, the nav part of `components/icons`, `src/hooks/useLocalStorage.ts` | copy (`react-router-dom` → `react-router`) |
+| M0.3.6 | `SidebarContext.tsx` | adapt: unchanged API; uses our ported `useLocalStorage` |
+| M0.3.6 | `Sidebar.tsx` | adapt: column layout only; no ripples modal, search hotkey or analytics |
+| M0.3.6 | `Content.tsx`, `MountingPoint.tsx` (+css) | adapt: no deprecation banner or cloud environment switcher; initials avatar; title = "Dashboard" until M0.3.10 puts `shop.name` there |
+| M0.3.6 | `menu/ItemGroup.tsx`, `menu/Menu.tsx`, `menu/utils.ts` | adapt: no shortcuts/feedback in the menu; `utils` keeps `isMenuActive` (+ rail helpers in M0.3.7), no extension helpers |
+| M0.3.6 | `menu/hooks/useMenuStructure.tsx` | adapt: only Home, Catalog→Products/Categories, Orders, Customers, Configuration; the permission filter returns with users (M1.2) |
+| M0.3.6 | `menu/utils.test.ts` (`isMenuActive` cases) | port |
+| M0.3.7 | `SidebarCollapseToggle.tsx` (+css), `useSidebarCollapseToggle.ts`, `sidebarCollapseMessages.ts`, `sidebarDrawerTriggerMessages.ts` | adapt: no analytics or ripple |
+| M0.3.7 | `menu/{RailMenuItem,RailItem,RailGroup,RailTooltipGroup,useLabelTooltip,useTooltipSuppression}` (+css) | copy/adapt |
+| M0.3.7 | `followSidebarLink.ts` (+test) | adapt: `history` → React Router 7 `navigate`; no app mount URI |
+| M0.3.7 | `react-hotkeys-hook` for Mod+B | ask in M0.3.7: the dependency vs a small keydown listener |
+| M0.3.8 | `useSidebarLayout.ts`, `SidebarDrawer.tsx` (+css), `useDrawerSwipe.ts`, `drawerSwipe.ts` (+tests) | copy |
+| M0.3.8 | `SidebarAppBar.tsx` (+css) | adapt: no search button |
+| M0.3.9 | `user/Info.tsx`, `user/Controls.tsx` (+css), `user/ThemeSwitcher.tsx`, `src/theme/hook.tsx` | adapt: ⋯ menu with Dark/Light Mode only; keeps Saleor's cross-tab `storage` sync, minus the legacy theme |
+| — | `DeprecationBanner/*` | omit: Saleor version-deprecation notice |
+| — | `ripples/*`, `shortcuts/*`, `ShotcutsItems.tsx` | omit: Saleor "what's new" ripples, search, GraphQL playground / dev mode |
+| — | `user/FeatureFlagsModal/*`, `user/useFeedbackSurvey.ts`, `menu/hooks/useEnvLink.ts` | omit: Saleor feature flags, PostHog survey, "Go to Saleor Cloud" |
+| — | `menu/{createCustomerTypeMenuItems,hooks/useCustomerTypeMenuItems}.ts`, `menu/{Divider,SubmenuSeparator,settingsSubmenuItem}` | omit: customer types, extension dividers and settings sub-items aren't on the roadmap |
+| — | `useSidebarLogo.ts` | omit: replaced by initials |
+| — | `*.stories.tsx`, `Sidebar.test.tsx` | omit: no Storybook; the big integration test leans on omitted parts (rewrite later if needed) |
 
 ---
 
