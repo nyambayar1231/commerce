@@ -1,10 +1,11 @@
 // Adapted from saleor-dashboard: src/components/Sidebar/Content.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The user footer arrives with M0.3.9; the deprecation banner is omitted.
+// The deprecation banner is omitted.
 import { Box } from "@saleor/macaw-ui";
 import { MountingPoint } from "./MountingPoint";
 import { Menu } from "./menu/Menu";
 import { useSidebarCollapse } from "./SidebarContext";
+import { UserInfo } from "./user/Info";
 
 /**
  * - `full`: always expanded (the drawer).
@@ -34,6 +35,7 @@ export const SidebarContent = ({ variant = "full" }: SidebarContentProps) => {
         <MountingPoint variant={variant} collapsed={collapsed} />
       </Box>
       <Menu collapsed={collapsed} />
+      <UserInfo collapsed={collapsed} />
     </Box>
   );
 };

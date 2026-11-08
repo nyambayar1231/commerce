@@ -1,6 +1,8 @@
 // Adapted from saleor-dashboard: src/components/Sidebar/menu/ItemGroup.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 import { Box, List, sprinkles, Text } from "@saleor/macaw-ui";
+import { useCallback } from "react";
+import { defineMessage, useIntl } from "react-intl";
 import { Link, useLocation } from "react-router";
 
 import { SubmenuItems } from "./SubmenuItems";
@@ -11,8 +13,32 @@ interface Props {
   menuItem: SidebarMenuItem;
 }
 
+// Ours, not Saleor's: Saleor leaves the expand chevron without an accessible name.
+const submenuMessage = defineMessage<{ section: string }>({
+  id: "jvlQkk",
+  defaultMessage: "{section} submenu",
+  description: "aria-label, button expanding or collapsing a sidebar menu group",
+});
+
 export const ItemGroup = ({ menuItem }: Props) => {
   const location = useLocation();
+  const intl = useIntl();
+  const submenuLabel = intl.formatMessage(submenuMessage, {
+    section: typeof menuItem.label === "string" ? menuItem.label : menuItem.id,
+  });
+  // Macaw renders the chevron (a Radix accordion trigger) right after the box holding our link and
+  // takes no props for it, so it is named through the DOM, as SidebarDrawer names Macaw's close
+  // button. Radix already sets aria-expanded on it.
+  const nameChevron = useCallback(
+    (link: HTMLAnchorElement | null) => {
+      const chevron = link?.parentElement?.nextElementSibling;
+
+      if (chevron instanceof HTMLButtonElement) {
+        chevron.setAttribute("aria-label", submenuLabel);
+      }
+    },
+    [submenuLabel],
+  );
 
   // Saleor keeps the search for navigation pins; we have none, but it is harmless.
   const activeLocation = location.pathname + location.search;
@@ -43,6 +69,7 @@ export const ItemGroup = ({ menuItem }: Props) => {
         className="sidebar-item-group-trigger"
       >
         <Link
+          ref={nameChevron}
           replace={isActive}
           aria-current={isActive ? "page" : undefined}
           to={menuItem?.url ?? ""}

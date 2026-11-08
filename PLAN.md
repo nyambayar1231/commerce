@@ -223,7 +223,7 @@ each starts.
 | M0.3.6 | Sidebar: full column (≥1024px), menu definitions, header; dashboard Vitest | Done |
 | M0.3.7 | Sidebar: collapse the column to the rail, persisted, Mod+B | Done |
 | M0.3.8 | Sidebar: rail layout (768–1023px) and drawer layout (<768px) | Done |
-| M0.3.9 | Sidebar footer ⋯ menu with the theme switcher; keyboard pass | Planned |
+| M0.3.9 | Sidebar footer ⋯ menu with the theme switcher; keyboard pass | Done |
 | M0.3.10 | Apollo Client + codegen + `shop { name }` in sidebar header | Planned |
 | M0.3.11 | Side-by-side comparison with real Saleor; screenshots; close M0.3 | Planned |
 
@@ -385,6 +385,30 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   close button labelled "Close navigation"; clicking Customers navigates and closes (both); the close
   button closes; a scripted touch swipe of 150px left slides it out (−260px) and closes; 1440 still
   shows the column with its collapse button; console clean.
+
+#### M0.3.9 Footer ⋯ menu + theme switcher; keyboard pass
+- **Concepts:** Macaw `Dropdown` (Radix DropdownMenu: roving focus, Escape, focus return);
+  the theme lives in Macaw's provider state and is mirrored to localStorage; a `storage` event
+  keeps other tabs in sync.
+- **Acceptance:** the ⋯ menu (column and rail) switches light/dark; the choice survives a reload;
+  the sidebar is usable with the keyboard only.
+- **Result:** `src/theme/hook.tsx`, `user/{Info,Controls,ThemeSwitcher}` (+css), `savebarHeight`
+  adapted as in the M0.3.5 table. `useThemeHandler` is Saleor's `useLegacyThemeHandler` without
+  the legacy theme. Without a user (M1) the footer keeps the empty name slot, and the rail
+  trigger shows the ⋯ icon where Saleor shows the avatar. Browser: ⋯ → "Dark Mode" → dark,
+  `activeMacawUITheme=defaultDark`, kept after reload; a `storage` event from "another tab" switches
+  back; rail "Account menu" opens the menu to the right of the 60px rail with "Light Mode". Keyboard:
+  Tab order Collapse → Home → Catalog → (Catalog expand) → Orders → Customers → Configuration → ⋯;
+  Enter/Space opens the menu with focus on the item, Enter switches the theme, Escape closes and focus
+  returns to ⋯; ⌘B collapses; console clean.
+  **Found (same in Saleor):** two buttons have no accessible name: Catalog's expand chevron
+  (Macaw `List.ItemGroup.Trigger`) and the expanded footer ⋯ (only the rail one has
+  "Account menu").
+  **Decided (owner, 2026-11-08): label both, a deliberate difference from Saleor.** The expanded ⋯
+  reuses Saleor's "Account menu" message; the chevron gets a new message "{section} submenu"
+  (`jvlQkk`), set through the DOM (Macaw takes no props for it), as Saleor's `SidebarDrawer`
+  names Macaw's close button. Verified: "Catalog submenu" with `aria-expanded` false → true after a
+  click; the label survives the re-render.
 
 ---
 
