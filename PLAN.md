@@ -216,7 +216,7 @@ each starts.
 | Step | What | Status |
 |---|---|---|
 | M0.3.1 | Vite + React 18 app replaces the placeholder | Done |
-| M0.3.2 | Macaw `ThemeProvider` + fonts, light/dark from the OS | Planned |
+| M0.3.2 | Macaw `ThemeProvider` + fonts, light/dark stored like Saleor | Done |
 | M0.3.3 | react-intl provider (en) + `defineMessages` | Planned |
 | M0.3.4 | React Router 6, app layout, placeholder routes, NotFound | Planned |
 | M0.3.5 | Sidebar inventory (copy / adapt / omit) → owner approval; no code | Planned |
@@ -236,6 +236,22 @@ each starts.
   `typecheck`, `lint`, `build` (140 kB JS) pass; dev server on Vite's default :5173 (Saleor's
   :9000 stays free for the side-by-side in M0.3.11) serves `index.html` and the transformed
   `App.tsx`. Checked with curl, not yet in a browser.
+
+#### M0.3.2 Macaw theme + fonts
+- **Concepts:** Macaw's `ThemeProvider` sets the token CSS variables for `defaultLight` /
+  `defaultDark`; sprinkles props on `Box`/`Text`; the `style` export bundles the Geist and Inter fonts.
+- **Acceptance:** a `Box` styled with tokens renders; the stored theme switches light/dark.
+- **Corrected (2026-11-08):** this step originally said "light/dark from the OS", but Saleor doesn't
+  follow the OS. It defaults to `defaultLight` and keeps the user's choice in localStorage
+  (`activeMacawUITheme`), so we match that. The writer (the switcher) comes in M0.3.9.
+- **Result:** `@saleor/macaw-ui` 3.1.0 (latest; Saleor imports it under the alias `macaw-ui-next`)
+  and `lucide-react` 0.555.0, Saleor's pin, although it doesn't meet Macaw's `^0.536.0` peer range
+  (Saleor has the same mismatch). Adapted `src/theme/{consts.ts,provider.tsx}` and the global part
+  of `src/index.css`, without Saleor's `!important`, which only beats its legacy MUI baseline.
+  `src/vite-env.d.ts` gives types for CSS imports. Browser: light → white body, dark → `rgb(38,40,54)`,
+  an unknown stored value → light, Inter applied, no console errors. Found while checking (same in
+  Saleor): `--mu-colors-foreground-text-neutral-plain` doesn't exist in Macaw 3.1.0, so the body
+  color rule does nothing; this Chrome profile clamps the 8.125px root font size to 9px.
 
 ---
 

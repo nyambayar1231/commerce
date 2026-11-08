@@ -1,6 +1,10 @@
+import "@saleor/macaw-ui/style";
+import "./index.css";
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { ThemeProvider } from "./theme/provider";
 
 const container = document.getElementById("root");
 if (!container) {
@@ -9,6 +13,8 @@ if (!container) {
 
 createRoot(container).render(
   <StrictMode>
-    <App />
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
   </StrictMode>,
 );

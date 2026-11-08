@@ -1,0 +1,28 @@
+/*
+ * Adapted from saleor-dashboard: src/index.css (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ * Only the global rules the shell needs; Saleor's other rules target components we don't have yet.
+ * Saleor marks the html/body rules !important to beat its legacy macaw-ui 0.7 (MUI) baseline;
+ * we don't ship that package, so plain rules win.
+ */
+
+/*
+ * Kill UA link chrome. Color and decoration belong to Link / macaw, not the
+ * browser. :where() keeps this at zero specificity so sprinkle/module classes win.
+ * currentColor keeps any remaining underline on the text, not :link / :visited blue.
+ */
+:where(a, a:visited) {
+  color: inherit;
+  text-decoration: none;
+  text-decoration-color: currentColor;
+}
+
+html {
+  /* set base font size to 13px */
+  font-size: 50.782%;
+}
+
+body {
+  color: var(--mu-colors-foreground-text-neutral-plain);
+  overscroll-behavior-y: none;
+}
