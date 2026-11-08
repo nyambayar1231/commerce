@@ -221,7 +221,7 @@ each starts.
 | M0.3.4 | React Router 7, app layout, placeholder routes, NotFound | Done |
 | M0.3.5 | Sidebar inventory (copy / adapt / omit) → owner approval; no code | Done |
 | M0.3.6 | Sidebar: full column (≥1024px), menu definitions, header; dashboard Vitest | Done |
-| M0.3.7 | Sidebar: collapse the column to the rail, persisted, Mod+B | Planned |
+| M0.3.7 | Sidebar: collapse the column to the rail, persisted, Mod+B | Done |
 | M0.3.8 | Sidebar: rail layout (768–1023px) and drawer layout (<768px) | Planned |
 | M0.3.9 | Sidebar footer ⋯ menu with the theme switcher; keyboard pass | Planned |
 | M0.3.10 | Apollo Client + codegen + `shop { name }` in sidebar header | Planned |
@@ -314,7 +314,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 | M0.3.7 | `SidebarCollapseToggle.tsx` (+css), `useSidebarCollapseToggle.ts`, `sidebarCollapseMessages.ts`, `sidebarDrawerTriggerMessages.ts` | adapt: no analytics or ripple |
 | M0.3.7 | `menu/{RailMenuItem,RailItem,RailGroup,RailTooltipGroup,useLabelTooltip,useTooltipSuppression}` (+css) | copy/adapt |
 | M0.3.7 | `followSidebarLink.ts` (+test) | adapt: `history` → React Router 7 `navigate`; no app mount URI |
-| M0.3.7 | `react-hotkeys-hook` for Mod+B | ask in M0.3.7: the dependency vs a small keydown listener |
+| M0.3.7 | `react-hotkeys-hook` for Mod+B | **decided:** a small keydown listener instead (owner, 2026-11-08) |
 | M0.3.8 | `useSidebarLayout.ts`, `SidebarDrawer.tsx` (+css), `useDrawerSwipe.ts`, `drawerSwipe.ts` (+tests) | copy |
 | M0.3.8 | `SidebarAppBar.tsx` (+css) | adapt: no search button |
 | M0.3.9 | `user/Info.tsx`, `user/Controls.tsx` (+css), `user/ThemeSwitcher.tsx`, `src/theme/hook.tsx` | adapt: ⋯ menu with Dark/Light Mode only; keeps Saleor's cross-tab `storage` sync, minus the legacy theme |
@@ -343,6 +343,27 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   current; Categories, Orders, Configuration current on their pages; `/products/42` → Products;
   NotFound → none; dark theme OK; Tab reaches Home → Catalog → the group's expand button (Macaw focus
   style), Enter toggles it; console clean.
+
+#### M0.3.7 Sidebar: collapse to the rail
+- **Concepts:** one boolean preference in localStorage (`dashboard-sidebar-collapsed`) drives
+  two renderings of the same menu data (`MenuItem` vs `RailMenuItem`); groups become a Macaw
+  `Popover` flyout; Radix tooltips with a shared "warm" delay; focus hand-off between toggles.
+- **Acceptance:** the header button and Mod+B collapse/expand; the choice survives a reload;
+  rail icons show tooltips; Catalog opens a flyout whose links navigate and close it.
+- **Result:** as in the M0.3.5 table, plus two small pieces from `shortcuts/` that the toggle's
+  tooltip uses (`KeyboardShortcut` key-cap, `getShortcutLeadingKey`). The rail's drawer trigger
+  and `sidebarDrawerTriggerMessages` move to M0.3.8, where the rail layout needs them.
+  Mod+B is a ~20-line keydown listener in `Sidebar.tsx` (⌘ on macOS, Ctrl elsewhere; ignored in
+  inputs, like `react-hotkeys-hook`). `followSidebarLink(event, navigate, location)` replaces v5's
+  `history`; its `navigate` parameter is typed as the one call it makes, because a Vitest mock can't
+  satisfy React Router's overloaded `NavigateFunction`. jsdom 31.0.0 added for that test (per-file
+  `@vitest-environment`).
+  Tests: 22/22 (ported `followSidebarLink`, `shouldLinkGroupInFlyout`, `getRailFlyoutChildren` +
+  earlier); forcing `replace: false` fails the "current page" case. Browser: collapse → 60px, page
+  starts at x=61, choice stored and kept after reload; Catalog flyout lists "Catalog" as an unlinked
+  heading (Products opens that page) + Products/Categories; Categories navigates, the flyout closes, the
+  Catalog icon stays active; Orders tooltip on hover; ⌘B expands with the Catalog group open on
+  Categories; Enter on collapse → focus moves to "Expand navigation", and back; console clean.
 
 ---
 

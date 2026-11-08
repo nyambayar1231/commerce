@@ -2,12 +2,14 @@
 // See THIRD_PARTY_LICENSES.md
 // The sidebar header. Saleor shows its logo image and "Saleor Dashboard"; we show the initials
 // of our title (owner decision, PLAN.md M0.3.5), which becomes the shop name in M0.3.10. The
-// collapse button arrives in M0.3.7; the Saleor Cloud environment switcher is omitted.
+// rail's drawer trigger arrives in M0.3.8; the Saleor Cloud environment switcher is omitted.
 import { Avatar, Box, Text } from "@saleor/macaw-ui";
 import { useIntl } from "react-intl";
 
 import { commonMessages } from "../../intl";
+import type { SidebarContentVariant } from "./Content";
 import styles from "./MountingPoint.module.css";
+import { SidebarCollapseButton, SidebarExpandButton } from "./SidebarCollapseToggle";
 
 const getInitials = (name: string): string =>
   name
@@ -17,9 +19,23 @@ const getInitials = (name: string): string =>
     .map((word) => word[0]?.toUpperCase())
     .join("");
 
-export const MountingPoint = () => {
+interface MountingPointProps {
+  variant: SidebarContentVariant;
+  collapsed: boolean;
+}
+
+export const MountingPoint = ({ variant, collapsed }: MountingPointProps) => {
   const intl = useIntl();
   const title = intl.formatMessage(commonMessages.dashboard);
+  const initials = getInitials(title);
+
+  if (collapsed) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" className={styles.header}>
+        <SidebarExpandButton initials={initials} />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -28,10 +44,11 @@ export const MountingPoint = () => {
       alignItems="center"
       className={`${styles.header} ${styles.expandedHeader}`}
     >
-      <Avatar.Store initials={getInitials(title)} scheme="accent1" size="small" />
+      <Avatar.Store initials={initials} scheme="accent1" size="small" />
       <Text size={3} fontWeight="bold" __flex="1" className="ellipsis">
         {title}
       </Text>
+      {variant === "collapsible" && <SidebarCollapseButton />}
     </Box>
   );
 };

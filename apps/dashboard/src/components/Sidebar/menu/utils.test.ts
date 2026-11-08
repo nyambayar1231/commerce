@@ -1,11 +1,12 @@
 // Adapted from saleor-dashboard: src/components/Sidebar/menu/utils.test.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Only the generic isMenuActive cases; extension, order-draft, navigation-pin, customer-type and
-// "/dashboard"-prefix cases test code we didn't port (PLAN.md M0.3.5).
-import { describe, expect, it } from "vitest";
+// Only the generic isMenuActive cases and the rail helpers; extension, order-draft,
+// navigation-pin, customer-type and "/dashboard"-prefix cases test code we didn't port
+// (PLAN.md M0.3.5).
+import { describe, expect, it, vi } from "vitest";
 
 import type { SidebarMenuItem } from "./types";
-import { isMenuActive } from "./utils";
+import { getRailFlyoutChildren, isMenuActive, shouldLinkGroupInFlyout } from "./utils";
 
 describe("isMenuActive", () => {
   const mockMenuItem: SidebarMenuItem = {
@@ -105,5 +106,116 @@ describe("isMenuActive", () => {
   // Ours: the menu links to "/products/" (Saleor's list URL) but routes render at "/products".
   it("should match a trailing-slash menu URL without the slash", () => {
     expect(isMenuActive("/products", { ...mockMenuItem, url: "/products/" })).toBe(true);
+  });
+});
+
+describe("shouldLinkGroupInFlyout", () => {
+  it("does not link the group when a child already opens its page", () => {
+    // Arrange
+    const catalog: SidebarMenuItem = {
+      id: "products",
+      label: "Catalog",
+      url: "/products/",
+      type: "itemGroup",
+      children: [
+        { id: "products", label: "Products", url: "/products", type: "item" },
+        { id: "categories", label: "Categories", url: "/categories/", type: "item" },
+      ],
+    };
+
+    // Act & Assert
+    expect(shouldLinkGroupInFlyout(catalog)).toBe(false);
+  });
+
+  it("ignores the query string when matching a child to the group page", () => {
+    // Arrange
+    const customers: SidebarMenuItem = {
+      id: "customers",
+      label: "Customers",
+      url: "/customers/",
+      type: "itemGroup",
+      children: [{ id: "all", label: "All", url: "/customers/?customerTypes=", type: "item" }],
+    };
+
+    // Act & Assert
+    expect(shouldLinkGroupInFlyout(customers)).toBe(false);
+  });
+
+  it("links the group when no child opens its page", () => {
+    // Arrange
+    const home: SidebarMenuItem = {
+      id: "home",
+      label: "Home",
+      url: "/home",
+      type: "itemGroup",
+      children: [{ id: "home-widget-1", label: "Pulse", url: "/home/widgets/1", type: "item" }],
+    };
+
+    // Act & Assert
+    expect(shouldLinkGroupInFlyout(home)).toBe(true);
+  });
+
+  it("does not link a group without a page", () => {
+    // Arrange
+    const group: SidebarMenuItem = { id: "group", label: "Group", type: "itemGroup", children: [] };
+
+    // Act & Assert
+    expect(shouldLinkGroupInFlyout(group)).toBe(false);
+  });
+});
+
+describe("getRailFlyoutChildren", () => {
+  it("drops row adornments", () => {
+    // Arrange
+    const group: SidebarMenuItem = {
+      id: "modeling",
+      label: "Modeling",
+      url: "/models/",
+      type: "itemGroup",
+      children: [
+        { id: "pin", label: "Blog", url: "/models/?pageTypes=1", type: "item", endAdornment: "x" },
+      ],
+    };
+
+    // Act
+    const children = getRailFlyoutChildren(group);
+
+    // Assert
+    expect(children[0]?.endAdornment).toBeUndefined();
+    expect(children[0]?.label).toBe("Blog");
+  });
+
+  it("runs the group click handler from the child that opens the group page", () => {
+    // Arrange
+    const groupClick = vi.fn();
+    const childClick = vi.fn();
+    const group: SidebarMenuItem = {
+      id: "installed-extensions",
+      label: "Extensions",
+      url: "/extensions/",
+      type: "itemGroup",
+      onClick: groupClick,
+      children: [
+        {
+          id: "installed-extensions",
+          label: "Installed",
+          url: "/extensions/",
+          type: "item",
+          onClick: childClick,
+        },
+        { id: "explore-extensions", label: "Explore", url: "/extensions/explore", type: "item" },
+      ],
+    };
+
+    // Act
+    const [installed, explore] = getRailFlyoutChildren(group);
+
+    installed?.onClick?.();
+    explore?.onClick?.();
+
+    // Assert
+    expect(childClick).toHaveBeenCalledTimes(1);
+    expect(groupClick).toHaveBeenCalledTimes(1);
+    expect(explore?.onClick).toBeUndefined();
   });
 });
