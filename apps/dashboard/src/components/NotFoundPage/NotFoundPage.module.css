@@ -1,0 +1,50 @@
+/*
+ * Adapted from saleor-dashboard: src/components/NotFoundPage/NotFoundPage.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ * Saleor's makeStyles (legacy macaw-ui 0.7 / MUI v4) translated to CSS: theme.spacing(n) is
+ * n * 0.8rem, and breakpoints.down("sm") is MUI v4's max-width 959.95px.
+ */
+.root {
+  align-items: center;
+  display: flex;
+  height: 100vh;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 1fr 487px;
+  margin: 0 auto;
+  width: 830px;
+}
+
+.innerContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.header {
+  font-weight: 600;
+}
+
+.button {
+  margin-top: 1.6rem;
+  padding: 20px;
+}
+
+.notFoundImage {
+  width: 100%;
+}
+
+@media (max-width: 959.95px) {
+  .container {
+    grid-template-columns: 1fr;
+    padding: 2.4rem;
+    width: 100%;
+  }
+
+  .innerContainer {
+    order: 1;
+    text-align: center;
+  }
+}

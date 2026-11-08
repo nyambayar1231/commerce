@@ -1,6 +1,6 @@
 # ADR-0007: Dashboard = Vite + React 18 + Macaw UI + Glide Data Grid + Apollo Client
 
-Status: Accepted (2026-11-06)
+Status: Accepted (2026-11-06); amended 2026-11-08 (React Router 6 → 7, owner decision in M0.3.4)
 
 ## Context
 Saleor Dashboard (`../saleor-dashboard/package.json`) uses Vite, React 18, `@saleor/macaw-ui-next`
@@ -13,7 +13,8 @@ Client 3, React Router 5, react-intl. Fidelity is a primary goal.
 - Glide Data Grid at the reference's major (5.x) so Saleor custom cells/theme adapt directly.
 - Apollo Client 3 + GraphQL Code Generator (typed documents). Normalized cache keeps list and detail
   views consistent after mutations, which is how Saleor Dashboard behaves.
-- React Router 6 (v5 is legacy; differences are confined to route definitions/hooks).
+- React Router 7 (`react-router`; v5 is legacy; differences are confined to route definitions/hooks).
+  The newest major that supports React 18: React Router 8 requires React 19.2.7+.
 - react-intl with a single `en` locale — keeps Saleor components' `useIntl`/`defineMessages`
   code adaptable verbatim and keeps i18n possible later.
 - Forms: react-hook-form + our Saleor-style Savebar/ExitFormDialog for dirty state.

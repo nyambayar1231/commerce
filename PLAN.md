@@ -190,7 +190,7 @@ each starts.
 - **Objective:** the Saleor Dashboard frame — Macaw theme, routing, and a faithful reproduction of
   Saleor's sidebar — with placeholder pages, talking to the API (`shop.name` shown in sidebar header).
 - **Scope:** Vite + React 18 + TS, `@saleor/macaw-ui` 3.x ThemeProvider (light/dark + theme
-  switcher), React Router 6, Apollo Client + codegen against `apps/api/schema.graphql`, react-intl
+  switcher), React Router 7, Apollo Client + codegen against `apps/api/schema.graphql`, react-intl
   (en), app layout, Sidebar adapted from `../saleor-dashboard/src/components/Sidebar/**`
   (menu hierarchy limited to sections we will build — see decision), collapsed rail, mobile drawer,
   keyboard nav, placeholder routes, NotFound page.
@@ -218,7 +218,7 @@ each starts.
 | M0.3.1 | Vite + React 18 app replaces the placeholder | Done |
 | M0.3.2 | Macaw `ThemeProvider` + fonts, light/dark stored like Saleor | Done |
 | M0.3.3 | react-intl provider (en) + `defineMessages` | Done |
-| M0.3.4 | React Router 6, app layout, placeholder routes, NotFound | Planned |
+| M0.3.4 | React Router 7, app layout, placeholder routes, NotFound | Done |
 | M0.3.5 | Sidebar inventory (copy / adapt / omit) → owner approval; no code | Planned |
 | M0.3.6 | Sidebar: menu definitions, expanded desktop view, license headers | Planned |
 | M0.3.7 | Sidebar: collapsed rail + persisted toggle | Planned |
@@ -267,6 +267,26 @@ each starts.
   messages can get Saleor-style ids with no extra tool. Browser: "Home" rendered, console clean; a
   temporary `"Hello {name"` message logged `FORMAT_ERROR` through `onError` and rendered verbatim
   (then reverted).
+
+#### M0.3.4 Router + layout
+- **Concepts:** client-side routing (History API, `<Routes>` picks the best match, `*` splats);
+  Saleor's two-column CSS grid layout with a sticky navigation cell.
+- **Acceptance:** every planned URL renders its placeholder; `/` → `/home`; an unknown URL → NotFound.
+- **Decided (owner, 2026-11-08):** React Router 7 instead of the planned 6. The latest, 8.x,
+  requires React 19.2.7+, so 7 is the newest that works with React 18 (Saleor's version).
+- **Result:** `react-router` 7.18.5 (v7 merged `react-router-dom` into it; first built on v6.30.6,
+  where opting in to two v7 flags was needed to silence console warnings). Like Saleor, `AppLayout`
+  wraps `<Routes>` (children, not a layout route with `<Outlet>`). Copied `AppLayout.module.css`; adapted
+  `AppLayout` (empty navigation cell until M0.3.6), `NotFound` and `NotFoundPage`, with Saleor's
+  `makeStyles` converted to a CSS module (`spacing(n)` = n × 0.8rem, `down("sm")` = max-width
+  959.95px) and the 404 SVG shown in an `<img>` instead of `react-inlinesvg` (it has a fixed fill).
+  `src/assets` excluded from Biome (copied SVG). Routes: `/home`, `/products/*`, `/categories/*`, `/orders/*`,
+  `/customers/*`, `/configuration` (exact, like Saleor); no `/catalog` (a menu group in Saleor, not a
+  page). Browser: all 10 probed paths correct, the back button goes to `/home`, browser Back
+  returns to the 404; at 400px the grid is one column, the nav cell is static and borderless, and the 404
+  page is one centered column with no horizontal scroll; console clean.
+  Noted: Macaw 3.1.0's `ThemeProvider` renders its own `<main>`, so the page has a nested `<main>`
+  (same in Saleor).
 
 ---
 
