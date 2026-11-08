@@ -4,10 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --experimental-strip-types src/index.ts",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@commerce/tsconfig": "workspace:*"
+    "@commerce/tsconfig": "workspace:*",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "6.2.1",
+    "vite": "8.3.6"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   }
 }

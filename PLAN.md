@@ -11,7 +11,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | M0 | Foundations | In progress |
 | M0.1 | Monorepo skeleton & local infrastructure | Done |
 | M0.2 | API skeleton, in 8 small steps (M0.2.1–M0.2.8) | Done |
-| M0.3 | Dashboard shell: Macaw theme, routing, faithful Saleor sidebar | Draft |
+| M0.3 | Dashboard shell, in 11 small steps (M0.3.1–M0.3.11) | In progress |
 | M1 | Identity: staff auth & permissions | Draft |
 | M1.1 | Users, sessions, login/logout/me | Draft |
 | M1.2 | Permission groups & guarded API/dashboard | Draft |
@@ -210,7 +210,32 @@ each starts.
   `../saleor-platform`) at desktop & mobile widths, expanded & collapsed, light & dark; keyboard
   Tab/Enter navigation works; screenshots attached to the milestone summary.
 - **Exclusions:** login (M1), real list pages (M2), Glide (M2.1).
-- **Status:** Draft.
+- **Status:** In progress (sub-steps approved 2026-11-06).
+- **Rule:** each sub-step is done in its own turn; I stop after it and wait for your approval.
+
+| Step | What | Status |
+|---|---|---|
+| M0.3.1 | Vite + React 18 app replaces the placeholder | Done |
+| M0.3.2 | Macaw `ThemeProvider` + fonts, light/dark from the OS | Planned |
+| M0.3.3 | react-intl provider (en) + `defineMessages` | Planned |
+| M0.3.4 | React Router 6, app layout, placeholder routes, NotFound | Planned |
+| M0.3.5 | Sidebar inventory (copy / adapt / omit) → owner approval; no code | Planned |
+| M0.3.6 | Sidebar: menu definitions, expanded desktop view, license headers | Planned |
+| M0.3.7 | Sidebar: collapsed rail + persisted toggle | Planned |
+| M0.3.8 | Sidebar: mobile drawer | Planned |
+| M0.3.9 | Keyboard navigation + theme switcher | Planned |
+| M0.3.10 | Apollo Client + codegen + `shop { name }` in sidebar header | Planned |
+| M0.3.11 | Side-by-side comparison with real Saleor; screenshots; close M0.3 | Planned |
+
+#### M0.3.1 Vite + React app
+- **Concepts:** Vite serves native ES modules in dev and bundles with Rolldown for prod;
+  `index.html` is the entry point; React 18 `createRoot`.
+- **Acceptance:** `pnpm --filter @commerce/dashboard dev` serves a page showing "Hello";
+  `build`, `typecheck`, `lint` pass.
+- **Result:** react/react-dom 18.3.1, vite 8.3.6 (same as the API's), @vitejs/plugin-react 6.2.1.
+  `typecheck`, `lint`, `build` (140 kB JS) pass; dev server on Vite's default :5173 (Saleor's
+  :9000 stays free for the side-by-side in M0.3.11) serves `index.html` and the transformed
+  `App.tsx`. Checked with curl, not yet in a browser.
 
 ---
 
