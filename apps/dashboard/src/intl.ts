@@ -4,6 +4,13 @@
 // base64(sha512(`${defaultMessage}#${description}`)).slice(0, 6)
 import { defineMessages } from "react-intl";
 
+export const commonMessages = defineMessages({
+  dashboard: {
+    id: "hzSNj4",
+    defaultMessage: "Dashboard",
+  },
+});
+
 // Only the sections on our roadmap (PLAN.md M0.3); ids copied unchanged from Saleor.
 export const sectionNames = defineMessages({
   catalog: {

@@ -220,7 +220,7 @@ each starts.
 | M0.3.3 | react-intl provider (en) + `defineMessages` | Done |
 | M0.3.4 | React Router 7, app layout, placeholder routes, NotFound | Done |
 | M0.3.5 | Sidebar inventory (copy / adapt / omit) → owner approval; no code | Done |
-| M0.3.6 | Sidebar: full column (≥1024px), menu definitions, header; dashboard Vitest | Planned |
+| M0.3.6 | Sidebar: full column (≥1024px), menu definitions, header; dashboard Vitest | Done |
 | M0.3.7 | Sidebar: collapse the column to the rail, persisted, Mod+B | Planned |
 | M0.3.8 | Sidebar: rail layout (768–1023px) and drawer layout (<768px) | Planned |
 | M0.3.9 | Sidebar footer ⋯ menu with the theme switcher; keyboard pass | Planned |
@@ -324,6 +324,25 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 | — | `menu/{createCustomerTypeMenuItems,hooks/useCustomerTypeMenuItems}.ts`, `menu/{Divider,SubmenuSeparator,settingsSubmenuItem}` | omit: customer types, extension dividers and settings sub-items aren't on the roadmap |
 | — | `useSidebarLogo.ts` | omit: replaced by initials |
 | — | `*.stories.tsx`, `Sidebar.test.tsx` | omit: no Storybook; the big integration test leans on omitted parts (rewrite later if needed) |
+
+#### M0.3.6 Sidebar: full column
+- **Concepts:** menu as data (`SidebarMenuItem[]` from `useMenuStructure`) rendered by
+  `MenuItem` → `SingleItem` / `ItemGroup`; active state = `matchPath` on the current URL
+  (`aria-current="page"`); Macaw `List.ItemGroup` for the expandable group.
+- **Acceptance:** at desktop width the sidebar shows the five sections with Saleor's icons and
+  labels; the current page is highlighted; Catalog expands to Products/Categories.
+- **Result:** files and treatment as in the M0.3.5 table. `Sidebar` renders only the column
+  layout, at every width until M0.3.8. The header title is "Dashboard" (Saleor's
+  `commonMessages.dashboard`) with "D" initials until M0.3.10. `isMenuActive` uses React Router 7's `matchPath({ path, end })`.
+  Added to `index.css`: Saleor's `hide-scrollbar` and `ellipsis` utilities, plus the parts of MUI's
+  `CssBaseline` (body margin 0, border-box, font smoothing) that Saleor gets from the legacy theme. Without them
+  an 8px body margin showed. `clsx` replaced by a template string (no new dependency). Vitest 5.1.0 in
+  the dashboard (`pnpm --filter @commerce/dashboard test`): 9 ported `isMenuActive` cases + 2 ours
+  (segment boundary, trailing slash) pass; forcing exact matching fails the sub-route case.
+  Browser: 260px column; Home current on `/home`; Catalog click → `/products/`, group expanded, Products
+  current; Categories, Orders, Configuration current on their pages; `/products/42` → Products;
+  NotFound → none; dark theme OK; Tab reaches Home → Catalog → the group's expand button (Macaw focus
+  style), Enter toggles it; console clean.
 
 ---
 

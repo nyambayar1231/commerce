@@ -3,22 +3,27 @@
 import { Box } from "@saleor/macaw-ui";
 import type { ReactNode } from "react";
 
+import { Sidebar } from "../Sidebar/Sidebar";
+import { SidebarProvider } from "../Sidebar/SidebarContext";
 import styles from "./AppLayout.module.css";
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
-// Saleor also mounts the SidebarProvider, a loading bar, announcements, the save-bar anchor,
-// search and dev panels here; each arrives with the milestone that needs it. The navigation
-// cell stays empty until the sidebar lands (M0.3.6).
+// Saleor also mounts a loading bar, announcements, the save-bar anchor,
+// search and dev panels here; each arrives with the milestone that needs it.
 export const AppLayout = ({ children }: AppLayoutProps) => (
-  <div className={styles.layout}>
-    <div className={styles.navigation} />
-    <Box height="100%" width="100%" overflow="hidden">
-      <Box as="main" width="100%" height="100%">
-        {children}
+  <SidebarProvider>
+    <div className={styles.layout}>
+      <div className={styles.navigation}>
+        <Sidebar />
+      </div>
+      <Box height="100%" width="100%" overflow="hidden">
+        <Box as="main" width="100%" height="100%">
+          {children}
+        </Box>
       </Box>
-    </Box>
-  </div>
+    </div>
+  </SidebarProvider>
 );

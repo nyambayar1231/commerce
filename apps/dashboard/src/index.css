@@ -1,7 +1,7 @@
 /*
  * Adapted from saleor-dashboard: src/index.css (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
  * See THIRD_PARTY_LICENSES.md
- * Only the global rules the shell needs; Saleor's other rules target components we don't have yet.
+ * Only the global rules and utility classes the shell uses so far.
  * Saleor marks the html/body rules !important to beat its legacy macaw-ui 0.7 (MUI) baseline;
  * we don't ship that package, so plain rules win.
  */
@@ -17,6 +17,26 @@
   text-decoration-color: currentColor;
 }
 
+/*
+ * Saleor gets these from MUI's CssBaseline, rendered by the legacy macaw-ui 0.7 ThemeProvider;
+ * we don't ship it, so the parts its layout relies on are restated here.
+ */
+html {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+}
+
 html {
   /* set base font size to 13px */
   font-size: 50.782%;
@@ -25,4 +45,18 @@ html {
 body {
   color: var(--mu-colors-foreground-text-neutral-plain);
   overscroll-behavior-y: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
