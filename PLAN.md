@@ -222,7 +222,7 @@ each starts.
 | M0.3.5 | Sidebar inventory (copy / adapt / omit) → owner approval; no code | Done |
 | M0.3.6 | Sidebar: full column (≥1024px), menu definitions, header; dashboard Vitest | Done |
 | M0.3.7 | Sidebar: collapse the column to the rail, persisted, Mod+B | Done |
-| M0.3.8 | Sidebar: rail layout (768–1023px) and drawer layout (<768px) | Planned |
+| M0.3.8 | Sidebar: rail layout (768–1023px) and drawer layout (<768px) | Done |
 | M0.3.9 | Sidebar footer ⋯ menu with the theme switcher; keyboard pass | Planned |
 | M0.3.10 | Apollo Client + codegen + `shop { name }` in sidebar header | Planned |
 | M0.3.11 | Side-by-side comparison with real Saleor; screenshots; close M0.3 | Planned |
@@ -364,6 +364,27 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   heading (Products opens that page) + Products/Categories; Categories navigates, the flyout closes, the
   Catalog icon stays active; Orders tooltip on hover; ⌘B expands with the Catalog group open on
   Categories; Enter on collapse → focus moves to "Expand navigation", and back; console clean.
+
+#### M0.3.8 Sidebar: rail and drawer layouts
+- **Concepts:** `useSyncExternalStore` over `matchMedia` picks one layout (`column` ≥1024px,
+  `rail` 768–1023px, `drawer` <768px) and renders only that one; Macaw `Drawer` (Radix Dialog)
+  remounted with a new `key` to close it from code; a pointer-event swipe that moves the panel
+  through its style without re-rendering.
+- **Acceptance:** each width shows its layout; the rail avatar and the app-bar menu button open
+  the full menu as a drawer; following a link, the close button, or a left swipe closes it.
+- **Decided (owner, 2026-11-08):** add `@testing-library/react` (16.3.3, + its peer
+  `@testing-library/dom` 10.4.2) to port Saleor's `useDrawerSwipe` hook test with `renderHook`.
+- **Result:** as in the M0.3.5 table, plus `useSidebarBrand` (ours; Saleor's `useSidebarLogo` role):
+  title + initials shared by the header, rail and app bar. The rail's `SidebarDrawerOpenButton` and
+  `sidebarDrawerTriggerMessages` (moved from M0.3.7) added. Two Biome fixes in copied code:
+  `forEach` → `for…of` in `useSidebarLayout` (callback returned a value) and an optional chain in
+  `useDrawerSwipe`. Tests 39/39 (ported `drawerSwipe` + `useDrawerSwipe`); setting the dismiss
+  ratio to 0.9 fails one case in each file. Browser (900px and 400px iframes in a 1440px page, since
+  the window could not be resized): 900 → 60px rail with "Open navigation"; 400 → 56px app bar "D
+  Dashboard" + "Open navigation"; both open a 260px drawer over a dimmed page, Orders current,
+  close button labelled "Close navigation"; clicking Customers navigates and closes (both); the close
+  button closes; a scripted touch swipe of 150px left slides it out (−260px) and closes; 1440 still
+  shows the column with its collapse button; console clean.
 
 ---
 

@@ -1,7 +1,6 @@
 // Adapted from saleor-dashboard: src/components/Sidebar/Content.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Saleor's "rail" variant arrives with the rail layout (M0.3.8), the user footer with M0.3.9; the
-// deprecation banner is omitted.
+// The user footer arrives with M0.3.9; the deprecation banner is omitted.
 import { Box } from "@saleor/macaw-ui";
 import { MountingPoint } from "./MountingPoint";
 import { Menu } from "./menu/Menu";
@@ -10,8 +9,9 @@ import { useSidebarCollapse } from "./SidebarContext";
 /**
  * - `full`: always expanded (the drawer).
  * - `collapsible`: the column, following the viewer's collapse preference.
+ * - `rail`: always collapsed, where the full sidebar does not fit beside the page.
  */
-export type SidebarContentVariant = "full" | "collapsible";
+export type SidebarContentVariant = "full" | "collapsible" | "rail";
 
 interface SidebarContentProps {
   variant?: SidebarContentVariant;
@@ -19,7 +19,7 @@ interface SidebarContentProps {
 
 export const SidebarContent = ({ variant = "full" }: SidebarContentProps) => {
   const { isCollapsed } = useSidebarCollapse();
-  const collapsed = variant === "collapsible" && isCollapsed;
+  const collapsed = variant === "rail" || (variant === "collapsible" && isCollapsed);
 
   return (
     <Box

@@ -1,13 +1,17 @@
 // Adapted from saleor-dashboard: src/components/Sidebar/Sidebar.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Only Saleor's "column" layout so far, at every width; the rail and drawer layouts arrive in
-// M0.3.8. The ripples modal, search hotkey and analytics are omitted.
+// The ripples modal, search hotkey and analytics are omitted.
+import { Drawer } from "@saleor/macaw-ui";
 import { useEffect } from "react";
 
 import { SidebarContent } from "./Content";
 import classes from "./Sidebar.module.css";
-import { useSidebarCollapse } from "./SidebarContext";
+import { SidebarAppBar } from "./SidebarAppBar";
+import { useSidebarBreakpointContext, useSidebarCollapse } from "./SidebarContext";
+import { SidebarDrawerContent, useDrawerRemount } from "./SidebarDrawer";
+import { useSidebarBrand } from "./useSidebarBrand";
 import { useSidebarCollapseToggle } from "./useSidebarCollapseToggle";
+import { type SidebarLayout, useSidebarLayout } from "./useSidebarLayout";
 
 const isMac = (): boolean => navigator.appVersion.toLowerCase().includes("mac");
 
@@ -55,4 +59,57 @@ const PersistentSidebar = () => {
   );
 };
 
-export const Sidebar = () => <PersistentSidebar />;
+/** The logo in the rail is the drawer trigger, so the full navigation opens over the page. */
+const RailSidebar = () => {
+  const drawer = useDrawerRemount();
+
+  return (
+    <Drawer key={drawer.key}>
+      <div className={classes.column} data-collapsed data-test-id="sidebar-rail">
+        <div className={classes.columnContent}>
+          <SidebarContent variant="rail" />
+        </div>
+      </div>
+      <SidebarDrawerContent onClose={drawer.close}>
+        <SidebarContent />
+      </SidebarDrawerContent>
+    </Drawer>
+  );
+};
+
+const DrawerSidebar = () => {
+  const drawer = useDrawerRemount();
+  const { title, initials } = useSidebarBrand();
+
+  return (
+    <Drawer key={drawer.key}>
+      <SidebarAppBar title={title} initials={initials} />
+      <SidebarDrawerContent onClose={drawer.close}>
+        <SidebarContent />
+      </SidebarDrawerContent>
+    </Drawer>
+  );
+};
+
+const SidebarForLayout = ({ layout }: { layout: SidebarLayout }) => {
+  switch (layout) {
+    case "column":
+      return <PersistentSidebar />;
+    case "rail":
+      return <RailSidebar />;
+    case "drawer":
+      return <DrawerSidebar />;
+    default: {
+      const exhaustive: never = layout;
+
+      return exhaustive;
+    }
+  }
+};
+
+export const Sidebar = () => {
+  const { breakpoint } = useSidebarBreakpointContext();
+  const layout = useSidebarLayout(breakpoint);
+
+  return <SidebarForLayout layout={layout} />;
+};
