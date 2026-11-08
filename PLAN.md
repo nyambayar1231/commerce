@@ -217,7 +217,7 @@ each starts.
 |---|---|---|
 | M0.3.1 | Vite + React 18 app replaces the placeholder | Done |
 | M0.3.2 | Macaw `ThemeProvider` + fonts, light/dark stored like Saleor | Done |
-| M0.3.3 | react-intl provider (en) + `defineMessages` | Planned |
+| M0.3.3 | react-intl provider (en) + `defineMessages` | Done |
 | M0.3.4 | React Router 6, app layout, placeholder routes, NotFound | Planned |
 | M0.3.5 | Sidebar inventory (copy / adapt / omit) → owner approval; no code | Planned |
 | M0.3.6 | Sidebar: menu definitions, expanded desktop view, license headers | Planned |
@@ -252,6 +252,21 @@ each starts.
   an unknown stored value → light, Inter applied, no console errors. Found while checking (same in
   Saleor): `--mu-colors-foreground-text-neutral-plain` doesn't exist in Macaw 3.1.0, so the body
   color rule does nothing; this Chrome profile clamps the 8.125px root font size to 9px.
+
+#### M0.3.3 i18n
+- **Concepts:** message descriptors (`id`, `defaultMessage`, `description`); `IntlProvider` and
+  `useIntl().formatMessage`; Saleor's ids are formatjs's default content hash
+  (`base64(sha512("defaultMessage#description")).slice(0, 6)`).
+- **Acceptance:** text comes from a message; a broken message is reported through `onError`.
+  (The planned "a missing id gives a warning" doesn't apply: with English only, react-intl renders
+  `defaultMessage` and has no translation to miss.)
+- **Result:** `react-intl` 12.1.6 (latest; Saleor pins 5.25.1, same API for what we use). Adapted
+  `LocaleProvider` (English only: no locale JSON loading, localStorage or `LocaleContext`; same
+  `onError` filter) and `src/intl.ts` with the 7 roadmap `sectionNames`, ids copied from Saleor.
+  The hash formula reproduces all 7 ids (and two from `sidebarCollapseMessages.ts`), so new
+  messages can get Saleor-style ids with no extra tool. Browser: "Home" rendered, console clean; a
+  temporary `"Hello {name"` message logged `FORMAT_ERROR` through `onError` and rendered verbatim
+  (then reverted).
 
 ---
 

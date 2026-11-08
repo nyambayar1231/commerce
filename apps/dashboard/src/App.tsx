@@ -1,21 +1,16 @@
 import { Box, Text } from "@saleor/macaw-ui";
+import { useIntl } from "react-intl";
+
+import { sectionNames } from "./intl";
 
 export function App() {
+  const intl = useIntl();
+
   return (
-    <Box padding={6} display="flex" flexDirection="column" gap={2}>
+    <Box padding={6}>
       <Text size={5} fontWeight="bold">
-        Hello
+        {intl.formatMessage(sectionNames.home)}
       </Text>
-      <Box
-        padding={4}
-        borderRadius={4}
-        borderStyle="solid"
-        borderWidth={1}
-        borderColor="default1"
-        backgroundColor="default2"
-      >
-        <Text size={3}>Styled with Macaw tokens</Text>
-      </Box>
     </Box>
   );
 }

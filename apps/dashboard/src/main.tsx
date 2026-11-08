@@ -4,6 +4,7 @@ import "./index.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { LocaleProvider } from "./components/Locale/Locale";
 import { ThemeProvider } from "./theme/provider";
 
 const container = document.getElementById("root");
@@ -13,8 +14,10 @@ if (!container) {
 
 createRoot(container).render(
   <StrictMode>
-    <ThemeProvider>
-      <App />
-    </ThemeProvider>
+    <LocaleProvider>
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
+    </LocaleProvider>
   </StrictMode>,
 );
