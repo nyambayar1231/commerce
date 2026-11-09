@@ -216,6 +216,8 @@ Saleor stays obvious:
 |---|---|---|
 | `tokenCreate` returns `user` and `errors` only, no `token`/`refreshToken`/`csrfToken` | `CreateToken.token`, `refreshToken`, `csrfToken` | The session token travels in an HttpOnly cookie (ADR-0006); returning it would expose it to JavaScript. Scripts read it from `Set-Cookie` and send it as `Authorization: Bearer`. |
 | `logout` mutation | *(none: JWTs expire; `tokensDeactivateAll` revokes all)* | DB sessions can be ended individually; `logout` deletes the current one and clears the cookie. |
+| `Product.isPublished`, `Product.publishedAt` | `Product.channelListings[].isPublished` / `publishedAt` | Single channel (ADR-0005): publication lives on the product, as in Saleor before channels. |
+| `ProductVariant.price: Money!`, `Product.minimalVariantPrice: Money` | `ProductVariant.channelListings[].price`, `Product.pricing.priceRange` | Single channel and no taxes/discounts yet: one stored price per variant; the product's lowest variant price (Saleor 2.x's `minimalVariantPrice`) for lists and sorting. |
 
 **The database** handles:
 - Invariants that must hold under concurrency: unique, foreign-key and `CHECK` constraints.
