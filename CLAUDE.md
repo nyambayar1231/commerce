@@ -52,7 +52,7 @@ When explaining a pattern, cite the reference file path, e.g.
 ## AI workflow: Claude Code leads and reviews, one OpenCode implementer writes the code
 
 Claude Code is the lead and reviewer; all commerce code is written by the single OpenCode Go
-implementer (`.opencode/agents/implementer.md`, DeepSeek V4 Pro) started with
+implementer (`.opencode/agents/implementer.md`, Kimi K3.1 Pro) started with
 `scripts/ai/spawn.sh`. For every development task follow `docs/ai-workflow/orchestrator.md`; setup
 and commands are in `docs/ai-workflow/README.md`; the implementer's rules are in `AGENTS.md`.
 In short:
