@@ -139,5 +139,5 @@ scripts/ai/stop.sh <name>|--all                       # end the implementer (wor
 
 ## Current state
 
-M0 (foundations: monorepo, API skeleton, dashboard shell) and M1 (identity: staff auth & permissions) done; M2 not started.
+M0 (foundations) and M1 (identity) done; M2 (catalog) approved, M2.1 (categories) done, M2.2 next.
 The AI team setup (`docs/ai-workflow/`) is in place. See `PLAN.md`.

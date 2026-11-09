@@ -24,4 +24,5 @@ export type {
   OrderDirection,
 } from "./categoryList.ts";
 export { InvalidCursorError, listCategories } from "./categoryList.ts";
+export { DEMO_CATEGORIES, seedDemoCatalog } from "./demoCatalog.ts";
 export { slugify } from "./slug.ts";

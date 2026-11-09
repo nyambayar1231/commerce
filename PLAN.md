@@ -8,7 +8,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | Milestone | Title | Status |
 |---|---|---|
 | M2 | Catalog | Approved |
-| M2.1 | Categories end-to-end (first Glide list + first save-bar form) | In progress |
+| M2.1 | Categories end-to-end (first Glide list + first save-bar form) | Done |
 | M2.2 | Products & variants API + product list grid | Approved |
 | M2.3 | Product list filtering (URL state → variables → where → SQL) | Approved |
 | M2.4 | Product create/update form | Approved |
@@ -48,6 +48,24 @@ Awaiting the owner's approval (each was reported when its step finished):
 - **M1.2.4:** `/configuration` and its menu item use `MANAGE_STAFF | MANAGE_SETTINGS |
   MANAGE_SHIPPING` (our planned configuration pages); Saleor's menu filter moved into a pure
   `filterMenuItemsByPermissions` for unit tests.
+- **M2.1 (categories) left out or different from Saleor:**
+  - API: no background image, SEO, metadata, translations, `ancestors`, `products`; categories can't
+    be re-parented (as Saleor). `PRODUCT_COUNT` sort and the products column arrive with M2.2.
+  - Dashboard: description edited as plain text (stored as EditorJS, decision 4); no breadcrumb,
+    SEO card (so no slug editing), Products card, background image, metadata, translations or
+    GraphiQL buttons; "All Categories" is plain text (no saved filter presets); search has no
+    syntax tooltip.
+  - Ported Saleor code trimmed to what categories use: Datagrid (no editing, fullscreen, column
+    picker, row menus, tooltips), notifications (no "dismiss all" / stack sync, no jotai), Form /
+    useForm (no exit-dialog wiring), modal (no steps), TopNav (no channel picker / subtitle line).
+  - Look: "No. of rows" is Macaw 3's Select (Saleor: legacy MUI select); in-grid spinner is an arc
+    (Saleor's throbber shape elsewhere replaced by Macaw's Spinner); Subcategories card has no
+    tree expansion, fixed column widths, our TablePagination; selecting a parent doesn't
+    auto-select its loaded children; the "load more" row's checkbox outline still shows (not
+    compared with Saleor, which needs >50 children).
+  - Architecture: dashboard switched to React Router's data router (needed by `useBlocker` for the
+    exit-form dialog).
+  - Dev data: `pnpm cli seed-catalog` creates a demo category tree (safe to re-run).
 
 ---
 
@@ -74,34 +92,9 @@ starts with the create flow and the list follows.
 6. **Media upload (M2.5):** GraphQL multipart (Saleor's `productMediaCreate(image: Upload)`) vs a
    REST endpoint. Recommended: GraphQL multipart, as Saleor; Yoga supports it built-in.
 
-### M2.1 Categories end-to-end
-- **Objective:** establish *the* list-page and detail-form patterns on a small entity.
-- **Scope:** `category` table; `categories` connection (keyset, sort by name, search),
-  `categoryCreate/Update/Delete`; Relay plugin + global IDs + `node`; dashboard: Datagrid wrapper
-  (adapted from `src/components/Datagrid`), TablePagination, list URL state, category detail page
-  with Savebar + ExitFormDialog + field errors; loading/empty/error states.
-- **Concepts:** Relay connections & keyset pagination; global IDs; errors-as-data; container vs
-  page components; dirty-state handling.
-- **Decisions:** subcategory display (Saleor shows subcategories + products tabs in detail).
-- **Acceptance:** create→list→edit→delete flow; pagination across >1 page verified with seeded
-  data; leaving dirty form prompts; API tests for pagination edges.
-- **Status:** Draft.
+### M2.1 Categories end-to-end — Done (2026-11-09)
 
-| Step | What | Status |
-|---|---|---|
-| M2.1.1 | `category` table + migration (`parent_id` FK `ON DELETE CASCADE`, unique `slug`, `description jsonb` EditorJS); `catalog` module service: create/update/delete, slug from name (unique), no re-parenting (as Saleor) + real-Postgres tests | Done |
-| M2.1.2 | `category(id\|slug)` query (`id name slug description parent level`), `categoryCreate(input, parent)`, `categoryUpdate(id, input)`, `categoryDelete(id)` with Saleor's `ProductError`, guarded by `MANAGE_PRODUCTS`; contract tests | Done |
-| M2.1.3 | Dashboard: Categories page header ("All Categories" + "Create category"), `?action=create` URL, Saleor's `CreateCategoryDialog` (DashboardModal, name + plain-text description → EditorJS JSON, Back/Create), notifier toast "Category created", navigate to `/categories/:id` | Done |
-| M2.1.4 | Dashboard: category detail page as Saleor's `CategoryUpdatePage`: top nav, General Information (name, description), Subcategories card + "Create subcategory" (same dialog with parent), Savebar (Back/Save/Delete), ExitFormDialog on dirty leave, field errors, delete dialog; background image, Products card and SEO wait (M2.5 / M2.2 / later) | Done |
-| M2.1.5 | Pothos Relay plugin: `Node` interface on `User`/`Group`/`Category` (same base64 global IDs); no `node`/`nodes` query, as Saleor's schema has none | Done |
-| M2.1.6 | `categories(first/after/last/before, filter{search}, sortBy{NAME, SUBCATEGORY_COUNT, PRODUCT_COUNT*}, level)` keyset connection, `Category.children` connection; contract tests for page edges | Done |
-| M2.1.7 | Dashboard `Datagrid` wrapper (Glide) adapted from `src/components/Datagrid`, `TablePagination`, list URL state (`src/categories/urls.ts`) | Done |
-| M2.1.8a | Category list page: Saleor's grid (name, subcategories; products column with M2.2), sortable headers, search, cursor pagination + "No. of rows", row links, default-sort redirect; API: `first`/`last` only required with `edges` (as Saleor) | Done |
-| M2.1.8b | Expandable tree rows (chevron, lazy children, "load more" rows) + "Collapse all" | Done |
-| M2.1.8c | Bulk delete (`categoryBulkDelete` API + selection + dialog) and the paginated list in the detail page's Subcategories card | Done |
-| M2.1.9 | Seed: a demo category tree big enough for >1 page; browser check of the full flow against real Saleor | Approved |
-
-\* `PRODUCT_COUNT` sort and the Products tab arrive with products (M2.2); the column shows 0 until then.
+Open items are listed under "Open items from finished milestones".
 
 ### M2.2 Products & variants API + list grid
 - Scope: product/variant tables, `products` connection, nested `variants`, DataLoaders,

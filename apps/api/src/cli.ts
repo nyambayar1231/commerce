@@ -11,17 +11,22 @@
 //                                                                   # var (Django/Saleor's
 //                                                                   # `createsuperuser
 //                                                                   # --noinput` convention)
+//   pnpm cli seed-catalog                                           # demo category tree
+//                                                                   # (local development;
+//                                                                   # safe to run again)
 
 import { createInterface, type Interface } from "node:readline/promises";
 import { Writable } from "node:stream";
 import { parseArgs } from "node:util";
 import { closeDb, getDb } from "@commerce/db";
+import { seedDemoCatalog } from "./modules/catalog/index.ts";
 import { type CreateSuperuserInput, createSuperuser } from "./modules/identity/index.ts";
 
 const USAGE = `Usage: pnpm cli <command> [options]
 
 Commands:
   createsuperuser    Create a staff superuser account
+  seed-catalog       Create the demo category tree (local development; safe to run again)
 
 Options for createsuperuser:
   --no-input                 Take all values from flags and the environment instead of prompting
@@ -88,6 +93,17 @@ async function main(): Promise<void> {
     console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
     console.error(USAGE);
     process.exitCode = 2;
+    return;
+  }
+
+  if (command === "seed-catalog") {
+    try {
+      const { created, skipped } = await seedDemoCatalog(getDb());
+      console.log(`Demo catalog: ${created} categories created, ${skipped} already there.`);
+    } catch (error) {
+      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      process.exitCode = 1;
+    }
     return;
   }
 
