@@ -136,4 +136,6 @@ scripts/ai/stop.sh <name>|--all                       # end workers (worktrees k
 
 ## Current state
 
-M0.1 and M0.2 done. Next: M0.3 (dashboard shell), awaiting owner approval. See `PLAN.md`.
+M0.1 and M0.2 done. M0.3 (dashboard shell) in progress: M0.3.1–M0.3.10 done; next M0.3.11
+(side-by-side comparison with real Saleor, closes M0.3). The AI team setup
+(`docs/ai-workflow/`) is in place. See `PLAN.md`.
