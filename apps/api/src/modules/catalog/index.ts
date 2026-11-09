@@ -15,7 +15,6 @@ export {
   NotFoundError,
   updateCategory,
 } from "./categories.ts";
-export { slugify } from "./slug.ts";
 export type {
   CategoryListArgs,
   CategoryListRow,
@@ -24,3 +23,4 @@ export type {
   OrderDirection,
 } from "./categoryList.ts";
 export { InvalidCursorError, listCategories } from "./categoryList.ts";
+export { slugify } from "./slug.ts";

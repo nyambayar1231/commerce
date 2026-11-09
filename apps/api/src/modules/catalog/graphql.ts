@@ -6,14 +6,14 @@ import { requirePermission } from "../../graphql/permissions.ts";
 import { DateTime, JSONString } from "../../graphql/scalars.ts";
 import {
   type CategoryError,
+  type CategoryListArgs,
+  type CategoryPage,
   type CategoryResult,
   type CategoryRow,
   createCategory,
   deleteCategory,
   getCategory,
   getCategoryLevel,
-  type CategoryListArgs,
-  type CategoryPage,
   InvalidCursorError,
   listCategories,
   NotFoundError,
