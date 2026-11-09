@@ -2,7 +2,7 @@ import type { Db } from "@commerce/db";
 import { useCSRFPrevention } from "@graphql-yoga/plugin-csrf-prevention";
 import { GraphQLError } from "graphql";
 import { createYoga, maskError } from "graphql-yoga";
-import type { Context } from "./graphql/context.ts";
+import { type Context, createContext } from "./graphql/context.ts";
 import { schema } from "./graphql/schema.ts";
 
 // The GraphQL app as a request handler, with no HTTP server attached. server.ts serves it over
@@ -13,10 +13,26 @@ import { schema } from "./graphql/schema.ts";
 //   original error is logged on the server (we add its causes, see `maskedErrors` below).
 // - request ids: each request gets one (or keeps a safe incoming `x-request-id`); it is added
 //   to every log line and returned in the `x-request-id` response header.
-export function createApp(db: Db) {
+//
+// CORS: only `allowedOrigins` may call the API from a browser, with credentials (the session
+// cookie). Yoga's default would reflect any origin with credentials allowed.
+export type AppOptions = { allowedOrigins: string[] };
+
+export function createApp(db: Db, { allowedOrigins }: AppOptions) {
+  // Explicit origins only. (whatwg-node's own list handling treats [] as "allow all" and echoes a
+  // single listed origin to every caller, so the check below is done here instead.)
+  if (allowedOrigins.length === 0 || allowedOrigins.includes("*")) {
+    throw new Error("allowedOrigins must list explicit origins");
+  }
   return createYoga<Record<string, unknown>, Context>({
     schema,
-    context: () => ({ db }),
+    context: ({ request }) => createContext(db, request),
+    cors: (request) => {
+      const origin = request.headers.get("origin");
+      return origin !== null && allowedOrigins.includes(origin)
+        ? { origin, credentials: true }
+        : false;
+    },
     maskedErrors: {
       // Yoga's default masking, plus one log line with the error's causes: Yoga logs the masked
       // error but not its `cause` chain, which is where the real reason lives (Drizzle's

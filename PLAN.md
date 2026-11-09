@@ -486,7 +486,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 | M1.1.1 | `user` table + migration; argon2id hash/verify module + unit tests | Done |
 | M1.1.2 | `pnpm cli createsuperuser` (interactive, hashes the password) | Done |
 | M1.1.3 | `session` table; session service: create (256-bit token, SHA-256 stored), look up with sliding 14-day expiry + hard cap, revoke; real-Postgres tests | Done |
-| M1.1.4 | Request context: cookie or `Authorization: Bearer` → `ctx.user`; CORS restricted to the dashboard origin with credentials (the M0.3.10 to-do) | Approved |
+| M1.1.4 | Request context: cookie or `Authorization: Bearer` → `ctx.user`; CORS restricted to the dashboard origin with credentials (the M0.3.10 to-do) | Done |
 | M1.1.5 | GraphQL login/logout/`me` (name per decision) + contract tests: wrong password, inactive user, expired session, logout revocation, uniform error | Approved |
 | M1.1.6 | Dashboard: auth provider (`me`), login page adapted from Saleor's `src/auth/components/LoginPage`, redirect to login when signed out | Approved |
 | M1.1.7 | Dashboard: Saleor's account row in the sidebar footer, logout in the user menu; browser check of login/logout | Approved |
@@ -516,6 +516,16 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   `revokeSession`. ADR-0006's `kind` column is deferred until customer login exists. `drizzle-orm`
   added to the API at the same pinned version as `@commerce/db` (for `eq`). 10 new tests; API 31
   passed; `verify.sh` all PASS. Implemented by the lead (OpenCode out of funds).
+- **Result (M1.1.4):** `apps/api/src/graphql/context.ts`: `createContext` turns
+  `Authorization: Bearer <token>` (wins, even when malformed) or the `session` cookie into
+  `ctx.user` (`SessionUser | null`) and `ctx.sessionToken` (kept for logout). CORS
+  (`apps/api/src/app.ts`): only origins in `ALLOWED_GRAPHQL_ORIGINS` (Saleor's variable name;
+  default `http://localhost:5173`, added to `.env.example`) get CORS headers, with credentials;
+  others get none. `createApp` refuses an empty or `*` list, because whatwg-node would treat `[]` as
+  "allow all" and echo a single listed origin to every caller (found by a curl check, then fixed
+  with a per-request origin check). 11 new tests; API 42 passed; `verify.sh` all PASS; a real
+  server on :4100: preflight from :5173 allowed, from another origin no headers, anonymous
+  `shop` query still works. Implemented by the lead (OpenCode out of funds).
 
 ### M1.2 Permission groups & guards
 - **Objective:** staff permissions enforced by API, reflected in dashboard UX.

@@ -3,7 +3,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { createApp } from "../../app.ts";
 
 // The real app and the real (test) database; requests go through Yoga in-process, no network.
-const app = createApp(getDb());
+const app = createApp(getDb(), { allowedOrigins: ["http://localhost:5173"] });
 
 afterAll(async () => {
   await closeDb();
