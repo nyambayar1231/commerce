@@ -36,6 +36,12 @@ Never pipe `spawn.sh` into `head`: a closed pipe kills it before the brief is de
 Wait with `hc wait --children any` (in the background for long steps), never `sleep`.
 `blocked` means a permission prompt or a question: ask the owner, never force it.
 
+**Fallback when OpenCode is out of funds** ("Insufficient account funds", or `doctor.sh --live`
+fails on the model): the lead implements the brief itself, in the main tree, with the same allowed
+files and acceptance criteria, then continues with steps 5–8 (skip 4). Never top up or wait for the
+usage reset; the owner chose this fallback on 2026-11-09. Check once per step whether OpenCode has
+funds again (a single short `opencode run`, or the next spawn), not repeatedly.
+
 ## 4. Evidence
 
 ```sh

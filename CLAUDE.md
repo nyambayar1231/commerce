@@ -62,7 +62,8 @@ In short:
 - Architecture decisions stay with the lead and the owner, never with the worker.
 - One implementer per working directory; use a worktree (`scripts/ai/worktree.sh`) for isolation.
 - Be token-efficient on both sides: OpenCode Go has a limited balance (it ran out on 2026-11-09);
-  limits are not increased when they run out.
+  limits are not increased when they run out. While OpenCode is out of funds, Claude Code writes
+  the code itself (same brief, checks and commits; `orchestrator.md` step 3 fallback).
 - Phase order: API → Admin dashboard (matching Saleor, wired to the real API) → QA →
   Storefront. Storefront work starts only after the owner explicitly confirms API and Admin are
   complete.
@@ -136,5 +137,5 @@ scripts/ai/stop.sh <name>|--all                       # end the implementer (wor
 
 ## Current state
 
-M0 (foundations: monorepo, API skeleton, dashboard shell) done. Next: M1 (identity), awaiting
-owner approval. The AI team setup (`docs/ai-workflow/`) is in place. See `PLAN.md`.
+M0 (foundations: monorepo, API skeleton, dashboard shell) done. M1 (identity) approved and in
+progress, run continuously per sub-step. The AI team setup (`docs/ai-workflow/`) is in place. See `PLAN.md`.
