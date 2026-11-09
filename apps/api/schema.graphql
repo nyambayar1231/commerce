@@ -24,6 +24,9 @@ enum AccountErrorCode {
 Represents a single category of products. Categories allow to organize products in a tree-hierarchies which can be used for navigation in the storefront.
 """
 type Category implements Node {
+  """List of children of the category."""
+  children(after: String, before: String, first: Int, last: Int): CategoryCountableConnection
+
   """
   Description of the category.
   
@@ -50,6 +53,19 @@ type Category implements Node {
   updatedAt: DateTime!
 }
 
+type CategoryCountableConnection {
+  edges: [CategoryCountableEdge!]!
+  pageInfo: PageInfo!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type CategoryCountableEdge {
+  cursor: String!
+  node: Category!
+}
+
 """
 Creates a new category.
 
@@ -70,6 +86,10 @@ type CategoryDelete {
   errors: [ProductError!]!
 }
 
+input CategoryFilterInput {
+  search: String
+}
+
 input CategoryInput {
   """
   Category description.
@@ -83,6 +103,22 @@ input CategoryInput {
 
   """Category slug."""
   slug: String
+}
+
+enum CategorySortField {
+  """Sort categories by name."""
+  NAME
+
+  """Sort categories by subcategory count."""
+  SUBCATEGORY_COUNT
+}
+
+input CategorySortingInput {
+  """Specifies the direction in which to sort categories."""
+  direction: OrderDirection!
+
+  """Sort categories by the selected field."""
+  field: CategorySortField!
 }
 
 """
@@ -214,6 +250,21 @@ interface Node {
   id: ID!
 }
 
+enum OrderDirection {
+  """Specifies an ascending sort order."""
+  ASC
+
+  """Specifies a descending sort order."""
+  DESC
+}
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+}
+
 """Represents a permission object in a friendly form."""
 type Permission {
   """Internal code for permission."""
@@ -329,6 +380,23 @@ enum ProductErrorCode {
 }
 
 type Query {
+  """List of the shop's categories."""
+  categories(
+    after: String
+    before: String
+
+    """Filtering options for categories."""
+    filter: CategoryFilterInput
+    first: Int
+    last: Int
+
+    """Filter categories by the nesting level in the category tree."""
+    level: Int
+
+    """Sort categories."""
+    sortBy: CategorySortingInput
+  ): CategoryCountableConnection
+
   """Look up a category by ID or slug."""
   category(
     """ID of the category."""

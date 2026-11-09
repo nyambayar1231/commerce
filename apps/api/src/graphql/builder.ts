@@ -14,6 +14,9 @@ import { decodeGlobalId, toGlobalId } from "./globalId.ts";
 export const builder = new SchemaBuilder<{
   Context: Context;
   DefaultFieldNullability: false;
+  // Saleor's connections: `edges: [XCountableEdge!]!`, `node: X!`.
+  DefaultEdgesNullability: { list: false; items: false };
+  DefaultNodeNullability: false;
   Scalars: {
     DateTime: { Input: Date; Output: Date };
     JSONString: { Input: unknown; Output: unknown };
@@ -28,6 +31,8 @@ export const builder = new SchemaBuilder<{
     nodesQueryOptions: false,
     nodeTypeOptions: { name: "Node" },
     idFieldOptions: { description: "The ID of the object." },
+    edgesFieldOptions: { nullable: { list: false, items: false } },
+    nodeFieldOptions: { nullable: false },
     encodeGlobalID: (typename, id) => toGlobalId(typename, String(id)),
     decodeGlobalID: (globalID) => decodeGlobalId(globalID),
   },

@@ -1,6 +1,7 @@
 import { GraphQLError } from "graphql";
 import { builder } from "../../graphql/builder.ts";
 import { fromGlobalId, nodesNotFound, toGlobalId } from "../../graphql/globalId.ts";
+import { validatePagination } from "../../graphql/pagination.ts";
 import { requirePermission } from "../../graphql/permissions.ts";
 import { DateTime, JSONString } from "../../graphql/scalars.ts";
 import {
@@ -11,6 +12,10 @@ import {
   deleteCategory,
   getCategory,
   getCategoryLevel,
+  type CategoryListArgs,
+  type CategoryPage,
+  InvalidCursorError,
+  listCategories,
   NotFoundError,
   updateCategory,
 } from "./index.ts";
@@ -21,6 +26,53 @@ const PERMISSION = "Requires one of the following permissions: MANAGE_PRODUCTS."
 type CategoryModel = CategoryRow & { level?: number };
 
 const CategoryType = builder.objectRef<CategoryModel>("Category");
+
+// Saleor's CategoryCountableConnection / CategoryCountableEdge, shared by `categories` and
+// `Category.children`.
+const CategoryConnection = builder.connectionObject(
+  {
+    type: CategoryType,
+    name: "CategoryCountableConnection",
+    fields: (t) => ({
+      totalCount: t.int({
+        nullable: true,
+        description: "A total count of items in the collection.",
+        resolve: (connection) => (connection as unknown as CategoryPage).totalCount,
+      }),
+    }),
+  },
+  { name: "CategoryCountableEdge" },
+);
+
+/** One page of categories in the connection shape, with Saleor's cursor errors. */
+async function categoryConnection(
+  db: Parameters<typeof listCategories>[0],
+  fieldName: string,
+  args: CategoryListArgs,
+) {
+  const page = validatePagination(fieldName, args);
+  try {
+    const result = await listCategories(db, {
+      ...args,
+      ...page,
+      first: page.first,
+      last: page.last,
+    });
+    return {
+      ...result,
+      edges: result.rows,
+      pageInfo: {
+        hasNextPage: result.hasNextPage,
+        hasPreviousPage: result.hasPreviousPage,
+        startCursor: result.rows[0]?.cursor ?? null,
+        endCursor: result.rows.at(-1)?.cursor ?? null,
+      },
+    };
+  } catch (error) {
+    if (error instanceof InvalidCursorError) throw new GraphQLError(error.message);
+    throw error;
+  }
+}
 
 // A Relay node (implements Node), as Saleor's Category.
 builder.node(CategoryType, {
@@ -53,8 +105,87 @@ builder.node(CategoryType, {
       description: "The date and time when the category was last updated.",
       resolve: (category) => category.updatedAt,
     }),
+    children: t.connection(
+      {
+        type: CategoryType,
+        nullable: true,
+        description: "List of children of the category.",
+        resolve: (category, args, ctx) =>
+          categoryConnection(ctx.db, "children", {
+            ...args,
+            parentId: category.id,
+            sort: { field: "NAME", direction: "ASC" },
+          }),
+      },
+      CategoryConnection,
+    ),
   }),
 });
+
+const OrderDirection = builder.enumType("OrderDirection", {
+  values: {
+    ASC: { description: "Specifies an ascending sort order." },
+    DESC: { description: "Specifies a descending sort order." },
+  } as const,
+});
+
+// Saleor's CategorySortField; PRODUCT_COUNT arrives with products (M2.2).
+const CategorySortField = builder.enumType("CategorySortField", {
+  values: {
+    NAME: { description: "Sort categories by name." },
+    SUBCATEGORY_COUNT: { description: "Sort categories by subcategory count." },
+  } as const,
+});
+
+const CategorySortingInput = builder.inputType("CategorySortingInput", {
+  fields: (t) => ({
+    direction: t.field({
+      type: OrderDirection,
+      required: true,
+      description: "Specifies the direction in which to sort categories.",
+    }),
+    field: t.field({
+      type: CategorySortField,
+      required: true,
+      description: "Sort categories by the selected field.",
+    }),
+  }),
+});
+
+// Saleor's CategoryFilterInput, `search` only so far (no metadata, ids, slugs or updatedAt).
+const CategoryFilterInput = builder.inputType("CategoryFilterInput", {
+  fields: (t) => ({
+    search: t.string(),
+  }),
+});
+
+builder.queryField("categories", (t) =>
+  t.connection(
+    {
+      type: CategoryType,
+      nullable: true,
+      description: "List of the shop's categories.",
+      args: {
+        filter: t.arg({
+          type: CategoryFilterInput,
+          description: "Filtering options for categories.",
+        }),
+        sortBy: t.arg({ type: CategorySortingInput, description: "Sort categories." }),
+        level: t.arg.int({
+          description: "Filter categories by the nesting level in the category tree.",
+        }),
+      },
+      resolve: (_parent, { filter, sortBy, level, ...page }, ctx) =>
+        categoryConnection(ctx.db, "categories", {
+          ...page,
+          search: filter?.search,
+          level,
+          sort: sortBy,
+        }),
+    },
+    CategoryConnection,
+  ),
+);
 
 const ProductErrorCode = builder.enumType("ProductErrorCode", {
   values: ["GRAPHQL_ERROR", "INVALID", "NOT_FOUND", "REQUIRED", "UNIQUE"] as const,

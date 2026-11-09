@@ -16,3 +16,11 @@ export {
   updateCategory,
 } from "./categories.ts";
 export { slugify } from "./slug.ts";
+export type {
+  CategoryListArgs,
+  CategoryListRow,
+  CategoryPage,
+  CategorySortField,
+  OrderDirection,
+} from "./categoryList.ts";
+export { InvalidCursorError, listCategories } from "./categoryList.ts";
