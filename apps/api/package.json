@@ -24,6 +24,7 @@
     "@node-rs/argon2": "2.2.2",
     "@pothos/core": "4.16.0",
     "@pothos/plugin-relay": "4.8.1",
+    "dataloader": "2.2.3",
     "drizzle-orm": "0.45.4",
     "graphql": "17.1.0",
     "graphql-yoga": "6.0.1"

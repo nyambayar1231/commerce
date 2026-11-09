@@ -41,6 +41,9 @@ importers:
       '@pothos/plugin-relay':
         specifier: 4.8.1
         version: 4.8.1(@pothos/core@4.16.0(graphql@17.1.0))(graphql@17.1.0)
+      dataloader:
+        specifier: 2.2.3
+        version: 2.2.3
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(postgres@3.4.9)
