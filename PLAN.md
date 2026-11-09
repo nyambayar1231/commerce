@@ -8,10 +8,10 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | Milestone | Title | Status |
 |---|---|---|
 | P0 | Planning: ARCHITECTURE.md, PLAN.md, CLAUDE.md, ADRs | Done |
-| M0 | Foundations | In progress |
+| M0 | Foundations | Done |
 | M0.1 | Monorepo skeleton & local infrastructure | Done |
 | M0.2 | API skeleton, in 8 small steps (M0.2.1–M0.2.8) | Done |
-| M0.3 | Dashboard shell, in 11 small steps (M0.3.1–M0.3.11) | In progress |
+| M0.3 | Dashboard shell, in 11 small steps (M0.3.1–M0.3.11) | Done |
 | M1 | Identity: staff auth & permissions | Draft |
 | M1.1 | Users, sessions, login/logout/me | Draft |
 | M1.2 | Permission groups & guarded API/dashboard | Draft |
@@ -22,7 +22,6 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | M2.4 | Product create/update form | Draft |
 | M2.5 | Product media | Draft |
 | M3 | Inventory: warehouse, stock, availability | Draft |
-| M4 | Storefront catalog | Draft |
 | M5 | Checkout | Draft |
 | M5.1 | Cart: checkout + lines | Draft |
 | M5.2 | Email, addresses, shipping methods, totals | Draft |
@@ -34,6 +33,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | M7 | Customer accounts | Draft |
 | M8 | Background processing: outbox + transactional email | Draft |
 | M9 | Hardening & deployability | Draft |
+| M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Detailed specs for M0 are review-ready. M1+ are scoped but will be refined (with you) before
 each starts.
@@ -210,7 +210,7 @@ each starts.
   `../saleor-platform`) at desktop & mobile widths, expanded & collapsed, light & dark; keyboard
   Tab/Enter navigation works; screenshots attached to the milestone summary.
 - **Exclusions:** login (M1), real list pages (M2), Glide (M2.1).
-- **Status:** In progress (sub-steps approved 2026-11-06).
+- **Status:** Done (2026-11-09). Sub-steps approved 2026-11-06.
 - **Rule:** each sub-step is done in its own turn; I stop after it and wait for your approval.
 
 | Step | What | Status |
@@ -225,7 +225,7 @@ each starts.
 | M0.3.8 | Sidebar: rail layout (768–1023px) and drawer layout (<768px) | Done |
 | M0.3.9 | Sidebar footer ⋯ menu with the theme switcher; keyboard pass | Done |
 | M0.3.10 | Apollo Client + codegen + `shop { name }` in sidebar header | Done |
-| M0.3.11 | Side-by-side comparison with real Saleor; screenshots; close M0.3 | Planned |
+| M0.3.11 | Side-by-side comparison with real Saleor; screenshots; close M0.3 | Done |
 
 #### M0.3.1 Vite + React app
 - **Concepts:** Vite serves native ES modules in dev and bundles with Rolldown for prod;
@@ -435,6 +435,32 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   **For M1:** Yoga's default CORS reflects any origin with credentials allowed. Before session cookies,
   restrict it to the dashboard and storefront origins.
 
+#### M0.3.11 Side-by-side comparison with real Saleor
+- **Setup:** Saleor API 3.23 from `../saleor-platform` (Docker, :8000) and Saleor Dashboard 3.23.42 from
+  `../saleor-dashboard` source (`npm run dev`, Node 24, :9000; a dev build, same layout as the image);
+  ours via `pnpm dev` (:4000, :5173). Both apps in one Chrome tab, so the viewport is identical; the
+  theme and collapsed state set through the same localStorage keys (`activeMacawUITheme`,
+  `dashboard-sidebar-collapsed`). Widths 900 and 390 rendered in a same-origin iframe of that width
+  (the window could not be resized), so the apps' media queries see exactly that width.
+- **Screenshots:** `docs/screenshots/m0.3/`, pairs `*-saleor` / `*-ours`: desktop 1440 dark and light,
+  expanded and collapsed (01–04); rail at 900 (05); mobile app bar at 390 (06); mobile drawer open,
+  dark (07); keyboard navigation (08).
+- **Matches:** column and rail widths (rail 61px), header row, item height and spacing, icons, active
+  item, chevrons and `aria-expanded`, footer divider, rail breakpoint (768–1023) and drawer (<768),
+  app bar, drawer header and close button, light and dark colours. Rail border measured identical
+  (1px `rgb(43, 64, 84)` on `rgb(34, 36, 48)`). Keyboard: Tab order matches Saleor's (hidden mobile
+  menu button first, then items); Tab → Catalog, Enter expands, Tab → Products, Enter opens
+  `/products/`; focus ring visible.
+- **Differences, all expected:** initials instead of Saleor's logo (M0.3.5); roadmap-only menu, so
+  no Search, Fulfillment, Discounts, Modeling, Translations, Extensions, Command menu, Playground,
+  What's New (decided 2026-11-06); no account row or notifications in the footer, and no app-bar
+  search (login is M1); placeholder pages instead of Saleor's content (M2+).
+- **Finding (open, for approval):** in dark mode Saleor's root text colour is white, ours is the
+  browser's black. It comes from Saleor's legacy Macaw (Material UI) `ThemeProvider` CSS baseline
+  (`../saleor-dashboard/src/index.tsx:135`), which we do not use. Not visible today (all text sets its
+  own colour), but unstyled text would render black on dark. Proposed fix: set the root text colour
+  to Macaw's `text.default1` in `apps/dashboard/src/index.css`.
+
 ---
 
 ## M1 — Identity
@@ -516,11 +542,6 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 - **Acceptance:** constraint violation tests; stock updates visible in grid.
 - **Status:** Draft.
 
-## M4 — Storefront catalog
-- **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
-- **Concepts:** Server Components, caching/revalidation, public vs staff API visibility.
-- **Status:** Draft.
-
 ## M5 — Checkout
 - **M5.1 Cart:** `checkoutCreate`, `checkoutLinesAdd/Update/Delete`, token cookie via Server
   Actions, live price calculation, advisory stock check.
@@ -551,6 +572,14 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 ## M9 — Hardening & deployability
 - Dockerfiles, production config/env validation, rate limiting on login, CI pipeline, Playwright
   golden paths, basic observability.
+- **Status:** Draft.
+
+## M4 — Storefront catalog
+- **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
+- **Concepts:** Server Components, caching/revalidation, public vs staff API visibility.
+- **Phase 4, gated:** starts only after the owner explicitly confirms that the API and the admin
+  dashboard are complete (owner priority 2026-11-09: API → Admin → QA → Storefront). Moved after
+  M9 on 2026-11-09; the ID is kept so existing references stay valid.
 - **Status:** Draft.
 
 ---
