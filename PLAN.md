@@ -484,7 +484,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 | Step | What | Status |
 |---|---|---|
 | M1.1.1 | `user` table + migration; argon2id hash/verify module + unit tests | Done |
-| M1.1.2 | `pnpm cli createsuperuser` (interactive, hashes the password) | Approved |
+| M1.1.2 | `pnpm cli createsuperuser` (interactive, hashes the password) | Done |
 | M1.1.3 | `session` table; session service: create (256-bit token, SHA-256 stored), look up with sliding 14-day expiry + hard cap, revoke; real-Postgres tests | Approved |
 | M1.1.4 | Request context: cookie or `Authorization: Bearer` → `ctx.user`; CORS restricted to the dashboard origin with credentials (the M0.3.10 to-do) | Approved |
 | M1.1.5 | GraphQL login/logout/`me` (name per decision) + contract tests: wrong password, inactive user, expired session, logout revocation, uniform error | Approved |
@@ -501,6 +501,13 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   argon2i hash rejected, OWASP parameters pinned. Reviews: code (approve), security (3 low).
   **Carried into M1.1.5:** dummy verify for unknown users / users without a password (timing must
   not reveal which emails exist) and a password length cap at the GraphQL input (security review).
+- **Result (M1.1.2):** `pnpm cli createsuperuser` (`apps/api/src/cli.ts`, root and API `cli` scripts):
+  interactive prompts with the password muted (verified in a real terminal: never on screen), or
+  `--no-input --email …` with the password from `SUPERUSER_PASSWORD` (never a flag). Logic in
+  `identity/users.ts` `createSuperuser(db, …)`: trimmed email, light format check, password 8–128
+  characters (Saleor's minimum; the cap closes the M1.1.1 length finding), staff + superuser + active,
+  duplicate emails rejected through `user_email_unique` (`EMAIL_TAKEN`). `identity/index.ts` added.
+  21 API tests. Light review by the lead (OpenCode reviewers ran out of funds mid-review): no issues.
 
 ### M1.2 Permission groups & guards
 - **Objective:** staff permissions enforced by API, reflected in dashboard UX.

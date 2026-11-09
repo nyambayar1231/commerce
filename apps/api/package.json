@@ -8,7 +8,8 @@
     "typecheck": "tsc --noEmit",
     "start": "node --env-file-if-exists=../../.env src/server.ts",
     "test": "vitest run",
-    "schema:print": "node src/print-schema-cli.ts"
+    "schema:print": "node src/print-schema-cli.ts",
+    "cli": "node --env-file-if-exists=../../.env src/cli.ts"
   },
   "devDependencies": {
     "@commerce/tsconfig": "workspace:*",
