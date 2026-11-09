@@ -1,5 +1,7 @@
 // Public surface of the `identity` module (ARCHITECTURE.md §2): other modules import from here
 // only. `password.ts` stays internal until a second module needs it.
 
+export type { CreatedSession, SessionUser } from "./sessions.ts";
+export { createSession, getSessionUser, revokeSession } from "./sessions.ts";
 export type { CreateSuperuserInput } from "./users.ts";
 export { CreateSuperuserError, createSuperuser } from "./users.ts";

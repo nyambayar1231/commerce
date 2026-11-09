@@ -3,6 +3,7 @@ import {
   boolean,
   check,
   customType,
+  index,
   pgTable,
   text,
   timestamp,
@@ -38,5 +39,30 @@ export const user = pgTable(
     check("user_email_not_empty", sql`${table.email} <> ''`),
     // Every superuser has staff powers too (Django/Saleor semantics).
     check("user_superuser_is_staff", sql`NOT ${table.isSuperuser} OR ${table.isStaff}`),
+  ],
+);
+
+// Login sessions (ADR-0006, ARCHITECTURE.md §7). The client holds a random token; only its SHA-256
+// hash is stored, so a leaked table can't be replayed. Deleting the row revokes the session.
+// ADR-0006's `kind` (staff|customer) is left out until customer login exists: today only staff
+// log in, and `user.is_staff` already says which kind a session is.
+export const session = pgTable(
+  "session",
+  {
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    // Hex SHA-256 of the token.
+    tokenHash: text("token_hash").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    // Hard cap on the session's total lifetime, set at creation.
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    // Drives the sliding inactivity expiry.
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique("session_token_hash_unique").on(table.tokenHash),
+    index("session_user_id_idx").on(table.userId),
   ],
 );

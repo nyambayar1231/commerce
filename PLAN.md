@@ -485,7 +485,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 |---|---|---|
 | M1.1.1 | `user` table + migration; argon2id hash/verify module + unit tests | Done |
 | M1.1.2 | `pnpm cli createsuperuser` (interactive, hashes the password) | Done |
-| M1.1.3 | `session` table; session service: create (256-bit token, SHA-256 stored), look up with sliding 14-day expiry + hard cap, revoke; real-Postgres tests | Approved |
+| M1.1.3 | `session` table; session service: create (256-bit token, SHA-256 stored), look up with sliding 14-day expiry + hard cap, revoke; real-Postgres tests | Done |
 | M1.1.4 | Request context: cookie or `Authorization: Bearer` → `ctx.user`; CORS restricted to the dashboard origin with credentials (the M0.3.10 to-do) | Approved |
 | M1.1.5 | GraphQL login/logout/`me` (name per decision) + contract tests: wrong password, inactive user, expired session, logout revocation, uniform error | Approved |
 | M1.1.6 | Dashboard: auth provider (`me`), login page adapted from Saleor's `src/auth/components/LoginPage`, redirect to login when signed out | Approved |
@@ -508,6 +508,14 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   characters (Saleor's minimum; the cap closes the M1.1.1 length finding), staff + superuser + active,
   duplicate emails rejected through `user_email_unique` (`EMAIL_TAKEN`). `identity/index.ts` added.
   21 API tests. Light review by the lead (OpenCode reviewers ran out of funds mid-review): no issues.
+- **Result (M1.1.3):** `session` table (migration `0004_session.sql`: unique `token_hash`, FK to
+  `user` with `ON DELETE CASCADE`, index on `user_id`) and `apps/api/src/modules/identity/sessions.ts`:
+  `createSession` (32 random bytes, base64url; only the hex SHA-256 is stored), `getSessionUser`
+  (ends the session after 14 idle days, at the 30-day hard cap = Saleor's `JWT_TTL_REFRESH`, or when
+  the user is inactive, deleting the row; `last_seen_at` is rewritten at most every 5 minutes),
+  `revokeSession`. ADR-0006's `kind` column is deferred until customer login exists. `drizzle-orm`
+  added to the API at the same pinned version as `@commerce/db` (for `eq`). 10 new tests; API 31
+  passed; `verify.sh` all PASS. Implemented by the lead (OpenCode out of funds).
 
 ### M1.2 Permission groups & guards
 - **Objective:** staff permissions enforced by API, reflected in dashboard UX.

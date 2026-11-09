@@ -35,6 +35,9 @@ importers:
       '@pothos/core':
         specifier: 4.16.0
         version: 4.16.0(graphql@17.1.0)
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(postgres@3.4.9)
       graphql:
         specifier: 17.1.0
         version: 17.1.0
