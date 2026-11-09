@@ -1,0 +1,47 @@
+/*
+ * Adapted from saleor-dashboard: src/components/Datagrid/styles.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ * Saleor's useStyles (legacy macaw-ui makeStyles) as plain CSS; only the classes a read-only list
+ * grid uses (no row-action bar, column picker or cell-editor portal yet).
+ */
+.actionBtnBar {
+  position: absolute;
+  left: 0;
+  z-index: 1;
+  background: var(--mu-colors-background-default1);
+  border-radius: var(--mu-border-radius-4);
+  width: calc(100% - 64px - 40px - 1px);
+  margin-top: 1px;
+  margin-left: 50px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: var(--mu-spacing-1-5);
+  box-sizing: border-box;
+}
+
+.datagrid {
+  border-radius: 0;
+  box-sizing: content-box;
+  width: 100%;
+  padding-bottom: 1px;
+}
+
+.datagrid :global(.dvn-scroller) {
+  overscroll-behavior-x: none;
+  overflow-y: hidden;
+}
+
+.editorContainer {
+  position: relative;
+  height: 100%;
+}
+
+.rowAnchor {
+  position: fixed;
+  display: block;
+  top: -1000px;
+  left: -1000px;
+  touch-action: pan-y;
+}

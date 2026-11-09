@@ -25,6 +25,11 @@ export const commonMessages = defineMessages({
     id: "we4Lby",
     defaultMessage: "Info",
   },
+  noOfRows: {
+    id: "2HfSiT",
+    defaultMessage: "No. of rows",
+    description: "pagination",
+  },
   requiredField: {
     id: "TKmub+",
     defaultMessage: "This field is required",

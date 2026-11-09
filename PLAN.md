@@ -95,7 +95,7 @@ starts with the create flow and the list follows.
 | M2.1.4 | Dashboard: category detail page as Saleor's `CategoryUpdatePage`: top nav, General Information (name, description), Subcategories card + "Create subcategory" (same dialog with parent), Savebar (Back/Save/Delete), ExitFormDialog on dirty leave, field errors, delete dialog; background image, Products card and SEO wait (M2.5 / M2.2 / later) | Done |
 | M2.1.5 | Pothos Relay plugin: `Node` interface on `User`/`Group`/`Category` (same base64 global IDs); no `node`/`nodes` query, as Saleor's schema has none | Done |
 | M2.1.6 | `categories(first/after/last/before, filter{search}, sortBy{NAME, SUBCATEGORY_COUNT, PRODUCT_COUNT*}, level)` keyset connection, `Category.children` connection; contract tests for page edges | Done |
-| M2.1.7 | Dashboard `Datagrid` wrapper (Glide) adapted from `src/components/Datagrid`, `TablePagination`, list URL state (`src/categories/urls.ts`) | Approved |
+| M2.1.7 | Dashboard `Datagrid` wrapper (Glide) adapted from `src/components/Datagrid`, `TablePagination`, list URL state (`src/categories/urls.ts`) | Done |
 | M2.1.8 | Category list page as Saleor 3.23: columns (name, products, subcategories), expandable tree rows + "Collapse all", search, sort, pagination, bulk delete; Subcategories card paginated | Approved |
 | M2.1.9 | Seed: a demo category tree big enough for >1 page; browser check of the full flow against real Saleor | Approved |
 
