@@ -7,6 +7,10 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { AuthProvider } from "./auth/AuthProvider";
 import { LocaleProvider } from "./components/Locale/Locale";
+import {
+  NotificationProvider,
+  NotificationsToaster,
+} from "./components/notifications/NotificationProvider";
 import { ShopProvider } from "./components/Shop";
 import { apolloClient } from "./graphql/client";
 import { ThemeProvider } from "./theme/provider";
@@ -23,7 +27,10 @@ createRoot(container).render(
         <AuthProvider>
           <ShopProvider>
             <ThemeProvider>
-              <App />
+              <NotificationProvider>
+                <App />
+                <NotificationsToaster />
+              </NotificationProvider>
             </ThemeProvider>
           </ShopProvider>
         </AuthProvider>

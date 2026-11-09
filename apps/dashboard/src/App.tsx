@@ -4,6 +4,7 @@ import { Auth } from "./auth";
 import { useUser } from "./auth/AuthProvider";
 import { LoginLoading } from "./auth/components/LoginLoading/LoginLoading";
 import SectionRoute from "./auth/components/SectionRoute";
+import { CategorySection } from "./categories";
 import { AppLayout } from "./components/AppLayout/AppLayout";
 import { PlaceholderPage } from "./components/PlaceholderPage/PlaceholderPage";
 import { CONFIGURATION_PERMISSIONS } from "./components/Sidebar/menu/hooks/useMenuStructure";
@@ -43,7 +44,7 @@ function Dashboard() {
           path="/categories/*"
           element={
             <SectionRoute permissions={["MANAGE_PRODUCTS"]}>
-              <PlaceholderPage title={sectionNames.categories} />
+              <CategorySection />
             </SectionRoute>
           }
         />

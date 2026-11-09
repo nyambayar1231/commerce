@@ -13,6 +13,44 @@ export const commonMessages = defineMessages({
     id: "hJZwTS",
     defaultMessage: "Email address",
   },
+  error: {
+    id: "KN7zKn",
+    defaultMessage: "Error",
+  },
+  info: {
+    id: "we4Lby",
+    defaultMessage: "Info",
+  },
+  success: {
+    id: "xrKHS6",
+    defaultMessage: "Success",
+  },
+  warning: {
+    id: "3SVI5p",
+    defaultMessage: "Warning",
+  },
+});
+
+export const buttonMessages = defineMessages({
+  back: {
+    id: "0OfZJA",
+    defaultMessage: "Back",
+    description: "button",
+  },
+  close: {
+    id: "rbrahO",
+    defaultMessage: "Close",
+  },
+  create: {
+    id: "H5NKfr",
+    defaultMessage: "Create",
+    description: "button",
+  },
+  save: {
+    id: "RaycYK",
+    defaultMessage: "Save",
+    description: "button",
+  },
 });
 
 // Only the sections on our roadmap (M0.3); ids copied unchanged from Saleor.

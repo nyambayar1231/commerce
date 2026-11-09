@@ -1,0 +1,13 @@
+/*
+ * Copied from saleor-dashboard: src/components/Modal/ContextHeader.module.css (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ */
+.contextBadge {
+  border-radius: var(--mu-border-radius-3);
+  background-color: var(--mu-colors-background-default2);
+  border: 1px solid var(--mu-colors-border-default1);
+}
+
+.descriptionWithSteps {
+  min-height: 40px;
+}
