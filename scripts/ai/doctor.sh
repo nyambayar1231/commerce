@@ -2,9 +2,11 @@
 # Checks that the AI team setup is usable: tools, authentication, Herdr core, model choices,
 # agent definitions and script syntax. Read-only; prints PASS/WARN/FAIL and exits 1 on FAIL.
 #
-#   scripts/ai/doctor.sh
+#   scripts/ai/doctor.sh          # static checks
+#   scripts/ai/doctor.sh --live   # also send each configured model a one-word prompt
 source "$(dirname "$0")/lib.sh"
 set +e
+live=0; [[ "${1:-}" == "--live" ]] && live=1
 
 fails=0
 pass() { echo "PASS  $*"; }
@@ -47,15 +49,22 @@ if [[ -f "$REPO_ROOT/.opencode/team.env" ]]; then
   # shellcheck disable=SC1091
   set -a; source "$REPO_ROOT/.opencode/team.env"; set +a
   available="$("$OC" models 2>/dev/null)"
-  for var in OC_MODEL_RESEARCH OC_MODEL_IMPLEMENT OC_MODEL_TEST OC_MODEL_REVIEW; do
+  for var in OC_MODEL_RESEARCH OC_MODEL_BACKEND OC_MODEL_DASHBOARD OC_MODEL_TEST OC_MODEL_REVIEW; do
     val="${!var:-}"
     if [[ -z "$val" ]]; then fail "$var is empty (scripts/ai/models.sh)"; continue; fi
     if ! grep -qxF "${val%%#*}" <<<"$available"; then fail "$var=$val is not in opencode models"; continue; fi
     if [[ "$val" == opencode-go/* ]]; then pass "$var=$val"; else warn "$var=$val is not an opencode-go model (may bill another account)"; fi
+    # Listed is not the same as usable (account region, plan): --live sends a one-word prompt.
+    if [[ "$live" == 1 ]]; then
+      reply="$(cd "${TMPDIR:-/tmp}" && "$OC" --standalone run -m "$val" "Reply with exactly the word OK and nothing else." 2>&1 | tail -3)"
+      if grep -q 'OK' <<<"$reply" && ! grep -qi 'error' <<<"$reply"; then pass "$var answers live"; else fail "$var=$val does not answer: $(tr '\n' ' ' <<<"$reply" | cut -c1-160)"; fi
+    fi
   done
-  if [[ -n "${OC_MODEL_REVIEW:-}" && "${OC_MODEL_REVIEW:-}" == "${OC_MODEL_IMPLEMENT:-}" ]]; then
-    warn "OC_MODEL_REVIEW equals OC_MODEL_IMPLEMENT: the first-pass review is not independent"
-  fi
+  for impl in OC_MODEL_BACKEND OC_MODEL_DASHBOARD; do
+    if [[ -n "${OC_MODEL_REVIEW:-}" && "${OC_MODEL_REVIEW:-}" == "${!impl:-}" ]]; then
+      warn "OC_MODEL_REVIEW equals $impl: the first-pass review is not independent"
+    fi
+  done
 else
   fail ".opencode/team.env missing: cp .opencode/team.env.example .opencode/team.env and pick models"
 fi

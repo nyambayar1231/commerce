@@ -44,7 +44,8 @@ role_writes() {
 model_var_for_role() {
   case "$1" in
     backend-researcher|dashboard-researcher) echo OC_MODEL_RESEARCH ;;
-    backend-implementer|dashboard-implementer) echo OC_MODEL_IMPLEMENT ;;
+    backend-implementer) echo OC_MODEL_BACKEND ;;
+    dashboard-implementer) echo OC_MODEL_DASHBOARD ;;
     test-debugger) echo OC_MODEL_TEST ;;
     code-reviewer|security-reviewer) echo OC_MODEL_REVIEW ;;
     *) return 1 ;;

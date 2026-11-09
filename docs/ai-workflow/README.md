@@ -37,9 +37,12 @@ governance or generated files, cannot read `.env`, cannot start other agents, an
    ```sh
    cp .opencode/team.env.example .opencode/team.env   # gitignored
    scripts/ai/models.sh                               # lists opencode-go/* models
-   $EDITOR .opencode/team.env                         # set OC_MODEL_RESEARCH/IMPLEMENT/TEST/REVIEW
+   $EDITOR .opencode/team.env                         # OC_MODEL_RESEARCH/BACKEND/DASHBOARD/TEST/REVIEW
+   scripts/ai/doctor.sh --live                        # each model must actually answer
    ```
-   Choose a different model for `OC_MODEL_REVIEW` than `OC_MODEL_IMPLEMENT`.
+   Choose a model family for `OC_MODEL_REVIEW` that differs from both implementers. A model can
+   be listed but unusable on your account (for example region-restricted models need "Global"
+   enabled in the OpenCode console), which is what `--live` catches.
 3. **Herdr.** The Herdr app must be running (it runs the `hc` core). `hc server status` should
    print JSON.
 4. **Check everything:** `scripts/ai/doctor.sh` must end with `all required checks passed`.
@@ -74,7 +77,7 @@ Every command the lead uses is a script you can run by hand too:
 
 | Script | What it does |
 |---|---|
-| `scripts/ai/doctor.sh` | Verifies tools, Herdr core, OpenCode Go auth, models, that all 7 agents load with `.env` denied, Claude agents, settings JSON, script syntax, gitignore |
+| `scripts/ai/doctor.sh [--live]` | Verifies tools, Herdr core, OpenCode Go auth, models, that all 7 agents load with `.env` denied, Claude agents, settings JSON, script syntax, gitignore |
 | `scripts/ai/models.sh [--all]` | Lists available OpenCode Go models and the current choice |
 | `scripts/ai/worktree.sh add <name> [<base>]` | New worktree `../commerce-wt/<name>` on branch `ai/<name>`, `.env` from `.env.example`, `pnpm install` |
 | `scripts/ai/worktree.sh rm <name>` | Removes a clean worktree (keeps the branch) |
