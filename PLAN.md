@@ -579,7 +579,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 |---|---|---|
 | M1.2.1 | Permission enum (ARCHITECTURE §8) + `permission_group`, group↔permission, user↔group tables; effective permissions = union (superuser = all) + tests | Done |
 | M1.2.2 | `requirePermission(ctx, …)`; `me { userPermissions }`; contract-test pattern for guarded fields | Done |
-| M1.2.3 | Minimal staff API: `permissionGroupCreate/Update`, `staffCreate`, each guarded by `MANAGE_STAFF` + tests | Approved |
+| M1.2.3 | Minimal staff API: `permissionGroupCreate/Update`, `staffCreate`, each guarded by `MANAGE_STAFF` + tests | Done |
 | M1.2.4 | Dashboard: sidebar items filtered by permission, route guard + Saleor's not-allowed page | Approved |
 
 - **Result (M1.2.1):** `packages/db/src/schema/identity.ts`: `PERMISSIONS` (the 7 codes of
@@ -601,7 +601,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   denied (defense in depth for the staff-only groups invariant). `ctx.permissions()` loads the
   user's effective permissions once per request. GraphQL: `PermissionEnum`, `UserPermission { code
   name }` (Saleor's names), `User.userPermissions: [UserPermission!]`; `sourcePermissionGroups`
-  comes with the group type (M1.2.3). Contract-test helpers in `apps/api/test/graphql.ts`
+  waits for the staff pages (admin phase). Contract-test helpers in `apps/api/test/graphql.ts`
   (`createTestClient`, `createStaff(db, permissions)`, `expectPermissionDenied`), with the pattern
   for a guarded field in its header; the first guarded fields (M1.2.3) use them. **Bug found and
   fixed:** under Vitest our code loaded graphql's CommonJS build and Yoga its ESM build (Node's
@@ -609,6 +609,25 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   tests only (the server under Node was fine); `vitest.config.ts` now resolves with `module-sync`.
   11 new tests (requirePermission: anonymous, lacking, granted, any-of, superuser, non-staff, cached
   once; the error survives Yoga's masking; `me.userPermissions` for groups/none/superuser).
+  `verify.sh` all PASS after commit. Implemented by the lead (OpenCode still out of funds).
+- **Result (M1.2.3):** `permissionGroupCreate(input)`, `permissionGroupUpdate(id, input)`,
+  `staffCreate(input)` with Saleor's names, inputs, payloads (`group`/`user` + `errors`), error
+  types (`PermissionGroupError`, `StaffError`) and messages; types `Group { id name permissions
+  users }` and `Permission`. Domain logic in `identity/staff.ts` (one transaction per call), the
+  GraphQL layer only guards (`requirePermission(ctx, "MANAGE_STAFF")`), decodes global IDs
+  (`graphql/globalId.ts`, Saleor's top-level errors for malformed / wrong-type / unknown IDs) and
+  maps errors. Saleor's escalation guards kept: OUT_OF_SCOPE_PERMISSION (granting or removing a
+  permission you lack; editing a group beyond your scope), OUT_OF_SCOPE_USER (removing a user
+  beyond your scope), OUT_OF_SCOPE_GROUP (staff into a group beyond your scope),
+  ASSIGN_NON_STAFF_MEMBER, CANNOT_REMOVE_FROM_LAST_GROUP, DUPLICATED_INPUT_ITEM, UNIQUE/REQUIRED
+  names, INVALID/UNIQUE/REQUIRED email (lower-cased, as Saleor). **Left out (for approval):**
+  channels, metadata/note, `redirectUrl` and the set-password email (M8), Saleor's
+  LEFT_NOT_MANAGEABLE_PERMISSION check, `Group.userCanManage`, the deprecated `*Errors` payload
+  fields. **Consequence:** a user made by `staffCreate` has no password, so cannot log in until
+  password reset exists (M8), as in Saleor before the email is used. Concurrent creates with the
+  same group name or email are caught by the unique constraints (a 500, not a payload error).
+  21 contract tests in `identity/staff.test.ts`, including the guard contract for all three
+  mutations (anonymous, customer, staff without MANAGE_STAFF denied; MANAGE_STAFF allowed).
   `verify.sh` all PASS after commit. Implemented by the lead (OpenCode still out of funds).
 
 ---

@@ -7,5 +7,20 @@ export type { Permission } from "./permissions.ts";
 export { getEffectivePermissions, PERMISSION_NAMES, PERMISSIONS } from "./permissions.ts";
 export type { CreatedSession, SessionUser } from "./sessions.ts";
 export { createSession, getSessionUser, revokeSession } from "./sessions.ts";
+export type {
+  PermissionGroupCreateInput,
+  PermissionGroupUpdateInput,
+  Requestor,
+  StaffCreateInput,
+  StaffError,
+  StaffErrorCode,
+  StaffResult,
+} from "./staff.ts";
+export {
+  createPermissionGroup,
+  createStaffUser,
+  NotFoundError,
+  updatePermissionGroup,
+} from "./staff.ts";
 export type { CreateSuperuserInput } from "./users.ts";
 export { CreateSuperuserError, createSuperuser } from "./users.ts";

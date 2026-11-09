@@ -13,7 +13,11 @@ type AccountError {
 
 enum AccountErrorCode {
   INACTIVE
+  INVALID
   INVALID_CREDENTIALS
+  OUT_OF_SCOPE_GROUP
+  REQUIRED
+  UNIQUE
 }
 
 """
@@ -22,6 +26,18 @@ Log in: on success, sets the HttpOnly session cookie and returns the user.
 type CreateToken {
   errors: [AccountError!]!
   user: User
+}
+
+"""Represents permission group data."""
+type Group {
+  id: ID!
+  name: String!
+
+  """List of group permissions"""
+  permissions: [Permission!]
+
+  """List of group users"""
+  users: [User!]
 }
 
 """Log out: ends the current session and clears the cookie."""
@@ -33,6 +49,33 @@ type Mutation {
   """End the current session. Succeeds when there is none."""
   logout: Logout!
 
+  """
+  Create new permission group. Requires one of the following permissions: MANAGE_STAFF.
+  """
+  permissionGroupCreate(
+    """Input fields to create permission group."""
+    input: PermissionGroupCreateInput!
+  ): PermissionGroupCreate!
+
+  """
+  Update permission group. Requires one of the following permissions: MANAGE_STAFF.
+  """
+  permissionGroupUpdate(
+    """ID of the group to update."""
+    id: ID!
+
+    """Input fields to create permission group."""
+    input: PermissionGroupUpdateInput!
+  ): PermissionGroupUpdate!
+
+  """
+  Creates a new staff user. Requires one of the following permissions: MANAGE_STAFF.
+  """
+  staffCreate(
+    """Fields required to create a staff user."""
+    input: StaffCreateInput!
+  ): StaffCreate!
+
   """Log in with email and password."""
   tokenCreate(
     """Email of a user."""
@@ -43,6 +86,15 @@ type Mutation {
   ): CreateToken!
 }
 
+"""Represents a permission object in a friendly form."""
+type Permission {
+  """Internal code for permission."""
+  code: PermissionEnum!
+
+  """Describe action(s) allowed to do by permission."""
+  name: String!
+}
+
 enum PermissionEnum {
   MANAGE_CHECKOUTS
   MANAGE_ORDERS
@@ -51,6 +103,79 @@ enum PermissionEnum {
   MANAGE_SHIPPING
   MANAGE_STAFF
   MANAGE_USERS
+}
+
+"""
+Create new permission group. Requires one of the following permissions: MANAGE_STAFF.
+"""
+type PermissionGroupCreate {
+  errors: [PermissionGroupError!]!
+  group: Group
+}
+
+input PermissionGroupCreateInput {
+  """List of permission code names to assign to this group."""
+  addPermissions: [PermissionEnum!]
+
+  """List of users to assign to this group."""
+  addUsers: [ID!]
+
+  """Group name."""
+  name: String!
+}
+
+type PermissionGroupError {
+  """The error code."""
+  code: PermissionGroupErrorCode!
+
+  """
+  Name of a field that caused the error. `null` if it isn't tied to one field.
+  """
+  field: String
+
+  """The error message."""
+  message: String!
+
+  """List of permissions which causes the error."""
+  permissions: [PermissionEnum!]
+
+  """List of user IDs which causes the error."""
+  users: [ID!]
+}
+
+enum PermissionGroupErrorCode {
+  ASSIGN_NON_STAFF_MEMBER
+  CANNOT_REMOVE_FROM_LAST_GROUP
+  DUPLICATED_INPUT_ITEM
+  OUT_OF_SCOPE_PERMISSION
+  OUT_OF_SCOPE_USER
+  REQUIRED
+  UNIQUE
+}
+
+"""
+Update permission group. Requires one of the following permissions: MANAGE_STAFF.
+"""
+type PermissionGroupUpdate {
+  errors: [PermissionGroupError!]!
+  group: Group
+}
+
+input PermissionGroupUpdateInput {
+  """List of permission code names to assign to this group."""
+  addPermissions: [PermissionEnum!]
+
+  """List of users to assign to this group."""
+  addUsers: [ID!]
+
+  """Group name."""
+  name: String
+
+  """List of permission code names to unassign from this group."""
+  removePermissions: [PermissionEnum!]
+
+  """List of users to unassign from this group."""
+  removeUsers: [ID!]
 }
 
 type Query {
@@ -70,6 +195,54 @@ type Shop {
 
   """Shop's name."""
   name: String!
+}
+
+"""
+Creates a new staff user. Requires one of the following permissions: MANAGE_STAFF.
+"""
+type StaffCreate {
+  errors: [StaffError!]!
+  user: User
+}
+
+"""Fields required to create a staff user."""
+input StaffCreateInput {
+  """List of permission group IDs to which user should be assigned."""
+  addGroups: [ID!]
+
+  """The unique email address of the user."""
+  email: String
+
+  """Given name."""
+  firstName: String
+
+  """User account is active."""
+  isActive: Boolean
+
+  """Family name."""
+  lastName: String
+}
+
+type StaffError {
+  """The error code."""
+  code: AccountErrorCode!
+
+  """
+  Name of a field that caused the error. `null` if it isn't tied to one field.
+  """
+  field: String
+
+  """List of permission group IDs which cause the error."""
+  groups: [ID!]
+
+  """The error message."""
+  message: String!
+
+  """List of permission codes which causes the error."""
+  permissions: [PermissionEnum!]
+
+  """List of user IDs which causes the error."""
+  users: [ID!]
 }
 
 """Represents user data."""

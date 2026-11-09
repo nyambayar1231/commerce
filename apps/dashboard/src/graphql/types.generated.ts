@@ -5,7 +5,11 @@ export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' |
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type AccountErrorCode =
   | 'INACTIVE'
-  | 'INVALID_CREDENTIALS';
+  | 'INVALID'
+  | 'INVALID_CREDENTIALS'
+  | 'OUT_OF_SCOPE_GROUP'
+  | 'REQUIRED'
+  | 'UNIQUE';
 
 export type TokenCreateMutationVariables = Exact<{
   email: string;

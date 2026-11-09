@@ -7,7 +7,7 @@ import { hashPassword } from "./password.ts";
 
 // Light sanity check, deliberately without an email-validation library: it only rejects values
 // that can't be delivered to at all. (Saleor uses Django's EmailValidator; we do less.)
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // 8 = Django's MinimumLengthValidator as Saleor configures it
 // (../saleor-core/saleor/settings.py, AUTH_PASSWORD_VALIDATORS, min_length=8).
