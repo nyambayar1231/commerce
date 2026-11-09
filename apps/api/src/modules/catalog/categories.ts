@@ -95,10 +95,40 @@ async function generateUniqueSlug(db: Executor, name: string): Promise<string> {
   }
 }
 
+export async function getCategory(
+  db: Executor,
+  where: { id: string } | { slug: string },
+): Promise<CategoryRow | null> {
+  const condition =
+    "id" in where ? eq(schema.category.id, where.id) : eq(schema.category.slug, where.slug);
+  const [row] = await db.select().from(schema.category).where(condition);
+  return row ?? null;
+}
+
 async function requireCategory(db: Executor, id: string): Promise<CategoryRow> {
-  const [row] = await db.select().from(schema.category).where(eq(schema.category.id, id));
+  const row = await getCategory(db, { id });
   if (!row) throw new NotFoundError([id]);
   return row;
+}
+
+/** Zero-based depth in the category tree, following parent_id up to the root. */
+export async function getCategoryLevel(db: Executor, id: string): Promise<number> {
+  const rows = await db.execute<{ level: number }>(sql`
+    WITH RECURSIVE category_tree AS (
+      SELECT id, parent_id, 0 AS level
+      FROM category
+      WHERE id = ${id}
+      UNION ALL
+      SELECT parent.id, parent.parent_id, category_tree.level + 1
+      FROM category AS parent
+      INNER JOIN category_tree ON parent.id = category_tree.parent_id
+    )
+    SELECT level
+    FROM category_tree
+    ORDER BY level DESC
+    LIMIT 1
+  `);
+  return rows[0]?.level ?? 0;
 }
 
 type ParsedDescription = { value: unknown; plaintext: string };

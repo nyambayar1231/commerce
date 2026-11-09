@@ -8,6 +8,8 @@ import {
   type CategoryUpdateInput,
   createCategory,
   deleteCategory,
+  getCategory,
+  getCategoryLevel,
   NotFoundError,
   updateCategory,
 } from "./index.ts";
@@ -39,6 +41,27 @@ function expectFailure(result: CategoryResult) {
   if (result.ok) throw new Error("expected category validation to fail");
   return result.errors;
 }
+
+describe("category reads", () => {
+  it("finds a category by id or slug and returns null for an unknown category", async () => {
+    const category = await mustCreate({ name: "Catalog" });
+
+    await expect(getCategory(db, { id: category.id })).resolves.toEqual(category);
+    await expect(getCategory(db, { slug: category.slug })).resolves.toEqual(category);
+    await expect(getCategory(db, { id: crypto.randomUUID() })).resolves.toBeNull();
+    await expect(getCategory(db, { slug: "unknown" })).resolves.toBeNull();
+  });
+
+  it("computes zero-based levels through the parent chain", async () => {
+    const parent = await mustCreate({ name: "Parent" });
+    const child = await mustCreate({ name: "Child", parentId: parent.id });
+    const grandchild = await mustCreate({ name: "Grandchild", parentId: child.id });
+
+    await expect(getCategoryLevel(db, parent.id)).resolves.toBe(0);
+    await expect(getCategoryLevel(db, child.id)).resolves.toBe(1);
+    await expect(getCategoryLevel(db, grandchild.id)).resolves.toBe(2);
+  });
+});
 
 describe("createCategory", () => {
   it("creates top-level and child categories with EditorJS plaintext", async () => {

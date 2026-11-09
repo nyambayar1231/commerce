@@ -7,5 +7,12 @@ export type {
   CategoryRow,
   CategoryUpdateInput,
 } from "./categories.ts";
-export { createCategory, deleteCategory, NotFoundError, updateCategory } from "./categories.ts";
+export {
+  createCategory,
+  deleteCategory,
+  getCategory,
+  getCategoryLevel,
+  NotFoundError,
+  updateCategory,
+} from "./categories.ts";
 export { slugify } from "./slug.ts";

@@ -21,12 +21,94 @@ enum AccountErrorCode {
 }
 
 """
+Represents a single category of products. Categories allow to organize products in a tree-hierarchies which can be used for navigation in the storefront.
+"""
+type Category {
+  """
+  Description of the category.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+
+  """The ID of the category."""
+  id: ID!
+
+  """Level of the category."""
+  level: Int!
+
+  """Name of category"""
+  name: String!
+
+  """Parent category."""
+  parent: Category
+
+  """Slug of the category."""
+  slug: String!
+
+  """The date and time when the category was last updated."""
+  updatedAt: DateTime!
+}
+
+"""
+Creates a new category.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type CategoryCreate {
+  category: Category
+  errors: [ProductError!]!
+}
+
+"""
+Deletes a category.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type CategoryDelete {
+  category: Category
+  errors: [ProductError!]!
+}
+
+input CategoryInput {
+  """
+  Category description.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+
+  """Category name."""
+  name: String
+
+  """Category slug."""
+  slug: String
+}
+
+"""
+Updates a category.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type CategoryUpdate {
+  category: Category
+  errors: [ProductError!]!
+}
+
+"""
 Log in: on success, sets the HttpOnly session cookie and returns the user.
 """
 type CreateToken {
   errors: [AccountError!]!
   user: User
 }
+
+"""
+The `DateTime` scalar type represents a DateTime
+value as specified by
+[iso8601](https://en.wikipedia.org/wiki/ISO_8601).
+"""
+scalar DateTime
 
 """Represents permission group data."""
 type Group {
@@ -40,12 +122,52 @@ type Group {
   users: [User!]
 }
 
+scalar JSONString
+
 """Log out: ends the current session and clears the cookie."""
 type Logout {
   errors: [AccountError!]!
 }
 
 type Mutation {
+  """
+  Creates a new category.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  categoryCreate(
+    """Fields required to create a category."""
+    input: CategoryInput!
+
+    """
+    ID of the parent category. If empty, category will be top level category.
+    """
+    parent: ID
+  ): CategoryCreate!
+
+  """
+  Deletes a category.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  categoryDelete(
+    """ID of a category to delete."""
+    id: ID!
+  ): CategoryDelete!
+
+  """
+  Updates a category.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  categoryUpdate(
+    """ID of a category to update."""
+    id: ID!
+
+    """Fields required to update a category."""
+    input: CategoryInput!
+  ): CategoryUpdate!
+
   """End the current session. Succeeds when there is none."""
   logout: Logout!
 
@@ -178,7 +300,38 @@ input PermissionGroupUpdateInput {
   removeUsers: [ID!]
 }
 
+"""Represents an error in the input of a mutation."""
+type ProductError {
+  """The error code."""
+  code: ProductErrorCode!
+
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String!
+}
+
+enum ProductErrorCode {
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  REQUIRED
+  UNIQUE
+}
+
 type Query {
+  """Look up a category by ID or slug."""
+  category(
+    """ID of the category."""
+    id: ID
+
+    """Slug of the category"""
+    slug: String
+  ): Category
+
   """Return the currently authenticated user."""
   me: User
 
