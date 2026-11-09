@@ -1,16 +1,18 @@
 // Adapted from saleor-dashboard: src/components/Sidebar/user/Controls.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The ⋯ account menu with only Saleor's theme item (owner decision, PLAN.md M0.3.5). The signed-in
-// header, Account Settings and Log out arrive with users (M1); the feedback button, Features
-// preview and "Go to Saleor Cloud" are omitted. Without a user the rail trigger shows the ⋯ icon
-// where Saleor shows the user's avatar.
-import { Box, Button, Dropdown, List } from "@saleor/macaw-ui";
+// Saleor's ⋯ account menu: the signed-in header (rail only), Log out and the theme item.
+// Account Settings returns with the staff detail page (admin phase); the feedback button, Features
+// preview and "Go to Saleor Cloud" are omitted.
+import { Box, Button, Dropdown, List, Text } from "@saleor/macaw-ui";
 import { EllipsisVertical } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useIntl } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 
+import { useUser } from "../../../auth/AuthProvider";
+import { getUserInitials, getUserName } from "../../../misc";
 import { useTheme } from "../../../theme/hook";
 import { navigationLucideIconProps } from "../../icons";
+import { UserAvatar } from "../../UserAvatar/UserAvatar";
 import { sidebarCollapseMessages } from "../sidebarCollapseMessages";
 import styles from "./Controls.module.css";
 import { ThemeSwitcher } from "./ThemeSwitcher";
@@ -48,6 +50,7 @@ export const useThemeHandler = () => {
  */
 export const UserControls = ({ collapsed = false }: { collapsed?: boolean }) => {
   const intl = useIntl();
+  const { user, logout } = useUser();
   const { changeTheme, theme } = useThemeHandler();
   const [open, setOpen] = useState(false);
 
@@ -67,7 +70,7 @@ export const UserControls = ({ collapsed = false }: { collapsed?: boolean }) => 
               data-test-id="userMenu"
               aria-label={intl.formatMessage(sidebarCollapseMessages.accountMenu)}
             >
-              <EllipsisVertical {...navigationLucideIconProps} />
+              {user && <UserAvatar initials={getUserInitials(user)} />}
             </button>
           ) : (
             <Button
@@ -89,6 +92,37 @@ export const UserControls = ({ collapsed = false }: { collapsed?: boolean }) => 
               boxShadow="defaultOverlay"
               backgroundColor="default1"
             >
+              {collapsed && user && (
+                <Box
+                  paddingX={1.5}
+                  paddingTop={1.5}
+                  paddingBottom={2}
+                  marginBottom={1}
+                  borderBottomWidth={1}
+                  borderBottomStyle="solid"
+                  borderColor="default1"
+                  display="grid"
+                  __maxWidth={240}
+                >
+                  <Text size={3} fontWeight="medium" className="ellipsis">
+                    {getUserName(user, true)}
+                  </Text>
+                  <Text size={2} color="default2" className="ellipsis">
+                    {user.email}
+                  </Text>
+                </Box>
+              )}
+              <Dropdown.Item>
+                <List.Item
+                  onClick={() => void logout()}
+                  {...listItemStyles}
+                  data-test-id="log-out-button"
+                >
+                  <Text>
+                    <FormattedMessage id="qLbse5" defaultMessage="Log out" description="button" />
+                  </Text>
+                </List.Item>
+              </Dropdown.Item>
               <Dropdown.Item>
                 <List.Item
                   display="flex"

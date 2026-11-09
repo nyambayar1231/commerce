@@ -50,9 +50,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await logoutMutation();
     } finally {
-      // Drop everything cached for this user, then mark the app as signed out.
-      await client.clearStore();
-      setUser(null);
+      // Drop everything cached for this user and refetch the active queries, so `me` reports the
+      // signed-out state from the server. Not clearStore(): it also discards the cache watches,
+      // so the `me` query above would never see the change.
+      await client.resetStore();
     }
   };
 

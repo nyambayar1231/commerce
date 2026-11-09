@@ -13,7 +13,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | M0.2 | API skeleton, in 8 small steps (M0.2.1–M0.2.8) | Done |
 | M0.3 | Dashboard shell, in 11 small steps (M0.3.1–M0.3.11) | Done |
 | M1 | Identity: staff auth & permissions | Approved |
-| M1.1 | Users, sessions, login/logout/me | Approved |
+| M1.1 | Users, sessions, login/logout/me | Done |
 | M1.2 | Permission groups & guarded API/dashboard | Approved |
 | M2 | Catalog | Draft |
 | M2.1 | Categories end-to-end (first Glide list + first save-bar form) | Draft |
@@ -489,7 +489,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 | M1.1.4 | Request context: cookie or `Authorization: Bearer` → `ctx.user`; CORS restricted to the dashboard origin with credentials (the M0.3.10 to-do) | Done |
 | M1.1.5 | GraphQL login/logout/`me` (name per decision) + contract tests: wrong password, inactive user, expired session, logout revocation, uniform error | Done |
 | M1.1.6 | Dashboard: auth provider (`me`), login page adapted from Saleor's `src/auth/components/LoginPage`, redirect to login when signed out | Done |
-| M1.1.7 | Dashboard: Saleor's account row in the sidebar footer, logout in the user menu; browser check of login/logout | Approved |
+| M1.1.7 | Dashboard: Saleor's account row in the sidebar footer, logout in the user menu; browser check of login/logout | Done |
 
 - **Result (M1.1.1):** `user` table (`packages/db/src/schema/identity.ts`) exactly as ARCHITECTURE §3:
   UUID v7 id, `citext` email with `user_email_unique`, nullable `password_hash`, CHECKs
@@ -551,6 +551,17 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   password → `/products` in the app; reload of `/orders` stays signed in; `document.cookie` doesn't
   show the session (HttpOnly; the Secure cookie works on http://localhost); console clean. Test
   user deleted afterwards. `verify.sh` all PASS. Implemented by the lead (OpenCode out of funds).
+- **Result (M1.1.7):** `Sidebar/user/Info.tsx`: Saleor's avatar + name row (`UserAvatar` adapted
+  from `src/components/UserAvatar`, initials only — users have no avatar image); `Controls.tsx`: the
+  rail trigger is the avatar, the rail menu opens with the name + email header, then Log out and
+  the theme item, as Saleor. `getUserName`/`getUserInitials` from Saleor's `src/misc.ts` (+ unit
+  tests). **Simplification (for approval):** no "Account Settings" item until the staff detail
+  page exists (admin phase). **Bug fixed from M1.1.6:** logout called Apollo's `clearStore()`,
+  which discards cache watches, so the dashboard stayed signed in after a successful server
+  logout; it now calls `resetStore()`, which refetches `me`. Browser check (Chrome, dark): footer
+  shows the owner's initials + name; test superuser without a name shows "M1" + email; Log out →
+  sign-in screen at the same URL, its session row gone; console clean. Collapsed rail not checked
+  in the browser. Test user deleted. `verify.sh` all PASS. Implemented by the lead.
 
 ### M1.2 Permission groups & guards
 - **Objective:** staff permissions enforced by API, reflected in dashboard UX.
