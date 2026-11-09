@@ -4,7 +4,9 @@ import {
   check,
   customType,
   index,
+  pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -64,5 +66,64 @@ export const session = pgTable(
   (table) => [
     unique("session_token_hash_unique").on(table.tokenHash),
     index("session_user_id_idx").on(table.userId),
+  ],
+);
+
+// Staff permissions: a closed set adapted from Saleor's `saleor/permission/enums.py`, limited to
+// what we build (ARCHITECTURE.md §8). A code is added together with its feature; Postgres enum
+// values can be added (a generated `ALTER TYPE ... ADD VALUE`) but not removed.
+export const PERMISSIONS = [
+  "MANAGE_PRODUCTS",
+  "MANAGE_ORDERS",
+  "MANAGE_CHECKOUTS",
+  "MANAGE_USERS",
+  "MANAGE_STAFF",
+  "MANAGE_SETTINGS",
+  "MANAGE_SHIPPING",
+] as const;
+
+export type Permission = (typeof PERMISSIONS)[number];
+
+export const permission = pgEnum("permission", PERMISSIONS);
+
+// Saleor's `account.Group`. Only staff users may belong to one; that is checked where members
+// are added (no cross-table CHECK in Postgres).
+export const permissionGroup = pgTable(
+  "permission_group",
+  {
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    name: text("name").notNull(),
+  },
+  (table) => [
+    unique("permission_group_name_unique").on(table.name),
+    check("permission_group_name_not_empty", sql`${table.name} <> ''`),
+  ],
+);
+
+export const permissionGroupPermission = pgTable(
+  "permission_group_permission",
+  {
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => permissionGroup.id, { onDelete: "cascade" }),
+    code: permission("code").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.groupId, table.code] })],
+);
+
+export const userPermissionGroup = pgTable(
+  "user_permission_group",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => permissionGroup.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    // (user_id, group_id) serves "a user's groups"; the index serves "a group's members".
+    primaryKey({ columns: [table.userId, table.groupId] }),
+    index("user_permission_group_group_id_idx").on(table.groupId),
   ],
 );

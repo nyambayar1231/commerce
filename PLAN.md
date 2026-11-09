@@ -577,10 +577,23 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 
 | Step | What | Status |
 |---|---|---|
-| M1.2.1 | Permission enum (ARCHITECTURE §8) + `permission_group`, group↔permission, user↔group tables; effective permissions = union (superuser = all) + tests | Approved |
+| M1.2.1 | Permission enum (ARCHITECTURE §8) + `permission_group`, group↔permission, user↔group tables; effective permissions = union (superuser = all) + tests | Done |
 | M1.2.2 | `requirePermission(ctx, …)`; `me { userPermissions }`; contract-test pattern for guarded fields | Approved |
 | M1.2.3 | Minimal staff API: `permissionGroupCreate/Update`, `staffCreate`, each guarded by `MANAGE_STAFF` + tests | Approved |
 | M1.2.4 | Dashboard: sidebar items filtered by permission, route guard + Saleor's not-allowed page | Approved |
+
+- **Result (M1.2.1):** `packages/db/src/schema/identity.ts`: `PERMISSIONS` (the 7 codes of
+  ARCHITECTURE §8) as the Postgres enum `permission` (codes can be added, not removed);
+  `permission_group` (unique, non-empty `name`), `permission_group_permission` (PK group+code),
+  `user_permission_group` (PK user+group, index on `group_id`), all FKs `ON DELETE CASCADE`;
+  migration `0005_permission_groups.sql` (generated, read). `identity/permissions.ts`:
+  `getEffectivePermissions(db, userId)` as Saleor's `User.effective_permissions`: superuser → all,
+  otherwise the distinct union over the user's groups, in enum order; Saleor's per-user
+  permissions left out. **Decision:** an inactive user (or unknown id) gets none, as Django's
+  ModelBackend. "Only staff in groups" is enforced where members are added (M1.2.3); Postgres has
+  no cross-table CHECK. 8 real-Postgres tests (union/dedup/order, superuser, inactive, unknown,
+  group delete cascades, enum rejects an unknown code, duplicate/empty name). `verify.sh` all PASS;
+  dev DB migrated. Implemented by the lead (OpenCode still out of funds).
 
 ---
 

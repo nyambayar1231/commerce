@@ -36,6 +36,13 @@
       "when": 1794221723108,
       "tag": "0004_session",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794224639570,
+      "tag": "0005_permission_groups",
+      "breakpoints": true
     }
   ]
 }
