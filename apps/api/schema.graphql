@@ -23,7 +23,7 @@ enum AccountErrorCode {
 """
 Represents a single category of products. Categories allow to organize products in a tree-hierarchies which can be used for navigation in the storefront.
 """
-type Category {
+type Category implements Node {
   """
   Description of the category.
   
@@ -111,7 +111,8 @@ value as specified by
 scalar DateTime
 
 """Represents permission group data."""
-type Group {
+type Group implements Node {
+  """The ID of the object."""
   id: ID!
   name: String!
 
@@ -206,6 +207,11 @@ type Mutation {
     """Password of a user."""
     password: String!
   ): CreateToken!
+}
+
+interface Node {
+  """The ID of the object."""
+  id: ID!
 }
 
 """Represents a permission object in a friendly form."""
@@ -399,9 +405,11 @@ type StaffError {
 }
 
 """Represents user data."""
-type User {
+type User implements Node {
   email: String!
   firstName: String!
+
+  """The ID of the object."""
   id: ID!
 
   """Determine if the user is a staff admin."""

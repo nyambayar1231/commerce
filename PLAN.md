@@ -58,8 +58,8 @@ commit with a report. Owner priority: creating a category exactly like Saleor co
 starts with the create flow and the list follows.
 
 **Decisions (accepted 2026-11-09):**
-1. **New dependencies** (CLAUDE.md asks first): `@pothos/plugin-relay` (connections, global IDs,
-   `node`; replaces our hand-written `graphql/globalId.ts`) in M2.1.5; `@glideapps/glide-data-grid`
+1. **New dependencies** (CLAUDE.md asks first): `@pothos/plugin-relay` (Node interface, cursor
+   connections; global IDs still encoded/decoded by `graphql/globalId.ts`) in M2.1.5; `@glideapps/glide-data-grid`
    (+ its peer deps, the versions Saleor pins) in M2.1.7; `dataloader` in M2.2.3.
 2. **Category tree in the list:** as the running Saleor 3.23: top-level rows that expand to show
    subcategories ("Collapse all"), plus the detail page's Subcategories card. (The draft assumed a
@@ -93,7 +93,7 @@ starts with the create flow and the list follows.
 | M2.1.2 | `category(id\|slug)` query (`id name slug description parent level`), `categoryCreate(input, parent)`, `categoryUpdate(id, input)`, `categoryDelete(id)` with Saleor's `ProductError`, guarded by `MANAGE_PRODUCTS`; contract tests | Done |
 | M2.1.3 | Dashboard: Categories page header ("All Categories" + "Create category"), `?action=create` URL, Saleor's `CreateCategoryDialog` (DashboardModal, name + plain-text description → EditorJS JSON, Back/Create), notifier toast "Category created", navigate to `/categories/:id` | Done |
 | M2.1.4 | Dashboard: category detail page as Saleor's `CategoryUpdatePage`: top nav, General Information (name, description), Subcategories card + "Create subcategory" (same dialog with parent), Savebar (Back/Save/Delete), ExitFormDialog on dirty leave, field errors, delete dialog; background image, Products card and SEO wait (M2.5 / M2.2 / later) | Done |
-| M2.1.5 | Pothos Relay plugin: `Node`, global IDs, `node(id)`; move `User`/`Group`/`Category` IDs onto it (same base64 format) | Approved |
+| M2.1.5 | Pothos Relay plugin: `Node` interface on `User`/`Group`/`Category` (same base64 global IDs); no `node`/`nodes` query, as Saleor's schema has none | Done |
 | M2.1.6 | `categories(first/after/last/before, filter{search}, sortBy{NAME, SUBCATEGORY_COUNT, PRODUCT_COUNT*}, level)` keyset connection, `Category.children` connection; contract tests for page edges | Approved |
 | M2.1.7 | Dashboard `Datagrid` wrapper (Glide) adapted from `src/components/Datagrid`, `TablePagination`, list URL state (`src/categories/urls.ts`) | Approved |
 | M2.1.8 | Category list page as Saleor 3.23: columns (name, products, subcategories), expandable tree rows + "Collapse all", search, sort, pagination, bulk delete; Subcategories card paginated | Approved |

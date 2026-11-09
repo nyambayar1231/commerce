@@ -35,6 +35,9 @@ importers:
       '@pothos/core':
         specifier: 4.16.0
         version: 4.16.0(graphql@17.1.0)
+      '@pothos/plugin-relay':
+        specifier: 4.8.1
+        version: 4.8.1(@pothos/core@4.16.0(graphql@17.1.0))(graphql@17.1.0)
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(postgres@3.4.9)
@@ -1421,6 +1424,12 @@ packages:
   '@pothos/core@4.16.0':
     resolution: {integrity: sha512-csiYUWWgxdpw7drDAIPcsuFu4/FFCZpooa3OWsItwlbcYCfMzTr3//tRev6H7FivKanhX6c9TGwGEpDfppQb8g==}
     peerDependencies:
+      graphql: ^16.10.0 || ^17.0.0
+
+  '@pothos/plugin-relay@4.8.1':
+    resolution: {integrity: sha512-saJGin9neFVHbE23XzFky299Idr8jgjpoyhrSh4Fj7p4RyOO7UQ+ZwhF8p3k31uC10iFnjqRdWsrqDZE2y9Fiw==}
+    peerDependencies:
+      '@pothos/core': '*'
       graphql: ^16.10.0 || ^17.0.0
 
   '@radix-ui/primitive@1.2.0':
@@ -4575,6 +4584,11 @@ snapshots:
 
   '@pothos/core@4.16.0(graphql@17.1.0)':
     dependencies:
+      graphql: 17.1.0
+
+  '@pothos/plugin-relay@4.8.1(@pothos/core@4.16.0(graphql@17.1.0))(graphql@17.1.0)':
+    dependencies:
+      '@pothos/core': 4.16.0(graphql@17.1.0)
       graphql: 17.1.0
 
   '@radix-ui/primitive@1.2.0': {}

@@ -47,10 +47,11 @@ const UserPermissionType = builder.objectRef<Permission>("UserPermission").imple
   }),
 });
 
-const UserType = builder.objectRef<SessionUser>("User").implement({
+// Relay nodes (implement Node), as Saleor's User and Group.
+const UserType = builder.node(builder.objectRef<SessionUser>("User"), {
+  id: { resolve: (user) => user.id },
   description: "Represents user data.",
   fields: (t) => ({
-    id: t.id({ resolve: (user) => toGlobalId("User", user.id) }),
     email: t.exposeString("email"),
     firstName: t.exposeString("firstName"),
     lastName: t.exposeString("lastName"),
@@ -200,10 +201,10 @@ const USER_COLUMNS = {
 type GroupModel = { id: string; name: string };
 
 // Saleor's Group (saleor/graphql/account/types.py), without channels and `userCanManage`.
-const GroupType = builder.objectRef<GroupModel>("Group").implement({
+const GroupType = builder.node(builder.objectRef<GroupModel>("Group"), {
+  id: { resolve: (group) => group.id },
   description: "Represents permission group data.",
   fields: (t) => ({
-    id: t.id({ resolve: (group) => toGlobalId("Group", group.id) }),
     name: t.exposeString("name"),
     permissions: t.field({
       type: [PermissionType],

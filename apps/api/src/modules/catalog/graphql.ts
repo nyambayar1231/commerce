@@ -22,15 +22,13 @@ type CategoryModel = CategoryRow & { level?: number };
 
 const CategoryType = builder.objectRef<CategoryModel>("Category");
 
-CategoryType.implement({
+// A Relay node (implements Node), as Saleor's Category.
+builder.node(CategoryType, {
+  id: { resolve: (category) => category.id, description: "The ID of the category." },
   description:
     "Represents a single category of products. Categories allow to organize products in a " +
     "tree-hierarchies which can be used for navigation in the storefront.",
   fields: (t) => ({
-    id: t.id({
-      description: "The ID of the category.",
-      resolve: (category) => toGlobalId("Category", category.id),
-    }),
     name: t.exposeString("name", { description: "Name of category" }),
     slug: t.exposeString("slug", { description: "Slug of the category." }),
     description: t.field({
