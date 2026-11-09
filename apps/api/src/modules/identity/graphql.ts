@@ -1,6 +1,15 @@
 import { builder } from "../../graphql/builder.ts";
 import { clearedSessionCookie, sessionCookie } from "../../graphql/context.ts";
-import { authenticate, createSession, revokeSession, type SessionUser } from "./index.ts";
+import {
+  authenticate,
+  createSession,
+  getEffectivePermissions,
+  PERMISSION_NAMES,
+  PERMISSIONS,
+  type Permission,
+  revokeSession,
+  type SessionUser,
+} from "./index.ts";
 
 // Login, logout and the current user. Names and shapes follow Saleor
 // (saleor/graphql/account/mutations/authentication/create_token.py, saleor/graphql/account/types.py)
@@ -10,6 +19,26 @@ import { authenticate, createSession, revokeSession, type SessionUser } from "./
 // Saleor's global ID: base64("User:<pk>").
 const userGlobalId = (id: string) => Buffer.from(`User:${id}`).toString("base64");
 
+// Saleor's PermissionEnum, limited to our closed set (ARCHITECTURE.md §8).
+const PermissionEnum = builder.enumType("PermissionEnum", { values: PERMISSIONS });
+
+// Saleor's UserPermission (saleor/graphql/account/types.py); its `sourcePermissionGroups` arrives
+// with the permission group type (M1.2.3).
+const UserPermissionType = builder.objectRef<Permission>("UserPermission").implement({
+  description: "Represents user's permissions.",
+  fields: (t) => ({
+    code: t.field({
+      type: PermissionEnum,
+      description: "Internal code for permission.",
+      resolve: (code) => code,
+    }),
+    name: t.string({
+      description: "Describe action(s) allowed to do by permission.",
+      resolve: (code) => PERMISSION_NAMES[code],
+    }),
+  }),
+});
+
 const UserType = builder.objectRef<SessionUser>("User").implement({
   description: "Represents user data.",
   fields: (t) => ({
@@ -18,6 +47,15 @@ const UserType = builder.objectRef<SessionUser>("User").implement({
     firstName: t.exposeString("firstName"),
     lastName: t.exposeString("lastName"),
     isStaff: t.exposeBoolean("isStaff", { description: "Determine if the user is a staff admin." }),
+    // Nullable list of non-null items, as Saleor's NonNullList.
+    userPermissions: t.field({
+      type: [UserPermissionType],
+      nullable: { list: true, items: false },
+      description: "List of user's permissions.",
+      // The current user's are already cached on the request.
+      resolve: (user, _args, ctx) =>
+        user.id === ctx.user?.id ? ctx.permissions() : getEffectivePermissions(ctx.db, user.id),
+    }),
   }),
 });
 

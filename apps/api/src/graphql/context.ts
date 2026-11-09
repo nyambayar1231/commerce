@@ -1,5 +1,10 @@
 import type { Db } from "@commerce/db";
-import { getSessionUser, type SessionUser } from "../modules/identity/index.ts";
+import {
+  getEffectivePermissions,
+  getSessionUser,
+  type Permission,
+  type SessionUser,
+} from "../modules/identity/index.ts";
 
 // What every resolver receives as its third argument. Created once per request (see app.ts).
 export interface Context {
@@ -8,6 +13,9 @@ export interface Context {
   user: SessionUser | null;
   // The token the request authenticated with (needed to revoke it on logout), or null.
   sessionToken: string | null;
+  // The user's effective permissions, loaded on first use and then reused for the request (as
+  // Saleor caches `User.effective_permissions`). Empty for anonymous requests.
+  permissions: () => Promise<readonly Permission[]>;
   // Adds a `Set-Cookie` header to this request's response (app.ts).
   setCookie: (header: string) => void;
 }
@@ -39,7 +47,17 @@ export function clearedSessionCookie(): string {
 export async function createContext(db: Db, request: Request): Promise<Omit<Context, "setCookie">> {
   const sessionToken = sessionTokenOf(request);
   const user = sessionToken === null ? null : await getSessionUser(db, sessionToken);
-  return { db, user, sessionToken: user === null ? null : sessionToken };
+  let permissions: Promise<readonly Permission[]> | undefined;
+  return {
+    db,
+    user,
+    sessionToken: user === null ? null : sessionToken,
+    permissions: () => {
+      if (user === null) return Promise.resolve([]);
+      permissions ??= getEffectivePermissions(db, user.id);
+      return permissions;
+    },
+  };
 }
 
 function cookieValue(header: string | null, name: string): string | null {

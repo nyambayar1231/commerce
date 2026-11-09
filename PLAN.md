@@ -578,7 +578,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 | Step | What | Status |
 |---|---|---|
 | M1.2.1 | Permission enum (ARCHITECTURE §8) + `permission_group`, group↔permission, user↔group tables; effective permissions = union (superuser = all) + tests | Done |
-| M1.2.2 | `requirePermission(ctx, …)`; `me { userPermissions }`; contract-test pattern for guarded fields | Approved |
+| M1.2.2 | `requirePermission(ctx, …)`; `me { userPermissions }`; contract-test pattern for guarded fields | Done |
 | M1.2.3 | Minimal staff API: `permissionGroupCreate/Update`, `staffCreate`, each guarded by `MANAGE_STAFF` + tests | Approved |
 | M1.2.4 | Dashboard: sidebar items filtered by permission, route guard + Saleor's not-allowed page | Approved |
 
@@ -594,6 +594,22 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   no cross-table CHECK. 8 real-Postgres tests (union/dedup/order, superuser, inactive, unknown,
   group delete cascades, enum rejects an unknown code, duplicate/empty name). `verify.sh` all PASS;
   dev DB migrated. Implemented by the lead (OpenCode still out of funds).
+- **Result (M1.2.2):** `apps/api/src/graphql/permissions.ts`: `requirePermission(ctx, ...codes)`,
+  called at the top of a resolver; as Saleor, any one of the codes suffices, and a denial is a
+  top-level GraphQL error with Saleor's message ("To access this path, you need one of the following
+  permissions: …") and `extensions.exception.code = "PermissionDenied"`. Non-staff users are always
+  denied (defense in depth for the staff-only groups invariant). `ctx.permissions()` loads the
+  user's effective permissions once per request. GraphQL: `PermissionEnum`, `UserPermission { code
+  name }` (Saleor's names), `User.userPermissions: [UserPermission!]`; `sourcePermissionGroups`
+  comes with the group type (M1.2.3). Contract-test helpers in `apps/api/test/graphql.ts`
+  (`createTestClient`, `createStaff(db, permissions)`, `expectPermissionDenied`), with the pattern
+  for a guarded field in its header; the first guarded fields (M1.2.3) use them. **Bug found and
+  fixed:** under Vitest our code loaded graphql's CommonJS build and Yoga its ESM build (Node's
+  `module-sync` condition), so Yoga masked every GraphQLError we throw as "Unexpected error." in
+  tests only (the server under Node was fine); `vitest.config.ts` now resolves with `module-sync`.
+  11 new tests (requirePermission: anonymous, lacking, granted, any-of, superuser, non-staff, cached
+  once; the error survives Yoga's masking; `me.userPermissions` for groups/none/superuser).
+  `verify.sh` all PASS after commit. Implemented by the lead (OpenCode still out of funds).
 
 ---
 

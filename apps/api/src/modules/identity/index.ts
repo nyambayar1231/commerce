@@ -4,7 +4,7 @@
 export type { LoginResult } from "./login.ts";
 export { authenticate } from "./login.ts";
 export type { Permission } from "./permissions.ts";
-export { getEffectivePermissions, PERMISSIONS } from "./permissions.ts";
+export { getEffectivePermissions, PERMISSION_NAMES, PERMISSIONS } from "./permissions.ts";
 export type { CreatedSession, SessionUser } from "./sessions.ts";
 export { createSession, getSessionUser, revokeSession } from "./sessions.ts";
 export type { CreateSuperuserInput } from "./users.ts";

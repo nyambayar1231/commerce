@@ -9,6 +9,18 @@ import { eq } from "drizzle-orm";
 export type Permission = schema.Permission;
 export const PERMISSIONS: readonly Permission[] = schema.PERMISSIONS;
 
+// Saleor's display names (the `permissions` Meta of each owning model, e.g.
+// ../saleor-core/saleor/product/models.py), returned as `UserPermission.name`.
+export const PERMISSION_NAMES: Record<Permission, string> = {
+  MANAGE_PRODUCTS: "Manage products.",
+  MANAGE_ORDERS: "Manage orders.",
+  MANAGE_CHECKOUTS: "Manage checkouts",
+  MANAGE_USERS: "Manage customers.",
+  MANAGE_STAFF: "Manage staff.",
+  MANAGE_SETTINGS: "Manage settings.",
+  MANAGE_SHIPPING: "Manage shipping.",
+};
+
 /** The user's effective permissions in enum order; empty for an unknown or inactive user. */
 export async function getEffectivePermissions(db: Executor, userId: string): Promise<Permission[]> {
   const [user] = await db

@@ -43,6 +43,16 @@ type Mutation {
   ): CreateToken!
 }
 
+enum PermissionEnum {
+  MANAGE_CHECKOUTS
+  MANAGE_ORDERS
+  MANAGE_PRODUCTS
+  MANAGE_SETTINGS
+  MANAGE_SHIPPING
+  MANAGE_STAFF
+  MANAGE_USERS
+}
+
 type Query {
   """Return the currently authenticated user."""
   me: User
@@ -71,4 +81,16 @@ type User {
   """Determine if the user is a staff admin."""
   isStaff: Boolean!
   lastName: String!
+
+  """List of user's permissions."""
+  userPermissions: [UserPermission!]
+}
+
+"""Represents user's permissions."""
+type UserPermission {
+  """Internal code for permission."""
+  code: PermissionEnum!
+
+  """Describe action(s) allowed to do by permission."""
+  name: String!
 }
