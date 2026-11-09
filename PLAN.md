@@ -89,7 +89,7 @@ starts with the create flow and the list follows.
 
 | Step | What | Status |
 |---|---|---|
-| M2.1.1 | `category` table + migration (`parent_id` FK `ON DELETE CASCADE`, unique `slug`, `description jsonb` EditorJS); `catalog` module service: create/update/delete, slug from name (unique), cycle rejection (recursive CTE) + real-Postgres tests | Approved |
+| M2.1.1 | `category` table + migration (`parent_id` FK `ON DELETE CASCADE`, unique `slug`, `description jsonb` EditorJS); `catalog` module service: create/update/delete, slug from name (unique), no re-parenting (as Saleor) + real-Postgres tests | Done |
 | M2.1.2 | `category(id\|slug)` query (`id name slug description parent level`), `categoryCreate(input, parent)`, `categoryUpdate(id, input)`, `categoryDelete(id)` with Saleor's `ProductError`, guarded by `MANAGE_PRODUCTS`; contract tests | Approved |
 | M2.1.3 | Dashboard: Categories page header ("All Categories" + "Create category"), `?action=create` URL, Saleor's `CreateCategoryDialog` (DashboardModal, name + plain-text description → EditorJS JSON, Back/Create), notifier toast "Category created", navigate to `/categories/:id` | Approved |
 | M2.1.4 | Dashboard: category detail page as Saleor's `CategoryUpdatePage`: top nav, General Information (name, description), Subcategories card + "Create subcategory" (same dialog with parent), Savebar (Back/Save/Delete), ExitFormDialog on dirty leave, field errors, delete dialog; background image, Products card and SEO wait (M2.5 / M2.2 / later) | Approved |
