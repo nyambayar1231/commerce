@@ -92,6 +92,15 @@ brief_copy="$AI_DIR/briefs/$name.md"
 
 writes=0; role_writes "$role" && writes=1
 config_content="$("$JQ" -cn --arg a "$role" --arg m "$model" '{default_agent: $a, model: $m}')"
+# OPENCODE_CONFIG_DIR replaces the global OpenCode config (verified), so the browse MCP server
+# that `browse install` put there is not loaded. Only the browser-tester gets it, here.
+if [[ "$role" == browser-tester ]]; then
+  BROWSE="$(resolve_bin browse)"
+  "$BROWSE" status 2>&1 | grep -q 'Extension: connected' \
+    || die "browse is not paired with Chrome: run browse pair and enter the code in the extension's Options"
+  config_content="$(echo "$config_content" | "$JQ" -c --arg b "$BROWSE" \
+    '. + {mcp: {servers: {browse: {type: "local", command: [$b, "mcp"]}}}}')"
+fi
 
 launch="$("$HC" run --bg --json --name "$name" --cwd "$cwd" \
   --label "commerce.ai=1" --label "commerce.ai.role=$role" --label "commerce.ai.writes=$writes" \

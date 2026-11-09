@@ -9,7 +9,7 @@ WORKTREE_BASE="${COMMERCE_WORKTREE_BASE:-$(dirname "$REPO_ROOT")/commerce-wt}"
 AI_DIR="$REPO_ROOT/.ai"   # briefs, evidence, locks (gitignored)
 
 # The worker roles; each is a file in .opencode/agents/<role>.md.
-ROLES="backend-researcher backend-implementer dashboard-researcher dashboard-implementer test-debugger code-reviewer security-reviewer"
+ROLES="backend-researcher backend-implementer dashboard-researcher dashboard-implementer test-debugger code-reviewer security-reviewer browser-tester"
 
 die() { echo "error: $*" >&2; exit 1; }
 
@@ -48,6 +48,7 @@ model_var_for_role() {
     dashboard-implementer) echo OC_MODEL_DASHBOARD ;;
     test-debugger) echo OC_MODEL_TEST ;;
     code-reviewer|security-reviewer) echo OC_MODEL_REVIEW ;;
+    browser-tester) echo OC_MODEL_BROWSER ;;
     *) return 1 ;;
   esac
 }

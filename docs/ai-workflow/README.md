@@ -20,6 +20,7 @@ Versions this was built and verified against (2026-11-09): Herdr core `hc` 0.1.1
 | Test & debugging engineer | OpenCode Go | `.opencode/agents/test-debugger.md` | app code, not migrations | Reproduces, finds root cause, fixes, adds tests |
 | Code reviewer (first pass) | OpenCode Go, a different model from the implementer | `.opencode/agents/code-reviewer.md` | no | Reviews the actual diff for correctness, scope, conventions |
 | Security reviewer (first pass) | OpenCode Go | `.opencode/agents/security-reviewer.md` | no | Reviews the actual diff for authz, injection, secrets, commerce integrity |
+| Browser tester | OpenCode Go + browse (your Chrome) | `.opencode/agents/browser-tester.md` | no | Clicks through the local apps, measures, screenshots to `/tmp/commerce-browse/<name>/`; never credentials, only localhost origins |
 | Final code review | Claude Opus subagent | `.claude/agents/opus-code-reviewer.md` | no | Critical review before a step is reported done |
 | Final security review | Claude Opus subagent | `.claude/agents/opus-security-reviewer.md` | no | Required for auth, permissions, checkout, payments, orders, raw SQL, dependencies |
 
@@ -137,6 +138,34 @@ lead: hc wait --children any → collect.sh → verify.sh → reviewers → repo
   example a dependency `ask`); the lead must ask you, never force it.
 - **Claude Opus** reviews run as Claude Code subagents of the lead (`.claude/agents/`), not in
   Herdr.
+
+## Browser work: OpenCode browse first, Claude in Chrome when needed
+
+Browser sessions are token-heavy (screenshots, page reads), so they run on OpenCode Go by
+default, through [browse](https://opencode.ai/browse), which drives your own Chrome:
+
+- **browser-tester (OpenCode + browse), the default:** click-throughs, screenshots, measuring
+  layout or styles, console checks, regression passes, and repeating the same check across
+  widths and themes. The lead writes a brief (`prompts/browser.md`), runs
+  `scripts/ai/spawn.sh browser-tester <name> <brief>`, and reads the report and screenshots.
+- **Claude in Chrome (the lead itself), the exception:** a quick look the lead must judge
+  visually, debugging the automation itself, or anything the browser-tester reported as
+  `blocked`.
+
+Setup (once): `curl -fsSL https://opencode.ai/browse/install | bash`, add the browse extension in
+Chrome, and pair it (`browse pair`, then enter the code in the extension's Options).
+`scripts/ai/doctor.sh` checks that browse is paired.
+
+How it is wired, verified on 2026-11-09:
+- `browse install` adds its MCP server to the **global** OpenCode config, but workers run with
+  `OPENCODE_CONFIG_DIR=<repo>/.opencode`, which replaces the global config. So `spawn.sh` adds
+  the browse server only when it starts a `browser-tester`. Other workers never load it.
+- Every other role also denies `browse_*`, plus OpenCode's `execute` tool, which can call MCP
+  tools from code and otherwise bypasses per-tool rules. The `browser` permission alone does
+  **not** gate browse.
+- The browser-tester may not use browse's `secrets_*`, `network`, `settings` or
+  `flight_recorder` tools, cannot edit files or run commands, and must restrict its session to
+  the local origins in its brief.
 
 ## What the guardrails are, and are not
 

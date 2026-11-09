@@ -34,6 +34,10 @@ permissions:
   - { action: shell, resource: "*>*", effect: deny }
   - { action: shell, resource: "*`*", effect: deny }
   - { action: shell, resource: "*$(*", effect: deny }
+  # No browser: browse (MCP) tools, and OpenCode's execute, which can call them from code.
+  - { action: browser, resource: "*", effect: deny }
+  - { action: browse_*, resource: "*", effect: deny }
+  - { action: execute, resource: "*", effect: deny }
   # Secrets: always last.
   - { action: read, resource: "*.env", effect: deny }
   - { action: read, resource: "*.env.*", effect: deny }

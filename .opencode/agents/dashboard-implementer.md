@@ -70,6 +70,10 @@ permissions:
   - { action: shell, resource: "npm *", effect: deny }
   - { action: shell, resource: "npx *", effect: deny }
   - { action: shell, resource: "yarn *", effect: deny }
+  # No browser: browse (MCP) tools, and OpenCode's execute, which can call them from code.
+  - { action: browser, resource: "*", effect: deny }
+  - { action: browse_*, resource: "*", effect: deny }
+  - { action: execute, resource: "*", effect: deny }
   # Secrets: always last.
   - { action: edit, resource: ".env*", effect: deny }
   - { action: edit, resource: "**/.env*", effect: deny }

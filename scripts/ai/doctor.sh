@@ -49,7 +49,7 @@ if [[ -f "$REPO_ROOT/.opencode/team.env" ]]; then
   # shellcheck disable=SC1091
   set -a; source "$REPO_ROOT/.opencode/team.env"; set +a
   available="$("$OC" models 2>/dev/null)"
-  for var in OC_MODEL_RESEARCH OC_MODEL_BACKEND OC_MODEL_DASHBOARD OC_MODEL_TEST OC_MODEL_REVIEW; do
+  for var in OC_MODEL_RESEARCH OC_MODEL_BACKEND OC_MODEL_DASHBOARD OC_MODEL_TEST OC_MODEL_REVIEW OC_MODEL_BROWSER; do
     val="${!var:-}"
     if [[ -z "$val" ]]; then fail "$var is empty (scripts/ai/models.sh)"; continue; fi
     if ! grep -qxF "${val%%#*}" <<<"$available"; then fail "$var=$val is not in opencode models"; continue; fi
@@ -84,6 +84,25 @@ else
       fail "agent $r: not loaded or mode '$mode' (must be primary)"
     fi
   done
+fi
+
+# --- browse (OpenCode drives Chrome; only the browser-tester role may use it)
+if [[ -n "$agents" ]]; then
+  for r in $ROLES; do
+    eff="$(echo "$agents" | "$JQ" -r --arg r "$r" '[.[] | select(.id == $r) | .permissions[] | select(.action == "browse_*")] | last | .effect // "none"')"
+    if [[ "$r" == browser-tester ]]; then
+      if [[ "$eff" == allow ]]; then pass "agent $r may use browse"; else fail "agent $r: browse_* is '$eff', expected allow"; fi
+    elif [[ "$eff" == deny ]]; then :; else fail "agent $r: browse_* is '$eff', expected deny"; fi
+  done
+  pass "browse_* denied for every role except browser-tester"
+fi
+BROWSE="$(resolve_bin browse 2>/dev/null)"
+if [[ -z "$BROWSE" ]]; then
+  warn "browse not installed: curl -fsSL https://opencode.ai/browse/install | bash (browser-tester needs it)"
+else
+  bstatus="$("$BROWSE" status 2>&1 | sed 's/\x1b\[[0-9;]*m//g')"
+  if grep -q 'Extension: connected' <<<"$bstatus"; then pass "browse $("$BROWSE" --version) paired with Chrome"
+  else warn "browse $("$BROWSE" --version) installed but Chrome is not paired: run browse pair, enter the code in the extension's Options"; fi
 fi
 
 # --- Claude Code agents

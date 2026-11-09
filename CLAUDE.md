@@ -63,6 +63,10 @@ Claude Code is the orchestrator and architect; implementation is delegated to Op
   `opus-security-reviewer` subagents).
 - Architecture decisions stay with the lead and the owner, never with a worker.
 - Never commit, push or deploy; the owner lands changes.
+- Browser work goes to the OpenCode `browser-tester` (browse drives the owner's Chrome) to save
+  Claude tokens: click-throughs, screenshots, measurements, console and regression checks. Use
+  Claude in Chrome yourself only for a quick look you must judge visually, or when the
+  browser-tester is blocked. Details: `docs/ai-workflow/README.md` → "Browser work".
 - Phase order: API → Admin dashboard (matching Saleor, wired to the real API) → QA →
   Storefront. Storefront work starts only after the owner explicitly confirms API and Admin are
   complete.
