@@ -177,6 +177,15 @@ type Logout {
   errors: [AccountError!]!
 }
 
+"""Represents amount of money in specific currency."""
+type Money {
+  """Amount of money."""
+  amount: Float!
+
+  """Currency code."""
+  currency: String!
+}
+
 type Mutation {
   """
   Deletes categories.
@@ -378,6 +387,62 @@ input PermissionGroupUpdateInput {
   removeUsers: [ID!]
 }
 
+"""Represents an individual item for sale in the storefront."""
+type Product implements Node {
+  """Category of the product."""
+  category: Category
+
+  """The date and time when the product was created."""
+  created: DateTime!
+
+  """Default variant of the product."""
+  defaultVariant: ProductVariant
+
+  """
+  Description of the product.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+
+  """The ID of the product."""
+  id: ID!
+
+  """Indicates if the product is published."""
+  isPublished: Boolean!
+
+  """The minimal price of a product's variants."""
+  minimalVariantPrice: Money
+
+  """Name of the product."""
+  name: String!
+
+  """The product publication date time."""
+  publishedAt: DateTime
+
+  """Slug of the product."""
+  slug: String!
+
+  """The date and time when the product was last updated."""
+  updatedAt: DateTime!
+
+  """List of variants for the product."""
+  variants: [ProductVariant!]!
+}
+
+type ProductCountableConnection {
+  edges: [ProductCountableEdge!]!
+  pageInfo: PageInfo!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type ProductCountableEdge {
+  cursor: String!
+  node: Product!
+}
+
 """Represents an error in the input of a mutation."""
 type ProductError {
   """The error code."""
@@ -398,6 +463,54 @@ enum ProductErrorCode {
   NOT_FOUND
   REQUIRED
   UNIQUE
+}
+
+input ProductOrder {
+  """Specifies the direction in which to sort products."""
+  direction: OrderDirection!
+
+  """Sort products by the selected field."""
+  field: ProductOrderField
+}
+
+enum ProductOrderField {
+  """Sort products by creation date."""
+  CREATED_AT
+
+  """Sort products by update date."""
+  LAST_MODIFIED_AT
+
+  """Sort products by name."""
+  NAME
+
+  """Sort products by price."""
+  PRICE
+
+  """Sort products by publication status."""
+  PUBLISHED
+}
+
+"""Represents a version of a product such as different size or color."""
+type ProductVariant implements Node {
+  """The ID of the product variant."""
+  id: ID!
+
+  """The name of the product variant."""
+  name: String!
+
+  """The price of the product variant."""
+  price: Money!
+
+  """The product to which the variant belongs."""
+  product: Product!
+
+  """The SKU (stock keeping unit) of the product variant."""
+  sku: String
+
+  """
+  Determines if the inventory of this variant should be tracked. If false, the quantity won't change when customers buy this item.
+  """
+  trackInventory: Boolean!
 }
 
 type Query {
@@ -429,6 +542,33 @@ type Query {
 
   """Return the currently authenticated user."""
   me: User
+
+  """
+  Look up a product by ID or slug. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
+  """
+  product(
+    """ID of the product."""
+    id: ID
+
+    """Slug of the product."""
+    slug: String
+  ): Product
+
+  """
+  List of the shop's products. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
+  """
+  products(
+    after: String
+    before: String
+    first: Int
+    last: Int
+
+    """Search products."""
+    search: String
+
+    """Sort products."""
+    sortBy: ProductOrder
+  ): ProductCountableConnection
 
   """Return information about the shop."""
   shop: Shop!

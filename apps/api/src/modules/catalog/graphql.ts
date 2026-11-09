@@ -27,7 +27,7 @@ const PERMISSION = "Requires one of the following permissions: MANAGE_PRODUCTS."
 // Rows from the list query also carry their subcategory count.
 type CategoryModel = CategoryRow & { level?: number; subcategoryCount?: number };
 
-const CategoryType = builder.objectRef<CategoryModel>("Category");
+export const CategoryType = builder.objectRef<CategoryModel>("Category");
 
 // Saleor's CategoryCountableConnection / CategoryCountableEdge, shared by `categories` and
 // `Category.children`.
@@ -143,7 +143,7 @@ builder.node(CategoryType, {
   }),
 });
 
-const OrderDirection = builder.enumType("OrderDirection", {
+export const OrderDirection = builder.enumType("OrderDirection", {
   values: {
     ASC: { description: "Specifies an ascending sort order." },
     DESC: { description: "Specifies a descending sort order." },

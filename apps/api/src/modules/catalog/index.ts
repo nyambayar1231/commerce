@@ -25,4 +25,13 @@ export type {
 } from "./categoryList.ts";
 export { InvalidCursorError, listCategories } from "./categoryList.ts";
 export { DEMO_CATEGORIES, seedDemoCatalog } from "./demoCatalog.ts";
+export type {
+  ProductListArgs,
+  ProductListRow,
+  ProductPage,
+  ProductSortField,
+} from "./productList.ts";
+export { listProducts } from "./productList.ts";
+export type { ProductRow, ProductVariantRow } from "./products.ts";
+export { getMinimalVariantPrice, getProduct, getProductVariants, toMoney } from "./products.ts";
 export { slugify } from "./slug.ts";

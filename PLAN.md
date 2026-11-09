@@ -106,7 +106,7 @@ Open items are listed under "Open items from finished milestones".
 | Step | What | Status |
 |---|---|---|
 | M2.2.1 | `product` + `product_variant` tables + migration (ARCHITECTURE §3; `category_id` nullable, `SET NULL`); `Money` GraphQL type via `@commerce/contracts` | Done |
-| M2.2.2 | `products` connection (sort NAME / PRICE / CREATED_AT / PUBLISHED, `search`), `product(id\|slug)`; unpublished only for `MANAGE_PRODUCTS`; contract tests | Proposed |
+| M2.2.2 | `products` connection (sort NAME / PRICE / CREATED_AT / PUBLISHED, `search`), `product(id\|slug)`; unpublished only for `MANAGE_PRODUCTS`; contract tests | Done |
 | M2.2.3 | DataLoaders for `Product.variants`, `Product.category`, `Category.products`; a test that counts queries (no N+1) | Proposed |
 | M2.2.4 | Category: Products tab + `PRODUCT_COUNT` sort (finishes M2.1's *) | Proposed |
 | M2.2.5 | Product list grid (`ProductListDatagrid` columns: name+thumbnail placeholder, category, price, availability), sort, pagination | Proposed |
