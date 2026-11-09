@@ -24,9 +24,16 @@ export function createApp(db: Db, { allowedOrigins }: AppOptions) {
   if (allowedOrigins.length === 0 || allowedOrigins.includes("*")) {
     throw new Error("allowedOrigins must list explicit origins");
   }
+  // Cookies resolvers set during a request, written onto its response by the plugin below.
+  const cookiesByRequest = new WeakMap<Request, string[]>();
+
   return createYoga<Record<string, unknown>, Context>({
     schema,
-    context: ({ request }) => createContext(db, request),
+    context: async ({ request }) => {
+      const cookies: string[] = [];
+      cookiesByRequest.set(request, cookies);
+      return { ...(await createContext(db, request)), setCookie: (c) => cookies.push(c) };
+    },
     cors: (request) => {
       const origin = request.headers.get("origin");
       return origin !== null && allowedOrigins.includes(origin)
@@ -49,6 +56,13 @@ export function createApp(db: Db, { allowedOrigins }: AppOptions) {
       // CSRF: rejects requests a browser could send cross-site without a CORS preflight
       // (GET, or POST with a form/text content type) unless they carry this header.
       useCSRFPrevention({ requestHeaders: ["x-graphql-yoga-csrf"] }),
+      {
+        onResponse: ({ request, response }) => {
+          for (const cookie of cookiesByRequest.get(request) ?? []) {
+            response.headers.append("set-cookie", cookie);
+          }
+        },
+      },
     ],
   });
 }

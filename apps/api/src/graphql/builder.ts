@@ -9,3 +9,4 @@ export const builder = new SchemaBuilder<{ Context: Context; DefaultFieldNullabi
 });
 
 builder.queryType({});
+builder.mutationType({});

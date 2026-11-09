@@ -14,6 +14,11 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
+export enum AccountErrorCode {
+  Inactive = 'INACTIVE',
+  InvalidCredentials = 'INVALID_CREDENTIALS'
+}
+
 export type ShopInfoQueryVariables = Exact<{ [key: string]: never; }>;
 
 

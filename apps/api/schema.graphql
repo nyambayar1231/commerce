@@ -1,4 +1,52 @@
+"""Represents errors in account mutations."""
+type AccountError {
+  code: AccountErrorCode!
+
+  """
+  Name of a field that caused the error. `null` if it isn't tied to one field.
+  """
+  field: String
+
+  """The error message."""
+  message: String!
+}
+
+enum AccountErrorCode {
+  INACTIVE
+  INVALID_CREDENTIALS
+}
+
+"""
+Log in: on success, sets the HttpOnly session cookie and returns the user.
+"""
+type CreateToken {
+  errors: [AccountError!]!
+  user: User
+}
+
+"""Log out: ends the current session and clears the cookie."""
+type Logout {
+  errors: [AccountError!]!
+}
+
+type Mutation {
+  """End the current session. Succeeds when there is none."""
+  logout: Logout!
+
+  """Log in with email and password."""
+  tokenCreate(
+    """Email of a user."""
+    email: String!
+
+    """Password of a user."""
+    password: String!
+  ): CreateToken!
+}
+
 type Query {
+  """Return the currently authenticated user."""
+  me: User
+
   """Return information about the shop."""
   shop: Shop!
 }
@@ -12,4 +60,15 @@ type Shop {
 
   """Shop's name."""
   name: String!
+}
+
+"""Represents user data."""
+type User {
+  email: String!
+  firstName: String!
+  id: ID!
+
+  """Determine if the user is a staff admin."""
+  isStaff: Boolean!
+  lastName: String!
 }

@@ -487,7 +487,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 | M1.1.2 | `pnpm cli createsuperuser` (interactive, hashes the password) | Done |
 | M1.1.3 | `session` table; session service: create (256-bit token, SHA-256 stored), look up with sliding 14-day expiry + hard cap, revoke; real-Postgres tests | Done |
 | M1.1.4 | Request context: cookie or `Authorization: Bearer` → `ctx.user`; CORS restricted to the dashboard origin with credentials (the M0.3.10 to-do) | Done |
-| M1.1.5 | GraphQL login/logout/`me` (name per decision) + contract tests: wrong password, inactive user, expired session, logout revocation, uniform error | Approved |
+| M1.1.5 | GraphQL login/logout/`me` (name per decision) + contract tests: wrong password, inactive user, expired session, logout revocation, uniform error | Done |
 | M1.1.6 | Dashboard: auth provider (`me`), login page adapted from Saleor's `src/auth/components/LoginPage`, redirect to login when signed out | Approved |
 | M1.1.7 | Dashboard: Saleor's account row in the sidebar footer, logout in the user menu; browser check of login/logout | Approved |
 
@@ -526,6 +526,16 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   with a per-request origin check). 11 new tests; API 42 passed; `verify.sh` all PASS; a real
   server on :4100: preflight from :5173 allowed, from another origin no headers, anonymous
   `shop` query still works. Implemented by the lead (OpenCode out of funds).
+- **Result (M1.1.5):** `tokenCreate(email, password)`, `logout`, `me` (`identity/graphql.ts`, login
+  rules in `identity/login.ts`). Success sets the `session` cookie (`HttpOnly; Secure; SameSite=Lax`,
+  expires at the session's 30-day cap) through a small `onResponse` plugin in `app.ts`
+  (`ctx.setCookie`); no token in the body. Unknown email / no password / wrong password / password
+  over 128 characters → one `INVALID_CREDENTIALS` (Saleor's message), with a dummy argon2id verify
+  so timing doesn't reveal which emails exist (the M1.1.1 carry-over); `INACTIVE` only with the
+  right password. A new login revokes the request's previous session. `User { id email firstName
+  lastName isStaff }` with Saleor-style global ids (`base64("User:<uuid>")`). Deviations recorded in
+  ARCHITECTURE §4 (no token fields; `logout` is ours), §7 updated. 10 contract tests; API 52 passed;
+  `verify.sh` all PASS. Implemented by the lead (OpenCode out of funds).
 
 ### M1.2 Permission groups & guards
 - **Objective:** staff permissions enforced by API, reflected in dashboard UX.

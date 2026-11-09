@@ -1,6 +1,7 @@
 import { builder } from "./builder.ts";
 
 // Importing a module's graphql.ts registers its types and fields on the builder.
+import "../modules/identity/graphql.ts";
 import "../modules/shop/graphql.ts";
 
 export const schema = builder.toSchema();

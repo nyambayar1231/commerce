@@ -8,6 +8,8 @@ export interface Context {
   user: SessionUser | null;
   // The token the request authenticated with (needed to revoke it on logout), or null.
   sessionToken: string | null;
+  // Adds a `Set-Cookie` header to this request's response (app.ts).
+  setCookie: (header: string) => void;
 }
 
 // Name of the HttpOnly cookie holding the session token (ADR-0006). Set by login in M1.1.5.
@@ -24,7 +26,17 @@ export function sessionTokenOf(request: Request): string | null {
   return cookieValue(request.headers.get("cookie"), SESSION_COOKIE);
 }
 
-export async function createContext(db: Db, request: Request): Promise<Context> {
+// `HttpOnly` keeps it away from JavaScript; `SameSite=Lax` plus the CSRF header covers cross-site
+// requests; `Secure` (browsers also accept it on http://localhost). ADR-0006.
+export function sessionCookie(token: string, expiresAt: Date): string {
+  return `${SESSION_COOKIE}=${token}; Path=/; Expires=${expiresAt.toUTCString()}; HttpOnly; Secure; SameSite=Lax`;
+}
+
+export function clearedSessionCookie(): string {
+  return `${SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
+}
+
+export async function createContext(db: Db, request: Request): Promise<Omit<Context, "setCookie">> {
   const sessionToken = sessionTokenOf(request);
   const user = sessionToken === null ? null : await getSessionUser(db, sessionToken);
   return { db, user, sessionToken: user === null ? null : sessionToken };

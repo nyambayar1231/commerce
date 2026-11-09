@@ -213,7 +213,8 @@ Saleor stays obvious:
 
 | Ours | Saleor | Reason |
 |---|---|---|
-| *(none yet; added as they are decided, starting M1.1 login)* | | |
+| `tokenCreate` returns `user` and `errors` only, no `token`/`refreshToken`/`csrfToken` | `CreateToken.token`, `refreshToken`, `csrfToken` | The session token travels in an HttpOnly cookie (ADR-0006); returning it would expose it to JavaScript. Scripts read it from `Set-Cookie` and send it as `Authorization: Bearer`. |
+| `logout` mutation | *(none: JWTs expire; `tokensDeactivateAll` revokes all)* | DB sessions can be ended individually; `logout` deletes the current one and clears the cookie. |
 
 **The database** handles:
 - Invariants that must hold under concurrency: unique, foreign-key and `CHECK` constraints.
@@ -327,9 +328,10 @@ PostgreSQL (M5.4).
 
 ## 7. Authentication
 
-- `staffLogin` / `customerLogin` (Saleor merges these into `tokenCreate`; we keep it to a single
-  `tokenCreate`-like `login` mutation if you prefer the Saleor name) verifies the password with
-  argon2id, creates a session row, and sets the cookie *(ADR-0006)*.
+- `tokenCreate(email, password)` (Saleor's name, decided in M1) verifies the password with
+  argon2id, creates a session row, and sets the cookie *(ADR-0006)*. Unknown email, no password and
+  wrong password give the same `INVALID_CREDENTIALS` after the same argon2id work; `INACTIVE` is
+  reported only with the right password, as in Saleor.
 - `logout` deletes the session row. `me` returns the current user and permissions.
 - Sessions expire after a sliding 14 days of inactivity (`last_seen_at`), and `expires_at` puts a
   hard cap on total lifetime.
