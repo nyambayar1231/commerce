@@ -12,9 +12,9 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | M0.1 | Monorepo skeleton & local infrastructure | Done |
 | M0.2 | API skeleton, in 8 small steps (M0.2.1–M0.2.8) | Done |
 | M0.3 | Dashboard shell, in 11 small steps (M0.3.1–M0.3.11) | Done |
-| M1 | Identity: staff auth & permissions | Approved |
+| M1 | Identity: staff auth & permissions | Done |
 | M1.1 | Users, sessions, login/logout/me | Done |
-| M1.2 | Permission groups & guarded API/dashboard | Approved |
+| M1.2 | Permission groups & guarded API/dashboard | Done |
 | M2 | Catalog | Draft |
 | M2.1 | Categories end-to-end (first Glide list + first save-bar form) | Draft |
 | M2.2 | Products & variants API + product list grid | Draft |
@@ -580,7 +580,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 | M1.2.1 | Permission enum (ARCHITECTURE §8) + `permission_group`, group↔permission, user↔group tables; effective permissions = union (superuser = all) + tests | Done |
 | M1.2.2 | `requirePermission(ctx, …)`; `me { userPermissions }`; contract-test pattern for guarded fields | Done |
 | M1.2.3 | Minimal staff API: `permissionGroupCreate/Update`, `staffCreate`, each guarded by `MANAGE_STAFF` + tests | Done |
-| M1.2.4 | Dashboard: sidebar items filtered by permission, route guard + Saleor's not-allowed page | Approved |
+| M1.2.4 | Dashboard: sidebar items filtered by permission, route guard + Saleor's not-allowed page | Done |
 
 - **Result (M1.2.1):** `packages/db/src/schema/identity.ts`: `PERMISSIONS` (the 7 codes of
   ARCHITECTURE §8) as the Postgres enum `permission` (codes can be added, not removed);
@@ -629,6 +629,23 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   21 contract tests in `identity/staff.test.ts`, including the guard contract for all three
   mutations (anonymous, customer, staff without MANAGE_STAFF denied; MANAGE_STAFF allowed).
   `verify.sh` all PASS after commit. Implemented by the lead (OpenCode still out of funds).
+- **Result (M1.2.4):** `fragments/auth.ts` (Saleor's `User` / `UserPermission` fragments, our
+  fields) used by `UserDetails` and `TokenCreate`, so the dashboard has `userPermissions`.
+  `auth/misc.ts` (Saleor's has/any/all helpers); `auth/components/SectionRoute.tsx`: Saleor's
+  guard as an element wrapper (React Router 7 `<Routes>` takes only `<Route>`), default "all",
+  **renders Saleor's NotFound page** when permissions are missing — Saleor has no separate
+  not-allowed page, so the plan's "not-allowed page" is that 404. Route permissions as Saleor's
+  `src/index.tsx`: products/categories MANAGE_PRODUCTS, orders MANAGE_ORDERS, customers any of
+  MANAGE_USERS/ORDERS/STAFF, configuration any of `CONFIGURATION_PERMISSIONS` (MANAGE_STAFF,
+  MANAGE_SETTINGS, MANAGE_SHIPPING: our planned configuration pages; Saleor derives it from its
+  configuration menu), home none. Sidebar items carry the same permissions; Saleor's filter
+  (any-of; a group keeps its permitted children) moved into a pure `filterMenuItemsByPermissions`
+  in `menu/utils.ts` for unit tests. 21 new dashboard tests (helpers, filter, SectionRoute).
+  Browser check (Chrome): staff with only MANAGE_ORDERS sees Home/Orders/Customers in the sidebar;
+  `/products` shows the 404 page; `/orders` opens; console clean; logout works. (The running API
+  on :4000 predated M1.2.2 and was restarted in watch mode with the owner's OK.) Test user and
+  group deleted. `verify.sh` all PASS after commit. Implemented by the OpenCode implementer
+  (DeepSeek V4 Pro, funds back), reviewed and verified by the lead.
 
 ---
 

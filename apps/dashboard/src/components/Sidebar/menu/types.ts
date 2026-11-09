@@ -3,13 +3,15 @@
 import type { Sprinkles } from "@saleor/macaw-ui";
 import type { ReactNode } from "react";
 
+import type { PermissionEnum } from "../../../graphql/types.generated";
+
 export interface SidebarMenuItem {
   label?: string | ReactNode;
   id: string;
   url?: string;
   matchUrls?: string[];
-  /** Saleor types this as `PermissionEnum[]`; ours become typed when permissions exist (M1.2). */
-  permissions?: string[];
+  /** Shown if the user has ANY of these permissions; undefined (or empty) = always shown. */
+  permissions?: PermissionEnum[];
   type: "item" | "itemGroup" | "divider";
   icon?: ReactNode;
   onClick?: () => void;

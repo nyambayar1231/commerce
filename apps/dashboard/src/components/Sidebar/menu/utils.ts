@@ -2,6 +2,7 @@
 // See THIRD_PARTY_LICENSES.md
 import { matchPath } from "react-router";
 
+import type { PermissionEnum } from "../../../graphql/types.generated";
 import type { SidebarMenuItem } from "./types";
 
 // Saleor's version also handles extensions, navigation pins, customer-type shortcuts, draft orders
@@ -56,3 +57,33 @@ export const getRailFlyoutChildren = (group: SidebarMenuItem): SidebarMenuItem[]
       },
     };
   });
+
+/**
+ * Saleor's permission filtering, extracted from useMenuStructure.tsx into a pure function: an
+ * item without permissions is shown; otherwise it is shown if the user has ANY of them; a shown
+ * group keeps only its permitted children.
+ */
+export const filterMenuItemsByPermissions = (
+  items: SidebarMenuItem[],
+  userPermissions: PermissionEnum[],
+): SidebarMenuItem[] => {
+  const isMenuItemPermitted = (menuItem: SidebarMenuItem): boolean => {
+    if (!menuItem.permissions || menuItem.permissions.length < 1) {
+      return true;
+    }
+
+    return menuItem.permissions.some((permission) => userPermissions.includes(permission));
+  };
+
+  return items.reduce((resultItems: SidebarMenuItem[], menuItem: SidebarMenuItem) => {
+    if (!isMenuItemPermitted(menuItem)) {
+      return resultItems;
+    }
+
+    const { children } = menuItem;
+    const filteredChildren = children ? children.filter(isMenuItemPermitted) : undefined;
+
+    resultItems.push({ ...menuItem, children: filteredChildren });
+    return resultItems;
+  }, []);
+};

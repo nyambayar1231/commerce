@@ -1,12 +1,17 @@
 // Adapted from saleor-dashboard: src/components/Sidebar/menu/utils.test.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Only the generic isMenuActive cases and the rail helpers; extension, order-draft,
-// navigation-pin, customer-type and "/dashboard"-prefix cases test code we didn't port
-// (PLAN.md M0.3.5).
+// Only the generic isMenuActive cases, the rail helpers and the permission filter; extension,
+// order-draft, navigation-pin, customer-type and "/dashboard"-prefix cases test code we didn't
+// port (PLAN.md M0.3.5).
 import { describe, expect, it, vi } from "vitest";
 
 import type { SidebarMenuItem } from "./types";
-import { getRailFlyoutChildren, isMenuActive, shouldLinkGroupInFlyout } from "./utils";
+import {
+  filterMenuItemsByPermissions,
+  getRailFlyoutChildren,
+  isMenuActive,
+  shouldLinkGroupInFlyout,
+} from "./utils";
 
 describe("isMenuActive", () => {
   const mockMenuItem: SidebarMenuItem = {
@@ -217,5 +222,70 @@ describe("getRailFlyoutChildren", () => {
     expect(childClick).toHaveBeenCalledTimes(1);
     expect(groupClick).toHaveBeenCalledTimes(1);
     expect(explore?.onClick).toBeUndefined();
+  });
+});
+
+describe("filterMenuItemsByPermissions", () => {
+  const item = (overrides: Partial<SidebarMenuItem>): SidebarMenuItem => ({
+    id: "item",
+    label: "Item",
+    url: "/item/",
+    type: "item",
+    ...overrides,
+  });
+
+  it("keeps items without permissions", () => {
+    // Arrange
+    const items = [item({ id: "home" })];
+
+    // Act & Assert
+    expect(filterMenuItemsByPermissions(items, [])).toEqual(items);
+  });
+
+  it("hides an item whose permissions the user lacks", () => {
+    // Arrange
+    const items = [item({ id: "orders", permissions: ["MANAGE_ORDERS"] })];
+
+    // Act & Assert
+    expect(filterMenuItemsByPermissions(items, ["MANAGE_PRODUCTS"])).toEqual([]);
+  });
+
+  it("keeps an item when the user has any one of its permissions", () => {
+    // Arrange
+    const items = [item({ id: "customers", permissions: ["MANAGE_USERS", "MANAGE_STAFF"] })];
+
+    // Act & Assert
+    expect(filterMenuItemsByPermissions(items, ["MANAGE_STAFF"])).toEqual(items);
+  });
+
+  it("drops a whole group whose permissions the user lacks", () => {
+    // Arrange
+    const group = item({
+      id: "catalog",
+      type: "itemGroup",
+      permissions: ["MANAGE_PRODUCTS"],
+      children: [item({ id: "products" })],
+    });
+
+    // Act & Assert
+    expect(filterMenuItemsByPermissions([group], ["MANAGE_ORDERS"])).toEqual([]);
+  });
+
+  it("drops a group's unpermitted children and keeps the permitted ones", () => {
+    // Arrange
+    const group = item({
+      id: "catalog",
+      type: "itemGroup",
+      permissions: ["MANAGE_PRODUCTS"],
+      children: [
+        item({ id: "products", permissions: ["MANAGE_PRODUCTS"] }),
+        item({ id: "orders", permissions: ["MANAGE_ORDERS"] }),
+      ],
+    });
+
+    // Act & Assert
+    const [catalog] = filterMenuItemsByPermissions([group], ["MANAGE_PRODUCTS"]);
+
+    expect(catalog?.children).toEqual([item({ id: "products", permissions: ["MANAGE_PRODUCTS"] })]);
   });
 });

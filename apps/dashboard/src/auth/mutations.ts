@@ -5,15 +5,13 @@
 // and `logout` is a mutation (ARCHITECTURE.md §4 deviations).
 import { gql } from "@apollo/client";
 
+import { userFragment } from "../fragments/auth";
+
 export const tokenCreateMutation = gql`
   mutation TokenCreate($email: String!, $password: String!) {
     tokenCreate(email: $email, password: $password) {
       user {
-        id
-        email
-        firstName
-        lastName
-        isStaff
+        ...User
       }
       errors {
         field
@@ -22,6 +20,7 @@ export const tokenCreateMutation = gql`
       }
     }
   }
+  ${userFragment}
 `;
 
 export const logoutMutation = gql`
