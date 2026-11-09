@@ -47,26 +47,22 @@ When explaining a pattern, cite the reference file path, e.g.
 7. Report verification faithfully. Failing tests or skipped checks are stated as such.
 8. Prefer small, explicit code over clever abstractions. Every abstraction must earn its place.
 
-## AI team: Claude Code leads, OpenCode Go implements, Herdr runs the terminals
+## AI workflow: Claude Code leads and reviews, one OpenCode implementer writes the code
 
-Claude Code is the orchestrator and architect; implementation is delegated to OpenCode workers
-(`.opencode/agents/`) through `scripts/ai/spawn.sh`. For every development task follow
-`docs/ai-workflow/orchestrator.md`; setup, roles and commands are in
-`docs/ai-workflow/README.md`; worker rules are in `AGENTS.md`. In short:
+Claude Code is the lead and reviewer; all commerce code is written by the single OpenCode Go
+implementer (`.opencode/agents/implementer.md`, DeepSeek V4 Pro) started with
+`scripts/ai/spawn.sh`. For every development task follow `docs/ai-workflow/orchestrator.md`; setup
+and commands are in `docs/ai-workflow/README.md`; the implementer's rules are in `AGENTS.md`.
+In short:
 
-- Investigate, then write a strictly scoped brief (one concept, explicit file list).
-- One writer per working directory; parallel writers get separate worktrees
-  (`scripts/ai/worktree.sh`) and disjoint files, otherwise run sequentially.
-- Never accept a worker's summary: collect the real diff (`scripts/ai/collect.sh`), run the
-  checks yourself (`scripts/ai/verify.sh`), and have the diff reviewed independently (OpenCode
-  `code-reviewer` / `security-reviewer`, then the `opus-code-reviewer` /
-  `opus-security-reviewer` subagents).
-- Architecture decisions stay with the lead and the owner, never with a worker.
-- Never commit, push or deploy; the owner lands changes.
-- Browser work goes to the OpenCode `browser-tester` (browse drives the owner's Chrome) to save
-  Claude tokens: click-throughs, screenshots, measurements, console and regression checks. Use
-  Claude in Chrome yourself only for a quick look you must judge visually, or when the
-  browser-tester is blocked. Details: `docs/ai-workflow/README.md` → "Browser work".
+- Investigate briefly, then write a strictly scoped brief (one concept, explicit file list).
+- Never accept the worker's summary: collect the real diff (`scripts/ai/collect.sh`) and run the
+  checks yourself (`scripts/ai/verify.sh`).
+- Review the diff lightly on Opus: correctness, security, scope. Skip nitpicks. No reviewer agents.
+- Architecture decisions stay with the lead and the owner, never with the worker.
+- One implementer per working directory; use a worktree (`scripts/ai/worktree.sh`) for isolation.
+- Be token-efficient on both sides: OpenCode Go has a limited balance (it ran out on 2026-11-09);
+  limits are not increased when they run out.
 - Phase order: API → Admin dashboard (matching Saleor, wired to the real API) → QA →
   Storefront. Storefront work starts only after the owner explicitly confirms API and Admin are
   complete.
@@ -125,17 +121,17 @@ pnpm schema:print   # regenerate apps/api/schema.graphql (commit it)
 pnpm codegen        # regenerate dashboard GraphQL types from schema.graphql (commit them)
 ```
 
-AI team (details in `docs/ai-workflow/README.md`):
+AI workflow (details in `docs/ai-workflow/README.md`):
 
 ```
-scripts/ai/doctor.sh                                  # verify tools, auth, models, agents
+scripts/ai/doctor.sh [--live]                         # verify tools, auth, model, the agent
 scripts/ai/start.sh                                   # open the Claude Code lead in Herdr
 scripts/ai/worktree.sh add <name>                     # isolated worktree ../commerce-wt/<name>
-scripts/ai/spawn.sh <role> <name> <brief.md>          # start an OpenCode worker with a brief
+scripts/ai/spawn.sh <name> <brief.md>                 # start the implementer with a brief
 scripts/ai/status.sh                                  # workers and worktrees
 scripts/ai/collect.sh <name>                          # evidence: real diff + worker report
 scripts/ai/verify.sh [--quick] [--build] [--dir d]    # lint, typecheck, tests, drift
-scripts/ai/stop.sh <name>|--all                       # end workers (worktrees kept)
+scripts/ai/stop.sh <name>|--all                       # end the implementer (worktrees kept)
 ```
 
 ## Current state

@@ -1,10 +1,10 @@
 # Brief: <short title>
 
-<!-- Template for backend-implementer / dashboard-implementer. Copy to .ai/briefs/<name>.md and
+<!-- Template for the implementer. Copy to .ai/briefs/<name>.md and
      fill every section. Delete these comments. A worker gets nothing but this brief, AGENTS.md
      and CLAUDE.md, so write what it needs. -->
 
-- **Role:** backend-implementer | dashboard-implementer
+- **Role:** implementer
 - **PLAN step:** <e.g. M1.1, approved by the owner on YYYY-MM-DD>
 - **Working directory:** <../commerce-wt/<name> or repo root>
 

@@ -1,212 +1,90 @@
-# AI team workflow
+# AI workflow
 
-How this repo is developed with **Claude Code** (lead) + **OpenCode Go** (workers) +
-**Herdr** (persistent agent terminals). This is the user guide. The step-by-step procedure the
-lead follows for every task is in [`orchestrator.md`](orchestrator.md); worker rules are in
+How this repo is developed with **Claude Code** (lead and reviewer) + **one OpenCode Go
+implementer** + **Herdr** (persistent agent terminals). The per-task procedure the lead follows is
+in [`orchestrator.md`](orchestrator.md); the implementer's rules are in
 [`/AGENTS.md`](../../AGENTS.md).
 
-Versions this was built and verified against (2026-11-09): Herdr core `hc` 0.1.18, OpenCode
-2.2.6, Claude Code with Opus 5.5.
+Built and verified with Herdr core `hc` 0.1.18, OpenCode 2.2.6 and Claude Code (Opus 5.5).
 
-## The team
+## The team (kept small on purpose)
 
-| Role | Runs on | Defined in | Can edit? | Job |
-|---|---|---|---|---|
-| **Orchestrator / architect** | Claude Code (Opus), your session | `CLAUDE.md`, `orchestrator.md` | yes, but delegates code | Investigates, writes scoped briefs, delegates, inspects diffs, runs checks, decides architecture questions with you, writes the final report |
-| Backend researcher | OpenCode Go | `.opencode/agents/backend-researcher.md` | no | Maps `apps/api`, `packages/db` and `../saleor-core` for a task, with citations |
-| Backend implementer | OpenCode Go | `.opencode/agents/backend-implementer.md` | `apps/api`, `packages/*` | Implements one API/DB brief with tests |
-| Dashboard researcher | OpenCode Go | `.opencode/agents/dashboard-researcher.md` | no | Inventories `../saleor-dashboard` against our dashboard and schema |
-| Dashboard implementer | OpenCode Go | `.opencode/agents/dashboard-implementer.md` | `apps/dashboard` | Implements one dashboard brief that matches Saleor and uses our API |
-| Test & debugging engineer | OpenCode Go | `.opencode/agents/test-debugger.md` | app code, not migrations | Reproduces, finds root cause, fixes, adds tests |
-| Code reviewer (first pass) | OpenCode Go, a different model from the implementer | `.opencode/agents/code-reviewer.md` | no | Reviews the actual diff for correctness, scope, conventions |
-| Security reviewer (first pass) | OpenCode Go | `.opencode/agents/security-reviewer.md` | no | Reviews the actual diff for authz, injection, secrets, commerce integrity |
-| Browser tester | OpenCode Go + browse (your Chrome) | `.opencode/agents/browser-tester.md` | no | Clicks through the local apps, measures, screenshots to `/tmp/commerce-browse/<name>/`; never credentials, only localhost origins |
-| Final code review | Claude Opus subagent | `.claude/agents/opus-code-reviewer.md` | no | Critical review before a step is reported done |
-| Final security review | Claude Opus subagent | `.claude/agents/opus-security-reviewer.md` | no | Required for auth, permissions, checkout, payments, orders, raw SQL, dependencies |
+| Role | Runs on | Defined in | Job |
+|---|---|---|---|
+| **Lead** | Claude Code (Opus), your session | `CLAUDE.md`, `orchestrator.md` | Investigates, writes a scoped brief, delegates, reads the diff, runs the checks, reviews lightly, commits, reports |
+| **Implementer** | OpenCode Go, DeepSeek V4 Pro | `.opencode/agents/implementer.md` | Implements one brief (API, DB, dashboard) with tests, in its own working tree; never commits |
 
-Researchers and reviewers are enforced read-only by OpenCode permission rules, not only by
-their prompts. Implementers cannot commit, push, stage, reset or switch branches, cannot edit
-governance or generated files, cannot read `.env`, cannot start other agents, and are blocked
-(`ask`) on dependency changes. See "What the guardrails are" below for their limits.
+History: a larger team (researchers, separate backend/dashboard implementers, test/debug, two
+OpenCode reviewers, a browser tester, two Opus review subagents) ran until 2026-11-09. Several
+OpenCode runs per step used up the OpenCode Go balance, so the owner reduced it to this pair.
+
+The implementer is guardrailed by OpenCode permission rules, not only by its prompt: no commits,
+pushes, staging, resets or branch switches; no `.env`; no edits to governance or generated files or
+to `apps/storefront`; no browser tools; dependency changes stop for the owner (`ask`).
 
 ## One-time setup (manual, by you)
 
-1. **OpenCode Go login.** Check with `opencode auth list` (you should see `OpenCode Go … stored`).
-   If missing: `opencode auth login` and pick OpenCode Go. Credentials stay in OpenCode; nothing
-   in this repo reads or copies them.
-2. **Pick models.** No model ID is committed.
-   ```sh
-   cp .opencode/team.env.example .opencode/team.env   # gitignored
-   scripts/ai/models.sh                               # lists opencode-go/* models
-   $EDITOR .opencode/team.env                         # OC_MODEL_RESEARCH/BACKEND/DASHBOARD/TEST/REVIEW
-   scripts/ai/doctor.sh --live                        # each model must actually answer
-   ```
-   Choose a model family for `OC_MODEL_REVIEW` that differs from both implementers. A model can
-   be listed but unusable on your account (for example region-restricted models need "Global"
-   enabled in the OpenCode console), which is what `--live` catches.
-3. **Herdr.** The Herdr app must be running (it runs the `hc` core). `hc server status` should
-   print JSON.
-4. **Check everything:** `scripts/ai/doctor.sh` must end with `all required checks passed`.
-5. **Commit the infrastructure** (`AGENTS.md`, `.opencode/agents`, `.claude/`, `scripts/ai`,
-   `docs/ai-workflow`, `.gitignore`) when you are happy with it. Workers in worktrees always
-   load agent definitions from this repo's `.opencode/` (via `OPENCODE_CONFIG_DIR`), but
-   `AGENTS.md`, scripts and docs only exist inside a new worktree once they are committed.
+1. **OpenCode Go login:** `opencode auth list` shows `OpenCode Go … stored`
+   (otherwise `opencode auth login`). DeepSeek needs **Global** regions enabled in the OpenCode
+   console (Settings → Privacy → Regions).
+2. **Model:** `cp .opencode/team.env.example .opencode/team.env` and set
+   `OC_MODEL_IMPLEMENT=opencode-go/deepseek-v4-pro` (gitignored; `scripts/ai/models.sh` lists models).
+3. **Herdr** app running (`hc server status` prints JSON).
+4. `scripts/ai/doctor.sh --live` ends with `all required checks passed` (`--live` also proves the
+   model answers, i.e. the account has funds).
 
 ## Daily use
 
 ```sh
-scripts/ai/start.sh                 # opens Claude Code as tab "lead" in Herdr (space "commerce")
-                                    # (or: scripts/ai/start.sh --headless, then hc attach lead)
+scripts/ai/start.sh                 # Claude Code as tab "lead" in Herdr (or --headless)
 ```
 
-Then tell the lead what to do, for example:
-
-> Follow docs/ai-workflow/orchestrator.md for PLAN step M1.1 (approved). Stop after the report.
-
-The lead runs the procedure: investigate → brief → worktree → spawn worker → wait → collect
-evidence → run checks → reviews → fix loop → report. Watch and steer at any time:
+Tell the lead: *"Follow docs/ai-workflow/orchestrator.md for PLAN step M1.1.3."* Watch or steer:
 
 ```sh
-scripts/ai/status.sh                # workers (role, status, turn, folder) and worktrees
-hc attach <name>                    # take over a worker's terminal; Ctrl+\ detaches
-hc read <name> --lines 60           # its screen and history without attaching
+scripts/ai/status.sh                # the implementer and worktrees
+hc attach <name>                    # take over its terminal; Ctrl+\ detaches
 hc send <name> "Focus on X"         # steer it
-scripts/ai/stop.sh <name>           # end one worker (or --all); worktrees are kept
+scripts/ai/stop.sh <name>           # end it (worktrees are kept)
 ```
-
-Every command the lead uses is a script you can run by hand too:
 
 | Script | What it does |
 |---|---|
-| `scripts/ai/doctor.sh [--live]` | Verifies tools, Herdr core, OpenCode Go auth, models, that all 7 agents load with `.env` denied, Claude agents, settings JSON, script syntax, gitignore |
-| `scripts/ai/models.sh [--all]` | Lists available OpenCode Go models and the current choice |
-| `scripts/ai/worktree.sh add <name> [<base>]` | New worktree `../commerce-wt/<name>` on branch `ai/<name>`, `.env` from `.env.example`, `pnpm install` |
-| `scripts/ai/worktree.sh rm <name>` | Removes a clean worktree (keeps the branch) |
-| `scripts/ai/spawn.sh <role> <name> <brief.md> [--cwd dir]` | Starts a worker in a Herdr terminal and delivers its brief (refuses unsafe launches, see the script header) |
-| `scripts/ai/status.sh` | Lists workers and worktrees |
-| `scripts/ai/collect.sh <name> [--cwd dir]` | Writes `.ai/evidence/<name>-<time>.md`: commits, status, full diff, untracked files, then the worker's report |
+| `scripts/ai/doctor.sh [--live]` | Tools, Herdr core, OpenCode Go auth, the model, the implementer's rules, settings JSON, script syntax, gitignore |
+| `scripts/ai/models.sh [--all]` | Available OpenCode Go models and the current choice |
+| `scripts/ai/worktree.sh add <name>` | Isolated worktree `../commerce-wt/<name>` (branch `ai/<name>`, `.env` from `.env.example`, `pnpm install`) |
+| `scripts/ai/spawn.sh <name> <brief.md> [--cwd d]` | Starts the implementer in a Herdr terminal and delivers the brief; refuses if the agent doesn't load or another implementer works in the same folder |
+| `scripts/ai/collect.sh <name> [--cwd d]` | `.ai/evidence/<name>-<time>.md`: commits, status, full diff, new files, then the worker's report |
 | `scripts/ai/verify.sh [--quick] [--build] [--dir d]` | lint, typecheck, tests (serialized on the shared test DB), schema/codegen drift, optional build |
-| `scripts/ai/stop.sh <name>\|--all` | Kills and removes workers this setup started; never other terminals |
+| `scripts/ai/stop.sh <name>\|--all` | Ends implementers this setup started; never other terminals |
 
-Runtime files go to `.ai/` (gitignored): `briefs/`, `evidence/`, and each worker's
-`.ai/report.md` inside its worktree.
+Runtime files live in `.ai/` (gitignored): `briefs/`, `evidence/`, the worker's `.ai/report.md`.
 
-## Landing a change
+## Browser checks
 
-Nothing is committed automatically. When the lead reports a step as verified, you decide:
-review the diff in the worktree, then commit on its branch (`git -C ../commerce-wt/<name> …`)
-and merge, or apply the diff to main yourself. Afterwards `scripts/ai/worktree.sh rm <name>`.
+There is no browser agent any more. When a step needs a look at the running dashboard, the lead
+uses Claude in Chrome briefly, or asks you. `browse` (OpenCode's Chrome driver) stays installed
+in your global OpenCode config but no project agent may use it.
 
-## Development phases (owner priority, enforced by the lead)
+## Development phases (owner priority)
 
-1. **API**: database, auth, authorization, catalog, products, variants, inventory, checkout,
-   orders, following `ARCHITECTURE.md` and `PLAN.md`.
-2. **Admin dashboard**: matches Saleor Dashboard closely and is wired to our real API.
-3. **Quality assurance**: integration, API and dashboard tests, security review, production
-   builds.
-4. **Storefront**: only after you explicitly confirm API and Admin are complete. Until then, no
-   agent edits `apps/storefront` (implementers are denied by permission rule).
+API → Admin dashboard (matching Saleor, wired to the real API) → QA → Storefront. The storefront
+(M4 and the parts moved to Phase 4) starts only after you confirm API and Admin are complete.
+`PLAN.md` decides which step is approved.
 
-`PLAN.md` still decides *which step* is approved; the phases decide *order*. Where a PLAN step
-spans API and dashboard, the API part is done and verified first.
+## Facts the scripts rely on (verified 2026-11-09)
 
-## How the pieces connect
-
-```
-you ──► Claude Code "lead" (Herdr terminal, $HC_TERMINAL_ID)
-          │  scripts/ai/spawn.sh role name brief
-          ▼
-        hc run --bg --name <name> --cwd ../commerce-wt/<name>
-          env OPENCODE_CONFIG_DIR=<repo>/.opencode
-              OPENCODE_CONFIG_CONTENT={"default_agent":"<role>","model":"<from team.env>"}
-          opencode --standalone            (interactive TUI, persistent, attachable)
-          │  hc send <name> "Read your brief at .ai/briefs/<name>.md …"
-          ▼
-        worker edits only its worktree, writes .ai/report.md,
-        runs: hc send <lead> "<name> done - see .ai/report.md"
-          │
-          ▼
-lead: hc wait --children any → collect.sh → verify.sh → reviewers → report to you
-```
-
-- **Claude → OpenCode delegation** is a Herdr terminal running the OpenCode TUI with a
-  per-launch agent and model. Workers stay interactive, so the lead (or you) can send
-  follow-ups to the same session instead of starting over.
-- **Herdr** keeps each worker alive in its own terminal (surviving a closed window), tracks
-  its status (`idle`, `working`, `blocked`, `done`) from OpenCode's own reports, delivers
-  messages both ways, and lets you attach. `blocked` means the worker needs a person (for
-  example a dependency `ask`); the lead must ask you, never force it.
-- **Claude Opus** reviews run as Claude Code subagents of the lead (`.claude/agents/`), not in
-  Herdr.
-
-## Browser work: OpenCode browse first, Claude in Chrome when needed
-
-Browser sessions are token-heavy (screenshots, page reads), so they run on OpenCode Go by
-default, through [browse](https://opencode.ai/browse), which drives your own Chrome:
-
-- **browser-tester (OpenCode + browse), the default:** click-throughs, screenshots, measuring
-  layout or styles, console checks, regression passes, and repeating the same check across
-  widths and themes. The lead writes a brief (`prompts/browser.md`), runs
-  `scripts/ai/spawn.sh browser-tester <name> <brief>`, and reads the report and screenshots.
-- **Claude in Chrome (the lead itself), the exception:** a quick look the lead must judge
-  visually, debugging the automation itself, or anything the browser-tester reported as
-  `blocked`.
-
-Setup (once): `curl -fsSL https://opencode.ai/browse/install | bash`, add the browse extension in
-Chrome, and pair it (`browse pair`, then enter the code in the extension's Options).
-`scripts/ai/doctor.sh` checks that browse is paired.
-
-How it is wired, verified on 2026-11-09:
-- `browse install` adds its MCP server to the **global** OpenCode config, but workers run with
-  `OPENCODE_CONFIG_DIR=<repo>/.opencode`, which replaces the global config. So `spawn.sh` adds
-  the browse server only when it starts a `browser-tester`. Other workers never load it.
-- Every other role also denies `browse_*`, plus OpenCode's `execute` tool, which can call MCP
-  tools from code and otherwise bypasses per-tool rules. The `browser` permission alone does
-  **not** gate browse.
-- The browser-tester may not use browse's `secrets_*`, `network`, `settings` or
-  `flight_recorder` tools, cannot edit files or run commands, and must restrict its session to
-  the local origins in its brief.
-
-## What the guardrails are, and are not
-
-Verified on 2026-11-09 with probe agents in a scratch repo:
-- `edit` rules use repo-relative globs. A writer could not write outside its directory
-  (absolute or `../`), could not write `secret/*` or `**/*.generated.ts` when denied, and
-  could still write allowed files.
-- Shell rules match the whole command string: `git commit …` and `cat .env` were denied, and
-  `echo` was allowed. Read-only agents could not edit or run commands outside their allow-list.
-- Rules are ordered and the **last match wins**. That is why every agent ends with the `.env`
-  rules, and `doctor.sh` checks it.
-
-Limits: these are guardrails on one tool, not a sandbox. A writing agent has a general shell,
-and a determined command could get around a glob, for example by building a file write in a
-script it creates. That is why the real protections are structural: a separate worktree per
-writer, no commit rights, the lead reading the actual diff, and you landing the change.
-
-## Herdr: supported and not supported
-
-- Herdr has no per-repo configuration. Its reusable *templates* live only in
-  `~/.config/herdr-core/templates/` (global). This repo therefore has no `.herdr/` folder;
-  `spawn.sh` launches workers directly with `hc run`, which is the pattern Herdr's manual
-  documents for agents without a template.
-- Programs launched by `hc run <cmd>` do not get your login `PATH`. The scripts pass absolute
-  binary paths (`resolve_bin` in `scripts/ai/lib.sh`).
-- A task sent right after the OpenCode TUI starts can be dropped (`started: false`).
-  `spawn.sh` retries only when Herdr reports `not_started` and the turn has not advanced, so a
-  task is never delivered twice.
-- OpenCode silently falls back to its full-permission **build** agent if the requested agent
-  does not exist, or is not `mode: primary`. `spawn.sh` refuses to launch unless the role loads
-  as primary in the target directory.
-- The OpenCode TUI has no `--agent`/`--model` flags; they are passed through
-  `OPENCODE_CONFIG_CONTENT`, which needs `--standalone`. The shared background service ignores
-  per-launch environment.
-
-## Changing the team
-
-- **Model for a role:** edit `.opencode/team.env`, then run `scripts/ai/doctor.sh`.
-- **Permissions or prompt of a worker:** edit `.opencode/agents/<role>.md`. Keep the ordering
-  (allow, then deny, then the `.env` rules last), then run `scripts/ai/doctor.sh`. The schema is
-  `https://opencode.ai/config.json` (`$defs/Config.AgentEncoded`); `opencode debug agents`
-  shows the effective rules.
-- **New role:** add the agent file, add it to `ROLES` (and `role_writes` if it edits) in
-  `scripts/ai/lib.sh`, map its model in `model_var_for_role`, and add a row above.
+- Herdr has no per-repo config (templates are global), so `spawn.sh` launches with `hc run`.
+- `hc run <cmd>` doesn't get your login `PATH`; the scripts pass absolute binaries.
+- The first message to a just-started OpenCode TUI can be dropped; `spawn.sh` retries only when
+  Herdr reports `not_started` and the turn hasn't advanced.
+- OpenCode falls back to its full-permission **build** agent if the requested agent is missing or
+  not `mode: primary`; `spawn.sh` refuses to launch in that case.
+- The TUI has no `--agent`/`--model` flags: they go through `OPENCODE_CONFIG_CONTENT`, which needs
+  `--standalone`. `OPENCODE_CONFIG_DIR` (set by `spawn.sh`) replaces the global OpenCode config, so
+  every worker uses this repo's `.opencode/` definitions even in a worktree.
+- Permission rules are ordered, **last match wins**; `edit` globs are repo-relative; shell rules
+  match the whole command string. The `browser` rule does not gate MCP tools; `browse_*` and
+  OpenCode's `execute` must be denied explicitly.
+- Guardrails are not a sandbox: the real protection is the worktree, no commit rights, the lead
+  reading the actual diff, and you landing the change.

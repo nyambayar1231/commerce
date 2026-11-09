@@ -8,8 +8,8 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WORKTREE_BASE="${COMMERCE_WORKTREE_BASE:-$(dirname "$REPO_ROOT")/commerce-wt}"
 AI_DIR="$REPO_ROOT/.ai"   # briefs, evidence, locks (gitignored)
 
-# The worker roles; each is a file in .opencode/agents/<role>.md.
-ROLES="backend-researcher backend-implementer dashboard-researcher dashboard-implementer test-debugger code-reviewer security-reviewer browser-tester"
+# The one worker role: .opencode/agents/implementer.md (the lead reviews; there are no other agents).
+ROLE="implementer"
 
 die() { echo "error: $*" >&2; exit 1; }
 
@@ -25,32 +25,6 @@ resolve_bin() {
   fi
   [[ -n "$p" ]] || die "$name not found (install it or add it to PATH)"
   echo "$p"
-}
-
-is_role() {
-  local r
-  for r in $ROLES; do [[ "$r" == "$1" ]] && return 0; done
-  return 1
-}
-
-# Roles that may edit files. Two writers never share a working directory.
-role_writes() {
-  case "$1" in
-    backend-implementer|dashboard-implementer|test-debugger) return 0 ;;
-    *) return 1 ;;
-  esac
-}
-
-model_var_for_role() {
-  case "$1" in
-    backend-researcher|dashboard-researcher) echo OC_MODEL_RESEARCH ;;
-    backend-implementer) echo OC_MODEL_BACKEND ;;
-    dashboard-implementer) echo OC_MODEL_DASHBOARD ;;
-    test-debugger) echo OC_MODEL_TEST ;;
-    code-reviewer|security-reviewer) echo OC_MODEL_REVIEW ;;
-    browser-tester) echo OC_MODEL_BROWSER ;;
-    *) return 1 ;;
-  esac
 }
 
 # Loads .opencode/team.env (model choices). Not committed: see .opencode/team.env.example.

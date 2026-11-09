@@ -20,13 +20,11 @@
 |---|---|---|
 | `scripts/ai/verify.sh` | `../commerce-wt/<name>` | <PASS/FAIL per step, test counts> |
 
-## Reviews
-- code-reviewer (<model>): <verdict, findings fixed / rejected with reason>
-- opus-code-reviewer: <verdict, …>
-- security (if applicable): <…>
+## Review (lead, light)
+- <findings that mattered, what was fixed, what was deliberately skipped>
 
-## Workers used
-<role, terminal name, model, rounds>
+## Implementer runs
+<terminal name, model, rounds>
 
 ## Deferred / known issues
 <list or "none">

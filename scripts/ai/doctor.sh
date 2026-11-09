@@ -44,72 +44,45 @@ else
   fail "OpenCode Go not authenticated: run opencode auth login (choose OpenCode Go)"
 fi
 
-# --- models
+# --- model (one implementer; the lead reviews on Claude)
 if [[ -f "$REPO_ROOT/.opencode/team.env" ]]; then
   # shellcheck disable=SC1091
   set -a; source "$REPO_ROOT/.opencode/team.env"; set +a
-  available="$("$OC" models 2>/dev/null)"
-  for var in OC_MODEL_RESEARCH OC_MODEL_BACKEND OC_MODEL_DASHBOARD OC_MODEL_TEST OC_MODEL_REVIEW OC_MODEL_BROWSER; do
-    val="${!var:-}"
-    if [[ -z "$val" ]]; then fail "$var is empty (scripts/ai/models.sh)"; continue; fi
-    if ! grep -qxF "${val%%#*}" <<<"$available"; then fail "$var=$val is not in opencode models"; continue; fi
-    if [[ "$val" == opencode-go/* ]]; then pass "$var=$val"; else warn "$var=$val is not an opencode-go model (may bill another account)"; fi
-    # Listed is not the same as usable (account region, plan): --live sends a one-word prompt.
+  val="${OC_MODEL_IMPLEMENT:-}"
+  if [[ -z "$val" ]]; then
+    fail "OC_MODEL_IMPLEMENT is empty (scripts/ai/models.sh)"
+  elif ! grep -qxF "${val%%#*}" <<<"$("$OC" models 2>/dev/null)"; then
+    fail "OC_MODEL_IMPLEMENT=$val is not in opencode models"
+  else
+    if [[ "$val" == opencode-go/* ]]; then pass "OC_MODEL_IMPLEMENT=$val"; else warn "OC_MODEL_IMPLEMENT=$val is not an opencode-go model (may bill another account)"; fi
+    # Listed is not the same as usable (account funds, region): --live sends a one-word prompt.
     if [[ "$live" == 1 ]]; then
       reply="$(cd "${TMPDIR:-/tmp}" && "$OC" --standalone run -m "$val" "Reply with exactly the word OK and nothing else." 2>&1 | tail -3)"
-      if grep -q 'OK' <<<"$reply" && ! grep -qi 'error' <<<"$reply"; then pass "$var answers live"; else fail "$var=$val does not answer: $(tr '\n' ' ' <<<"$reply" | cut -c1-160)"; fi
+      if grep -q 'OK' <<<"$reply" && ! grep -qi 'error' <<<"$reply"; then pass "model answers live"; else fail "$val does not answer: $(tr '\n' ' ' <<<"$reply" | cut -c1-160)"; fi
     fi
-  done
-  for impl in OC_MODEL_BACKEND OC_MODEL_DASHBOARD; do
-    if [[ -n "${OC_MODEL_REVIEW:-}" && "${OC_MODEL_REVIEW:-}" == "${!impl:-}" ]]; then
-      warn "OC_MODEL_REVIEW equals $impl: the first-pass review is not independent"
-    fi
-  done
+  fi
 else
-  fail ".opencode/team.env missing: cp .opencode/team.env.example .opencode/team.env and pick models"
+  fail ".opencode/team.env missing: cp .opencode/team.env.example .opencode/team.env and set OC_MODEL_IMPLEMENT"
 fi
 
-# --- OpenCode agents (loaded exactly the way spawn.sh loads them)
+# --- the implementer agent (loaded exactly the way spawn.sh loads it)
 agents="$(cd "$REPO_ROOT" && env "$(opencode_env)" "$OC" --standalone debug agents 2>/dev/null)"
 if [[ -z "$agents" ]]; then
   fail "opencode debug agents failed (config error?): run it in $REPO_ROOT to see why"
 else
-  for r in $ROLES; do
-    mode="$(echo "$agents" | "$JQ" -r --arg r "$r" '.[] | select(.id == $r) | .mode')"
-    if [[ "$mode" == primary ]]; then
-      # Secrets rules must come after every allow (last match wins).
-      last="$(echo "$agents" | "$JQ" -r --arg r "$r" '[.[] | select(.id == $r) | .permissions[] | select(.action == "read" and .resource == "*.env")] | last | .effect')"
-      if [[ "$last" == deny ]]; then pass "agent $r loads (primary, .env read denied)"; else fail "agent $r: last read *.env rule is '$last', expected deny"; fi
+  mode="$(echo "$agents" | "$JQ" -r --arg r "$ROLE" '.[] | select(.id == $r) | .mode')"
+  if [[ "$mode" == primary ]]; then
+    # Rules are last-match-wins: the secrets and browser denies must not be overridden.
+    rule() { echo "$agents" | "$JQ" -r --arg r "$ROLE" --arg a "$1" --arg res "$2" '[.[] | select(.id == $r) | .permissions[] | select(.action == $a and .resource == $res)] | last | .effect // "none"'; }
+    if [[ "$(rule read '*.env')" == deny && "$(rule browse_* '*')" == deny && "$(rule execute '*')" == deny ]]; then
+      pass "agent $ROLE loads (primary; .env, browse and execute denied)"
     else
-      fail "agent $r: not loaded or mode '$mode' (must be primary)"
+      fail "agent $ROLE: expected deny for read *.env, browse_* and execute"
     fi
-  done
+  else
+    fail "agent $ROLE: not loaded or mode '$mode' (must be primary)"
+  fi
 fi
-
-# --- browse (OpenCode drives Chrome; only the browser-tester role may use it)
-if [[ -n "$agents" ]]; then
-  for r in $ROLES; do
-    eff="$(echo "$agents" | "$JQ" -r --arg r "$r" '[.[] | select(.id == $r) | .permissions[] | select(.action == "browse_*")] | last | .effect // "none"')"
-    if [[ "$r" == browser-tester ]]; then
-      if [[ "$eff" == allow ]]; then pass "agent $r may use browse"; else fail "agent $r: browse_* is '$eff', expected allow"; fi
-    elif [[ "$eff" == deny ]]; then :; else fail "agent $r: browse_* is '$eff', expected deny"; fi
-  done
-  pass "browse_* denied for every role except browser-tester"
-fi
-BROWSE="$(resolve_bin browse 2>/dev/null)"
-if [[ -z "$BROWSE" ]]; then
-  warn "browse not installed: curl -fsSL https://opencode.ai/browse/install | bash (browser-tester needs it)"
-else
-  bstatus="$("$BROWSE" status 2>&1 | sed 's/\x1b\[[0-9;]*m//g')"
-  if grep -q 'Extension: connected' <<<"$bstatus"; then pass "browse $("$BROWSE" --version) paired with Chrome"
-  else warn "browse $("$BROWSE" --version) installed but Chrome is not paired: run browse pair, enter the code in the extension's Options"; fi
-fi
-
-# --- Claude Code agents
-for f in "$REPO_ROOT"/.claude/agents/*.md; do
-  n="$(sed -n 's/^name: //p' "$f" | head -1)"; m="$(sed -n 's/^model: //p' "$f" | head -1)"
-  if [[ -n "$n" && "$m" == opus ]]; then pass "claude agent $n (model: $m)"; else fail "claude agent $f: missing name or model is not opus"; fi
-done
 if "$JQ" empty "$REPO_ROOT/.claude/settings.json" 2>/dev/null; then pass ".claude/settings.json is valid JSON"; else fail ".claude/settings.json invalid"; fi
 
 # --- scripts

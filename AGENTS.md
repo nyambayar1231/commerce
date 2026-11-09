@@ -8,18 +8,18 @@ The team layout, roles and lifecycle are documented in `docs/ai-workflow/README.
 
 ## Who decides
 
-- **Claude Code (the orchestrator)** owns planning, scoping, architecture, review and the final
+- **Claude Code (the lead)** owns planning, scoping, architecture, review, commits and the final
   report. It works only inside the milestone/step the owner approved in `PLAN.md`.
-- **OpenCode workers** (`.opencode/agents/*.md`) do exactly the task in their brief, nothing
-  more. A worker never widens its own scope, never starts other agents, and never decides
-  architecture. When the brief is ambiguous or wrong, stop and report `blocked` with the
+- **The OpenCode implementer** (`.opencode/agents/implementer.md`) does exactly the task in its
+  brief, nothing more. It never widens its own scope, never starts other agents, and never
+  decides architecture. When the brief is ambiguous or wrong, stop and report `blocked` with the
   question.
 
 ## Hard rules for every worker
 
 1. Edit only the files your brief allows. If a fix needs another file, stop and report it.
 2. Never commit, push, stage, stash, reset, rebase, merge, switch branches or create worktrees.
-   The owner commits.
+   The lead commits after reviewing your diff.
 3. Never read, print or edit `.env` or any credential. `.env.example` is fine.
 4. Never hand-edit generated files: `apps/api/schema.graphql`, `**/*.generated.ts`,
    `packages/db/drizzle/meta/**`. Regenerate them with the commands in `CLAUDE.md`.
@@ -37,8 +37,7 @@ The team layout, roles and lifecycle are documented in `docs/ai-workflow/README.
 ## Evidence, not claims
 
 Your report is checked against the real `git diff` and re-run commands. Write it to
-`.ai/report.md` in your working directory (implementers and the test/debug worker), or as your
-final message (read-only roles). Use exactly this shape:
+`.ai/report.md` in your working directory. Use exactly this shape:
 
 ```markdown
 ## Worker report: <terminal name>

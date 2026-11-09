@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# Starts one OpenCode worker in a persistent Herdr (hc) terminal and hands it a brief.
+# Starts the OpenCode implementer in a persistent Herdr (hc) terminal and hands it a brief.
 #
-#   scripts/ai/spawn.sh <role> <name> <brief.md> [--cwd <dir>]
+#   scripts/ai/spawn.sh <name> <brief.md> [--cwd <dir>]
 #
-#   role   one of the agents in .opencode/agents/ (see `scripts/ai/spawn.sh --roles`)
 #   name   Herdr terminal name, 1-32 chars of a-z 0-9 - _ (also used for the evidence files)
 #   brief  Markdown task brief (template: docs/ai-workflow/prompts/). It is copied to
 #          .ai/briefs/<name>.md and the worker is told to read it.
@@ -14,20 +13,15 @@
 # with `hc send <orchestrator>`, and `hc wait --children any` returns when it finishes.
 #
 # Guarantees, checked before launch:
-#   - the role's agent loads in the target directory (otherwise OpenCode silently falls back to
-#     its full-permission "build" agent, verified during setup);
-#   - no other live writer works in the same directory;
-#   - the role's model is configured in .opencode/team.env.
+#   - the implementer agent loads in the target directory (otherwise OpenCode silently falls back
+#     to its full-permission "build" agent, verified during setup);
+#   - no other live implementer works in the same directory;
+#   - OC_MODEL_IMPLEMENT is configured in .opencode/team.env.
 source "$(dirname "$0")/lib.sh"
 
-if [[ "${1:-}" == "--roles" ]]; then
-  for r in $ROLES; do echo "$r"; done
-  exit 0
-fi
-
-role="${1:-}"; name="${2:-}"; brief="${3:-}"
-[[ -n "$role" && -n "$name" && -n "$brief" ]] || { sed -n '2,21p' "$0"; exit 2; }
-shift 3
+role="$ROLE"; name="${1:-}"; brief="${2:-}"
+[[ -n "$name" && -n "$brief" ]] || { sed -n '2,20p' "$0"; exit 2; }
+shift 2
 cwd=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -36,7 +30,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-is_role "$role" || die "unknown role '$role' (scripts/ai/spawn.sh --roles)"
 [[ "$name" =~ ^[a-z0-9][a-z0-9_-]{0,31}$ ]] || die "name must be 1-32 chars of a-z 0-9 - _"
 [[ -f "$brief" ]] || die "brief not found: $brief"
 
@@ -57,7 +50,7 @@ if "$HC" get "$name" >/dev/null 2>&1; then
 fi
 
 # One writer per working directory.
-if role_writes "$role"; then
+if true; then
   for addr in $("$HC" ls --json | "$JQ" -r '.terminals[].address'); do
     info="$("$HC" get --json "$addr" 2>/dev/null || true)"
     [[ -n "$info" ]] || continue
@@ -65,7 +58,7 @@ if role_writes "$role"; then
     other_writes="$(echo "$info" | "$JQ" -r '.labels["commerce.ai.writes"] // "0"')"
     other_state="$(echo "$info" | "$JQ" -r '.state')"
     if [[ "$other_state" == "live" && "$other_writes" == "1" && "$other_cwd" == "$cwd" ]]; then
-      die "writer $addr already works in $cwd. Use a worktree: scripts/ai/worktree.sh add $name"
+      die "implementer $addr already works in $cwd. Use a worktree: scripts/ai/worktree.sh add $name"
     fi
   done
   if [[ "$cwd" == "$REPO_ROOT" && -n "$(git -C "$cwd" status --porcelain)" ]]; then
@@ -75,9 +68,8 @@ if role_writes "$role"; then
 fi
 
 load_team_env
-model_var="$(model_var_for_role "$role")"
-model="${!model_var:-}"
-[[ -n "$model" ]] || die "$model_var is empty in .opencode/team.env (pick one: scripts/ai/models.sh)"
+model="${OC_MODEL_IMPLEMENT:-}"
+[[ -n "$model" ]] || die "OC_MODEL_IMPLEMENT is empty in .opencode/team.env (pick one: scripts/ai/models.sh)"
 
 # The agent must load in that directory with the main repo's definitions.
 agents_json="$(cd "$cwd" && env "$(opencode_env)" "$OC" --standalone debug agents 2>/dev/null)" \
@@ -90,17 +82,8 @@ mkdir -p "$AI_DIR/briefs"
 brief_copy="$AI_DIR/briefs/$name.md"
 [[ "$(cd "$(dirname "$brief")" && pwd)/$(basename "$brief")" == "$brief_copy" ]] || cp "$brief" "$brief_copy"
 
-writes=0; role_writes "$role" && writes=1
+writes=1
 config_content="$("$JQ" -cn --arg a "$role" --arg m "$model" '{default_agent: $a, model: $m}')"
-# OPENCODE_CONFIG_DIR replaces the global OpenCode config (verified), so the browse MCP server
-# that `browse install` put there is not loaded. Only the browser-tester gets it, here.
-if [[ "$role" == browser-tester ]]; then
-  BROWSE="$(resolve_bin browse)"
-  "$BROWSE" status 2>&1 | grep -q 'Extension: connected' \
-    || die "browse is not paired with Chrome: run browse pair and enter the code in the extension's Options"
-  config_content="$(echo "$config_content" | "$JQ" -c --arg b "$BROWSE" \
-    '. + {mcp: {servers: {browse: {type: "local", command: [$b, "mcp"]}}}}')"
-fi
 
 launch="$("$HC" run --bg --json --name "$name" --cwd "$cwd" \
   --label "commerce.ai=1" --label "commerce.ai.role=$role" --label "commerce.ai.writes=$writes" \
