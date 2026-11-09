@@ -9,7 +9,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 |---|---|---|
 | M2 | Catalog | Approved |
 | M2.1 | Categories end-to-end (first Glide list + first save-bar form) | Done |
-| M2.2 | Products & variants API + product list grid | Approved |
+| M2.2 | Products & variants API + product list grid | In progress |
 | M2.3 | Product list filtering (URL state → variables → where → SQL) | Approved |
 | M2.4 | Product create/update form | Approved |
 | M2.5 | Product media | Approved |
@@ -105,7 +105,7 @@ Open items are listed under "Open items from finished milestones".
 
 | Step | What | Status |
 |---|---|---|
-| M2.2.1 | `product` + `product_variant` tables + migration (ARCHITECTURE §3; `category_id` nullable, `SET NULL`); `Money` GraphQL type via `@commerce/contracts` | Proposed |
+| M2.2.1 | `product` + `product_variant` tables + migration (ARCHITECTURE §3; `category_id` nullable, `SET NULL`); `Money` GraphQL type via `@commerce/contracts` | Done |
 | M2.2.2 | `products` connection (sort NAME / PRICE / CREATED_AT / PUBLISHED, `search`), `product(id\|slug)`; unpublished only for `MANAGE_PRODUCTS`; contract tests | Proposed |
 | M2.2.3 | DataLoaders for `Product.variants`, `Product.category`, `Category.products`; a test that counts queries (no N+1) | Proposed |
 | M2.2.4 | Category: Products tab + `PRODUCT_COUNT` sort (finishes M2.1's *) | Proposed |
@@ -141,6 +141,10 @@ Open items are listed under "Open items from finished milestones".
 ### M2.5 Product media
 - Scope: local-disk file storage behind a tiny `storage` interface, upload via multipart GraphQL
   or signed REST endpoint (decide), media reorder.
+- Owner (2026-11-09): leans to AWS S3 for uploads. Lead's proposal: S3 (Seoul/Tokyo) behind the
+  `storage` interface, MinIO/local disk in dev and tests, CloudFront in front, uploads through the
+  API (GraphQL multipart) first; compare Cloudflare R2 (no egress fees). ADR + setup checklist at
+  M2.5; the owner creates the AWS account/bucket/credentials.
 - Status: Draft.
 
 | Step | What | Status |

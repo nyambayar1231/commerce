@@ -23,6 +23,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@commerce/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@commerce/db':
         specifier: workspace:*
         version: link:../../packages/db
