@@ -15,3 +15,5 @@ coverage/
 .opencode/team.env
 # OpenCode TUI preferences, written into OPENCODE_CONFIG_DIR by workers
 .opencode/cli.json
+# Claude Code per-user permission approvals
+.claude/settings.local.json
