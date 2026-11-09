@@ -1,35 +1,74 @@
 // Adapted from saleor-dashboard: src/categories/views/CategoryList/CategoryList.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Only the create flow so far: the URL's `action=create` opens Saleor's CreateCategoryDialog;
-// on success a toast and a jump to the new category. The grid, search, sort, pagination, presets
-// and bulk delete arrive with the list (M2.1.7–M2.1.8).
-import { useMutation } from "@apollo/client";
+// Top-level categories with search, sort and cursor pagination, all from the URL as Saleor; a URL
+// without a sort is redirected to Saleor's default (name, ascending). The URL's `action=create`
+// opens Saleor's CreateCategoryDialog; on success a toast and a jump to the new category.
+// Not yet: tree rows and bulk delete (M2.1.8b/c), filter presets.
+import { useMutation, useQuery } from "@apollo/client";
+import { useEffect, useMemo } from "react";
 import { useIntl } from "react-intl";
 import { useNavigate, useSearchParams } from "react-router";
 
-import { CategoryCreateDocument, type ProductErrorFragment } from "../../graphql/types.generated";
+import {
+  CategoryCreateDocument,
+  type ProductErrorFragment,
+  RootCategoriesDocument,
+} from "../../graphql/types.generated";
+import useListSettings from "../../hooks/useListSettings";
 import { useNotifier } from "../../hooks/useNotifier/useNotifier";
+import { createPaginationState, usePaginator } from "../../hooks/usePaginator";
 import { CategoryListPage } from "../components/CategoryListPage/CategoryListPage";
 import { CreateCategoryDialog } from "../components/CreateCategoryDialog/CreateCategoryDialog";
 import { messages as createCategoryMessages } from "../components/CreateCategoryDialog/messages";
 import { getMutationStatus } from "../mutationStatus";
-import { type CategoryListUrlDialog, categoryListUrl, categoryUrl } from "../urls";
+import { getSortQueryVariables, getSortUrlParams } from "../sort";
+import {
+  type CategoryListUrlDialog,
+  categoryListUrl,
+  categoryUrl,
+  parseCategoryListUrl,
+} from "../urls";
 
 export const CategoryList = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const notify = useNotifier();
   const intl = useIntl();
-  const action = searchParams.get("action") as CategoryListUrlDialog | null;
+  const params = useMemo(() => parseCategoryListUrl(searchParams), [searchParams]);
+  const { settings, updateListSettings } = useListSettings("CATEGORY_LIST");
 
-  // Saleor's createDialogActionHandlers: the open dialog lives in the URL.
+  // Saleor's useSortRedirects: a list URL always names its sort.
+  useEffect(() => {
+    if (params.sort === undefined) {
+      navigate(categoryListUrl({ ...params, sort: "name", asc: true }), { replace: true });
+    }
+  }, [navigate, params]);
+
+  const paginationState = createPaginationState(settings.rowNumber, params);
+  const { data, loading } = useQuery(RootCategoriesDocument, {
+    variables: {
+      ...paginationState,
+      filter: params.query ? { search: params.query } : null,
+      sort: getSortQueryVariables(params),
+    },
+    skip: params.sort === undefined,
+  });
+  const rows = data?.categories?.edges.map((edge) => edge.node) ?? [];
+  const paginator = usePaginator({
+    pageInfo: data?.categories?.pageInfo,
+    paginationState,
+    queryString: { query: params.query, sort: params.sort, asc: params.asc },
+  });
+
+  // Saleor's createDialogActionHandlers: the open dialog lives in the URL, next to the list state.
   const openModal = (dialog: CategoryListUrlDialog) =>
-    navigate(categoryListUrl({ action: dialog }));
-  const closeModal = () => navigate(categoryListUrl(), { replace: true });
+    navigate(categoryListUrl({ ...params, action: dialog }));
+  const closeModal = () =>
+    navigate(categoryListUrl({ ...params, action: undefined }), { replace: true });
 
   const [createCategory, createCategoryOpts] = useMutation(CategoryCreateDocument, {
-    onCompleted: (data) => {
-      if ((data.categoryCreate.errors.length ?? 0) > 0) {
+    onCompleted: (result) => {
+      if ((result.categoryCreate.errors.length ?? 0) > 0) {
         return;
       }
 
@@ -38,15 +77,39 @@ export const CategoryList = () => {
         text: intl.formatMessage(createCategoryMessages.created),
       });
       closeModal();
-      navigate(categoryUrl(data.categoryCreate.category?.id ?? ""));
+      navigate(categoryUrl(result.categoryCreate.category?.id ?? ""));
     },
   });
 
+  // Searching, re-sorting and a new page size all start again from the first page.
+  const firstPage = { after: undefined, before: undefined };
+
   return (
     <>
-      <CategoryListPage onCreateCategory={() => openModal("create")} />
+      <CategoryListPage
+        initialSearch={params.query ?? ""}
+        onSearchChange={(query) =>
+          navigate(categoryListUrl({ ...params, ...firstPage, query }), { replace: true })
+        }
+        onCreateCategory={() => openModal("create")}
+        rows={rows}
+        disabled={loading && !data}
+        sort={{ sort: params.sort, asc: params.asc }}
+        onSort={(field) =>
+          navigate(categoryListUrl(getSortUrlParams(params, field)), { replace: true })
+        }
+        settings={settings}
+        onUpdateListSettings={(key, value) => {
+          updateListSettings(key, value);
+          navigate(categoryListUrl({ ...params, ...firstPage }), { replace: true });
+        }}
+        hasNextPage={paginator.hasNextPage}
+        hasPreviousPage={paginator.hasPreviousPage}
+        nextHref={paginator.nextHref}
+        prevHref={paginator.prevHref}
+      />
       <CreateCategoryDialog
-        open={action === "create"}
+        open={params.action === "create"}
         onClose={closeModal}
         confirmButtonState={getMutationStatus({
           ...createCategoryOpts,

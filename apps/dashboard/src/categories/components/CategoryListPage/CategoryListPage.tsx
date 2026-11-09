@@ -2,21 +2,32 @@
 // See THIRD_PARTY_LICENSES.md
 // The header only. Saleor shows "All Categories" as the label of its filter-presets dropdown
 // (FilterPresetsSelect) next to a hidden TopNav title; without presets we show that label as text.
-// The search bar and the Datagrid card arrive with the list (M2.1.7–M2.1.8); extension menu items
-// and the create-button dropdown for extensions are omitted.
+// Then Saleor's card: search, the grid and its pagination. Tree rows, "Collapse all" and bulk delete
+// come with M2.1.8b/c; extension menu items and the extensions create-button dropdown are omitted.
 import { Box, Button, Text } from "@saleor/macaw-ui";
+import type { ComponentProps } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
 import { TopNav } from "../../../components/AppLayout/TopNav";
+import { DashboardCard } from "../../../components/Card";
 import { ListPageLayout } from "../../../components/Layouts/List/Root";
+import { ListSearchInput } from "../../../components/ListSearchInput/ListSearchInput";
 import { sectionNames } from "../../../intl";
+import { CategoryListDatagrid } from "../CategoryListDatagrid/CategoryListDatagrid";
 import { messages } from "./messages";
 
-interface CategoryListPageProps {
+interface CategoryListPageProps extends ComponentProps<typeof CategoryListDatagrid> {
+  initialSearch: string;
+  onSearchChange: (query: string) => void;
   onCreateCategory: () => void;
 }
 
-export const CategoryListPage = ({ onCreateCategory }: CategoryListPageProps) => {
+export const CategoryListPage = ({
+  initialSearch,
+  onSearchChange,
+  onCreateCategory,
+  ...listProps
+}: CategoryListPageProps) => {
   const intl = useIntl();
 
   return (
@@ -39,6 +50,24 @@ export const CategoryListPage = ({ onCreateCategory }: CategoryListPageProps) =>
           </Box>
         </Box>
       </TopNav>
+      <DashboardCard>
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          paddingX={6}
+          marginBottom={2}
+        >
+          <Box __width="320px">
+            <ListSearchInput
+              initialSearch={initialSearch}
+              placeholder={intl.formatMessage(messages.searchCategory)}
+              onSearchChange={onSearchChange}
+            />
+          </Box>
+        </Box>
+        <CategoryListDatagrid {...listProps} />
+      </DashboardCard>
     </ListPageLayout>
   );
 };

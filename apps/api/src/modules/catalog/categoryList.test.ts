@@ -229,3 +229,38 @@ describe("Category.children", () => {
     expect(names(page)).toEqual(["Child E"]);
   });
 });
+
+describe("first/last only when edges are selected (as Saleor)", () => {
+  it("answers totalCount without first or last", async () => {
+    const result = await client.gql(`{
+      categories(level: 0) { totalCount }
+      first: categories(level: 0, first: 1) { edges { node { name children { totalCount } } } }
+    }`);
+    expect(result.body.errors).toBeUndefined();
+    expect(result.body.data).toEqual({
+      categories: { totalCount: 25 },
+      first: { edges: [{ node: { name: "Cat 01", children: { totalCount: 3 } } }] },
+    });
+  });
+
+  it("still requires first or last when edges are selected, also through a fragment", async () => {
+    const result = await client.gql(`
+      query { categories { ...Page } }
+      fragment Page on CategoryCountableConnection { edges { node { name } } }
+    `);
+    expect(errorOf(result)).toBe(
+      "You must provide a `first` or `last` value to properly paginate the `categories` connection.",
+    );
+  });
+
+  it("counts children of a category loaded on its own", async () => {
+    const id = toGlobalId("Category", ids.get("Cat 02") ?? "");
+    const result = await client.gql(
+      `query ($id: ID!) { category(id: $id) { children { totalCount } } }`,
+      {
+        id,
+      },
+    );
+    expect(result.body.data).toEqual({ category: { children: { totalCount: 1 } } });
+  });
+});

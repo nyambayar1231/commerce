@@ -36,6 +36,7 @@ import { DashboardCard } from "../Card";
 import { Placeholder } from "../Placeholder/Placeholder";
 import { DEFAULT_ROW_MARKER_WIDTH } from "./const";
 import styles from "./Datagrid.module.css";
+import { headerIcons } from "./headerIcons";
 import { usePointerDragClickGuard } from "./hooks/usePointerDragClickGuard";
 import { activateRowAnchor, hideRowAnchorElement, useRowAnchor } from "./hooks/useRowAnchor";
 import { useRowAnchorHandler } from "./hooks/useRowAnchorHandler";
@@ -301,6 +302,7 @@ export const Datagrid = ({
                 <DataEditor
                   width="100%"
                   theme={finalTheme}
+                  headerIcons={headerIcons}
                   drawFocusRing={false}
                   rowMarkerTheme={rowMarkerTheme}
                   className={`${styles.datagrid} dashboard-datagrid`}

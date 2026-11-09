@@ -1,7 +1,7 @@
 import { GraphQLError } from "graphql";
 import { builder } from "../../graphql/builder.ts";
 import { fromGlobalId, nodesNotFound, toGlobalId } from "../../graphql/globalId.ts";
-import { validatePagination } from "../../graphql/pagination.ts";
+import { isEdgesRequested, validatePagination } from "../../graphql/pagination.ts";
 import { requirePermission } from "../../graphql/permissions.ts";
 import { DateTime, JSONString } from "../../graphql/scalars.ts";
 import {
@@ -23,7 +23,8 @@ import {
 const RICH_CONTENT = "\n\nRich text format. For reference see https://editorjs.io/";
 const PERMISSION = "Requires one of the following permissions: MANAGE_PRODUCTS.";
 
-type CategoryModel = CategoryRow & { level?: number };
+// Rows from the list query also carry their subcategory count.
+type CategoryModel = CategoryRow & { level?: number; subcategoryCount?: number };
 
 const CategoryType = builder.objectRef<CategoryModel>("Category");
 
@@ -49,8 +50,9 @@ async function categoryConnection(
   db: Parameters<typeof listCategories>[0],
   fieldName: string,
   args: CategoryListArgs,
+  edgesRequested: boolean,
 ) {
-  const page = validatePagination(fieldName, args);
+  const page = validatePagination(fieldName, args, edgesRequested);
   try {
     const result = await listCategories(db, {
       ...args,
@@ -110,12 +112,30 @@ builder.node(CategoryType, {
         type: CategoryType,
         nullable: true,
         description: "List of children of the category.",
-        resolve: (category, args, ctx) =>
-          categoryConnection(ctx.db, "children", {
-            ...args,
-            parentId: category.id,
-            sort: { field: "NAME", direction: "ASC" },
-          }),
+        resolve: (category, args, ctx, info) => {
+          const edgesRequested = isEdgesRequested(info);
+
+          // A list row already knows how many children it has: answer `{ totalCount }` without a query.
+          if (!edgesRequested && category.subcategoryCount !== undefined) {
+            return {
+              totalCount: category.subcategoryCount,
+              edges: [],
+              pageInfo: {
+                hasNextPage: false,
+                hasPreviousPage: false,
+                startCursor: null,
+                endCursor: null,
+              },
+            };
+          }
+
+          return categoryConnection(
+            ctx.db,
+            "children",
+            { ...args, parentId: category.id, sort: { field: "NAME", direction: "ASC" } },
+            edgesRequested,
+          );
+        },
       },
       CategoryConnection,
     ),
@@ -175,13 +195,13 @@ builder.queryField("categories", (t) =>
           description: "Filter categories by the nesting level in the category tree.",
         }),
       },
-      resolve: (_parent, { filter, sortBy, level, ...page }, ctx) =>
-        categoryConnection(ctx.db, "categories", {
-          ...page,
-          search: filter?.search,
-          level,
-          sort: sortBy,
-        }),
+      resolve: (_parent, { filter, sortBy, level, ...page }, ctx, info) =>
+        categoryConnection(
+          ctx.db,
+          "categories",
+          { ...page, search: filter?.search, level, sort: sortBy },
+          isEdgesRequested(info),
+        ),
     },
     CategoryConnection,
   ),

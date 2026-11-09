@@ -3,7 +3,40 @@
 // Saleor's CategoryDetails query without children/products pagination (M2.1.6 / M2.2).
 import { gql } from "@apollo/client";
 
-import { categoryDetailsFragment } from "../fragments/categories";
+import { categoryDetailsFragment, categoryFragment } from "../fragments/categories";
+import { pageInfoFragment } from "../fragments/pageInfo";
+
+export const rootCategories = gql`
+  query RootCategories(
+    $first: Int
+    $after: String
+    $last: Int
+    $before: String
+    $filter: CategoryFilterInput
+    $sort: CategorySortingInput
+  ) {
+    categories(
+      level: 0
+      first: $first
+      after: $after
+      last: $last
+      before: $before
+      filter: $filter
+      sortBy: $sort
+    ) {
+      edges {
+        node {
+          ...Category
+        }
+      }
+      pageInfo {
+        ...PageInfo
+      }
+    }
+  }
+  ${categoryFragment}
+  ${pageInfoFragment}
+`;
 
 export const categoryDetailsQuery = gql`
   query CategoryDetails($id: ID!) {
