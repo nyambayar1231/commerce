@@ -1,10 +1,13 @@
 import "@saleor/macaw-ui/style";
 import "./index.css";
 
+import { ApolloProvider } from "@apollo/client";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { LocaleProvider } from "./components/Locale/Locale";
+import { ShopProvider } from "./components/Shop";
+import { apolloClient } from "./graphql/client";
 import { ThemeProvider } from "./theme/provider";
 
 const container = document.getElementById("root");
@@ -14,10 +17,14 @@ if (!container) {
 
 createRoot(container).render(
   <StrictMode>
-    <LocaleProvider>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
-    </LocaleProvider>
+    <ApolloProvider client={apolloClient}>
+      <LocaleProvider>
+        <ShopProvider>
+          <ThemeProvider>
+            <App />
+          </ThemeProvider>
+        </ShopProvider>
+      </LocaleProvider>
+    </ApolloProvider>
   </StrictMode>,
 );

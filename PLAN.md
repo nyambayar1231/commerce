@@ -224,7 +224,7 @@ each starts.
 | M0.3.7 | Sidebar: collapse the column to the rail, persisted, Mod+B | Done |
 | M0.3.8 | Sidebar: rail layout (768–1023px) and drawer layout (<768px) | Done |
 | M0.3.9 | Sidebar footer ⋯ menu with the theme switcher; keyboard pass | Done |
-| M0.3.10 | Apollo Client + codegen + `shop { name }` in sidebar header | Planned |
+| M0.3.10 | Apollo Client + codegen + `shop { name }` in sidebar header | Done |
 | M0.3.11 | Side-by-side comparison with real Saleor; screenshots; close M0.3 | Planned |
 
 #### M0.3.1 Vite + React app
@@ -409,6 +409,31 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   (`jvlQkk`), set through the DOM (Macaw takes no props for it), as Saleor's `SidebarDrawer`
   names Macaw's close button. Verified: "Catalog submenu" with `aria-expanded` false → true after a
   click; the label survives the re-render.
+
+#### M0.3.10 Apollo + codegen + shop name
+- **Concepts:** Apollo's normalized `InMemoryCache`; typed documents (`useQuery(ShopInfoDocument)`
+  infers data and variables types from the generated document); the printed SDL as the contract
+  between API and dashboard; a CORS preflight and the CSRF header.
+- **Acceptance:** the sidebar header shows `shop.name` from the API; `pnpm codegen` regenerates the
+  types and is cached until the schema or a query changes.
+- **Decided (owner, 2026-11-08):** the dashboard calls the API cross-origin (`VITE_API_URL`,
+  default `http://localhost:4000/graphql`), like Saleor's `API_URL`, rather than through a Vite proxy.
+- **Result:** `@apollo/client` 3.14.1 (ADR-0007: Apollo 3; latest 3.x), `graphql` 16.15.0 in the dashboard
+  (Apollo 3 accepts graphql 15/16; the API keeps 17), `@graphql-typed-document-node/core` 3.2.0 (the
+  generated file's type import). Codegen CLI 8.0.0 + `typescript` 7.0.0 + `typescript-operations` 7.0.0 +
+  `typed-document-node` 8.0.0, with Saleor's type settings, plus `useTypeImports` for
+  `verbatimModuleSyntax`. Saleor generates hooks (`typescript-react-apollo`); we generate typed
+  documents, per ADR-0007. Adapted `graphql/client.ts` (HttpLink with `credentials: "include"` and the
+  `x-graphql-yoga-csrf` header; no auth, upload or schema-lock links), `components/Shop` (`ShopProvider`
+  without the auth skip or analytics, plus `useShop`), `ShopInfo` limited to `name`. `useSidebarBrand` now uses
+  the shop name, falling back to "Dashboard". Turborepo `codegen` task with `apps/api/schema.graphql`
+  as an input. `*.generated.ts` excluded from Biome. Verified: generated `ShopInfoQuery` /
+  `ShopInfoDocument`; second run FULL TURBO and byte-identical; touching `schema.graphql` → cache miss,
+  restoring it → cache hit; typecheck, lint, 39 tests, build pass; browser: one POST to :4000 → 200,
+  header "H · Hantesi-Mongolia" (initials split on spaces only), console clean. Not verified: the
+  "Dashboard" fallback with the API down.
+  **For M1:** Yoga's default CORS reflects any origin with credentials allowed. Before session cookies,
+  restrict it to the dashboard and storefront origins.
 
 ---
 

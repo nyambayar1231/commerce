@@ -20,6 +20,10 @@
     "schema:print": {
       "inputs": ["src/**"],
       "outputs": ["schema.graphql"]
+    },
+    "codegen": {
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/apps/api/schema.graphql"],
+      "outputs": ["src/graphql/*.generated.ts"]
     }
   }
 }

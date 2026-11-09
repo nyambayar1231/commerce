@@ -15,7 +15,8 @@
     "db:up": "docker compose up -d --wait postgres",
     "db:down": "docker compose down",
     "db:psql": "docker compose exec postgres psql -U commerce commerce",
-    "schema:print": "turbo run schema:print"
+    "schema:print": "turbo run schema:print",
+    "codegen": "turbo run codegen"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.5",

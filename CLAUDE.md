@@ -90,6 +90,7 @@ Claude Code is the orchestrator and architect; implementation is delegated to Op
   Shared configs in `packages/tsconfig` (`base`, `node`, `react`).
 - Dependencies are pinned to exact versions (`pnpm add --save-exact`).
 - Generated, committed files — never edit by hand: `apps/api/schema.graphql` (`pnpm schema:print`),
+  `apps/dashboard/src/graphql/*.generated.ts` (`pnpm codegen`),
   `packages/db/drizzle/**` (drizzle-kit; custom migrations are written inside the generated file).
 - GraphQL naming: Saleor's names by default; any deviation goes in ARCHITECTURE §4's
   deviations table with its reason.
@@ -117,6 +118,7 @@ pnpm --filter @commerce/db db:generate --custom --name <name>   # empty SQL migr
 pnpm --filter @commerce/db db:migrate                   # apply migrations (needs db:up)
 pnpm --filter @commerce/api dev                         # API on :4000/graphql, watch mode
 pnpm schema:print   # regenerate apps/api/schema.graphql (commit it)
+pnpm codegen        # regenerate dashboard GraphQL types from schema.graphql (commit them)
 ```
 
 AI team (details in `docs/ai-workflow/README.md`):
@@ -131,8 +133,6 @@ scripts/ai/collect.sh <name>                          # evidence: real diff + wo
 scripts/ai/verify.sh [--quick] [--build] [--dir d]    # lint, typecheck, tests, drift
 scripts/ai/stop.sh <name>|--all                       # end workers (worktrees kept)
 ```
-
-Planned: `codegen` (M0.3).
 
 ## Current state
 

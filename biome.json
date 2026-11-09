@@ -12,7 +12,8 @@
       "!**/*.md",
       "!packages/db/drizzle",
       "!apps/api/schema.graphql",
-      "!apps/dashboard/src/assets"
+      "!apps/dashboard/src/assets",
+      "!**/*.generated.ts"
     ]
   },
   "formatter": {

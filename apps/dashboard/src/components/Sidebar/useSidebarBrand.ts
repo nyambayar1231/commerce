@@ -1,9 +1,11 @@
 // Stands in for Saleor's useSidebarLogo (src/components/Sidebar/useSidebarLogo.ts): instead of a
-// logo image, the header, rail and app bar show initials (owner decision, PLAN.md M0.3.5).
-// The title becomes the shop name in M0.3.10.
+// logo image, the header, rail and app bar show the shop's initials (owner decision, PLAN.md
+// M0.3.5). Saleor's header says "Saleor Dashboard"; ours shows the shop name, and "Dashboard"
+// until it loads or if the API can't be reached.
 import { useIntl } from "react-intl";
 
 import { commonMessages } from "../../intl";
+import { useShop } from "../Shop";
 
 const getInitials = (name: string): string =>
   name
@@ -15,7 +17,8 @@ const getInitials = (name: string): string =>
 
 export const useSidebarBrand = (): { title: string; initials: string } => {
   const intl = useIntl();
-  const title = intl.formatMessage(commonMessages.dashboard);
+  const shop = useShop();
+  const title = shop?.name ?? intl.formatMessage(commonMessages.dashboard);
 
   return { title, initials: getInitials(title) };
 };
