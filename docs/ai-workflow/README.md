@@ -12,7 +12,7 @@ Built and verified with Herdr core `hc` 0.1.18, OpenCode 2.2.6 and Claude Code (
 | Role | Runs on | Defined in | Job |
 |---|---|---|---|
 | **Lead** | Claude Code (Opus), your session | `CLAUDE.md`, `orchestrator.md` | Investigates, writes a scoped brief, delegates, reads the diff, runs the checks, reviews lightly, commits, reports |
-| **Implementer** | OpenCode Go, Kimi K3.1 Pro | `.opencode/agents/implementer.md` | Implements one brief (API, DB, dashboard) with tests, in its own working tree; never commits |
+| **Implementer** | OpenCode Go, DeepSeek V4.1 Flash | `.opencode/agents/implementer.md` | Implements one brief (API, DB, dashboard) with tests, in its own working tree; never commits |
 
 History: a larger team (researchers, separate backend/dashboard implementers, test/debug, two
 OpenCode reviewers, a browser tester, two Opus review subagents) ran until 2026-11-09. Several
@@ -27,7 +27,7 @@ to `apps/storefront`; no browser tools; dependency changes stop for the owner (`
 1. **OpenCode Go login:** `opencode auth list` shows `OpenCode Go … stored`
    (otherwise `opencode auth login`).
 2. **Model:** `cp .opencode/team.env.example .opencode/team.env` and set
-   `OC_MODEL_IMPLEMENT=opencode-go/kimi-k3.1-pro` (gitignored; `scripts/ai/models.sh` lists models).
+   `OC_MODEL_IMPLEMENT=opencode-go/deepseek-v4.1-flash` (gitignored; `scripts/ai/models.sh` lists models).
 3. **Herdr** app running (`hc server status` prints JSON).
 4. `scripts/ai/doctor.sh --live` ends with `all required checks passed` (`--live` also proves the
    model answers, i.e. the account has funds).
