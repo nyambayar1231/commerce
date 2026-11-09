@@ -15,7 +15,7 @@ export const commonMessages = defineMessages({
   },
 });
 
-// Only the sections on our roadmap (PLAN.md M0.3); ids copied unchanged from Saleor.
+// Only the sections on our roadmap (M0.3); ids copied unchanged from Saleor.
 export const sectionNames = defineMessages({
   catalog: {
     id: "P5HhQl",

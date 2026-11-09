@@ -42,8 +42,10 @@ When explaining a pattern, cite the reference file path, e.g.
 5. When reproducing Saleor Dashboard UI: inspect the actual reference implementation first and
    match it; any simplification must be explained and approved.
 6. After a milestone/sub-milestone: summarize (built, internals, decisions, verification,
-   deferred), update `PLAN.md` status, then **stop** and wait. Never start the next milestone
-   automatically.
+   deferred), then **stop** and wait. Never start the next milestone automatically.
+   Keep `PLAN.md` lean: it holds only unfinished work. Mark a step Done in its table; when a
+   milestone is finished, delete its section (git history keeps it) and carry anything still
+   awaiting the owner's approval into "Open items from finished milestones".
 7. Report verification faithfully. Failing tests or skipped checks are stated as such.
 8. Prefer small, explicit code over clever abstractions. Every abstraction must earn its place.
 

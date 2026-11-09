@@ -75,7 +75,8 @@ Re-verify. Escalate to the owner after two rounds.
 
 ## 8. Commit and report
 
-Record the result in `PLAN.md` (status + a short **Result** line), commit the step (one commit per
-sub-step), and report to the owner: what changed, files, verification (actual commands and
+Mark the step Done in `PLAN.md` (no Result paragraphs: the details go in the commit and the
+report; an item that still needs the owner's approval goes in "Open items from finished
+milestones"), commit the step (one commit per sub-step), and report to the owner: what changed, files, verification (actual commands and
 results), review findings and what was fixed, anything deferred. Push only when the owner asked.
 Template: [`prompts/final-report.md`](prompts/final-report.md).

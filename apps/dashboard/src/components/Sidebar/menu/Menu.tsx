@@ -1,6 +1,6 @@
 // Adapted from saleor-dashboard: src/components/Sidebar/menu/Menu.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Saleor's shortcuts and feedback button are omitted (PLAN.md M0.3.5).
+// Saleor's shortcuts and feedback button are omitted (owner decision, M0.3.5).
 import { Box, List } from "@saleor/macaw-ui";
 
 import { useMenuStructure } from "./hooks/useMenuStructure";

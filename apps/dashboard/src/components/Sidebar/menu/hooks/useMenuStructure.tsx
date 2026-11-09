@@ -23,7 +23,7 @@ export const CONFIGURATION_PERMISSIONS: PermissionEnum[] = [
   "MANAGE_SHIPPING",
 ];
 
-// Saleor's menu, limited to the sections on our roadmap (PLAN.md M0.3.5). Ids, urls, icons and
+// Saleor's menu, limited to the sections on our roadmap (owner decision, M0.3.5). Ids, urls, icons and
 // labels are Saleor's. Orders and Customers are plain items: in Saleor they are groups whose
 // children (draft orders, customer types) we don't build. Items are filtered by the user's
 // permissions exactly as Saleor filters them (utils.ts).

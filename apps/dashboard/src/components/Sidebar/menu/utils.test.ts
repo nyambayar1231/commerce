@@ -2,7 +2,7 @@
 // See THIRD_PARTY_LICENSES.md
 // Only the generic isMenuActive cases, the rail helpers and the permission filter; extension,
 // order-draft, navigation-pin, customer-type and "/dashboard"-prefix cases test code we didn't
-// port (PLAN.md M0.3.5).
+// port (owner decision, M0.3.5).
 import { describe, expect, it, vi } from "vitest";
 
 import type { SidebarMenuItem } from "./types";
