@@ -47,6 +47,26 @@ When explaining a pattern, cite the reference file path, e.g.
 7. Report verification faithfully. Failing tests or skipped checks are stated as such.
 8. Prefer small, explicit code over clever abstractions. Every abstraction must earn its place.
 
+## AI team: Claude Code leads, OpenCode Go implements, Herdr runs the terminals
+
+Claude Code is the orchestrator and architect; implementation is delegated to OpenCode workers
+(`.opencode/agents/`) through `scripts/ai/spawn.sh`. For every development task follow
+`docs/ai-workflow/orchestrator.md`; setup, roles and commands are in
+`docs/ai-workflow/README.md`; worker rules are in `AGENTS.md`. In short:
+
+- Investigate, then write a strictly scoped brief (one concept, explicit file list).
+- One writer per working directory; parallel writers get separate worktrees
+  (`scripts/ai/worktree.sh`) and disjoint files, otherwise run sequentially.
+- Never accept a worker's summary: collect the real diff (`scripts/ai/collect.sh`), run the
+  checks yourself (`scripts/ai/verify.sh`), and have the diff reviewed independently (OpenCode
+  `code-reviewer` / `security-reviewer`, then the `opus-code-reviewer` /
+  `opus-security-reviewer` subagents).
+- Architecture decisions stay with the lead and the owner, never with a worker.
+- Never commit, push or deploy; the owner lands changes.
+- Phase order: API → Admin dashboard (matching Saleor, wired to the real API) → QA →
+  Storefront. Storefront work starts only after the owner explicitly confirms API and Admin are
+  complete.
+
 ## Repository conventions
 
 - Package manager: `pnpm` workspaces; task runner: Turborepo.
@@ -97,6 +117,19 @@ pnpm --filter @commerce/db db:generate --custom --name <name>   # empty SQL migr
 pnpm --filter @commerce/db db:migrate                   # apply migrations (needs db:up)
 pnpm --filter @commerce/api dev                         # API on :4000/graphql, watch mode
 pnpm schema:print   # regenerate apps/api/schema.graphql (commit it)
+```
+
+AI team (details in `docs/ai-workflow/README.md`):
+
+```
+scripts/ai/doctor.sh                                  # verify tools, auth, models, agents
+scripts/ai/start.sh                                   # open the Claude Code lead in Herdr
+scripts/ai/worktree.sh add <name>                     # isolated worktree ../commerce-wt/<name>
+scripts/ai/spawn.sh <role> <name> <brief.md>          # start an OpenCode worker with a brief
+scripts/ai/status.sh                                  # workers and worktrees
+scripts/ai/collect.sh <name>                          # evidence: real diff + worker report
+scripts/ai/verify.sh [--quick] [--build] [--dir d]    # lint, typecheck, tests, drift
+scripts/ai/stop.sh <name>|--all                       # end workers (worktrees kept)
 ```
 
 Planned: `codegen` (M0.3).

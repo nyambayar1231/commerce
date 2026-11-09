@@ -9,3 +9,9 @@ coverage/
 .env.*
 !.env.example
 .DS_Store
+
+# AI team runtime files (docs/ai-workflow) and per-user model choice
+.ai/
+.opencode/team.env
+# OpenCode TUI preferences, written into OPENCODE_CONFIG_DIR by workers
+.opencode/cli.json
