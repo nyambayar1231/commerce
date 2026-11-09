@@ -8,10 +8,7 @@ import { isEdgesRequested, validatePagination } from "../../graphql/pagination.t
 import { DateTime, JSONString } from "../../graphql/scalars.ts";
 import { CategoryType, OrderDirection } from "./graphql.ts";
 import {
-  getCategory,
-  getMinimalVariantPrice,
   getProduct,
-  getProductVariants,
   InvalidCursorError,
   listProducts,
   type ProductListArgs,
@@ -43,6 +40,24 @@ async function isVisible(product: ProductRow, ctx: Context): Promise<boolean> {
     product.isPublished &&
     (product.publishedAt === null || product.publishedAt.getTime() <= Date.now())
   );
+}
+
+/**
+ * The cheapest variant's price, as `getMinimalVariantPrice` does it in SQL: order by amount,
+ * then id, and take the first. Null when the product has no variants.
+ */
+function minimalPriceOf(variants: ProductVariantRow[]): Money | null {
+  let min: ProductVariantRow | null = null;
+  for (const variant of variants) {
+    if (
+      min === null ||
+      variant.priceAmount < min.priceAmount ||
+      (variant.priceAmount === min.priceAmount && variant.id < min.id)
+    ) {
+      min = variant;
+    }
+  }
+  return min === null ? null : toMoney(min.priceAmount, min.currency);
 }
 
 // Saleor's ProductCountableConnection / ProductCountableEdge.
@@ -110,7 +125,7 @@ builder.node(ProductType, {
       nullable: true,
       description: "Category of the product.",
       resolve: (product, _args, ctx) =>
-        product.categoryId === null ? null : getCategory(ctx.db, { id: product.categoryId }),
+        product.categoryId === null ? null : ctx.loaders.categoryById.load(product.categoryId),
     }),
     created: t.field({
       type: DateTime,
@@ -135,22 +150,22 @@ builder.node(ProductType, {
       type: MoneyType,
       nullable: true,
       description: "The minimal price of a product's variants.",
-      resolve: (product, _args, ctx) =>
+      resolve: async (product, _args, ctx) =>
         product.minimalPrice !== undefined
           ? product.minimalPrice
-          : getMinimalVariantPrice(ctx.db, product.id),
+          : minimalPriceOf(await ctx.loaders.variantsByProductId.load(product.id)),
     }),
     defaultVariant: t.field({
       type: ProductVariantType,
       nullable: true,
       description: "Default variant of the product.",
       resolve: async (product, _args, ctx) =>
-        (await getProductVariants(ctx.db, product.id))[0] ?? null,
+        (await ctx.loaders.variantsByProductId.load(product.id))[0] ?? null,
     }),
     variants: t.field({
       type: [ProductVariantType],
       description: "List of variants for the product.",
-      resolve: (product, _args, ctx) => getProductVariants(ctx.db, product.id),
+      resolve: (product, _args, ctx) => ctx.loaders.variantsByProductId.load(product.id),
     }),
   }),
 });
@@ -168,7 +183,7 @@ builder.node(ProductVariantType, {
       type: ProductType,
       description: "The product to which the variant belongs.",
       resolve: async (variant, _args, ctx) => {
-        const product = await getProduct(ctx.db, { id: variant.productId });
+        const product = await ctx.loaders.productById.load(variant.productId);
         if (!product || !(await isVisible(product, ctx))) {
           throw new GraphQLError("Product not found.");
         }

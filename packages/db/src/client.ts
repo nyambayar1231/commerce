@@ -6,18 +6,35 @@ import * as schema from "./schema/index.ts";
 
 let cached: ReturnType<typeof create> | undefined;
 
-function create() {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is not set (copy .env.example to .env)");
+/** postgres.js fires `debug` once for every query it sends; tests count queries with it. */
+export type DbOptions = { onQuery?: (sql: string) => void };
 
+function create(url: string, options: DbOptions = {}) {
   // postgres.js keeps a pool of up to `max` connections and lends one to each query.
-  const client = postgres(url, { max: 10 });
+  const client = postgres(url, {
+    max: 10,
+    ...(options.onQuery && {
+      debug: (_connection: number, query: string) => options.onQuery?.(query),
+    }),
+  });
   return drizzle(client, { schema });
+}
+
+/**
+ * A client for an explicit URL. Tests use it to count queries or to point at another database;
+ * the app goes through `getDb()`.
+ */
+export function createDb(url: string, options?: DbOptions) {
+  return create(url, options);
 }
 
 /** Lazy, so importing this package never opens a connection by itself. */
 export function getDb() {
-  cached ??= create();
+  if (!cached) {
+    const url = process.env.DATABASE_URL;
+    if (!url) throw new Error("DATABASE_URL is not set (copy .env.example to .env)");
+    cached = create(url);
+  }
   return cached;
 }
 

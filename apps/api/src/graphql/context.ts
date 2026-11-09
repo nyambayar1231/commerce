@@ -1,4 +1,5 @@
 import type { Db } from "@commerce/db";
+import { type CatalogLoaders, createCatalogLoaders } from "../modules/catalog/index.ts";
 import {
   getEffectivePermissions,
   getSessionUser,
@@ -9,6 +10,9 @@ import {
 // What every resolver receives as its third argument. Created once per request (see app.ts).
 export interface Context {
   db: Db;
+  // Batch loaders for nested fields, created once per request (they cache, so they must never be
+  // shared across requests). Created eagerly: a DataLoader costs nothing until its first load.
+  loaders: CatalogLoaders;
   // The logged-in user, or null for anonymous requests and ended sessions.
   user: SessionUser | null;
   // The token the request authenticated with (needed to revoke it on logout), or null.
@@ -50,6 +54,7 @@ export async function createContext(db: Db, request: Request): Promise<Omit<Cont
   let permissions: Promise<readonly Permission[]> | undefined;
   return {
     db,
+    loaders: createCatalogLoaders(db),
     user,
     sessionToken: user === null ? null : sessionToken,
     permissions: () => {

@@ -97,7 +97,7 @@ builder.node(CategoryType, {
       nullable: true,
       description: "Parent category.",
       resolve: (category, _args, ctx) =>
-        category.parentId === null ? null : getCategory(ctx.db, { id: category.parentId }),
+        category.parentId === null ? null : ctx.loaders.categoryById.load(category.parentId),
     }),
     level: t.int({
       description: "Level of the category.",

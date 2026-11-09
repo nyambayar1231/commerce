@@ -25,6 +25,8 @@ export type {
 } from "./categoryList.ts";
 export { InvalidCursorError, listCategories } from "./categoryList.ts";
 export { DEMO_CATEGORIES, seedDemoCatalog } from "./demoCatalog.ts";
+export type { CatalogLoaders } from "./loaders.ts";
+export { createCatalogLoaders } from "./loaders.ts";
 export type {
   ProductListArgs,
   ProductListRow,
