@@ -11,6 +11,7 @@ import {
   type CategoryResult,
   type CategoryRow,
   createCategory,
+  deleteCategories,
   deleteCategory,
   getCategory,
   getCategoryLevel,
@@ -374,6 +375,36 @@ builder.mutationField("categoryDelete", (t) =>
         await deleteCategory(ctx.db, categoryId);
         return { category: { ...category, level }, errors: [] };
       });
+    },
+  }),
+);
+
+type CategoryBulkDeletePayload = { count: number; errors: CategoryError[] };
+
+const CategoryBulkDeleteType = builder
+  .objectRef<CategoryBulkDeletePayload>("CategoryBulkDelete")
+  .implement({
+    description: `Deletes categories.\n\n${PERMISSION}`,
+    fields: (t) => ({
+      count: t.exposeInt("count", { description: "Returns how many objects were affected." }),
+      errors: t.field({ type: [ProductErrorType], resolve: (payload) => payload.errors }),
+    }),
+  });
+
+builder.mutationField("categoryBulkDelete", (t) =>
+  t.field({
+    type: CategoryBulkDeleteType,
+    nullable: true,
+    description: `Deletes categories.\n\n${PERMISSION}`,
+    args: {
+      ids: t.arg.idList({ required: true, description: "List of category IDs to delete." }),
+    },
+    resolve: async (_parent, { ids }, ctx) => {
+      await requirePermission(ctx, "MANAGE_PRODUCTS");
+      const categoryIds = ids.map((id) => fromGlobalId("Category", String(id)));
+      const { count } = await runCategory(() => deleteCategories(ctx.db, categoryIds));
+
+      return { count, errors: [] };
     },
   }),
 );

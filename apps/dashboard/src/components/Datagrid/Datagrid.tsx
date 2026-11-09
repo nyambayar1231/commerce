@@ -82,6 +82,7 @@ export interface DatagridProps {
   themeOverride?: Partial<Theme>;
   getRowThemeOverride?: GetRowThemeCallback;
   rowMarkerWidth?: number;
+  rowMarkerTheme?: Partial<Theme>;
 }
 
 export const Datagrid = ({
@@ -110,6 +111,7 @@ export const Datagrid = ({
   themeOverride,
   getRowThemeOverride: getRowThemeOverrideProp,
   rowMarkerWidth,
+  rowMarkerTheme: rowMarkerThemeOverride,
 }: DatagridProps): ReactElement => {
   const { themeValues, theme } = useTheme();
   const datagridTheme = useDatagridTheme(readonly);
@@ -122,8 +124,9 @@ export const Datagrid = ({
       accentColor: themeValues.colors.background.accent1,
       accentFg: themeValues.colors.background.default1,
       accentLight: themeValues.colors.background.default2,
+      ...rowMarkerThemeOverride,
     }),
-    [themeValues],
+    [themeValues, rowMarkerThemeOverride],
   );
   const editor = useRef<DataEditorRef | null>(null);
   const editorContainerRef = useRef<HTMLDivElement | null>(null);

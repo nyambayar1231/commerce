@@ -5,9 +5,10 @@
 // opens Saleor's CreateCategoryDialog; on success a toast and a jump to the new category.
 // Top-level rows expand into their subcategories (Saleor's tree controller); which rows are
 // expanded is kept in localStorage under Saleor's key.
-// Not yet: bulk delete (M2.1.8c), filter presets.
+// Selected rows can be deleted together (Saleor's bulk delete dialog on `action=delete`); afterwards
+// the tree drops what was deleted and reloads the affected parents. Not yet: filter presets.
 import { useApolloClient, useMutation, useQuery } from "@apollo/client";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIntl } from "react-intl";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 
@@ -20,6 +21,7 @@ import useListSettings from "../../hooks/useListSettings";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { useNotifier } from "../../hooks/useNotifier/useNotifier";
 import { createPaginationState, usePaginator } from "../../hooks/usePaginator";
+import { CategoryBulkDeleteDialog } from "../components/CategoryBulkDeleteDialog/CategoryBulkDeleteDialog";
 import { CategoryListPage } from "../components/CategoryListPage/CategoryListPage";
 import { CreateCategoryDialog } from "../components/CreateCategoryDialog/CreateCategoryDialog";
 import { messages as createCategoryMessages } from "../components/CreateCategoryDialog/messages";
@@ -35,6 +37,7 @@ import {
   CATEGORY_LIST_EXPANDED_IDS_STORAGE_KEY,
   normalizeStoredExpandedIds,
 } from "./CategoryList/expandedIdsStorage";
+import { useCategoryBulkDeleteController } from "./CategoryList/hooks/useCategoryBulkDeleteController";
 import { useCategoryTreeController } from "./CategoryList/hooks/useCategoryTreeController";
 
 export const CategoryList = () => {
@@ -53,7 +56,7 @@ export const CategoryList = () => {
   }, [navigate, params]);
 
   const paginationState = createPaginationState(settings.rowNumber, params);
-  const { data, loading } = useQuery(RootCategoriesDocument, {
+  const { data, loading, refetch } = useQuery(RootCategoriesDocument, {
     variables: {
       ...paginationState,
       filter: params.query ? { search: params.query } : null,
@@ -71,8 +74,17 @@ export const CategoryList = () => {
     CATEGORY_LIST_EXPANDED_IDS_STORAGE_KEY,
     (stored) => normalizeStoredExpandedIds(stored),
   );
-  // Row selection arrives with bulk delete (M2.1.8c).
-  const clearRowSelection = useCallback(() => {}, []);
+  // Selected category ids, and the grid's own "clear selection" (Saleor's useRowSelection).
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const clearGridSelection = useRef<() => void>(() => {});
+  const handleSelectedIdsChange = useCallback((ids: string[], clearSelection: () => void) => {
+    clearGridSelection.current = clearSelection;
+    setSelectedIds((current) => (current.join() === ids.join() ? current : ids));
+  }, []);
+  const clearRowSelection = useCallback(() => {
+    clearGridSelection.current();
+    setSelectedIds([]);
+  }, []);
   const tree = useCategoryTreeController({
     client,
     categories,
@@ -85,6 +97,23 @@ export const CategoryList = () => {
     pageInfo: data?.categories?.pageInfo,
     paginationState,
     queryString: { query: params.query, sort: params.sort, asc: params.asc },
+  });
+
+  const bulkDelete = useCategoryBulkDeleteController({
+    selectedRowIds: selectedIds,
+    visibleRows: tree.visibleRows,
+    getCachedChildrenByParentId: tree.getCachedChildrenByParentId,
+    pruneTreeStateAfterDelete: tree.pruneTreeStateAfterDelete,
+    refreshParentChildren: tree.refreshParentChildren,
+    clearRowSelection,
+    refetchRootCategories: () => void refetch(),
+    navigateToList: () =>
+      navigate(categoryListUrl({ ...params, action: undefined }), { replace: true }),
+    notifyDeleted: () =>
+      notify({
+        status: "success",
+        text: intl.formatMessage({ id: "G5ETO0", defaultMessage: "Categories deleted" }),
+      }),
   });
 
   // Saleor's createDialogActionHandlers: the open dialog lives in the URL, next to the list state.
@@ -121,6 +150,9 @@ export const CategoryList = () => {
         onCreateCategory={() => openModal("create")}
         hasExpandedSubcategories={tree.hasExpandedSubcategories}
         onCollapseAllSubcategories={tree.handleCollapseAllSubcategories}
+        selectedCategoriesIds={selectedIds}
+        onCategoriesDelete={() => openModal("delete")}
+        onSelectedCategoriesIdsChange={handleSelectedIdsChange}
         rows={tree.visibleRows}
         isCategoryExpanded={tree.isCategoryExpanded}
         onCategoryExpandToggle={(id) => void tree.toggleExpanded(id)}
@@ -142,6 +174,16 @@ export const CategoryList = () => {
         hasPreviousPage={paginator.hasPreviousPage}
         nextHref={paginator.nextHref}
         prevHref={paginator.prevHref}
+      />
+      <CategoryBulkDeleteDialog
+        open={params.action === "delete" && selectedIds.length > 0}
+        count={selectedIds.length}
+        confirmButtonState={getMutationStatus({
+          ...bulkDelete.categoryBulkDeleteOpts,
+          errors: bulkDelete.categoryBulkDeleteOpts.data?.categoryBulkDelete?.errors,
+        })}
+        onClose={closeModal}
+        onConfirm={() => void bulkDelete.handleCategoryBulkDelete()}
       />
       <CreateCategoryDialog
         open={params.action === "create"}

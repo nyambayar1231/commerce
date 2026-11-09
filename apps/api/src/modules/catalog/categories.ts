@@ -1,5 +1,5 @@
 import { type Executor, schema } from "@commerce/db";
-import { and, eq, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import { slugify } from "./slug.ts";
 
 export type CategoryRow = typeof schema.category.$inferSelect;
@@ -274,5 +274,28 @@ export async function deleteCategory(db: Executor, id: string): Promise<{ id: st
       .returning({ id: schema.category.id });
     if (!category) throw new NotFoundError([id]);
     return category;
+  });
+}
+
+/**
+ * Deletes several categories at once (Saleor's categoryBulkDelete); their subtrees go with them
+ * (FK cascade). All ids must exist, as Saleor's get_nodes_or_error; `count` is how many of the
+ * given categories were deleted (a child listed next to its parent is counted once, as deleted).
+ */
+export async function deleteCategories(db: Executor, ids: string[]): Promise<{ count: number }> {
+  const unique = [...new Set(ids)];
+
+  return db.transaction(async (tx) => {
+    const found = await tx
+      .select({ id: schema.category.id })
+      .from(schema.category)
+      .where(inArray(schema.category.id, unique));
+    const missing = unique.filter((id) => !found.some((row) => row.id === id));
+    if (missing.length > 0) throw new NotFoundError(missing);
+
+    if (unique.length > 0) {
+      await tx.delete(schema.category).where(inArray(schema.category.id, unique));
+    }
+    return { count: unique.length };
   });
 }

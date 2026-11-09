@@ -9,6 +9,7 @@ export type {
 } from "./categories.ts";
 export {
   createCategory,
+  deleteCategories,
   deleteCategory,
   getCategory,
   getCategoryLevel,

@@ -2,7 +2,7 @@
 // See THIRD_PARTY_LICENSES.md
 // Saleor's tree grid: an expand column (chevron, or a spinner while children load), names indented
 // by depth, and "Load N more subcategories" rows. Saleor's "Number of products" column arrives with
-// products (M2.2); its sidebar variant comes with M2.1.8c.
+// products (M2.2), in both the page and the sidebar variant.
 import type { GridCell, Item, Theme } from "@glideapps/glide-data-grid";
 import type { IntlShape } from "react-intl";
 
@@ -60,6 +60,28 @@ export const categoryListStaticColumnsAdapter = (
       ? getColumnSortDirectionIcon(sort, column.id as CategoryListUrlSortField)
       : undefined,
   }));
+
+export interface SidebarColumnWidths {
+  name: number;
+  subcategories: number;
+}
+
+/** Sidebar membership list (the detail page's Subcategories card). */
+export const categoryListSidebarColumnsAdapter = (
+  intl: IntlShape,
+  widths: SidebarColumnWidths,
+): AvailableColumn[] => [
+  {
+    id: "name",
+    title: intl.formatMessage(columnsMessages.name),
+    width: widths.name,
+  },
+  {
+    id: "subcategories",
+    title: intl.formatMessage(columnsMessages.sidebarSubcategories),
+    width: widths.subcategories,
+  },
+];
 
 const getLoadMoreCount = (remainingCount: number): number =>
   Math.min(SUBCATEGORIES_PAGE_SIZE, remainingCount);

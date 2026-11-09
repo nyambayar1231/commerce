@@ -6,10 +6,10 @@
 // `ancestors`, M2.1.6), Products card (M2.2), SEO card with the slug, background image (M2.5),
 // metadata, translations, GraphiQL and extension menu items.
 import { FolderPlus, Trash2 } from "lucide-react";
+import type { ComponentProps } from "react";
 import { useMemo } from "react";
 import { useIntl } from "react-intl";
 import { useNavigate } from "react-router";
-
 import {
   TopNav,
   TopNavDestinationIcon,
@@ -27,6 +27,7 @@ import type {
 } from "../../../graphql/types.generated";
 import { categoryListPath, categoryUrl } from "../../urls";
 import { CategoryDetailsForm } from "../CategoryDetailsForm/CategoryDetailsForm";
+
 import { CategorySubcategories } from "../CategorySubcategories/CategorySubcategories";
 import { CategorySaveCompositionHint } from "./CategorySaveCompositionHint";
 import { type CategoryUpdateData, useCategoryUpdateForm } from "./form";
@@ -40,6 +41,11 @@ interface CategoryUpdatePageProps {
   onSubmit: (data: CategoryUpdateData) => Promise<unknown[]>;
   onDelete: () => void;
   onCreateSubcategory: () => void;
+  /** The Subcategories card's list, pagination and selection. */
+  subcategoriesProps: Omit<
+    ComponentProps<typeof CategorySubcategories>,
+    "disabled" | "onCreateSubcategory"
+  >;
 }
 
 export const CategoryUpdatePage = ({
@@ -50,6 +56,7 @@ export const CategoryUpdatePage = ({
   onSubmit,
   onDelete,
   onCreateSubcategory,
+  subcategoriesProps,
 }: CategoryUpdatePageProps) => {
   const intl = useIntl();
   const navigate = useNavigate();
@@ -119,7 +126,11 @@ export const CategoryUpdatePage = ({
           </DetailPageContent>
         </DetailPageLayout.Content>
         <DetailPageLayout.RightSidebar paddingTop={6}>
-          <CategorySubcategories disabled={disabled} onCreateSubcategory={onCreateSubcategory} />
+          <CategorySubcategories
+            disabled={disabled}
+            onCreateSubcategory={onCreateSubcategory}
+            {...subcategoriesProps}
+          />
         </DetailPageLayout.RightSidebar>
         <Savebar>
           <Savebar.Spacer />

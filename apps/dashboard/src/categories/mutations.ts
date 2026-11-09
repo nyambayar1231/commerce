@@ -1,6 +1,5 @@
 // Adapted from saleor-dashboard: src/categories/mutations.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// CategoryBulkDelete comes with the list (M2.1.8).
 import { gql } from "@apollo/client";
 
 import { categoryDetailsFragment } from "../fragments/categories";
@@ -44,5 +43,16 @@ export const categoryUpdateMutation = gql`
     }
   }
   ${categoryDetailsFragment}
+  ${productErrorFragment}
+`;
+
+export const categoryBulkDeleteMutation = gql`
+  mutation CategoryBulkDelete($ids: [ID!]!) {
+    categoryBulkDelete(ids: $ids) {
+      errors {
+        ...ProductError
+      }
+    }
+  }
   ${productErrorFragment}
 `;

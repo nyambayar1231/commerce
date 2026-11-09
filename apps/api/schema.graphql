@@ -53,6 +53,17 @@ type Category implements Node {
   updatedAt: DateTime!
 }
 
+"""
+Deletes categories.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type CategoryBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  errors: [ProductError!]!
+}
+
 type CategoryCountableConnection {
   edges: [CategoryCountableEdge!]!
   pageInfo: PageInfo!
@@ -167,6 +178,16 @@ type Logout {
 }
 
 type Mutation {
+  """
+  Deletes categories.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  categoryBulkDelete(
+    """List of category IDs to delete."""
+    ids: [ID!]!
+  ): CategoryBulkDelete
+
   """
   Creates a new category.
   

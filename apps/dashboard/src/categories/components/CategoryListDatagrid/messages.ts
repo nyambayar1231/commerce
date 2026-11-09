@@ -1,9 +1,18 @@
 // Adapted from saleor-dashboard: src/categories/components/CategoryListDatagrid/messages.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The sidebar column messages come with M2.1.8c.
 import { defineMessage, defineMessages } from "react-intl";
 
 export const columnsMessages = defineMessages({
+  name: {
+    id: "6AMFki",
+    defaultMessage: "Name",
+    description: "product name",
+  },
+  sidebarSubcategories: {
+    id: "lDPwGU",
+    defaultMessage: "Subs",
+    description: "short subcategory count column header in category sidebar",
+  },
   categoryName: {
     id: "kgVqk1",
     defaultMessage: "Category name",

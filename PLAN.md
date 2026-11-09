@@ -98,7 +98,7 @@ starts with the create flow and the list follows.
 | M2.1.7 | Dashboard `Datagrid` wrapper (Glide) adapted from `src/components/Datagrid`, `TablePagination`, list URL state (`src/categories/urls.ts`) | Done |
 | M2.1.8a | Category list page: Saleor's grid (name, subcategories; products column with M2.2), sortable headers, search, cursor pagination + "No. of rows", row links, default-sort redirect; API: `first`/`last` only required with `edges` (as Saleor) | Done |
 | M2.1.8b | Expandable tree rows (chevron, lazy children, "load more" rows) + "Collapse all" | Done |
-| M2.1.8c | Bulk delete (`categoryBulkDelete` API + selection + dialog) and the paginated list in the detail page's Subcategories card | Approved |
+| M2.1.8c | Bulk delete (`categoryBulkDelete` API + selection + dialog) and the paginated list in the detail page's Subcategories card | Done |
 | M2.1.9 | Seed: a demo category tree big enough for >1 page; browser check of the full flow against real Saleor | Approved |
 
 \* `PRODUCT_COUNT` sort and the Products tab arrive with products (M2.2); the column shows 0 until then.

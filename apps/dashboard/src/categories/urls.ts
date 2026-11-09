@@ -60,7 +60,7 @@ export const parseCategoryListUrl = (search: URLSearchParams): CategoryListUrlQu
 
 export const categoryPath = (id: string): string => `${categorySectionUrl}${id}`;
 
-export type CategoryUrlDialog = "delete" | "create";
+export type CategoryUrlDialog = "delete" | "delete-categories" | "create";
 
 export interface CategoryUrlQueryParams {
   action?: CategoryUrlDialog;

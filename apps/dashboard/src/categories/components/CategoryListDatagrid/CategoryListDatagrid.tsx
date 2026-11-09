@@ -2,9 +2,10 @@
 // See THIRD_PARTY_LICENSES.md
 // The list grid: Saleor's expandable tree (chevron column, indented children, "load more" rows),
 // columns with sort arrows (header click sorts), row link to the category, checkbox row markers and
-// the pagination footer. Not yet: selection handling and the sidebar variant (M2.1.8c), the column
-// picker.
-import type { Item } from "@glideapps/glide-data-grid";
+// the pagination footer, and row selection (category rows only). The "sidebar" variant is the
+// detail page's Subcategories list: compact rows, "Name"/"Subs" headers, no sorting and no
+// footer (the card paginates). Not yet: tree rows in the sidebar, the column picker.
+import type { Item, Theme } from "@glideapps/glide-data-grid";
 import { useTheme } from "@saleor/macaw-ui";
 import { useCallback, useMemo } from "react";
 import { useIntl } from "react-intl";
@@ -22,31 +23,45 @@ import {
 import type { CategoryListRow } from "../../views/CategoryList/types";
 import {
   categoryListExpandColumn,
+  categoryListSidebarColumnsAdapter,
   categoryListStaticColumnsAdapter,
   createGetCellContent,
 } from "./datagrid";
+
+// Saleor's sidebar sizes (CategoryListDatagrid.tsx); its widths are measured from the card, ours
+// are fixed to fit the right column.
+const SIDEBAR_ROW_HEIGHT = 36;
+const SIDEBAR_ROW_MARKER_WIDTH = 36;
+const SIDEBAR_COLUMN_WIDTHS = { name: 200, subcategories: 72 };
+// Glide: checkboxSize = min(18, rowHeight − 2 * cellVerticalPadding)
+const sidebarRowMarkerTheme: Partial<Theme> = { cellVerticalPadding: 11, cellHorizontalPadding: 4 };
+
 import { loadMoreSubcategoriesMessage, messages } from "./messages";
 
 interface CategoryListDatagridProps {
+  variant?: "page" | "sidebar";
   rows: CategoryListRow[];
   disabled: boolean;
-  sort: Sort<CategoryListUrlSortField>;
-  onSort: (field: CategoryListUrlSortField) => void;
-  settings: ListSettings;
-  onUpdateListSettings: ListSettingsUpdate;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
+  sort?: Sort<CategoryListUrlSortField>;
+  onSort?: (field: CategoryListUrlSortField) => void;
+  settings?: ListSettings;
+  onUpdateListSettings?: ListSettingsUpdate;
+  hasNextPage?: boolean;
+  hasPreviousPage?: boolean;
   nextHref?: string;
   prevHref?: string;
-  isCategoryExpanded: (categoryId: string) => boolean;
-  onCategoryExpandToggle: (categoryId: string) => void;
-  isCategoryChildrenLoading: (categoryId: string) => boolean;
-  isLoadingMoreSubcategories: (parentId: string) => boolean;
-  getCategoryDepth: (categoryId: string) => number;
-  onLoadMoreSubcategories: (parentId: string) => void;
+  isCategoryExpanded?: (categoryId: string) => boolean;
+  onCategoryExpandToggle?: (categoryId: string) => void;
+  isCategoryChildrenLoading?: (categoryId: string) => boolean;
+  isLoadingMoreSubcategories?: (parentId: string) => boolean;
+  getCategoryDepth?: (categoryId: string) => number;
+  onLoadMoreSubcategories?: (parentId: string) => void;
+  /** Selected category ids, plus a callback that clears the grid's selection. */
+  onSelectedCategoriesIdsChange?: (ids: string[], clearSelection: () => void) => void;
 }
 
 export const CategoryListDatagrid = ({
+  variant = "page",
   rows,
   disabled,
   sort,
@@ -63,13 +78,29 @@ export const CategoryListDatagrid = ({
   isLoadingMoreSubcategories,
   getCategoryDepth,
   onLoadMoreSubcategories,
+  onSelectedCategoriesIdsChange,
 }: CategoryListDatagridProps) => {
   const intl = useIntl();
   const navigate = useNavigate();
   const { themeValues } = useTheme();
+  const isSidebar = variant === "sidebar";
   const availableColumns = useMemo(
-    () => [categoryListExpandColumn, ...categoryListStaticColumnsAdapter(intl, sort)],
-    [intl, sort],
+    () =>
+      isSidebar
+        ? categoryListSidebarColumnsAdapter(intl, SIDEBAR_COLUMN_WIDTHS)
+        : [categoryListExpandColumn, ...categoryListStaticColumnsAdapter(intl, sort)],
+    [intl, isSidebar, sort],
+  );
+  const sidebarDatagridTheme = useMemo(
+    (): Partial<Theme> => ({
+      bgHeader: themeValues.colors.background.default1,
+      bgHeaderHasFocus: themeValues.colors.background.default1,
+      bgHeaderHovered: themeValues.colors.background.default1,
+      textHeader: themeValues.colors.text.default2,
+      textHeaderSelected: themeValues.colors.text.default2,
+      headerFontStyle: `${themeValues.fontWeight.regular} ${themeValues.fontSize[2]}`,
+    }),
+    [themeValues],
   );
 
   const formatLoadMoreLabel = useCallback(
@@ -144,8 +175,11 @@ export const CategoryListDatagrid = ({
       }
 
       if (rowData.type === "load-more") {
-        if (availableColumns[col]?.id === "name" && !isLoadingMoreSubcategories(rowData.parentId)) {
-          onLoadMoreSubcategories(rowData.parentId);
+        if (
+          availableColumns[col]?.id === "name" &&
+          !isLoadingMoreSubcategories?.(rowData.parentId)
+        ) {
+          onLoadMoreSubcategories?.(rowData.parentId);
         }
 
         return;
@@ -154,8 +188,8 @@ export const CategoryListDatagrid = ({
       if (availableColumns[col]?.id === "expand") {
         const hasSubcategories = (rowData.category.children?.totalCount ?? 0) > 0;
 
-        if (hasSubcategories && !isCategoryChildrenLoading(rowData.category.id)) {
-          onCategoryExpandToggle(rowData.category.id);
+        if (hasSubcategories && !isCategoryChildrenLoading?.(rowData.category.id)) {
+          onCategoryExpandToggle?.(rowData.category.id);
         }
 
         return;
@@ -174,6 +208,19 @@ export const CategoryListDatagrid = ({
     ],
   );
 
+  const handleRowSelectionChange = useCallback(
+    (selectedRows: number[], clearSelection: () => void) => {
+      const ids = selectedRows.flatMap((index) => {
+        const rowData = rows[index];
+
+        return rowData?.type === "category" ? [rowData.category.id] : [];
+      });
+
+      onSelectedCategoriesIdsChange?.(ids, clearSelection);
+    },
+    [rows, onSelectedCategoriesIdsChange],
+  );
+
   const handleHeaderClick = useCallback(
     (col: number) => {
       const columnId = availableColumns[col]?.id;
@@ -181,7 +228,7 @@ export const CategoryListDatagrid = ({
       switch (columnId) {
         case SortField.name:
         case SortField.subcategoryCount:
-          onSort(columnId);
+          onSort?.(columnId);
           break;
       }
     },
@@ -204,16 +251,25 @@ export const CategoryListDatagrid = ({
         rowAnchor={handleRowAnchor}
         onRowClick={handleRowClick}
         getRowThemeOverride={getRowThemeOverride}
+        onRowSelectionChange={handleRowSelectionChange}
+        rowHeight={isSidebar ? SIDEBAR_ROW_HEIGHT : undefined}
+        headerHeight={isSidebar ? SIDEBAR_ROW_HEIGHT : undefined}
+        rowMarkerWidth={isSidebar ? SIDEBAR_ROW_MARKER_WIDTH : undefined}
+        rowMarkerTheme={isSidebar ? sidebarRowMarkerTheme : undefined}
+        themeOverride={isSidebar ? sidebarDatagridTheme : undefined}
+        showTopBorder={!isSidebar}
       />
-      <DatagridPagination
-        settings={settings}
-        disabled={disabled}
-        onUpdateListSettings={onUpdateListSettings}
-        hasNextPage={hasNextPage}
-        hasPreviousPage={hasPreviousPage}
-        nextHref={nextHref}
-        prevHref={prevHref}
-      />
+      {!isSidebar && (
+        <DatagridPagination
+          settings={settings}
+          disabled={disabled}
+          onUpdateListSettings={onUpdateListSettings}
+          hasNextPage={hasNextPage}
+          hasPreviousPage={hasPreviousPage}
+          nextHref={nextHref}
+          prevHref={prevHref}
+        />
+      )}
     </>
   );
 };

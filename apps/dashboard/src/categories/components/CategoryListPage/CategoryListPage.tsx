@@ -2,13 +2,14 @@
 // See THIRD_PARTY_LICENSES.md
 // The header only. Saleor shows "All Categories" as the label of its filter-presets dropdown
 // (FilterPresetsSelect) next to a hidden TopNav title; without presets we show that label as text.
-// Then Saleor's card: search, "Collapse all" (tree rows), the grid and its pagination. Bulk delete
-// comes with M2.1.8c; extension menu items and the extensions create-button dropdown are omitted.
+// Then Saleor's card: search, "Collapse all" (tree rows), "Delete categories (N)" while rows are
+// selected, the grid and its pagination; extension menu items and the extensions create-button dropdown are omitted.
 import { Box, Button, Text } from "@saleor/macaw-ui";
 import type { ComponentProps } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
 import { TopNav } from "../../../components/AppLayout/TopNav";
+import { BulkDeleteButton } from "../../../components/BulkDeleteButton/BulkDeleteButton";
 import { DashboardCard } from "../../../components/Card";
 import { ListPageLayout } from "../../../components/Layouts/List/Root";
 import { ListSearchInput } from "../../../components/ListSearchInput/ListSearchInput";
@@ -21,6 +22,8 @@ interface CategoryListPageProps extends ComponentProps<typeof CategoryListDatagr
   onSearchChange: (query: string) => void;
   hasExpandedSubcategories: boolean;
   onCollapseAllSubcategories: () => void;
+  selectedCategoriesIds: string[];
+  onCategoriesDelete: () => void;
   onCreateCategory: () => void;
 }
 
@@ -29,6 +32,8 @@ export const CategoryListPage = ({
   onSearchChange,
   hasExpandedSubcategories,
   onCollapseAllSubcategories,
+  selectedCategoriesIds,
+  onCategoriesDelete,
   onCreateCategory,
   ...listProps
 }: CategoryListPageProps) => {
@@ -78,6 +83,11 @@ export const CategoryListPage = ({
             >
               <FormattedMessage {...messages.collapseAllSubcategories} />
             </Button>
+            {selectedCategoriesIds.length > 0 && (
+              <BulkDeleteButton count={selectedCategoriesIds.length} onClick={onCategoriesDelete}>
+                <FormattedMessage {...messages.bulkCategoryDelete} />
+              </BulkDeleteButton>
+            )}
           </Box>
         </Box>
         <CategoryListDatagrid {...listProps} />
