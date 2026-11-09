@@ -3,7 +3,12 @@ import { createIntl } from "react-intl";
 import { describe, expect, it } from "vitest";
 
 import type { CategoryFragment } from "../../../graphql/types.generated";
-import { categoryListStaticColumnsAdapter, createGetCellContent } from "./datagrid";
+import type { CategoryListRow } from "../../views/CategoryList/types";
+import {
+  categoryListExpandColumn,
+  categoryListStaticColumnsAdapter,
+  createGetCellContent,
+} from "./datagrid";
 
 const intl = createIntl({ locale: "en" });
 
@@ -12,6 +17,13 @@ const category = (name: string, children: number): CategoryFragment => ({
   id: name,
   name,
   children: { __typename: "CategoryCountableConnection", totalCount: children },
+});
+
+const row = (name: string, children: number, depth = 0): CategoryListRow => ({
+  type: "category",
+  category: category(name, children),
+  depth,
+  parentId: null,
 });
 
 describe("category list datagrid", () => {
@@ -28,7 +40,7 @@ describe("category list datagrid", () => {
 
   it("renders read-only text cells for the name and subcategory count", () => {
     const columns = categoryListStaticColumnsAdapter(intl);
-    const getCell = createGetCellContent([category("Shoes", 3)], columns);
+    const getCell = createGetCellContent([row("Shoes", 3)], columns);
 
     expect(getCell([0, 0])).toMatchObject({
       kind: GridCellKind.Text,
@@ -38,5 +50,32 @@ describe("category list datagrid", () => {
     });
     expect(getCell([1, 0])).toMatchObject({ data: "3" });
     expect(getCell([0, 5])).toMatchObject({ data: "" });
+  });
+
+  it("shows a chevron (or a spinner while loading) only for categories with children", () => {
+    const columns = [categoryListExpandColumn, ...categoryListStaticColumnsAdapter(intl)];
+    const rows = [row("Shoes", 3), row("Hats", 0), row("Bags", 2)];
+    const getCell = createGetCellContent(rows, columns, {
+      isCategoryExpanded: (id) => id === "Shoes",
+      isCategoryChildrenLoading: (id) => id === "Bags",
+    });
+
+    expect(getCell([0, 0])).toMatchObject({ data: { kind: "chevron-cell", direction: "down" } });
+    expect(getCell([0, 1])).toMatchObject({ kind: GridCellKind.Text, data: "" });
+    expect(getCell([0, 2])).toMatchObject({ data: { kind: "throbber-cell" } });
+  });
+
+  it("indents children and labels load-more rows with what is left (at most a page)", () => {
+    const columns = [categoryListExpandColumn, ...categoryListStaticColumnsAdapter(intl)];
+    const rows: CategoryListRow[] = [
+      row("Boots", 0, 1),
+      { type: "load-more", parentId: "Shoes", depth: 1, remainingCount: 70 },
+    ];
+    const getCell = createGetCellContent(rows, columns, {
+      formatLoadMoreLabel: (count) => `Load ${count} more`,
+    });
+
+    expect(getCell([1, 0])).toMatchObject({ data: "\u00A0\u00A0\u00A0\u00A0Boots" });
+    expect(getCell([1, 1])).toMatchObject({ data: "\u00A0\u00A0\u00A0\u00A0Load 50 more" });
   });
 });

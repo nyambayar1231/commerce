@@ -1,19 +1,43 @@
 // Adapted from saleor-dashboard: src/categories/components/CategoryListDatagrid/datagrid.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Flat rows so far: the tree (expand chevron, indented names, "load more" rows) is M2.1.8b, and
-// Saleor's "Number of products" column arrives with products (M2.2).
-import type { GridCell, Item } from "@glideapps/glide-data-grid";
+// Saleor's tree grid: an expand column (chevron, or a spinner while children load), names indented
+// by depth, and "Load N more subcategories" rows. Saleor's "Number of products" column arrives with
+// products (M2.2); its sidebar variant comes with M2.1.8c.
+import type { GridCell, Item, Theme } from "@glideapps/glide-data-grid";
 import type { IntlShape } from "react-intl";
 
-import { readonlyTextCell } from "../../../components/Datagrid/customCells/cells";
+import {
+  chevronCell,
+  loadingCell,
+  loadMoreTextCell,
+  readonlyTextCell,
+} from "../../../components/Datagrid/customCells/cells";
 import type { AvailableColumn } from "../../../components/Datagrid/types";
-import type { CategoryFragment } from "../../../graphql/types.generated";
 import {
   getColumnSortDirectionIcon,
   type Sort,
 } from "../../../utils/columns/getColumnSortDirectionIcon";
 import type { CategoryListUrlSortField } from "../../urls";
+import { SUBCATEGORIES_PAGE_SIZE } from "../../views/CategoryList/services/categoryChildrenQueries";
+import type { CategoryListRow } from "../../views/CategoryList/types";
+import { formatIndentedTreeLabel } from "../../views/CategoryList/utils/treeIndent";
 import { columnsMessages } from "./messages";
+
+interface CreateGetCellContentOptions {
+  isCategoryExpanded?: (categoryId: string) => boolean;
+  isCategoryChildrenLoading?: (categoryId: string) => boolean;
+  isLoadingMoreSubcategories?: (parentId: string) => boolean;
+  getCategoryDepth?: (categoryId: string) => number;
+  formatLoadMoreLabel?: (remainingCount: number) => string;
+  loadMoreCellThemeOverride?: Partial<Theme>;
+}
+
+export const categoryListExpandColumn: AvailableColumn = {
+  id: "expand",
+  title: "",
+  width: 20,
+  action: () => true,
+};
 
 export const categoryListStaticColumnsAdapter = (
   intl: IntlShape,
@@ -37,19 +61,69 @@ export const categoryListStaticColumnsAdapter = (
       : undefined,
   }));
 
+const getLoadMoreCount = (remainingCount: number): number =>
+  Math.min(SUBCATEGORIES_PAGE_SIZE, remainingCount);
+
 export const createGetCellContent =
-  (rows: CategoryFragment[], columns: AvailableColumn[]) =>
+  (
+    rows: CategoryListRow[],
+    columns: AvailableColumn[],
+    {
+      isCategoryExpanded,
+      isCategoryChildrenLoading,
+      isLoadingMoreSubcategories,
+      getCategoryDepth,
+      formatLoadMoreLabel,
+      loadMoreCellThemeOverride,
+    }: CreateGetCellContentOptions = {},
+  ) =>
   ([column, row]: Item): GridCell => {
     const columnId = columns[column]?.id;
-    const category = rows[row];
+    const rowData = rows[row];
 
-    if (!columnId || !category) {
+    if (!columnId || !rowData) {
       return readonlyTextCell("");
     }
 
+    if (rowData.type === "load-more") {
+      const isLoadingMore = isLoadingMoreSubcategories?.(rowData.parentId) ?? false;
+
+      switch (columnId) {
+        case "expand":
+          return isLoadingMore ? loadingCell() : readonlyTextCell("", false);
+        case "name":
+          return loadMoreTextCell(
+            formatIndentedTreeLabel(
+              formatLoadMoreLabel?.(getLoadMoreCount(rowData.remainingCount)) ?? "",
+              rowData.depth,
+            ),
+            loadMoreCellThemeOverride,
+            { loading: isLoadingMore },
+          );
+        default:
+          return readonlyTextCell("", false);
+      }
+    }
+
+    const category = rowData.category;
+
     switch (columnId) {
-      case "name":
-        return readonlyTextCell(category.name);
+      case "expand": {
+        if (!category.children?.totalCount) {
+          return readonlyTextCell("", false);
+        }
+
+        if (isCategoryChildrenLoading?.(category.id)) {
+          return loadingCell();
+        }
+
+        return chevronCell(isCategoryExpanded?.(category.id) ?? false);
+      }
+      case "name": {
+        const depth = getCategoryDepth?.(category.id) ?? rowData.depth;
+
+        return readonlyTextCell(formatIndentedTreeLabel(category.name ?? "", depth));
+      }
       case "subcategories":
         return readonlyTextCell(category.children?.totalCount?.toString() ?? "");
       default:

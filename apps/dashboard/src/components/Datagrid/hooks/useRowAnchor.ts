@@ -1,10 +1,11 @@
 // Adapted from saleor-dashboard: src/components/Datagrid/hooks/useRowAnchor.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Without Saleor's per-column cell actions (product grid) and app-mount URI prefix (we serve at /).
+// Without Saleor's app-mount URI prefix (we serve at /).
 import type { DataEditorProps, GridMouseEventArgs, Item } from "@glideapps/glide-data-grid";
 import { useCallback, useEffect, useRef } from "react";
 
-import { preventRowClickOnSelectionCheckbox } from "../utils";
+import type { AvailableColumn } from "../types";
+import { getCellAction, preventRowClickOnSelectionCheckbox } from "../utils";
 
 export const hideRowAnchorElement = (anchor: HTMLAnchorElement): void => {
   anchor.style.display = "none";
@@ -37,10 +38,12 @@ export const activateRowAnchor = (
 export const useRowAnchor = ({
   getRowAnchorUrl,
   rowMarkers,
+  availableColumns,
   onWheel,
 }: {
   getRowAnchorUrl?: (item: Item) => string;
   rowMarkers?: DataEditorProps["rowMarkers"];
+  availableColumns?: readonly AvailableColumn[];
   onWheel?: (event: WheelEvent) => void;
 }) => {
   const rowAnchorRef = useRef<HTMLAnchorElement | null>(null);
@@ -99,9 +102,10 @@ export const useRowAnchor = ({
         return;
       }
 
+      const action = getCellAction(availableColumns, args.location[0]);
       const href = getRowAnchorUrl(args.location);
 
-      if (!href) {
+      if (!href || action) {
         hideRowAnchorElement(anchor);
 
         return;
@@ -122,7 +126,7 @@ export const useRowAnchor = ({
       anchor.dataset.reactRouterPath = href;
       anchor.style.display = "block";
     },
-    [getRowAnchorUrl, rowMarkers],
+    [availableColumns, getRowAnchorUrl, rowMarkers],
   );
 
   return {

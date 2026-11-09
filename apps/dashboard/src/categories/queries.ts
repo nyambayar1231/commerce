@@ -46,3 +46,23 @@ export const categoryDetailsQuery = gql`
   }
   ${categoryDetailsFragment}
 `;
+
+export const categoryChildren = gql`
+  query CategoryChildren($id: ID!, $first: Int!, $after: String) {
+    category(id: $id) {
+      id
+      children(first: $first, after: $after) {
+        edges {
+          node {
+            ...Category
+          }
+        }
+        pageInfo {
+          ...PageInfo
+        }
+      }
+    }
+  }
+  ${categoryFragment}
+  ${pageInfoFragment}
+`;

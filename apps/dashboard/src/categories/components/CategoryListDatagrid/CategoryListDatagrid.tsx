@@ -1,16 +1,17 @@
 // Adapted from saleor-dashboard: src/categories/components/CategoryListDatagrid/CategoryListDatagrid.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The list grid: Saleor's columns with sort arrows (header click sorts), row link to the
-// category, checkbox row markers, and the pagination footer. Not yet: tree rows and selection
-// handling (M2.1.8b/c), the sidebar variant (M2.1.8c), the column picker.
+// The list grid: Saleor's expandable tree (chevron column, indented children, "load more" rows),
+// columns with sort arrows (header click sorts), row link to the category, checkbox row markers and
+// the pagination footer. Not yet: selection handling and the sidebar variant (M2.1.8c), the column
+// picker.
 import type { Item } from "@glideapps/glide-data-grid";
+import { useTheme } from "@saleor/macaw-ui";
 import { useCallback, useMemo } from "react";
 import { useIntl } from "react-intl";
 import { useNavigate } from "react-router";
 
 import { Datagrid } from "../../../components/Datagrid/Datagrid";
 import { DatagridPagination } from "../../../components/TablePagination/DatagridPagination";
-import type { CategoryFragment } from "../../../graphql/types.generated";
 import type { ListSettings, ListSettingsUpdate } from "../../../hooks/useListSettings";
 import type { Sort } from "../../../utils/columns/getColumnSortDirectionIcon";
 import {
@@ -18,11 +19,16 @@ import {
   categoryUrl,
   CategoryListUrlSortField as SortField,
 } from "../../urls";
-import { categoryListStaticColumnsAdapter, createGetCellContent } from "./datagrid";
-import { messages } from "./messages";
+import type { CategoryListRow } from "../../views/CategoryList/types";
+import {
+  categoryListExpandColumn,
+  categoryListStaticColumnsAdapter,
+  createGetCellContent,
+} from "./datagrid";
+import { loadMoreSubcategoriesMessage, messages } from "./messages";
 
 interface CategoryListDatagridProps {
-  rows: CategoryFragment[];
+  rows: CategoryListRow[];
   disabled: boolean;
   sort: Sort<CategoryListUrlSortField>;
   onSort: (field: CategoryListUrlSortField) => void;
@@ -32,6 +38,12 @@ interface CategoryListDatagridProps {
   hasPreviousPage: boolean;
   nextHref?: string;
   prevHref?: string;
+  isCategoryExpanded: (categoryId: string) => boolean;
+  onCategoryExpandToggle: (categoryId: string) => void;
+  isCategoryChildrenLoading: (categoryId: string) => boolean;
+  isLoadingMoreSubcategories: (parentId: string) => boolean;
+  getCategoryDepth: (categoryId: string) => number;
+  onLoadMoreSubcategories: (parentId: string) => void;
 }
 
 export const CategoryListDatagrid = ({
@@ -45,36 +57,121 @@ export const CategoryListDatagrid = ({
   hasPreviousPage,
   nextHref,
   prevHref,
+  isCategoryExpanded,
+  onCategoryExpandToggle,
+  isCategoryChildrenLoading,
+  isLoadingMoreSubcategories,
+  getCategoryDepth,
+  onLoadMoreSubcategories,
 }: CategoryListDatagridProps) => {
   const intl = useIntl();
   const navigate = useNavigate();
+  const { themeValues } = useTheme();
   const availableColumns = useMemo(
-    () => categoryListStaticColumnsAdapter(intl, sort),
+    () => [categoryListExpandColumn, ...categoryListStaticColumnsAdapter(intl, sort)],
     [intl, sort],
   );
+
+  const formatLoadMoreLabel = useCallback(
+    (remainingCount: number) =>
+      intl.formatMessage(loadMoreSubcategoriesMessage, { count: remainingCount }),
+    [intl],
+  );
+  const loadMoreCellThemeOverride = useMemo(
+    () => ({
+      baseFontStyle: `${themeValues.fontWeight.regular} ${themeValues.fontSize[2]}`,
+      textDark: themeValues.colors.text.accent1,
+    }),
+    [themeValues],
+  );
+
+  // "Load more" rows have no checkbox and no hover highlight.
+  const getRowThemeOverride = useCallback(
+    (row: number) => {
+      if (rows[row]?.type !== "load-more") {
+        return undefined;
+      }
+
+      const background = themeValues.colors.background.default1;
+
+      return {
+        bgCell: background,
+        accentColor: background,
+        accentLight: background,
+        accentFg: background,
+      };
+    },
+    [rows, themeValues.colors.background.default1],
+  );
+
   const getCellContent = useMemo(
-    () => createGetCellContent(rows, availableColumns),
-    [rows, availableColumns],
+    () =>
+      createGetCellContent(rows, availableColumns, {
+        isCategoryExpanded,
+        isCategoryChildrenLoading,
+        isLoadingMoreSubcategories,
+        getCategoryDepth,
+        formatLoadMoreLabel,
+        loadMoreCellThemeOverride,
+      }),
+    [
+      rows,
+      availableColumns,
+      isCategoryExpanded,
+      isCategoryChildrenLoading,
+      isLoadingMoreSubcategories,
+      getCategoryDepth,
+      formatLoadMoreLabel,
+      loadMoreCellThemeOverride,
+    ],
   );
 
   const handleRowAnchor = useCallback(
     ([, row]: Item) => {
-      const category = rows[row];
+      const rowData = rows[row];
 
-      return category ? categoryUrl(category.id) : "";
+      return rowData?.type === "category" ? categoryUrl(rowData.category.id) : "";
     },
     [rows],
   );
 
   const handleRowClick = useCallback(
-    ([, row]: Item) => {
-      const category = rows[row];
+    ([col, row]: Item) => {
+      const rowData = rows[row];
 
-      if (category) {
-        navigate(categoryUrl(category.id));
+      if (!rowData) {
+        return;
       }
+
+      if (rowData.type === "load-more") {
+        if (availableColumns[col]?.id === "name" && !isLoadingMoreSubcategories(rowData.parentId)) {
+          onLoadMoreSubcategories(rowData.parentId);
+        }
+
+        return;
+      }
+
+      if (availableColumns[col]?.id === "expand") {
+        const hasSubcategories = (rowData.category.children?.totalCount ?? 0) > 0;
+
+        if (hasSubcategories && !isCategoryChildrenLoading(rowData.category.id)) {
+          onCategoryExpandToggle(rowData.category.id);
+        }
+
+        return;
+      }
+
+      navigate(categoryUrl(rowData.category.id));
     },
-    [navigate, rows],
+    [
+      availableColumns,
+      rows,
+      navigate,
+      onCategoryExpandToggle,
+      isCategoryChildrenLoading,
+      isLoadingMoreSubcategories,
+      onLoadMoreSubcategories,
+    ],
   );
 
   const handleHeaderClick = useCallback(
@@ -106,6 +203,7 @@ export const CategoryListDatagrid = ({
         onHeaderClicked={handleHeaderClick}
         rowAnchor={handleRowAnchor}
         onRowClick={handleRowClick}
+        getRowThemeOverride={getRowThemeOverride}
       />
       <DatagridPagination
         settings={settings}

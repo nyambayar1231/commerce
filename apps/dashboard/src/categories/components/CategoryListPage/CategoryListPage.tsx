@@ -2,8 +2,8 @@
 // See THIRD_PARTY_LICENSES.md
 // The header only. Saleor shows "All Categories" as the label of its filter-presets dropdown
 // (FilterPresetsSelect) next to a hidden TopNav title; without presets we show that label as text.
-// Then Saleor's card: search, the grid and its pagination. Tree rows, "Collapse all" and bulk delete
-// come with M2.1.8b/c; extension menu items and the extensions create-button dropdown are omitted.
+// Then Saleor's card: search, "Collapse all" (tree rows), the grid and its pagination. Bulk delete
+// comes with M2.1.8c; extension menu items and the extensions create-button dropdown are omitted.
 import { Box, Button, Text } from "@saleor/macaw-ui";
 import type { ComponentProps } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
@@ -19,12 +19,16 @@ import { messages } from "./messages";
 interface CategoryListPageProps extends ComponentProps<typeof CategoryListDatagrid> {
   initialSearch: string;
   onSearchChange: (query: string) => void;
+  hasExpandedSubcategories: boolean;
+  onCollapseAllSubcategories: () => void;
   onCreateCategory: () => void;
 }
 
 export const CategoryListPage = ({
   initialSearch,
   onSearchChange,
+  hasExpandedSubcategories,
+  onCollapseAllSubcategories,
   onCreateCategory,
   ...listProps
 }: CategoryListPageProps) => {
@@ -64,6 +68,16 @@ export const CategoryListPage = ({
               placeholder={intl.formatMessage(messages.searchCategory)}
               onSearchChange={onSearchChange}
             />
+          </Box>
+          <Box display="flex" alignItems="center" gap={4}>
+            <Button
+              variant="secondary"
+              onClick={onCollapseAllSubcategories}
+              disabled={!hasExpandedSubcategories}
+              data-test-id="collapse-all-subcategories"
+            >
+              <FormattedMessage {...messages.collapseAllSubcategories} />
+            </Button>
           </Box>
         </Box>
         <CategoryListDatagrid {...listProps} />

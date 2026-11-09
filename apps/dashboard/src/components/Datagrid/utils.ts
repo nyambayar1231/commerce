@@ -1,10 +1,18 @@
 // Adapted from saleor-dashboard: src/components/Datagrid/utils.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
+
 import {
   CompactSelection,
   type DataEditorProps,
   type GridSelection,
 } from "@glideapps/glide-data-grid";
+import type { AvailableColumn } from "./types";
+
+/** A column with its own click action (e.g. the tree chevron) is not part of the row link. */
+export const getCellAction = (
+  availableColumns: readonly AvailableColumn[] | undefined,
+  column: number,
+) => availableColumns?.[column]?.action;
 
 export const preventRowClickOnSelectionCheckbox = (
   rowMarkers: DataEditorProps["rowMarkers"],

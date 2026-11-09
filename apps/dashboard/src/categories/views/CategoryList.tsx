@@ -3,11 +3,13 @@
 // Top-level categories with search, sort and cursor pagination, all from the URL as Saleor; a URL
 // without a sort is redirected to Saleor's default (name, ascending). The URL's `action=create`
 // opens Saleor's CreateCategoryDialog; on success a toast and a jump to the new category.
-// Not yet: tree rows and bulk delete (M2.1.8b/c), filter presets.
-import { useMutation, useQuery } from "@apollo/client";
-import { useEffect, useMemo } from "react";
+// Top-level rows expand into their subcategories (Saleor's tree controller); which rows are
+// expanded is kept in localStorage under Saleor's key.
+// Not yet: bulk delete (M2.1.8c), filter presets.
+import { useApolloClient, useMutation, useQuery } from "@apollo/client";
+import { useCallback, useEffect, useMemo } from "react";
 import { useIntl } from "react-intl";
-import { useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 
 import {
   CategoryCreateDocument,
@@ -15,6 +17,7 @@ import {
   RootCategoriesDocument,
 } from "../../graphql/types.generated";
 import useListSettings from "../../hooks/useListSettings";
+import useLocalStorage from "../../hooks/useLocalStorage";
 import { useNotifier } from "../../hooks/useNotifier/useNotifier";
 import { createPaginationState, usePaginator } from "../../hooks/usePaginator";
 import { CategoryListPage } from "../components/CategoryListPage/CategoryListPage";
@@ -28,6 +31,11 @@ import {
   categoryUrl,
   parseCategoryListUrl,
 } from "../urls";
+import {
+  CATEGORY_LIST_EXPANDED_IDS_STORAGE_KEY,
+  normalizeStoredExpandedIds,
+} from "./CategoryList/expandedIdsStorage";
+import { useCategoryTreeController } from "./CategoryList/hooks/useCategoryTreeController";
 
 export const CategoryList = () => {
   const navigate = useNavigate();
@@ -53,7 +61,26 @@ export const CategoryList = () => {
     },
     skip: params.sort === undefined,
   });
-  const rows = data?.categories?.edges.map((edge) => edge.node) ?? [];
+  const categories = useMemo(
+    () => data?.categories?.edges.map((edge) => edge.node) ?? [],
+    [data?.categories?.edges],
+  );
+  const client = useApolloClient();
+  const location = useLocation();
+  const [storedExpandedIds, setStoredExpandedIds] = useLocalStorage<string[]>(
+    CATEGORY_LIST_EXPANDED_IDS_STORAGE_KEY,
+    (stored) => normalizeStoredExpandedIds(stored),
+  );
+  // Row selection arrives with bulk delete (M2.1.8c).
+  const clearRowSelection = useCallback(() => {}, []);
+  const tree = useCategoryTreeController({
+    client,
+    categories,
+    locationPathname: location.pathname,
+    clearRowSelection,
+    storedExpandedIds,
+    setStoredExpandedIds,
+  });
   const paginator = usePaginator({
     pageInfo: data?.categories?.pageInfo,
     paginationState,
@@ -92,7 +119,15 @@ export const CategoryList = () => {
           navigate(categoryListUrl({ ...params, ...firstPage, query }), { replace: true })
         }
         onCreateCategory={() => openModal("create")}
-        rows={rows}
+        hasExpandedSubcategories={tree.hasExpandedSubcategories}
+        onCollapseAllSubcategories={tree.handleCollapseAllSubcategories}
+        rows={tree.visibleRows}
+        isCategoryExpanded={tree.isCategoryExpanded}
+        onCategoryExpandToggle={(id) => void tree.toggleExpanded(id)}
+        isCategoryChildrenLoading={tree.isCategoryChildrenLoading}
+        isLoadingMoreSubcategories={tree.isLoadingMoreSubcategories}
+        getCategoryDepth={tree.getCategoryDepth}
+        onLoadMoreSubcategories={(id) => void tree.loadMoreSubcategories(id)}
         disabled={loading && !data}
         sort={{ sort: params.sort, asc: params.asc }}
         onSort={(field) =>

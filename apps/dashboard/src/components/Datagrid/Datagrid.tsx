@@ -3,9 +3,10 @@
 // Saleor's Glide wrapper for list pages, read-only so far: columns and cells, loading and empty
 // states, row hover, row links (the invisible anchor that follows the hovered row, so a row opens
 // on click and in a new tab on Cmd/Ctrl/middle-click), checkbox row selection with selection
-// actions, header clicks (sorting) and row theme overrides.
+// actions, header clicks (sorting), row theme overrides, columns with their own click action (not
+// part of the row link) and the chevron/loading custom cells.
 // Not yet (each comes with its first user): cell editing and change tracking, fullscreen, the
-// column picker and column resize/reorder, per-row action menus, tooltips, custom cell renderers,
+// column picker and column resize/reorder, per-row action menus, tooltips, other custom cells,
 // horizontal-swipe history guard.
 import "@glideapps/glide-data-grid/dist/index.css";
 
@@ -35,6 +36,7 @@ import type { NavigateOptions } from "react-router";
 import { DashboardCard } from "../Card";
 import { Placeholder } from "../Placeholder/Placeholder";
 import { DEFAULT_ROW_MARKER_WIDTH } from "./const";
+import { customRenderers } from "./customCells/customRenderers";
 import styles from "./Datagrid.module.css";
 import { headerIcons } from "./headerIcons";
 import { usePointerDragClickGuard } from "./hooks/usePointerDragClickGuard";
@@ -44,7 +46,11 @@ import { useRowHover } from "./hooks/useRowHover";
 import { getForwardedWheelDelta } from "./rowAnchorWheel";
 import { cellHeight, useDatagridTheme } from "./styles";
 import type { AvailableColumn } from "./types";
-import { getVisibleGridSelection, preventRowClickOnSelectionCheckbox } from "./utils";
+import {
+  getCellAction,
+  getVisibleGridSelection,
+  preventRowClickOnSelectionCheckbox,
+} from "./utils";
 
 type GetRowThemeCallback = NonNullable<DataEditorProps["getRowThemeOverride"]>;
 
@@ -145,6 +151,7 @@ export const Datagrid = ({
   const { rowAnchorRef, setRowAnchorRef, setAnchorPosition } = useRowAnchor({
     getRowAnchorUrl: rowAnchor,
     rowMarkers,
+    availableColumns,
     onWheel: handleRowAnchorWheel,
   });
   const rowAnchorHandler = useRowAnchorHandler(navigatorOpts);
@@ -206,10 +213,14 @@ export const Datagrid = ({
         return;
       }
 
+      if (getCellAction(availableColumns, item[0])) {
+        return;
+      }
+
       handleRowHover(args);
       activateRowAnchor(rowAnchorRef.current, { openInNewTab: intentToOpenInNewTab });
     },
-    [rowMarkers, onRowClick, handleRowHover, rowAnchorRef, shouldSuppressClick],
+    [rowMarkers, onRowClick, handleRowHover, rowAnchorRef, shouldSuppressClick, availableColumns],
   );
 
   const handleGridSelectionChange = (gridSelection: GridSelection) => {
@@ -302,6 +313,7 @@ export const Datagrid = ({
                 <DataEditor
                   width="100%"
                   theme={finalTheme}
+                  customRenderers={customRenderers}
                   headerIcons={headerIcons}
                   drawFocusRing={false}
                   rowMarkerTheme={rowMarkerTheme}
