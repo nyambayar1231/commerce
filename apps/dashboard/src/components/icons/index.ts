@@ -39,3 +39,9 @@ export const navigationLucideIconProps = {
   size: iconSize.small,
   strokeWidth: iconStrokeWidthBySize.small,
 } as const;
+
+/** Saleor's TopNav destination icons (src/components/icons/index.ts). */
+export const topNavLucideIconProps = {
+  size: iconSize.small,
+  strokeWidth: iconStrokeWidthBySize.small,
+} as const;

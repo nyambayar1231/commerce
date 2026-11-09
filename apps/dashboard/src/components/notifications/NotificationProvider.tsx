@@ -1,10 +1,12 @@
 // Adapted from saleor-dashboard: src/components/notifications/NotificationProvider.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // Without Saleor's "dismiss all" pill and live stack-offset sync (they matter once several toasts
-// stack) and without the Savebar-aware bottom inset, which returns with the Savebar (M2.1.4).
+// stack).
 import { type PropsWithChildren, type ReactNode, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Toaster, toast } from "sonner";
+import { borderHeight, savebarHeight } from "../AppLayout/consts";
+import { useSavebarRef } from "../Savebar/SavebarRefContext";
 
 import { type INotificationContext, NotificationContext } from "./NotificationContext";
 import styles from "./NotificationsToaster.module.css";
@@ -21,13 +23,22 @@ const TOAST_EDGE_INSET_PX = 20;
 /** Vertical gap between expanded toasts. */
 const TOAST_STACK_GAP_PX = 12;
 
-/** Viewport toaster, rendered into `#toast-portal` (index.html) as Saleor does. */
+/**
+ * Viewport toaster, rendered into `#toast-portal` (index.html) as Saleor does. Must render under
+ * SavebarRefProvider so the bottom offset clears the sticky Savebar — most notifies fire from Save
+ * on detail pages.
+ */
 export const NotificationsToaster = (): ReactNode => {
+  const { isSavebarMounted } = useSavebarRef();
   const container = document.getElementById("toast-portal");
 
   if (!container) {
     return null;
   }
+
+  const bottomOffset = isSavebarMounted
+    ? `calc(${savebarHeight} + ${borderHeight} + ${TOAST_DISMISS_GAP_PX}px)`
+    : `${TOAST_DISMISS_GAP_PX}px`;
 
   return createPortal(
     // Stop event propagation to prevent clicks on toasts from closing modals
@@ -35,7 +46,7 @@ export const NotificationsToaster = (): ReactNode => {
     // biome-ignore lint/a11y/useKeyWithClickEvents: as above, no action of its own
     <div
       className={styles.viewport}
-      style={{ bottom: `${TOAST_DISMISS_GAP_PX}px`, right: TOAST_EDGE_INSET_PX }}
+      style={{ bottom: bottomOffset, right: TOAST_EDGE_INSET_PX }}
       onClick={stopPropagation}
       onPointerDown={stopPropagation}
     >

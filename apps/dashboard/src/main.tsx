@@ -11,6 +11,7 @@ import {
   NotificationProvider,
   NotificationsToaster,
 } from "./components/notifications/NotificationProvider";
+import { SavebarRefProvider } from "./components/Savebar/SavebarRefContext";
 import { ShopProvider } from "./components/Shop";
 import { apolloClient } from "./graphql/client";
 import { ThemeProvider } from "./theme/provider";
@@ -28,8 +29,10 @@ createRoot(container).render(
           <ShopProvider>
             <ThemeProvider>
               <NotificationProvider>
-                <App />
-                <NotificationsToaster />
+                <SavebarRefProvider>
+                  <App />
+                  <NotificationsToaster />
+                </SavebarRefProvider>
               </NotificationProvider>
             </ThemeProvider>
           </ShopProvider>

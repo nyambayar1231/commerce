@@ -17,9 +17,17 @@ export const commonMessages = defineMessages({
     id: "KN7zKn",
     defaultMessage: "Error",
   },
+  generalInformations: {
+    id: "pkUbrL",
+    defaultMessage: "General Information",
+  },
   info: {
     id: "we4Lby",
     defaultMessage: "Info",
+  },
+  requiredField: {
+    id: "TKmub+",
+    defaultMessage: "This field is required",
   },
   success: {
     id: "xrKHS6",
@@ -44,6 +52,11 @@ export const buttonMessages = defineMessages({
   create: {
     id: "H5NKfr",
     defaultMessage: "Create",
+    description: "button",
+  },
+  delete: {
+    id: "ufmuTp",
+    defaultMessage: "Delete",
     description: "button",
   },
   save: {
