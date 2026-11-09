@@ -43,7 +43,14 @@ html {
 }
 
 body {
-  color: var(--mu-colors-foreground-text-neutral-plain);
+  /*
+   * Differs from Saleor: it declares the legacy --mu-colors-foreground-text-neutral-plain
+   * here, but that variable does not exist in @saleor/macaw-ui 3 (invalid -> browser black),
+   * and its light text in dark mode comes from the legacy macaw-ui 0.7 baseline (MUI CssBaseline
+   * plus its :root color-scheme), which we don't ship.
+   * Macaw 3's default text token is --mu-colors-text-default1.
+   */
+  color: var(--mu-colors-text-default1);
   overscroll-behavior-y: none;
 }
 
