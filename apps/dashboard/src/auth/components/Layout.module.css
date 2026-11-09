@@ -1,0 +1,73 @@
+/* Adapted from saleor-dashboard: src/auth/components/Layout.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+   See THIRD_PARTY_LICENSES.md
+   Saleor's makeStyles with MUI v4 breakpoints: sm = 600px, lg = 1280px; theme.spacing(n) = 8n px. */
+.root {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+  width: 100vw;
+}
+
+.mainPanel {
+  background: var(--mu-colors-background-default1);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  justify-content: center;
+  padding: 40px 48px 32px 48px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.logo {
+  display: block;
+  height: 40px;
+  margin-bottom: 32px;
+}
+
+.mainPanelContent {
+  margin: auto;
+  width: 100%;
+}
+
+.sidebar {
+  display: none;
+}
+
+.sidebarArt {
+  width: 100%;
+}
+
+@media (max-width: 599.95px) {
+  .mainPanel {
+    padding: 16px;
+  }
+}
+
+@media (min-width: 600px) {
+  .mainPanelContent {
+    width: 328px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .root {
+    grid-template-columns: 560px 1fr;
+  }
+  .sidebar {
+    align-items: center;
+    display: flex;
+  }
+}
+
+@media (min-width: 1440px) {
+  .root {
+    grid-template-columns: 780px 1fr;
+  }
+  .mainPanelContent {
+    width: 380px;
+  }
+}

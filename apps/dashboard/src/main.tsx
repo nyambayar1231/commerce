@@ -5,6 +5,7 @@ import { ApolloProvider } from "@apollo/client";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { AuthProvider } from "./auth/AuthProvider";
 import { LocaleProvider } from "./components/Locale/Locale";
 import { ShopProvider } from "./components/Shop";
 import { apolloClient } from "./graphql/client";
@@ -19,11 +20,13 @@ createRoot(container).render(
   <StrictMode>
     <ApolloProvider client={apolloClient}>
       <LocaleProvider>
-        <ShopProvider>
-          <ThemeProvider>
-            <App />
-          </ThemeProvider>
-        </ShopProvider>
+        <AuthProvider>
+          <ShopProvider>
+            <ThemeProvider>
+              <App />
+            </ThemeProvider>
+          </ShopProvider>
+        </AuthProvider>
       </LocaleProvider>
     </ApolloProvider>
   </StrictMode>,

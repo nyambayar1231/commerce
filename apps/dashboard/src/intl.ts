@@ -9,6 +9,10 @@ export const commonMessages = defineMessages({
     id: "hzSNj4",
     defaultMessage: "Dashboard",
   },
+  email: {
+    id: "hJZwTS",
+    defaultMessage: "Email address",
+  },
 });
 
 // Only the sections on our roadmap (PLAN.md M0.3); ids copied unchanged from Saleor.

@@ -8,7 +8,7 @@ const config: CodegenConfig = {
   documents: ["./src/**/queries.ts", "./src/**/mutations.ts", "./src/**/fragments/*.ts"],
   generates: {
     "./src/graphql/types.generated.ts": {
-      plugins: ["typescript", "typescript-operations", "typed-document-node"],
+      plugins: ["typescript-operations", "typed-document-node"],
       config: {
         nonOptionalTypename: true,
         avoidOptionals: {
@@ -18,6 +18,9 @@ const config: CodegenConfig = {
           defaultValue: false,
         },
         onlyOperationTypes: true,
+        // GraphQL enums as string unions (Saleor's codegen-main.ts does the same), so no TS
+        // `enum` (not erasable syntax).
+        enumsAsTypes: true,
         // Our tsconfig sets verbatimModuleSyntax: type imports must say so.
         useTypeImports: true,
       },

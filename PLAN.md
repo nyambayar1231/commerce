@@ -488,7 +488,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 | M1.1.3 | `session` table; session service: create (256-bit token, SHA-256 stored), look up with sliding 14-day expiry + hard cap, revoke; real-Postgres tests | Done |
 | M1.1.4 | Request context: cookie or `Authorization: Bearer` → `ctx.user`; CORS restricted to the dashboard origin with credentials (the M0.3.10 to-do) | Done |
 | M1.1.5 | GraphQL login/logout/`me` (name per decision) + contract tests: wrong password, inactive user, expired session, logout revocation, uniform error | Done |
-| M1.1.6 | Dashboard: auth provider (`me`), login page adapted from Saleor's `src/auth/components/LoginPage`, redirect to login when signed out | Approved |
+| M1.1.6 | Dashboard: auth provider (`me`), login page adapted from Saleor's `src/auth/components/LoginPage`, redirect to login when signed out | Done |
 | M1.1.7 | Dashboard: Saleor's account row in the sidebar footer, logout in the user menu; browser check of login/logout | Approved |
 
 - **Result (M1.1.1):** `user` table (`packages/db/src/schema/identity.ts`) exactly as ARCHITECTURE §3:
@@ -536,6 +536,21 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   lastName isStaff }` with Saleor-style global ids (`base64("User:<uuid>")`). Deviations recorded in
   ARCHITECTURE §4 (no token fields; `logout` is ours), §7 updated. 10 contract tests; API 52 passed;
   `verify.sh` all PASS. Implemented by the lead (OpenCode out of funds).
+- **Result (M1.1.6):** `apps/dashboard/src/auth/`: `AuthProvider` (`me` via `UserDetails`; `login` →
+  `tokenCreate`, errors mapped as Saleor's `useAuthProvider`; non-staff users are logged out with
+  "You don't have permission to login."; `logout` → mutation + `clearStore`), `Layout`, `LoginPage`,
+  `LoginLoading`, messages (Saleor's ids). `App.tsx` gate as Saleor's `src/index.tsx`: spinner while
+  `me` loads, the login screen **at the requested URL** when signed out (Saleor renders it in place
+  rather than redirecting), the app after login at that same URL. **Simplifications (for approval):**
+  shop name instead of the Saleor logo (trademark); no "Forgot password?" link until M8; no OIDC
+  buttons; Macaw `Spinner` instead of SaleorThrobber and the button loader. Saleor's
+  `login-background.svg` copied with 2 stray bytes after `</svg>` removed (an `<img>` rejects them;
+  Saleor inlines it). Codegen: `typescript-operations` 7 alone (with the `typescript` plugin every
+  enum was emitted twice) and `enumsAsTypes` as Saleor. Browser check (Chrome, 1456px, dark):
+  `/products` signed out → login screen with the art; wrong password → Saleor's error; right
+  password → `/products` in the app; reload of `/orders` stays signed in; `document.cookie` doesn't
+  show the session (HttpOnly; the Secure cookie works on http://localhost); console clean. Test
+  user deleted afterwards. `verify.sh` all PASS. Implemented by the lead (OpenCode out of funds).
 
 ### M1.2 Permission groups & guards
 - **Objective:** staff permissions enforced by API, reflected in dashboard UX.
