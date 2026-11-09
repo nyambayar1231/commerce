@@ -15,6 +15,20 @@
       "when": 1793955858297,
       "tag": "0001_seed_shop_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794215245199,
+      "tag": "0002_citext_extension",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794215257025,
+      "tag": "0003_user",
+      "breakpoints": true
     }
   ]
 }

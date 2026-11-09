@@ -483,13 +483,24 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 
 | Step | What | Status |
 |---|---|---|
-| M1.1.1 | `user` table + migration; argon2id hash/verify module + unit tests | Approved |
+| M1.1.1 | `user` table + migration; argon2id hash/verify module + unit tests | Done |
 | M1.1.2 | `pnpm cli createsuperuser` (interactive, hashes the password) | Approved |
 | M1.1.3 | `session` table; session service: create (256-bit token, SHA-256 stored), look up with sliding 14-day expiry + hard cap, revoke; real-Postgres tests | Approved |
 | M1.1.4 | Request context: cookie or `Authorization: Bearer` → `ctx.user`; CORS restricted to the dashboard origin with credentials (the M0.3.10 to-do) | Approved |
 | M1.1.5 | GraphQL login/logout/`me` (name per decision) + contract tests: wrong password, inactive user, expired session, logout revocation, uniform error | Approved |
 | M1.1.6 | Dashboard: auth provider (`me`), login page adapted from Saleor's `src/auth/components/LoginPage`, redirect to login when signed out | Approved |
 | M1.1.7 | Dashboard: Saleor's account row in the sidebar footer, logout in the user menu; browser check of login/logout | Approved |
+
+- **Result (M1.1.1):** `user` table (`packages/db/src/schema/identity.ts`) exactly as ARCHITECTURE §3:
+  UUID v7 id, `citext` email with `user_email_unique`, nullable `password_hash`, CHECKs
+  `user_email_not_empty` and `user_superuser_is_staff`. Migrations `0002_citext_extension` (custom,
+  `CREATE EXTENSION citext`) then `0003_user` (generated). `identity/password.ts`: argon2id via
+  `@node-rs/argon2` 2.2.2 (prebuilt binaries, no install script) with OWASP parameters (m=19456,
+  t=2, p=1); `verifyPassword` never throws and rejects non-argon2id hashes (security review).
+  Tests: 14 API tests incl. case-insensitive email uniqueness, UUID v7 shape, constraint names, an
+  argon2i hash rejected, OWASP parameters pinned. Reviews: code (approve), security (3 low).
+  **Carried into M1.1.5:** dummy verify for unknown users / users without a password (timing must
+  not reveal which emails exist) and a password length cap at the GraphQL input (security review).
 
 ### M1.2 Permission groups & guards
 - **Objective:** staff permissions enforced by API, reflected in dashboard UX.
