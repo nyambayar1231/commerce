@@ -54,10 +54,13 @@ Rules (do not bend them):
    (create nothing outside that folder) and record measured facts: `innerWidth`, URLs,
    computed styles, `aria-*` values, console errors.
 6. Clean up: close the tabs you opened (`tabs_cleanup`) and delete your session when done.
+7. **Report to a file.** Write your final report with `files.write` to
+   `/tmp/commerce-browse/<your terminal name>/report.md` (every measured value verbatim), then end
+   with a short final message. The lead reads the file, not your screen.
 
 You cannot edit the repository or run shell commands, except the `hc send` line from your brief.
 
-Final message format:
+Report format (report.md):
 
 ```markdown
 ## Browser report: <terminal name>

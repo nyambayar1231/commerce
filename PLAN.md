@@ -12,9 +12,9 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | M0.1 | Monorepo skeleton & local infrastructure | Done |
 | M0.2 | API skeleton, in 8 small steps (M0.2.1–M0.2.8) | Done |
 | M0.3 | Dashboard shell, in 11 small steps (M0.3.1–M0.3.11) | Done |
-| M1 | Identity: staff auth & permissions | Draft |
-| M1.1 | Users, sessions, login/logout/me | Draft |
-| M1.2 | Permission groups & guarded API/dashboard | Draft |
+| M1 | Identity: staff auth & permissions | Approved |
+| M1.1 | Users, sessions, login/logout/me | Approved |
+| M1.2 | Permission groups & guarded API/dashboard | Approved |
 | M2 | Catalog | Draft |
 | M2.1 | Categories end-to-end (first Glide list + first save-bar form) | Draft |
 | M2.2 | Products & variants API + product list grid | Draft |
@@ -472,11 +472,24 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   auth context, logout in sidebar user menu.
 - **Concepts:** password hashing; session vs JWT (ADR-0006); cookies (HttpOnly/SameSite/Secure);
   CSRF.
-- **Decisions:** mutation names — Saleor's `tokenCreate` vs explicit `login`.
+- **Decided (owner, 2026-11-09):** login is Saleor's `tokenCreate` (creates a session and sets the
+  cookie instead of issuing a JWT); `logout` is added (Saleor has no server-side logout), listed in
+  ARCHITECTURE §4's deviations table.
 - **Acceptance:** integration tests for wrong password, inactive user, expired session, logout
   revocation; manual dashboard login/logout.
 - **Exclusions:** password reset (needs email, M8), customer login (M7).
-- **Status:** Draft.
+- **Status:** Approved (2026-11-09). Run continuously: each sub-step delegated, verified and
+  reported before the next; stop only for a failure or an owner decision.
+
+| Step | What | Status |
+|---|---|---|
+| M1.1.1 | `user` table + migration; argon2id hash/verify module + unit tests | Approved |
+| M1.1.2 | `pnpm cli createsuperuser` (interactive, hashes the password) | Approved |
+| M1.1.3 | `session` table; session service: create (256-bit token, SHA-256 stored), look up with sliding 14-day expiry + hard cap, revoke; real-Postgres tests | Approved |
+| M1.1.4 | Request context: cookie or `Authorization: Bearer` → `ctx.user`; CORS restricted to the dashboard origin with credentials (the M0.3.10 to-do) | Approved |
+| M1.1.5 | GraphQL login/logout/`me` (name per decision) + contract tests: wrong password, inactive user, expired session, logout revocation, uniform error | Approved |
+| M1.1.6 | Dashboard: auth provider (`me`), login page adapted from Saleor's `src/auth/components/LoginPage`, redirect to login when signed out | Approved |
+| M1.1.7 | Dashboard: Saleor's account row in the sidebar footer, logout in the user menu; browser check of login/logout | Approved |
 
 ### M1.2 Permission groups & guards
 - **Objective:** staff permissions enforced by API, reflected in dashboard UX.
@@ -484,10 +497,18 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
   (`permissionGroupCreate/Update`, `staffCreate`) — dashboard UI for it deferred or minimal (decide);
   route guard + not-allowed page; sidebar filtering.
 - **Concepts:** authn vs authz; union of group permissions; defense in depth (UI hides, API enforces).
-- **Decisions:** build Staff/Permission Groups dashboard pages now or later?
+- **Decided (owner, 2026-11-09):** Staff Members and Permission Groups dashboard pages come later,
+  in the admin phase; M1.2 is API-only for staff management.
 - **Acceptance:** contract tests for every guarded field returning permission error; dashboard
   shows not-allowed page for a user lacking `MANAGE_PRODUCTS`.
-- **Status:** Draft.
+- **Status:** Approved (2026-11-09), run continuously like M1.1.
+
+| Step | What | Status |
+|---|---|---|
+| M1.2.1 | Permission enum (ARCHITECTURE §8) + `permission_group`, group↔permission, user↔group tables; effective permissions = union (superuser = all) + tests | Approved |
+| M1.2.2 | `requirePermission(ctx, …)`; `me { userPermissions }`; contract-test pattern for guarded fields | Approved |
+| M1.2.3 | Minimal staff API: `permissionGroupCreate/Update`, `staffCreate`, each guarded by `MANAGE_STAFF` + tests | Approved |
+| M1.2.4 | Dashboard: sidebar items filtered by permission, route guard + Saleor's not-allowed page | Approved |
 
 ---
 
@@ -543,14 +564,13 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 - **Status:** Draft.
 
 ## M5 — Checkout
-- **M5.1 Cart:** `checkoutCreate`, `checkoutLinesAdd/Update/Delete`, token cookie via Server
-  Actions, live price calculation, advisory stock check.
+- **M5.1 Cart:** `checkoutCreate`, `checkoutLinesAdd/Update/Delete`, live price calculation,
+  advisory stock check.
 - **M5.2 Details:** email, addresses (validation), shipping methods (admin CRUD minimal),
   `TaxedMoney` totals.
 - **M5.3 Payments (dummy):** `payment_transaction` + events, dummy provider authorize/charge,
   `transactionInitialize`-like mutation. Decision: real Stripe test-mode as optional M5.5.
-- **M5.4 Completion:** §5.4 flow; concurrency tests (two buyers, last unit; double submit);
-  order confirmation page.
+- **M5.4 Completion:** §5.4 flow; concurrency tests (two buyers, last unit; double submit).
 - **Status:** Draft.
 
 ## M6 — Orders in the dashboard
@@ -560,8 +580,8 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 - **Status:** Draft.
 
 ## M7 — Customer accounts
-- Storefront register/login/logout, order history; checkout attaches to user; dashboard
-  customers list/detail.
+- Customer accounts API (register/login/logout, order history queries); checkout attaches to
+  user; dashboard customers list/detail.
 - **Status:** Draft.
 
 ## M8 — Background processing
@@ -571,7 +591,7 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 
 ## M9 — Hardening & deployability
 - Dockerfiles, production config/env validation, rate limiting on login, CI pipeline, Playwright
-  golden paths, basic observability.
+  golden paths for the dashboard and API, basic observability.
 - **Status:** Draft.
 
 ## M4 — Storefront catalog
@@ -580,6 +600,9 @@ menu in a drawer), **drawer** <768px (an app bar with a menu button). Steps M0.3
 - **Phase 4, gated:** starts only after the owner explicitly confirms that the API and the admin
   dashboard are complete (owner priority 2026-11-09: API → Admin → QA → Storefront). Moved after
   M9 on 2026-11-09; the ID is kept so existing references stay valid.
+- **Also Phase 4 (moved from other milestones, 2026-11-09):** the checkout token cookie via
+  Server Actions and the order confirmation page (from M5), storefront register/login/logout and
+  order history (from M7), and the Playwright golden path where a customer buys (from M9).
 - **Status:** Draft.
 
 ---
