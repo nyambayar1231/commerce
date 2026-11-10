@@ -46,6 +46,19 @@ type Category implements Node {
   """Parent category."""
   parent: Category
 
+  """
+  List of products in the category. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
+  """
+  products(
+    after: String
+    before: String
+    first: Int
+    last: Int
+
+    """Search products."""
+    search: String
+  ): ProductCountableConnection
+
   """Slug of the category."""
   slug: String!
 
@@ -119,6 +132,9 @@ input CategoryInput {
 enum CategorySortField {
   """Sort categories by name."""
   NAME
+
+  """Sort categories by product count."""
+  PRODUCT_COUNT
 
   """Sort categories by subcategory count."""
   SUBCATEGORY_COUNT

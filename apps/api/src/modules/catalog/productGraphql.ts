@@ -108,6 +108,49 @@ async function productConnection(
   }
 }
 
+// Saleor's `Category.products` (saleor/graphql/product/types/categories.py, resolve_products):
+// products of the category and all its descendants, visible like `products`.
+builder.objectField(CategoryType, "products", (t) =>
+  t.connection(
+    {
+      type: ProductType,
+      nullable: true,
+      description: `List of products in the category. ${UNPUBLISHED_NOTE}`,
+      args: {
+        search: t.arg.string({ description: "Search products." }),
+      },
+      resolve: async (category, { search, ...page }, ctx, info) => {
+        const edgesRequested = isEdgesRequested(info);
+        const includeUnpublished = await seesUnpublished(ctx);
+
+        // A categories list row already knows the subtree's full product count. It counts
+        // unpublished products too, so only callers that see them may use it (the mirror of the
+        // `subcategoryCount` shortcut in `Category.children`).
+        if (!edgesRequested && includeUnpublished && category.productCount !== undefined) {
+          return {
+            totalCount: category.productCount,
+            edges: [],
+            pageInfo: {
+              hasNextPage: false,
+              hasPreviousPage: false,
+              startCursor: null,
+              endCursor: null,
+            },
+          };
+        }
+
+        return productConnection(
+          ctx,
+          "products",
+          { ...page, search, categoryId: category.id },
+          edgesRequested,
+        );
+      },
+    },
+    ProductConnection,
+  ),
+);
+
 builder.node(ProductType, {
   id: { resolve: (product) => product.id, description: "The ID of the product." },
   description: "Represents an individual item for sale in the storefront.",

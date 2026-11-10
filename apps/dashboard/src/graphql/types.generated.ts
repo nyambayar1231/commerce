@@ -31,6 +31,8 @@ export type CategoryInput = {
 export type CategorySortField =
   /** Sort categories by name. */
   | 'NAME'
+  /** Sort categories by product count. */
+  | 'PRODUCT_COUNT'
   /** Sort categories by subcategory count. */
   | 'SUBCATEGORY_COUNT';
 

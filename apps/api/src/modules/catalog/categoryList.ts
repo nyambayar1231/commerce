@@ -4,10 +4,11 @@ import { type SQL, sql } from "drizzle-orm";
 // Saleor's `categories` and `Category.children` connections: filtered, sorted, keyset-paginated
 // (saleor/graphql/core/connection.py). A cursor holds the row's sort value and id, base64-encoded
 // JSON as Saleor's; a page is fetched with one extra row to know whether there is another page.
-// Sorting: NAME and SUBCATEGORY_COUNT, always tie-broken by id so pages never overlap or skip rows.
-// PRODUCT_COUNT comes with products (M2.2).
+// Sorting: NAME, SUBCATEGORY_COUNT and PRODUCT_COUNT, always tie-broken by id so pages never
+// overlap or skip rows. The product count is cumulative over the subtree, as Saleor's
+// `CategorySortField.qs_with_product_count`.
 
-export type CategorySortField = "NAME" | "SUBCATEGORY_COUNT";
+export type CategorySortField = "NAME" | "SUBCATEGORY_COUNT" | "PRODUCT_COUNT";
 export type OrderDirection = "ASC" | "DESC";
 
 export interface CategoryListArgs {
@@ -32,6 +33,8 @@ export type CategoryListRow = {
   updatedAt: Date;
   level: number;
   subcategoryCount: number;
+  /** Products in this category and all its descendants, published or not (Saleor's sort). */
+  productCount: number;
 };
 
 export interface CategoryPage {
@@ -51,8 +54,16 @@ export class InvalidCursorError extends Error {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const sortValue = (row: CategoryListRow, field: CategorySortField): string =>
-  field === "NAME" ? row.name : String(row.subcategoryCount);
+const sortValue = (row: CategoryListRow, field: CategorySortField): string => {
+  switch (field) {
+    case "NAME":
+      return row.name;
+    case "SUBCATEGORY_COUNT":
+      return String(row.subcategoryCount);
+    case "PRODUCT_COUNT":
+      return String(row.productCount);
+  }
+};
 
 const encodeCursor = (row: CategoryListRow, field: CategorySortField): string =>
   Buffer.from(JSON.stringify([sortValue(row, field), row.id])).toString("base64");
@@ -73,7 +84,7 @@ function decodeCursor(cursor: string, field: CategorySortField): [string | numbe
   ) {
     throw new InvalidCursorError();
   }
-  if (field === "SUBCATEGORY_COUNT") {
+  if (field === "SUBCATEGORY_COUNT" || field === "PRODUCT_COUNT") {
     const count = Number(parsed[0]);
     if (!Number.isInteger(count) || count < 0) throw new InvalidCursorError();
     return [count, parsed[1]];
@@ -99,7 +110,11 @@ export async function listCategories(db: Executor, args: CategoryListArgs): Prom
   if (args.parentId != null) filters.push(sql`c.parent_id = ${args.parentId}`);
   const where = filters.length > 0 ? sql`WHERE ${sql.join(filters, sql` AND `)}` : sql``;
 
-  const sortColumn = field === "NAME" ? sql`name` : sql`subcategory_count`;
+  const sortColumn: SQL = {
+    NAME: sql`name`,
+    SUBCATEGORY_COUNT: sql`subcategory_count`,
+    PRODUCT_COUNT: sql`product_count`,
+  }[field];
   // Walking backwards reads the rows in reverse order, then flips them back.
   const ascending = (direction === "ASC") !== backwards;
   const order = ascending ? sql`ASC` : sql`DESC`;
@@ -117,19 +132,32 @@ export async function listCategories(db: Executor, args: CategoryListArgs): Prom
       UNION ALL
       SELECT child.id, tree.level + 1 FROM category AS child JOIN tree ON child.parent_id = tree.id
     ),
+    descendants AS (
+      SELECT id AS root_id, id AS descendant_id FROM category
+      UNION ALL
+      SELECT d.root_id, child.id
+      FROM descendants AS d JOIN category AS child ON child.parent_id = d.descendant_id
+    ),
     base AS (
       SELECT
         c.id, c.name, c.slug, c.description,
         c.description_plaintext AS "descriptionPlaintext",
         c.parent_id AS "parentId", c.updated_at AS "updatedAt",
         t.level,
-        (SELECT count(*) FROM category AS s WHERE s.parent_id = c.id)::int AS subcategory_count
-      FROM category AS c JOIN tree AS t ON t.id = c.id
+        (SELECT count(*) FROM category AS s WHERE s.parent_id = c.id)::int AS subcategory_count,
+        COALESCE(pc.product_count, 0)::int AS product_count
+      FROM category AS c
+      JOIN tree AS t ON t.id = c.id
+      LEFT JOIN (
+        SELECT d.root_id, count(p.id)::int AS product_count
+        FROM descendants AS d JOIN product AS p ON p.category_id = d.descendant_id
+        GROUP BY d.root_id
+      ) AS pc ON pc.root_id = c.id
       ${where}
     )`;
 
   const [pageRows, [{ count } = { count: 0 }]] = await Promise.all([
-    db.execute<CategoryListRow & { subcategory_count: number }>(sql`
+    db.execute<CategoryListRow & { subcategory_count: number; product_count: number }>(sql`
       ${base}
       SELECT * FROM base ${keyset}
       ORDER BY ${sortColumn} ${order}, id ${order}
@@ -137,10 +165,11 @@ export async function listCategories(db: Executor, args: CategoryListArgs): Prom
     db.execute<{ count: number }>(sql`${base} SELECT count(*)::int AS count FROM base`),
   ]);
 
-  const rows = [...pageRows].map(({ subcategory_count, ...row }) => ({
+  const rows = [...pageRows].map(({ subcategory_count, product_count, ...row }) => ({
     ...row,
     updatedAt: new Date(row.updatedAt),
     subcategoryCount: subcategory_count,
+    productCount: product_count,
   }));
   const hasMore = rows.length > limit;
   const page = rows.slice(0, limit);

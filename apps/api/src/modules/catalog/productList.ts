@@ -13,6 +13,8 @@ export type ProductSortField = "NAME" | "PRICE" | "PUBLISHED" | "CREATED_AT" | "
 
 export interface ProductListArgs {
   search?: string | null;
+  /** Restrict to this category and all its descendants, as Saleor does for `Category.products`. */
+  categoryId?: string | null;
   sort?: { field?: ProductSortField | null; direction: OrderDirection } | null;
   /** Staff with MANAGE_PRODUCTS see unpublished and future-dated products too. */
   includeUnpublished?: boolean;
@@ -110,6 +112,9 @@ export async function listProducts(db: Executor, args: ProductListArgs): Promise
   if (!args.includeUnpublished) {
     filters.push(sql`p.is_published AND (p.published_at IS NULL OR p.published_at <= now())`);
   }
+  if (args.categoryId != null) {
+    filters.push(sql`p.category_id IN (SELECT id FROM subtree)`);
+  }
   if (args.search?.trim()) {
     const pattern = `%${args.search.trim().replace(/[\\%_]/g, "\\$&")}%`;
     filters.push(
@@ -136,8 +141,7 @@ export async function listProducts(db: Executor, args: ProductListArgs): Promise
       : sql`WHERE (${sortColumn}, id) < (${value}, ${id}::uuid)`;
   }
 
-  const base = sql`
-    WITH base AS (
+  const select = sql`
       SELECT
         p.id, p.name, p.slug, p.description,
         p.description_plaintext AS "descriptionPlaintext",
@@ -149,8 +153,20 @@ export async function listProducts(db: Executor, args: ProductListArgs): Promise
         (SELECT v.currency FROM product_variant AS v WHERE v.product_id = p.id
           ORDER BY v.price_amount, v.id LIMIT 1) AS "minPriceCurrency"
       FROM product AS p
-      ${where}
-    )`;
+      ${where}`;
+  // A category lists its own products and those of every descendant, as Saleor's
+  // `root.get_descendants(include_self=True)`; the recursive CTE walks `category.parent_id`.
+  const base =
+    args.categoryId != null
+      ? sql`
+    WITH RECURSIVE subtree AS (
+      SELECT id FROM category WHERE id = ${args.categoryId}
+      UNION ALL
+      SELECT child.id FROM category AS child JOIN subtree ON child.parent_id = subtree.id
+    ),
+    base AS (${select})`
+      : sql`
+    WITH base AS (${select})`;
 
   const [pageRows, [{ count } = { count: 0 }]] = await Promise.all([
     db.execute<RawProductRow>(sql`

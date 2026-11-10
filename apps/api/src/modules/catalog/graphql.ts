@@ -24,8 +24,12 @@ import {
 const RICH_CONTENT = "\n\nRich text format. For reference see https://editorjs.io/";
 const PERMISSION = "Requires one of the following permissions: MANAGE_PRODUCTS.";
 
-// Rows from the list query also carry their subcategory count.
-type CategoryModel = CategoryRow & { level?: number; subcategoryCount?: number };
+// Rows from the list query also carry their subcategory and product counts.
+type CategoryModel = CategoryRow & {
+  level?: number;
+  subcategoryCount?: number;
+  productCount?: number;
+};
 
 export const CategoryType = builder.objectRef<CategoryModel>("Category");
 
@@ -150,10 +154,11 @@ export const OrderDirection = builder.enumType("OrderDirection", {
   } as const,
 });
 
-// Saleor's CategorySortField; PRODUCT_COUNT arrives with products (M2.2).
+// Saleor's CategorySortField.
 const CategorySortField = builder.enumType("CategorySortField", {
   values: {
     NAME: { description: "Sort categories by name." },
+    PRODUCT_COUNT: { description: "Sort categories by product count." },
     SUBCATEGORY_COUNT: { description: "Sort categories by subcategory count." },
   } as const,
 });
