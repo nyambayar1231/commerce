@@ -11,7 +11,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | M2.1 | Categories end-to-end (first Glide list + first save-bar form) | Done |
 | M2.2 | Products & variants API + product list grid | Done |
 | M2.3 | Product list filtering (URL state → variables → where → SQL) | Done |
-| M2.4 | Product create/update form | In progress |
+| M2.4 | Product create/update form | Done |
 | M2.5 | Product media | Approved |
 | M3 | Inventory: warehouse, stock, availability | Draft |
 | M5 | Checkout | Draft |
@@ -98,6 +98,29 @@ Awaiting the owner's approval (each was reported when its step finished):
     `useInfinityScroll` observes the input label, so `onScrollEnd` never fires; Saleor uses the same
     version, its demo has only 18 categories). Typing searches all categories.
 
+- **M2.4 (product & variant editing) left out or different from Saleor:**
+  - Owner decisions (2026-11-10): publishing needs a category (Saleor's `PRODUCT_WITHOUT_CATEGORY`)
+    and ≥1 variant (ours, `PRODUCT_WITHOUT_VARIANTS`); the last variant of a published product
+    can't be deleted; the Variants card is a read-only grid (Saleor: editable grid + bulk
+    mutations); `productVariantBulkCreate`/`BulkUpdate`/`BulkDelete` not built.
+  - API: no variant `weight`, no `publishedAt` input (publishing sets it to now, unpublishing
+    clears it); `productDelete`'s payload lists `variants` as empty (the rows are gone).
+  - Dashboard: create dialog is name + category (no product-type picker, title "Create product");
+    plain "Create Product" button (no split button / export menu); product page has no SEO/slug,
+    attributes, media, collections, taxes, metadata, GraphiQL, "product doctor"; the availability
+    card has no channels, available-for-purchase or scheduling; description is plain text. Variant
+    pages: no reordering, search or thumbnails in the navigation, no attributes, media, stock
+    (M3), weight, checkout limits or metadata; the two-column layout doesn't stack on narrow
+    screens. Variants card: no search, column picker, row selection or per-channel columns.
+  - Still not built although M2.2 pointed them at M2.4: bulk delete on the product list's
+    checkboxes (`productBulkDelete`) and assign/unassign on the category's "Products in …" card
+    (a product's category is set on its page instead).
+  - Every save sends the whole product form, so a published product that lost its category (the
+    category was deleted) asks for a category on the next save.
+  - **Proposal awaiting approval:** make `cache-and-network` the Apollo client default (Saleor's
+    `makeQuery` default). Today only the product list uses it; other lists (e.g. categories)
+    keep showing cached data until a reload.
+
 ---
 
 ## M2 — Catalog
@@ -135,28 +158,9 @@ Open items are listed under "Open items from finished milestones".
 
 Open items are listed under "Open items from finished milestones".
 
-### M2.4 Product create/update form
-- Scope: product + variants editing (prices, SKU), publish toggle with invariant, delete;
-  client+server validation; Savebar.
-- Create flow: simple dialog (name + category), no product types (M2 decision 5).
-- **Decisions (owner, 2026-11-10):** publishing needs a category (Saleor's
-  `PRODUCT_WITHOUT_CATEGORY`) and ≥1 variant (`PRODUCT_WITHOUT_VARIANTS`); deleting the last
-  variant of a published product is rejected; `productVariantBulkCreate` dropped for now.
-- Left out so far (carry to open items when M2.4 is done): `productVariantBulkCreate`, variant
-  `weight`, a `publishedAt` input (publishing sets it to now, unpublishing clears it); the
-  `productDelete` payload's `variants` resolve empty (the rows are gone).
-  Dashboard: the create dialog has no product-type picker; the product list query uses Saleor's
-  `cache-and-network`, other queries still Apollo's `cache-first` (Saleor's `makeQuery` defaults
-  all to `cache-and-network`; propose making it the client default).
-- Status: In progress.
+### M2.4 Product create/update form — Done (2026-11-10)
 
-| Step | What | Status |
-|---|---|---|
-| M2.4.1 | `productCreate/Update/Delete`, `productVariantCreate/Update/Delete`, publish invariant (category + ≥1 variant), price ≥ 0, shop currency; `ProductError` codes; guard + invariant tests | Done |
-| M2.4.2a | Product detail page: general info, category, publish toggle, Savebar, delete | Done |
-| M2.4.2b | Product create dialog (name + category) + "Create product" on the list → detail page | Done |
-| M2.4.3a | `productVariant(id, sku)` query; variant create + detail pages (name, price, SKU, track inventory, delete) | Done |
-| M2.4.3b | Variants card on the product page: read-only Datagrid (name, SKU, price), row → variant page, "Add variant" (owner 2026-11-10: read-only, not Saleor's editable grid) | Proposed |
+Open items are listed under "Open items from finished milestones".
 
 ### M2.5 Product media
 - Scope: local-disk file storage behind a tiny `storage` interface, upload via multipart GraphQL

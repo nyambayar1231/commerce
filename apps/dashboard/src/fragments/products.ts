@@ -24,7 +24,8 @@ export const productListRowFragment = gql`
 `;
 
 // The product detail page's fields: Saleor's ProductDetails fragment limited to what the update
-// page shows (no product type, attributes, media, SEO or metadata yet).
+// page shows (no product type, attributes, media, SEO or metadata yet). The variants feed the
+// read-only Variants card; `price` is the single channel's price.
 export const productDetailsFragment = gql`
   fragment ProductDetails on Product {
     id
@@ -38,6 +39,15 @@ export const productDetailsFragment = gql`
     isPublished
     publishedAt
     updatedAt
+    variants {
+      id
+      name
+      sku
+      price {
+        amount
+        currency
+      }
+    }
   }
 `;
 

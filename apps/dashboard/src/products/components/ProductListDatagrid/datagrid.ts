@@ -84,9 +84,10 @@ export const getProductAvailability = (
   return isScheduledForFuture ? "hidden" : "published";
 };
 
-const formatPrice = (
+/** A price cell's text: the currency with no minor digits (MNT, ADR-0013). Shared with variants. */
+export const formatPrice = (
   intl: IntlShape,
-  price: ProductListRowFragment["minimalVariantPrice"],
+  price: { amount: number; currency: string } | null | undefined,
 ): string =>
   price
     ? intl.formatNumber(price.amount, {

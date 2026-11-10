@@ -1,10 +1,11 @@
 // Adapted from saleor-dashboard: src/products/components/ProductUpdatePage/ProductUpdatePage.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // Saleor's layout for the product update page: TopNav (all products, the ⋯ menu with Delete
-// product), General Information in the main column, Organize Product and Availability in the right
-// sidebar, and the Savebar (save-composition hint, Back, Save). Not yet: media, attributes,
-// variants, SEO/slug editing, product type, collections, taxes, metadata, translations, GraphiQL,
-// extension widgets and the availability diagnostics.
+// product), General Information and the read-only Variants card in the main column, Organize
+// Product and Availability in the right sidebar, and the Savebar (save-composition hint, Back,
+// Save). Not yet: media, attributes, variant editing/creation (the variants grid is read-only),
+// SEO/slug editing, product type, collections, taxes, metadata, translations, GraphiQL, extension
+// widgets and the availability diagnostics.
 import { Box } from "@saleor/macaw-ui";
 import { Tag, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -22,10 +23,11 @@ import type {
   ProductDetailsFragment,
   ProductErrorFragment,
 } from "../../../graphql/types.generated";
-import { productListPath } from "../../urls";
+import { productListPath, productVariantAddUrl, productVariantEditUrl } from "../../urls";
 import { ProductAvailabilityCard } from "../ProductAvailabilityCard/ProductAvailabilityCard";
 import { ProductDetailsForm } from "../ProductDetailsForm/ProductDetailsForm";
 import { ProductOrganization } from "../ProductOrganization/ProductOrganization";
+import { ProductVariants } from "../ProductVariants/ProductVariants";
 import { type ProductUpdateData, useProductUpdateForm } from "./form";
 import { messages } from "./messages";
 import { ProductSaveCompositionHint } from "./ProductSaveCompositionHint";
@@ -116,6 +118,13 @@ export const ProductUpdatePage = ({
         <DetailPageLayout.Content>
           <DetailPageContent>
             <ProductDetailsForm data={data} disabled={disabled} errors={errors} onChange={change} />
+            {product ? (
+              <ProductVariants
+                variants={product.variants}
+                onAddVariant={() => navigate(productVariantAddUrl(product.id))}
+                onRowClick={(variantId) => navigate(productVariantEditUrl(variantId))}
+              />
+            ) : null}
           </DetailPageContent>
         </DetailPageLayout.Content>
         <DetailPageLayout.RightSidebar paddingTop={6}>
