@@ -22,6 +22,9 @@ describe("product urls", () => {
     expect(productPath("UHJvZHVjdDox")).toBe("/products/UHJvZHVjdDox");
     expect(productUrl("UHJvZHVjdDox")).toBe("/products/UHJvZHVjdDox?");
     expect(productUrl("a=")).toBe("/products/a%3D?");
+    expect(productUrl("UHJvZHVjdDox", { action: "remove" })).toBe(
+      "/products/UHJvZHVjdDox?action=remove",
+    );
   });
 
   it("parses the list params, round-tripping what it builds", () => {

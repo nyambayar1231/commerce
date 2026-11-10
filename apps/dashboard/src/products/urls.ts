@@ -84,4 +84,13 @@ export const getFiltersUrlParams = (
 
 export const productPath = (id: string): string => `${productSectionUrl}${id}`;
 
-export const productUrl = (id: string): string => `${productPath(encodeURIComponent(id))}?`;
+export type ProductUrlDialog = "remove";
+
+export interface ProductUrlQueryParams {
+  action?: ProductUrlDialog;
+}
+
+export const productUrl = (id: string, params?: ProductUrlQueryParams): string =>
+  `${productPath(encodeURIComponent(id))}?${new URLSearchParams(
+    queryEntries({ ...params }),
+  ).toString()}`;

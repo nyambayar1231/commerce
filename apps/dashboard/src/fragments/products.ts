@@ -22,3 +22,21 @@ export const productListRowFragment = gql`
     updatedAt
   }
 `;
+
+// The product detail page's fields: Saleor's ProductDetails fragment limited to what the update
+// page shows (no product type, attributes, media, SEO or metadata yet).
+export const productDetailsFragment = gql`
+  fragment ProductDetails on Product {
+    id
+    name
+    slug
+    description
+    category {
+      id
+      name
+    }
+    isPublished
+    publishedAt
+    updatedAt
+  }
+`;

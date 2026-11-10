@@ -150,7 +150,8 @@ Open items are listed under "Open items from finished milestones".
 | Step | What | Status |
 |---|---|---|
 | M2.4.1 | `productCreate/Update/Delete`, `productVariantCreate/Update/Delete`, publish invariant (category + ≥1 variant), price ≥ 0, shop currency; `ProductError` codes; guard + invariant tests | Done |
-| M2.4.2 | Product create dialog (name + category) → product detail page: general info, category, publish toggle, Savebar, delete | Proposed |
+| M2.4.2a | Product detail page: general info, category, publish toggle, Savebar, delete | Done |
+| M2.4.2b | Product create dialog (name + category) + "Create product" on the list → detail page | Proposed |
 | M2.4.3 | Variants card on the product page + variant detail page (SKU, name, price), create/delete | Proposed |
 
 ### M2.5 Product media
