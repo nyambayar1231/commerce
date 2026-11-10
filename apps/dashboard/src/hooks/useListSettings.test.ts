@@ -19,6 +19,7 @@ describe("useListSettings", () => {
     expect(result.current.settings.rowNumber).toBe(50);
     expect(JSON.parse(localStorage.getItem(listSettingsStorageKey) ?? "{}")).toEqual({
       CATEGORY_LIST: { rowNumber: 50 },
+      COLLECTION_PRODUCTS_LIST: { rowNumber: PAGINATE_BY },
     });
   });
 

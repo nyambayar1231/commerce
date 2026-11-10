@@ -1,8 +1,8 @@
 // Adapted from saleor-dashboard: src/categories/components/CategoryListDatagrid/datagrid.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // Saleor's tree grid: an expand column (chevron, or a spinner while children load), names indented
-// by depth, and "Load N more subcategories" rows. Saleor's "Number of products" column arrives with
-// products (M2.2), in both the page and the sidebar variant.
+// by depth, "Load N more subcategories" rows, and the product-count column in both the page and the
+// sidebar variant. The page column order is name, products, subcategories (as briefed).
 import type { GridCell, Item, Theme } from "@glideapps/glide-data-grid";
 import type { IntlShape } from "react-intl";
 
@@ -50,6 +50,11 @@ export const categoryListStaticColumnsAdapter = (
       width: 350,
     },
     {
+      id: "products",
+      title: intl.formatMessage(columnsMessages.numberOfProducts),
+      width: 300,
+    },
+    {
       id: "subcategories",
       title: intl.formatMessage(columnsMessages.subcategories),
       width: 300,
@@ -64,6 +69,7 @@ export const categoryListStaticColumnsAdapter = (
 export interface SidebarColumnWidths {
   name: number;
   subcategories: number;
+  products: number;
 }
 
 /** Sidebar membership list (the detail page's Subcategories card). */
@@ -80,6 +86,11 @@ export const categoryListSidebarColumnsAdapter = (
     id: "subcategories",
     title: intl.formatMessage(columnsMessages.sidebarSubcategories),
     width: widths.subcategories,
+  },
+  {
+    id: "products",
+    title: intl.formatMessage(columnsMessages.sidebarProducts),
+    width: widths.products,
   },
 ];
 
@@ -148,6 +159,8 @@ export const createGetCellContent =
       }
       case "subcategories":
         return readonlyTextCell(category.children?.totalCount?.toString() ?? "");
+      case "products":
+        return readonlyTextCell(category.products?.totalCount?.toString() ?? "");
       default:
         return readonlyTextCell("", false);
     }

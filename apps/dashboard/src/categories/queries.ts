@@ -1,6 +1,7 @@
 // Adapted from saleor-dashboard: src/categories/queries.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Saleor's queries, without the products connection (M2.2).
+// Saleor's queries. The card's product row fields are Saleor's CollectionProduct fragment, limited
+// to what we show: name and single-channel availability.
 import { gql } from "@apollo/client";
 
 import { categoryDetailsFragment, categoryFragment } from "../fragments/categories";
@@ -68,6 +69,28 @@ export const categoryDetailsQuery = gql`
   }
   ${categoryDetailsFragment}
   ${categoryFragment}
+  ${pageInfoFragment}
+`;
+
+export const categoryProducts = gql`
+  query CategoryProducts($id: ID!, $first: Int, $after: String, $last: Int, $before: String) {
+    category(id: $id) {
+      id
+      products(first: $first, after: $after, before: $before, last: $last) {
+        edges {
+          node {
+            id
+            name
+            isPublished
+            publishedAt
+          }
+        }
+        pageInfo {
+          ...PageInfo
+        }
+      }
+    }
+  }
   ${pageInfoFragment}
 `;
 

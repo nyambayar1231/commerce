@@ -1,10 +1,12 @@
 // Adapted from saleor-dashboard: src/categories/components/CategoryListDatagrid/CategoryListDatagrid.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The list grid: Saleor's expandable tree (chevron column, indented children, "load more" rows),
-// columns with sort arrows (header click sorts), row link to the category, checkbox row markers and
-// the pagination footer, and row selection (category rows only). The "sidebar" variant is the
-// detail page's Subcategories list: compact rows, "Name"/"Subs" headers, no sorting and no
-// footer (the card paginates). Not yet: tree rows in the sidebar, the column picker.
+// columns with sort arrows (header click sorts, including Number of products), row link to the
+// category, checkbox row markers and the pagination footer, and row selection (category rows only).
+// The "sidebar" variant is the detail page's Subcategories list: compact rows, "Name"/"Subs"/"Prods"
+// headers, no sorting and no footer (the card paginates). Saleor measures the sidebar column widths
+// from the card; ours are fixed to fit the right column. Not yet: tree rows in the sidebar, the
+// column picker, Saleor's softened count text.
 import type { Item, Theme } from "@glideapps/glide-data-grid";
 import { useTheme } from "@saleor/macaw-ui";
 import { useCallback, useMemo } from "react";
@@ -29,10 +31,10 @@ import {
 } from "./datagrid";
 
 // Saleor's sidebar sizes (CategoryListDatagrid.tsx); its widths are measured from the card, ours
-// are fixed to fit the right column.
+// are fixed to fit the right column with three columns.
 const SIDEBAR_ROW_HEIGHT = 36;
 const SIDEBAR_ROW_MARKER_WIDTH = 36;
-const SIDEBAR_COLUMN_WIDTHS = { name: 200, subcategories: 72 };
+const SIDEBAR_COLUMN_WIDTHS = { name: 176, subcategories: 72, products: 72 };
 // Glide: checkboxSize = min(18, rowHeight − 2 * cellVerticalPadding)
 const sidebarRowMarkerTheme: Partial<Theme> = { cellVerticalPadding: 11, cellHorizontalPadding: 4 };
 
@@ -227,6 +229,7 @@ export const CategoryListDatagrid = ({
 
       switch (columnId) {
         case SortField.name:
+        case SortField.productCount:
         case SortField.subcategoryCount:
           onSort?.(columnId);
           break;

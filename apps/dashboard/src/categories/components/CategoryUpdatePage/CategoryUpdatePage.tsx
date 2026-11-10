@@ -1,9 +1,9 @@
 // Adapted from saleor-dashboard: src/categories/components/CategoryUpdatePage/CategoryUpdatePage.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // Saleor's layout: TopNav (back to the parent or the list, the ⋯ menu with Create subcategory and
-// Delete category), General Information, the Subcategories card in the right column, and the
-// Savebar (save-composition hint, Back, Save). Not yet: the ancestors breadcrumb (needs
-// `ancestors`, M2.1.6), Products card (M2.2), SEO card with the slug, background image (M2.5),
+// Delete category), General Information, the Products card under it, the Subcategories card in the
+// right column, and the Savebar (save-composition hint, Back, Save). Not yet: the ancestors
+// breadcrumb (needs `ancestors`, M2.1.6), SEO card with the slug, background image (M2.5),
 // metadata, translations, GraphiQL and extension menu items.
 import { FolderPlus, Trash2 } from "lucide-react";
 import type { ComponentProps } from "react";
@@ -27,13 +27,14 @@ import type {
 } from "../../../graphql/types.generated";
 import { categoryListPath, categoryUrl } from "../../urls";
 import { CategoryDetailsForm } from "../CategoryDetailsForm/CategoryDetailsForm";
-
+import { CategoryProducts } from "../CategoryProducts/CategoryProducts";
 import { CategorySubcategories } from "../CategorySubcategories/CategorySubcategories";
 import { CategorySaveCompositionHint } from "./CategorySaveCompositionHint";
 import { type CategoryUpdateData, useCategoryUpdateForm } from "./form";
 import { messages } from "./messages";
 
 interface CategoryUpdatePageProps {
+  categoryId: string;
   category: CategoryDetailsFragment | undefined | null;
   errors: ProductErrorFragment[];
   disabled: boolean;
@@ -49,6 +50,7 @@ interface CategoryUpdatePageProps {
 }
 
 export const CategoryUpdatePage = ({
+  categoryId,
   category,
   errors,
   disabled,
@@ -123,6 +125,7 @@ export const CategoryUpdatePage = ({
               errors={errors}
               onChange={change}
             />
+            <CategoryProducts category={category} categoryId={categoryId} disabled={disabled} />
           </DetailPageContent>
         </DetailPageLayout.Content>
         <DetailPageLayout.RightSidebar paddingTop={6}>

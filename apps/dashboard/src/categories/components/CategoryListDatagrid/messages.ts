@@ -13,6 +13,11 @@ export const columnsMessages = defineMessages({
     defaultMessage: "Subs",
     description: "short subcategory count column header in category sidebar",
   },
+  sidebarProducts: {
+    id: "a5eZlA",
+    defaultMessage: "Prods",
+    description: "short product count column header in category sidebar",
+  },
   categoryName: {
     id: "kgVqk1",
     defaultMessage: "Category name",
@@ -20,6 +25,10 @@ export const columnsMessages = defineMessages({
   subcategories: {
     defaultMessage: "Subcategories",
     id: "F7DxHw",
+  },
+  numberOfProducts: {
+    id: "cLcy6F",
+    defaultMessage: "Number of products",
   },
 });
 

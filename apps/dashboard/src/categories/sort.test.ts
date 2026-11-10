@@ -12,8 +12,10 @@ describe("category list sort", () => {
       field: "SUBCATEGORY_COUNT",
       direction: "DESC",
     });
-    // Product counts arrive with products.
-    expect(getSortQueryVariables({ sort: "products", asc: true })).toBeUndefined();
+    expect(getSortQueryVariables({ sort: "products", asc: true })).toEqual({
+      field: "PRODUCT_COUNT",
+      direction: "ASC",
+    });
   });
 
   it("flips the direction on the same column, sorts a new one ascending, and resets the page", () => {

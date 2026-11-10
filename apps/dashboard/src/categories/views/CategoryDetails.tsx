@@ -3,8 +3,9 @@
 // The page's container: loads the category, saves it, deletes it, and creates subcategories through
 // Saleor's dialog (URL `action=create` / `action=delete`, as Saleor). The Subcategories card pages
 // through the children (page state kept locally, rows per page from the list settings, as
-// Saleor's) and bulk-deletes selected ones (`action=delete-categories`). Not yet: the products
-// list, background image, metadata (see CategoryUpdatePage).
+// Saleor's) and bulk-deletes selected ones (`action=delete-categories`). The Products card queries
+// its own connection (see CategoryProducts). Not yet: background image, metadata (see
+// CategoryUpdatePage).
 import { useMutation, useQuery } from "@apollo/client";
 import { useCallback, useRef, useState } from "react";
 import { useIntl } from "react-intl";
@@ -173,6 +174,7 @@ export const CategoryDetails = () => {
   return (
     <>
       <CategoryUpdatePage
+        categoryId={id}
         category={category}
         disabled={loading}
         errors={updateResult.data?.categoryUpdate.errors ?? []}

@@ -4,13 +4,14 @@
 import type { CategorySortField, OrderDirection } from "../graphql/types.generated";
 import { type CategoryListUrlQueryParams, CategoryListUrlSortField } from "./urls";
 
-// PRODUCT_COUNT arrives with products (M2.2); until then the products column isn't shown.
 function getSortQueryField(
   sort: CategoryListUrlQueryParams["sort"],
 ): CategorySortField | undefined {
   switch (sort) {
     case CategoryListUrlSortField.name:
       return "NAME";
+    case CategoryListUrlSortField.productCount:
+      return "PRODUCT_COUNT";
     case CategoryListUrlSortField.subcategoryCount:
       return "SUBCATEGORY_COUNT";
     default:
