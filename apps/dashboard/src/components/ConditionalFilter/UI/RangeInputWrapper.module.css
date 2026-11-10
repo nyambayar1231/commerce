@@ -1,0 +1,44 @@
+/*
+ * Adapted from saleor-dashboard: src/components/ConditionalFilter/UI/RangeInputWrapper.module.css
+ * (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ */
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mu-spacing-1);
+  width: 100%;
+  min-width: 0;
+}
+
+.inline {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--mu-spacing-1);
+  width: auto;
+  max-width: 100%;
+}
+
+.inline > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.inline[data-range-size="date"] > * {
+  flex: 0 1 160px;
+  width: 160px;
+}
+
+.inline[data-range-size="datetime"] > * {
+  flex: 0 1 240px;
+  width: 240px;
+}
+
+.inline :global([data-macaw-ui-component="Input"]) {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}

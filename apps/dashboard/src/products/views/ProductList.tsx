@@ -1,14 +1,16 @@
 // Adapted from saleor-dashboard: src/products/views/ProductList/ProductList.tsx (BSD-3-Clause,
 // Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The product list with search, sort and cursor pagination, all from the URL as Saleor; a URL
-// without a sort is redirected to Saleor's default (name, ascending). The conditional filters in
-// the URL become the query's `where`. Not yet: the filter bar and saved presets (M2.3.3), bulk
-// actions and Create product (M2.4), tiles view.
+// The product list with filters, search, sort and cursor pagination, all from the URL as Saleor;
+// a URL without a sort is redirected to Saleor's default (name, ascending). The conditional
+// filters in the URL become the query's `where`; the filter panel edits a copy and applies it back
+// to the URL. Not yet: category labels in the filter (M2.3.3b), bulk actions and Create product
+// (M2.4), tiles view.
 import { useQuery } from "@apollo/client";
 import { useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
+import { ConditionalProductFilterProvider } from "../../components/ConditionalFilter/context/provider";
 import { createProductQueryVariables } from "../../components/ConditionalFilter/queryVariables";
 import { ProductListDocument } from "../../graphql/types.generated";
 import useListSettings from "../../hooks/useListSettings";
@@ -18,6 +20,16 @@ import { getSortQueryVariables, getSortUrlParams } from "../sort";
 import { filterUrlEntries, parseProductListUrl, productListUrl } from "../urls";
 
 export const ProductList = () => {
+  const [searchParams] = useSearchParams();
+
+  return (
+    <ConditionalProductFilterProvider locationSearch={searchParams.toString()}>
+      <ProductListContent />
+    </ConditionalProductFilterProvider>
+  );
+};
+
+const ProductListContent = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const params = useMemo(() => parseProductListUrl(searchParams), [searchParams]);

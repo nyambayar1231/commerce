@@ -38,14 +38,14 @@ export const STATIC_PRODUCT_OPTIONS: LeftOperand[] = [
   { value: "category", label: "Category", type: "category", slug: "category", maxOccurrences: 1 },
   {
     value: "isPublished",
-    label: "IsPublished",
+    label: "Is published",
     type: "isPublished",
     slug: "isPublished",
     maxOccurrences: 1,
   },
   {
     value: "hasCategory",
-    label: "HasCategory",
+    label: "Has category",
     type: "hasCategory",
     slug: "hasCategory",
     maxOccurrences: 1,

@@ -9,10 +9,10 @@ import { Box, Text } from "@saleor/macaw-ui";
 import type { ComponentProps } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
+import { ListFilters } from "../../../components/AppLayout/ListFilters/ListFilters";
 import { TopNav } from "../../../components/AppLayout/TopNav";
 import { DashboardCard } from "../../../components/Card";
 import { ListPageLayout } from "../../../components/Layouts/List/Root";
-import { ListSearchInput } from "../../../components/ListSearchInput/ListSearchInput";
 import { sectionNames } from "../../../intl";
 import { ProductListDatagrid } from "../ProductListDatagrid/ProductListDatagrid";
 import { messages } from "./messages";
@@ -43,21 +43,11 @@ export const ProductListPage = ({
         </Box>
       </TopNav>
       <DashboardCard>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          paddingX={6}
-          marginBottom={2}
-        >
-          <Box __width="320px">
-            <ListSearchInput
-              initialSearch={initialSearch}
-              placeholder={intl.formatMessage(messages.searchProducts)}
-              onSearchChange={onSearchChange}
-            />
-          </Box>
-        </Box>
+        <ListFilters
+          initialSearch={initialSearch}
+          searchPlaceholder={intl.formatMessage(messages.searchProducts)}
+          onSearchChange={onSearchChange}
+        />
         <ProductListDatagrid {...listProps} />
       </DashboardCard>
     </ListPageLayout>

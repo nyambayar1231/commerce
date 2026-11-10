@@ -1,0 +1,39 @@
+/*
+ * Adapted from saleor-dashboard: src/components/ConditionalFilter/UI/Row.module.css
+ * (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ * The panel row grid. Saleor's inline row, selection pill and async-portal styles are dropped.
+ */
+.row {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.row > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.valueField {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.valueField > * {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+/*
+ * Chrome/WebKit date controls use an inner edit layout that grows to a tall
+ * empty box when overflow is hidden (the "between" fields looked huge).
+ */
+.row :global(input[type="date"]),
+.row :global(input[type="datetime-local"]),
+.row :global(input[type="time"]) {
+  min-width: 0;
+  overflow: visible;
+}

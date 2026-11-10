@@ -5,7 +5,7 @@
 // option response to look values up in: the value comes straight from the URL and is validated
 // per field here, so an invalid entry becomes an ignorable element instead of crashing the page.
 import type { UrlToken } from "../ValueProvider/UrlToken";
-import { type ConditionItem, ConditionOptions, type StaticElementName } from "./ConditionOptions";
+import { ConditionOptions, type StaticElementName } from "./ConditionOptions";
 import { ConditionSelected } from "./ConditionSelected";
 import type { ConditionValue } from "./ConditionValue";
 
