@@ -9,6 +9,11 @@ try {
 
 const testUrl = process.env.DATABASE_URL_TEST ?? "";
 
+// The media bucket the way DATABASE_URL_TEST is the test database: tests read the variables
+// production reads, pointed at the bucket whose name ends in -test (test/global-setup.ts).
+const testBucket = process.env.AWS_MEDIA_BUCKET_NAME_TEST ?? "";
+const s3Endpoint = (process.env.AWS_S3_ENDPOINT_URL ?? "").replace(/\/+$/, "");
+
 export default defineConfig({
   // Resolve packages as Node does. graphql 17 ships a CommonJS and an ESM build; Node imports the
   // ESM one through the `module-sync` condition, which Vite doesn't apply by default, so our source
@@ -21,6 +26,10 @@ export default defineConfig({
     fileParallelism: false,
     // Point @commerce/db's getDb() at the test database through the same variable production
     // reads. Code under test needs no test-only wiring.
-    env: { DATABASE_URL: testUrl },
+    env: {
+      DATABASE_URL: testUrl,
+      AWS_MEDIA_BUCKET_NAME: testBucket,
+      MEDIA_PUBLIC_URL: `${s3Endpoint}/${testBucket}`,
+    },
   },
 });

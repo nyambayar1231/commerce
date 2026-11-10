@@ -2,6 +2,7 @@ import { type Executor, schema } from "@commerce/db";
 import DataLoader from "dataloader";
 import { asc, inArray } from "drizzle-orm";
 import type { CategoryRow } from "./categories.ts";
+import type { ProductMediaRow } from "./media.ts";
 import type { ProductRow, ProductVariantRow } from "./products.ts";
 
 // Per-request batch loaders for the catalog's nested fields (ARCHITECTURE.md §4 and §5.1 step 5):
@@ -16,6 +17,8 @@ export interface CatalogLoaders {
   productById: DataLoader<string, ProductRow | null>;
   /** `Product.variants`, `Product.defaultVariant` and `Product.minimalVariantPrice`. */
   variantsByProductId: DataLoader<string, ProductVariantRow[]>;
+  /** `Product.media`. */
+  mediaByProductId: DataLoader<string, ProductMediaRow[]>;
 }
 
 /** Loaders live for exactly one request: create them in `createContext`, never globally. */
@@ -49,6 +52,21 @@ export function createCatalogLoaders(db: Executor): CatalogLoaders {
       for (const row of rows) {
         const variants = byProduct.get(row.productId);
         if (variants) variants.push(row);
+        else byProduct.set(row.productId, [row]);
+      }
+      return productIds.map((productId) => byProduct.get(productId) ?? []);
+    }),
+
+    mediaByProductId: new DataLoader(async (productIds) => {
+      const rows = await db
+        .select()
+        .from(schema.productMedia)
+        .where(inArray(schema.productMedia.productId, [...productIds]))
+        .orderBy(asc(schema.productMedia.sortOrder), asc(schema.productMedia.id));
+      const byProduct = new Map<string, ProductMediaRow[]>();
+      for (const row of rows) {
+        const media = byProduct.get(row.productId);
+        if (media) media.push(row);
         else byProduct.set(row.productId, [row]);
       }
       return productIds.map((productId) => byProduct.get(productId) ?? []);

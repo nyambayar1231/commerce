@@ -548,6 +548,9 @@ type Product implements Node {
   """Indicates if the product is published."""
   isPublished: Boolean!
 
+  """List of media for the product."""
+  media: [ProductMedia!]!
+
   """The minimal price of a product's variants."""
   minimalVariantPrice: Money
 
@@ -666,6 +669,38 @@ input ProductInput {
 
   """Product slug."""
   slug: String
+}
+
+"""Represents a product media."""
+type ProductMedia implements Node {
+  """The alt text of the media."""
+  alt: String!
+
+  """The unique ID of the product media."""
+  id: ID!
+
+  """The oEmbed data of the media."""
+  oembedData: JSONString!
+
+  """Product id the media refers to."""
+  productId: ID
+
+  """The sort order of the media."""
+  sortOrder: Int
+
+  """The type of the media."""
+  type: ProductMediaType!
+
+  """The URL of the media."""
+  url: String!
+}
+
+enum ProductMediaType {
+  """An uploaded image or an URL to an image"""
+  IMAGE
+
+  """A URL to an external video"""
+  VIDEO
 }
 
 input ProductOrder {

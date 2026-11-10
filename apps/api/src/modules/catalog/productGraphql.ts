@@ -2,10 +2,11 @@ import { type Money, parseDecimal } from "@commerce/contracts";
 import { GraphQLError } from "graphql";
 import { builder } from "../../graphql/builder.ts";
 import type { Context } from "../../graphql/context.ts";
-import { fromGlobalId } from "../../graphql/globalId.ts";
+import { fromGlobalId, toGlobalId } from "../../graphql/globalId.ts";
 import { MoneyType } from "../../graphql/money.ts";
 import { isEdgesRequested, validatePagination } from "../../graphql/pagination.ts";
 import { DateTime, Decimal, JSONString } from "../../graphql/scalars.ts";
+import { getStorage } from "../../storage/index.ts";
 import { CategoryType, OrderDirection } from "./graphql.ts";
 import {
   getProduct,
@@ -13,6 +14,7 @@ import {
   InvalidCursorError,
   listProducts,
   type ProductListArgs,
+  type ProductMediaRow,
   type ProductPage,
   type ProductRow,
   type ProductSortField,
@@ -35,6 +37,16 @@ type ProductModel = ProductRow & { minimalPrice?: Money | null };
 
 export const ProductType = builder.objectRef<ProductModel>("Product");
 export const ProductVariantType = builder.objectRef<ProductVariantRow>("ProductVariant");
+export const ProductMediaType = builder.objectRef<ProductMediaRow>("ProductMedia");
+
+// Saleor's ProductMediaType enum (saleor/graphql/product/enums.py). Not every value is producible
+// yet: media are images only until M2.5.2 adds external videos.
+const ProductMediaKind = builder.enumType("ProductMediaType", {
+  values: {
+    IMAGE: { description: "An uploaded image or an URL to an image" },
+    VIDEO: { description: "A URL to an external video" },
+  } as const,
+});
 
 /** Staff with MANAGE_PRODUCTS see unpublished and future-dated products (ARCHITECTURE.md §8). */
 async function seesUnpublished(ctx: Context): Promise<boolean> {
@@ -217,6 +229,11 @@ builder.node(ProductType, {
       description: "List of variants for the product.",
       resolve: (product, _args, ctx) => ctx.loaders.variantsByProductId.load(product.id),
     }),
+    media: t.field({
+      type: [ProductMediaType],
+      description: "List of media for the product.",
+      resolve: (product, _args, ctx) => ctx.loaders.mediaByProductId.load(product.id),
+    }),
   }),
 });
 
@@ -249,6 +266,39 @@ builder.node(ProductVariantType, {
       type: MoneyType,
       description: "The price of the product variant.",
       resolve: (variant) => toMoney(variant.priceAmount, variant.currency),
+    }),
+  }),
+});
+
+// Saleor's ProductMedia (saleor/graphql/product/types/products.py). Images only until M2.5.2:
+// `type` is always IMAGE and `oembedData` is the empty object, as Saleor stores for images.
+builder.node(ProductMediaType, {
+  id: { resolve: (media) => media.id, description: "The unique ID of the product media." },
+  description: "Represents a product media.",
+  fields: (t) => ({
+    sortOrder: t.exposeInt("sortOrder", {
+      nullable: true,
+      description: "The sort order of the media.",
+    }),
+    alt: t.exposeString("alt", { description: "The alt text of the media." }),
+    type: t.field({
+      type: ProductMediaKind,
+      description: "The type of the media.",
+      resolve: () => "IMAGE" as const,
+    }),
+    oembedData: t.field({
+      type: JSONString,
+      description: "The oEmbed data of the media.",
+      resolve: () => ({}),
+    }),
+    url: t.string({
+      description: "The URL of the media.",
+      resolve: (media) => getStorage().publicUrl(media.imageKey),
+    }),
+    productId: t.id({
+      nullable: true,
+      description: "Product id the media refers to.",
+      resolve: (media) => toGlobalId("Product", media.productId),
     }),
   }),
 });

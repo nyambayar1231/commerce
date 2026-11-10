@@ -68,6 +68,61 @@ export const product = pgTable(
   ],
 );
 
+// Saleor's `product.ProductMedia`, images only (ADR-0014). The bytes live in S3; `image_key` is
+// `products/<product_id>/<id>.<ext>`. Saleor's external_url, oembed_data and to_remove are not
+// modelled. `alt` is Saleor's max_length=250.
+export const productMedia = pgTable(
+  "product_media",
+  {
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => product.id, { onDelete: "cascade" }),
+    imageKey: text("image_key").notNull(),
+    contentType: text("content_type").notNull(),
+    alt: text("alt").notNull().default(""),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check("product_media_alt_max_length", sql`char_length(${table.alt}) <= 250`),
+    check("product_media_image_key_not_empty", sql`${table.imageKey} <> ''`),
+    index("product_media_product_id_sort_order_idx").on(table.productId, table.sortOrder),
+  ],
+);
+
+// Saleor's `thumbnail.Thumbnail` rows for product media (`saleor/thumbnail/models.py`). One row per
+// generated size/format; the bytes live in S3 at `thumbnails/<media_id>/<size>.<ext>` (ADR-0014).
+export const productMediaThumbnail = pgTable(
+  "product_media_thumbnail",
+  {
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    mediaId: uuid("media_id")
+      .notNull()
+      .references(() => productMedia.id, { onDelete: "cascade" }),
+    size: integer("size").notNull(),
+    format: text("format").notNull(),
+    imageKey: text("image_key").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique("product_media_thumbnail_media_id_size_format_unique").on(
+      table.mediaId,
+      table.size,
+      table.format,
+    ),
+    check(
+      "product_media_thumbnail_size_allowed",
+      sql`${table.size} in (32, 64, 128, 256, 512, 1024, 2048, 4096)`,
+    ),
+    check(
+      "product_media_thumbnail_format_allowed",
+      sql`${table.format} in ('ORIGINAL', 'WEBP', 'AVIF')`,
+    ),
+  ],
+);
+
 // Saleor's `product.ProductVariant` with its single-channel price inline (Saleor keeps the price
 // in ProductVariantChannelListing). Money is an integer count of minor units plus the currency on
 // every row (ADR-0013); the service checks the currency is the shop's.
