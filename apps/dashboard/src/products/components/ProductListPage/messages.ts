@@ -13,4 +13,9 @@ export const messages = defineMessages({
     id: "AHOQr2",
     defaultMessage: "Search products...",
   },
+  createProduct: {
+    id: "JFmOfi",
+    defaultMessage: "Create Product",
+    description: "button",
+  },
 });

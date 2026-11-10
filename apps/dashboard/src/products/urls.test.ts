@@ -41,6 +41,16 @@ describe("product urls", () => {
     ).toEqual({ after: "a" });
   });
 
+  it("keeps the create-product dialog in the URL and ignores unknown actions", () => {
+    expect(productListUrl({ action: "create-product", sort: "name", asc: true })).toBe(
+      "/products/?action=create-product&sort=name&asc=true",
+    );
+    expect(
+      parseProductListUrl(new URLSearchParams("action=create-product&sort=name&asc=true")),
+    ).toEqual({ action: "create-product", sort: "name", asc: true });
+    expect(parseProductListUrl(new URLSearchParams("action=delete"))).toEqual({});
+  });
+
   it("keeps the conditional filters next to search, sort and pagination", () => {
     const filters = parseFilterContainer("0[s0.isPublished]=false");
 

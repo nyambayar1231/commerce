@@ -1,8 +1,9 @@
 // Adapted from saleor-dashboard: src/products/urls.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The product list's state lives in the URL as Saleor's: the conditional filters (indexed
-// `0[s0.isPublished]=false` entries), `query` (search), `sort` + `asc` and the page cursor
-// (`after` / `before`). Not yet: Saleor's saved filter presets, bulk-selection `ids` and dialogs.
+// `0[s0.isPublished]=false` entries), `query` (search), `sort` + `asc`, the page cursor
+// (`after` / `before`) and the open dialog (`action`). Not yet: Saleor's saved filter presets,
+// bulk-selection `ids` and most dialogs.
 import type { FilterContainer } from "../components/ConditionalFilter/FilterElement/FilterElement";
 import {
   filterQueryEntries,
@@ -26,7 +27,10 @@ export const ProductListUrlSortField = {
 export type ProductListUrlSortField =
   (typeof ProductListUrlSortField)[keyof typeof ProductListUrlSortField];
 
+export type ProductListUrlDialog = "create-product";
+
 export interface ProductListUrlQueryParams {
+  action?: ProductListUrlDialog;
   query?: string;
   sort?: ProductListUrlSortField;
   asc?: boolean;
@@ -54,13 +58,18 @@ export const productListUrl = (params?: ProductListUrlQueryParams): string => {
 };
 
 const SORT_FIELDS = Object.values(ProductListUrlSortField) as string[];
+const LIST_DIALOGS: ProductListUrlDialog[] = ["create-product"];
 
 /** The list's URL params, ignoring values that aren't valid (a hand-edited URL). */
 export const parseProductListUrl = (search: URLSearchParams): ProductListUrlQueryParams => {
   const params: ProductListUrlQueryParams = {};
   const sort = search.get("sort");
   const asc = search.get("asc");
+  const action = search.get("action");
 
+  if (action && (LIST_DIALOGS as string[]).includes(action)) {
+    params.action = action as ProductListUrlDialog;
+  }
   if (search.get("query")) params.query = search.get("query") ?? undefined;
   if (sort && SORT_FIELDS.includes(sort)) params.sort = sort as ProductListUrlSortField;
   if (asc === "true" || asc === "false") params.asc = asc === "true";

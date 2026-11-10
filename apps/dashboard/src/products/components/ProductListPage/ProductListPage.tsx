@@ -3,9 +3,10 @@
 // See THIRD_PARTY_LICENSES.md
 // The header and card. Saleor shows "All products" as the label of its filter-presets dropdown
 // (FilterPresetsSelect) next to a hidden TopNav title; without presets we show that label as text.
-// Then Saleor's card: search and the grid with its pagination. Not yet: the Create product button
-// (M2.4), export/extension menus, limits, the view switch, bulk delete and filter presets.
-import { Box, Text } from "@saleor/macaw-ui";
+// Saleor's create-button dropdown becomes a plain "Create Product" button (no product types or
+// extensions). Then Saleor's card: search and the grid with its pagination. Not yet: export/extension
+// menus, the create-button dropdown, limits, the view switch, bulk delete and filter presets.
+import { Box, Button, Text } from "@saleor/macaw-ui";
 import type { ComponentProps } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
@@ -20,11 +21,13 @@ import { messages } from "./messages";
 interface ProductListPageProps extends ComponentProps<typeof ProductListDatagrid> {
   initialSearch: string;
   onSearchChange: (query: string) => void;
+  onAdd: () => void;
 }
 
 export const ProductListPage = ({
   initialSearch,
   onSearchChange,
+  onAdd,
   ...listProps
 }: ProductListPageProps) => {
   const intl = useIntl();
@@ -40,6 +43,11 @@ export const ProductListPage = ({
           <Text size={6}>
             <FormattedMessage {...messages.allProducts} />
           </Text>
+          <Box display="flex" alignItems="center" gap={2}>
+            <Button data-test-id="add-product" variant="primary" onClick={onAdd}>
+              <FormattedMessage {...messages.createProduct} />
+            </Button>
+          </Box>
         </Box>
       </TopNav>
       <DashboardCard>

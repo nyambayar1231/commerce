@@ -1,11 +1,26 @@
 // Adapted from saleor-dashboard: src/products/mutations.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The product update page's mutations. `productUpdate` returns the product so the form picks up
-// the saved values (including the server-side publication date).
+// The product section's mutations. `productCreate` returns just the new product's id: the list
+// navigates to its detail page. `productUpdate` returns the product so the form picks up the
+// saved values (including the server-side publication date).
 import { gql } from "@apollo/client";
 
 import { productErrorFragment } from "../fragments/errors";
 import { productDetailsFragment } from "../fragments/products";
+
+export const productCreateMutation = gql`
+  mutation ProductCreate($input: ProductCreateInput!) {
+    productCreate(input: $input) {
+      product {
+        id
+      }
+      errors {
+        ...ProductError
+      }
+    }
+  }
+  ${productErrorFragment}
+`;
 
 export const productUpdateMutation = gql`
   mutation ProductUpdate($id: ID!, $input: ProductInput!) {
