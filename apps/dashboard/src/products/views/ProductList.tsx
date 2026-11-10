@@ -3,7 +3,7 @@
 // See THIRD_PARTY_LICENSES.md
 // The product list with search, sort and cursor pagination, all from the URL as Saleor; a URL
 // without a sort is redirected to Saleor's default (name, ascending). Not yet: filters and saved
-// presets (M2.3), bulk actions and Create product (M2.4), the column picker (M2.2.6), tiles view.
+// presets (M2.3), bulk actions and Create product (M2.4), tiles view.
 import { useQuery } from "@apollo/client";
 import { useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -65,7 +65,11 @@ export const ProductList = () => {
       settings={settings}
       onUpdateListSettings={(key, value) => {
         updateListSettings(key, value);
-        navigate(productListUrl({ ...params, ...firstPage }), { replace: true });
+
+        // Only a page-size change restarts paging; toggling or resizing a column must not.
+        if (key === "rowNumber") {
+          navigate(productListUrl({ ...params, ...firstPage }), { replace: true });
+        }
       }}
       hasNextPage={paginator.hasNextPage}
       hasPreviousPage={paginator.hasPreviousPage}

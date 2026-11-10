@@ -1,18 +1,25 @@
 // Adapted from saleor-dashboard: src/products/components/ProductListDatagrid/ProductListDatagrid.tsx
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The product list grid: Saleor's columns with sort arrows (header click sorts), checkbox row
-// markers, row link to the product, loading/empty states and the pagination footer. Not yet:
-// bulk actions behind the row checkboxes (M2.4), the column picker (M2.2.6), tiles view.
+// The product list grid: Saleor's static columns with sort arrows (header click sorts), column
+// picker, resizing and reordering, checkbox row markers, row link to the product,
+// loading/empty states and the pagination footer. Not yet: bulk actions behind the row checkboxes
+// (M2.4), Saleor's dynamic attribute columns, tiles view.
 import type { Item } from "@glideapps/glide-data-grid";
 import { useCallback, useMemo } from "react";
 import { useIntl } from "react-intl";
 import { useNavigate } from "react-router";
 
+import { ColumnPicker } from "../../../components/Datagrid/ColumnPicker/ColumnPicker";
+import { useColumns } from "../../../components/Datagrid/ColumnPicker/useColumns";
 import { Datagrid } from "../../../components/Datagrid/Datagrid";
 import { DatagridPagination } from "../../../components/TablePagination/DatagridPagination";
 import type { ProductListRowFragment } from "../../../graphql/types.generated";
-import type { ListSettings, ListSettingsUpdate } from "../../../hooks/useListSettings";
+import {
+  type ListSettings,
+  type ListSettingsUpdate,
+  PRODUCT_LIST_DEFAULT_COLUMNS,
+} from "../../../hooks/useListSettings";
 import type { Sort } from "../../../utils/columns/getColumnSortDirectionIcon";
 import {
   type ProductListUrlSortField,
@@ -49,11 +56,29 @@ export const ProductListDatagrid = ({
 }: ProductListDatagridProps) => {
   const intl = useIntl();
   const navigate = useNavigate();
-  const availableColumns = useMemo(() => productListStaticColumnsAdapter(intl, sort), [intl, sort]);
+  const memoizedStaticColumns = useMemo(
+    () => productListStaticColumnsAdapter(intl, sort),
+    [intl, sort],
+  );
+
+  const handleColumnChange = useCallback(
+    (picked: string[]) => {
+      onUpdateListSettings?.("columns", picked);
+    },
+    [onUpdateListSettings],
+  );
+
+  const { handlers, visibleColumns, staticColumns, selectedColumns, recentlyAddedColumn } =
+    useColumns({
+      gridName: "product_list",
+      staticColumns: memoizedStaticColumns,
+      selectedColumns: settings?.columns ?? PRODUCT_LIST_DEFAULT_COLUMNS,
+      onSave: handleColumnChange,
+    });
 
   const getCellContent = useMemo(
-    () => createGetCellContent(rows, availableColumns, { intl }),
-    [rows, availableColumns, intl],
+    () => createGetCellContent(rows, visibleColumns, { intl }),
+    [rows, visibleColumns, intl],
   );
 
   const handleRowAnchor = useCallback(
@@ -78,7 +103,7 @@ export const ProductListDatagrid = ({
 
   const handleHeaderClick = useCallback(
     (col: number) => {
-      const columnId = availableColumns[col]?.id;
+      const columnId = visibleColumns[col]?.id;
 
       switch (columnId) {
         case SortField.name:
@@ -90,7 +115,7 @@ export const ProductListDatagrid = ({
           break;
       }
     },
-    [availableColumns, onSort],
+    [visibleColumns, onSort],
   );
 
   return (
@@ -101,11 +126,22 @@ export const ProductListDatagrid = ({
         loading={disabled}
         verticalBorder={false}
         rowMarkers="checkbox-visible"
-        availableColumns={availableColumns}
+        availableColumns={visibleColumns}
         rows={rows.length}
         getCellContent={getCellContent}
         emptyText={intl.formatMessage(messages.noData)}
         onHeaderClicked={handleHeaderClick}
+        renderColumnPicker={() => (
+          <ColumnPicker
+            staticColumns={staticColumns}
+            selectedColumns={selectedColumns}
+            onToggle={handlers.onToggle}
+          />
+        )}
+        onColumnMoved={handlers.onMove}
+        onColumnResize={handlers.onResize}
+        recentlyAddedColumn={recentlyAddedColumn}
+        onClearRecentlyAddedColumn={handlers.onClearRecentlyAddedColumn}
         rowAnchor={handleRowAnchor}
         onRowClick={handleRowClick}
         showTopBorder

@@ -1,0 +1,32 @@
+/*
+ * Adapted from saleor-dashboard: src/components/Datagrid/styles.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ * Saleor's `ghostIcon` (a 32px icon inside the 40px header slot) and the popover margin, as CSS.
+ */
+.trigger {
+  color: var(--mu-colors-text-default1);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--mu-border-radius-3);
+  background: transparent;
+  cursor: pointer;
+}
+
+.trigger:hover {
+  background: var(--mu-colors-background-default1-hovered);
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--mu-colors-border-accent1);
+}
+
+.popover {
+  margin: var(--mu-spacing-1-5);
+  z-index: 1;
+}

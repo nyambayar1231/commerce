@@ -4,17 +4,19 @@
 // states, row hover, row links (the invisible anchor that follows the hovered row, so a row opens
 // on click and in a new tab on Cmd/Ctrl/middle-click), checkbox row selection with selection
 // actions, header clicks (sorting), row theme overrides, columns with their own click action (not
-// part of the row link) and the chevron/loading custom cells.
-// Not yet (each comes with its first user): cell editing and change tracking, fullscreen, the
-// column picker and column resize/reorder, per-row action menus, tooltips, other custom cells,
-// horizontal-swipe history guard.
+// part of the row link), the chevron/loading custom cells, and the header's column-picker slot
+// with resize/reorder support. Not yet (each comes with its first user): cell editing and change
+// tracking, fullscreen, per-row action menus, tooltips, other custom cells, horizontal-swipe
+// history guard.
 import "@glideapps/glide-data-grid/dist/index.css";
 
 import DataEditor, {
   type CellClickedEventArgs,
   type DataEditorProps,
   type DataEditorRef,
+  type DrawHeaderCallback,
   type GridCell,
+  type GridColumn,
   type GridMouseEventArgs,
   type GridSelection,
   type HeaderClickedEventArgs,
@@ -65,6 +67,13 @@ export interface DatagridProps {
   /** Rendered over the header while rows are selected (e.g. a bulk delete button). */
   selectionActions?: (selection: number[]) => ReactNode;
   onHeaderClicked?: (colIndex: number, event: HeaderClickedEventArgs) => void;
+  /** Renders the column picker in the grid's fixed right-hand header slot. */
+  renderColumnPicker?: () => ReactElement;
+  onColumnMoved?: (startIndex: number, endIndex: number) => void;
+  onColumnResize?: (column: GridColumn, newSize: number) => void;
+  /** Scrolls this column into view once, then calls onClearRecentlyAddedColumn. */
+  recentlyAddedColumn?: string | null;
+  onClearRecentlyAddedColumn?: () => void;
   onRowClick?: (item: Item) => void;
   onRowSelectionChange?: (rowsId: number[], clearSelection: () => void) => void;
   readonly?: boolean;
@@ -94,6 +103,11 @@ export const Datagrid = ({
   loading,
   selectionActions,
   onHeaderClicked,
+  renderColumnPicker,
+  onColumnMoved,
+  onColumnResize,
+  recentlyAddedColumn,
+  onClearRecentlyAddedColumn,
   onRowClick,
   onRowSelectionChange,
   readonly = false,
@@ -277,6 +291,72 @@ export const Datagrid = ({
     [selection, selectionActions],
   );
 
+  // Scroll to a column the user just added, then clear the request so later column changes
+  // (resize, reorder, removal) do not scroll again.
+  useEffect(
+    function scrollToRecentlyAddedColumn() {
+      if (!recentlyAddedColumn || !editor.current) {
+        return;
+      }
+
+      const columnIndex = availableColumns.findIndex((column) => column.id === recentlyAddedColumn);
+
+      if (columnIndex === -1) {
+        return;
+      }
+
+      editor.current.scrollTo(columnIndex, 0, "horizontal", 0, 0, { hAlign: "start" });
+      onClearRecentlyAddedColumn?.();
+    },
+    [recentlyAddedColumn, availableColumns, onClearRecentlyAddedColumn],
+  );
+
+  // Glide's default header, plus Saleor's grip on a hovered header to show it can be dragged.
+  const drawHeader: DrawHeaderCallback = useCallback(
+    ({ ctx, rect, isSelected, isHovered, spriteManager, theme, column }) => {
+      const columnMeta = availableColumns.find(
+        (availableColumn) => availableColumn.id === column.id,
+      );
+
+      if ((isSelected || isHovered) && column.id !== "empty" && !columnMeta?.disableReorder) {
+        const iconSize = 16;
+        const padding = 8;
+        const x = rect.x + rect.width - iconSize - padding;
+        const y = rect.y + (rect.height - iconSize) / 2;
+
+        spriteManager.drawSprite("gripVertical", "normal", ctx, x, y, iconSize, theme);
+      }
+
+      return false;
+    },
+    [availableColumns],
+  );
+
+  const handleColumnResize = useCallback(
+    (column: GridColumn, newSize: number) => {
+      onColumnResize?.(column, newSize);
+    },
+    [onColumnResize],
+  );
+
+  const handleColumnMoved = useCallback(
+    (startIndex: number, endIndex: number) => {
+      if (!onColumnMoved) {
+        return;
+      }
+
+      const startColumn = availableColumns[startIndex];
+      const endColumn = availableColumns[endIndex];
+
+      if (startColumn?.disableReorder || endColumn?.disableReorder) {
+        return;
+      }
+
+      onColumnMoved(startIndex, endIndex);
+    },
+    [availableColumns, onColumnMoved],
+  );
+
   if (loading) {
     return (
       <Box data-test-id="datagrid-loader" display="flex" justifyContent="center" marginY={9}>
@@ -318,6 +398,7 @@ export const Datagrid = ({
                   theme={finalTheme}
                   customRenderers={customRenderers}
                   headerIcons={headerIcons}
+                  drawHeader={drawHeader}
                   drawFocusRing={false}
                   rowMarkerTheme={rowMarkerTheme}
                   className={`${styles.datagrid} dashboard-datagrid`}
@@ -333,6 +414,8 @@ export const Datagrid = ({
                   rangeSelect="multi-rect"
                   columnSelect="none"
                   getCellsForSelection
+                  onColumnMoved={handleColumnMoved}
+                  onColumnResize={handleColumnResize}
                   onHeaderClicked={onHeaderClicked}
                   onCellClicked={handleCellClick}
                   onGridSelectionChange={handleGridSelectionChange}
@@ -343,6 +426,16 @@ export const Datagrid = ({
                   headerHeight={headerHeight}
                   ref={editor}
                   rowMarkerWidth={rowMarkerWidth ?? DEFAULT_ROW_MARKER_WIDTH}
+                  rightElementProps={{ sticky: true }}
+                  rightElement={
+                    renderColumnPicker ? (
+                      <div className={styles.rowActionBar}>
+                        <div className={`${styles.columnPicker} ${styles.columnPickerBackground}`}>
+                          {renderColumnPicker()}
+                        </div>
+                      </div>
+                    ) : undefined
+                  }
                 />
               </div>
             </>

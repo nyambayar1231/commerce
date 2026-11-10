@@ -9,7 +9,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 |---|---|---|
 | M2 | Catalog | Approved |
 | M2.1 | Categories end-to-end (first Glide list + first save-bar form) | Done |
-| M2.2 | Products & variants API + product list grid | In progress |
+| M2.2 | Products & variants API + product list grid | Done |
 | M2.3 | Product list filtering (URL state → variables → where → SQL) | Approved |
 | M2.4 | Product create/update form | Approved |
 | M2.5 | Product media | Approved |
@@ -66,6 +66,20 @@ Awaiting the owner's approval (each was reported when its step finished):
   - Architecture: dashboard switched to React Router's data router (needed by `useBlocker` for the
     exit-form dialog).
   - Dev data: `pnpm cli seed-catalog` creates a demo category tree (safe to re-run).
+- **M2.2 (products API + list) left out or different from Saleor:**
+  - API: single-channel deviations `Product.isPublished`/`publishedAt`/`minimalVariantPrice`,
+    `ProductVariant.price` (ARCHITECTURE §4); no product types, attributes, media, `where`/`filter`
+    (M2.3) or `productVariants` connection; `PRODUCT_COUNT` counts all products in the subtree
+    (as Saleor) while `Category.products.totalCount` counts the visible ones.
+  - Category screens: the "Products in …" card is read-only (assign/unassign with M2.4), has
+    placeholder thumbnails, a plain list instead of Saleor's GridTable, and "Hidden" for future-dated
+    products (Saleor: "Scheduled").
+  - Product list: availability and dates as plain text cells (no status/date cells), no thumbnail,
+    price = lowest variant price (no range), checkboxes without a bulk action yet (M2.4), no
+    "Create product" (M2.4), filters/presets (M2.3), tiles view or export; the Published/Hidden rule
+    is duplicated in two files.
+  - Column picker: static columns only; widths/order in localStorage (`columnPickerSettings`)
+    instead of Saleor's user-account metadata; a plain button instead of macaw's IconButton.
 
 ---
 
@@ -96,21 +110,9 @@ starts with the create flow and the list follows.
 
 Open items are listed under "Open items from finished milestones".
 
-### M2.2 Products & variants API + list grid
-- Scope: product/variant tables, `products` connection, nested `variants`, DataLoaders,
-  product list grid (columns from `src/products/components/ProductListDatagrid`), column picker,
-  sort. **Excludes filtering** (M2.3).
-- Concepts: N+1 and DataLoader; computed columns; Glide custom cells.
-- Status: Draft.
+### M2.2 Products & variants API + list grid — Done (2026-11-10)
 
-| Step | What | Status |
-|---|---|---|
-| M2.2.1 | `product` + `product_variant` tables + migration (ARCHITECTURE §3; `category_id` nullable, `SET NULL`); `Money` GraphQL type via `@commerce/contracts` | Done |
-| M2.2.2 | `products` connection (sort NAME / PRICE / CREATED_AT / PUBLISHED, `search`), `product(id\|slug)`; unpublished only for `MANAGE_PRODUCTS`; contract tests | Done |
-| M2.2.3 | DataLoaders for `Product.category`/`variants`/`defaultVariant`/`minimalVariantPrice`, `ProductVariant.product`, `Category.parent` (per request); a test that counts queries (6, constant with page size) | Done |
-| M2.2.4 | `Category.products` (subtree) + `PRODUCT_COUNT` sort; dashboard: "Number of products" / "Prods" columns and the read-only "Products in …" card (assign/unassign with M2.4) | Done |
-| M2.2.5 | Product list page: Saleor's grid (name, availability, price, category, updated, created), sortable headers, search, pagination, row links | Done |
-| M2.2.6 | Column picker adapted from `Datagrid/ColumnPicker` (static columns only), persisted per user in localStorage as Saleor | Proposed |
+Open items are listed under "Open items from finished milestones".
 
 ### M2.3 Product list filtering
 - Scope: `ProductWhereInput` (category oneOf, isPublished eq, price range, later stock), `search`;

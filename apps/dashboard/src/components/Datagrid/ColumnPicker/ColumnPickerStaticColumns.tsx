@@ -1,0 +1,37 @@
+// Adapted from saleor-dashboard: src/components/Datagrid/ColumnPicker/ColumnPickerStaticColumns.tsx
+// (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+// See THIRD_PARTY_LICENSES.md
+import { Box, Text, Toggle } from "@saleor/macaw-ui";
+
+import type { AvailableColumn } from "../types";
+import { filterEmptyColumn, isLastEnabledColumn } from "./utils";
+
+interface ColumnPickerStaticColumnsProps {
+  staticColumns: AvailableColumn[];
+  handleToggle: (id: string) => void;
+  selectedColumns: string[];
+}
+
+export const ColumnPickerStaticColumns = ({
+  staticColumns,
+  handleToggle,
+  selectedColumns,
+}: ColumnPickerStaticColumnsProps) => (
+  <Box data-test-id="static-col-container">
+    {staticColumns.filter(filterEmptyColumn).map((column) => (
+      <Box padding={1} key={column.id}>
+        <Toggle
+          data-test-id={`stat-col-${column.id}`}
+          onPressedChange={() => handleToggle(column.id)}
+          pressed={selectedColumns.includes(column.id)}
+          // One static column must always be enabled.
+          disabled={isLastEnabledColumn(column.id, staticColumns, selectedColumns)}
+        >
+          <Text size={3} color="default1">
+            {column.title}
+          </Text>
+        </Toggle>
+      </Box>
+    ))}
+  </Box>
+);

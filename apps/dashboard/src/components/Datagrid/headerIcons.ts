@@ -1,6 +1,6 @@
 // Adapted from saleor-dashboard: src/components/Datagrid/headerIcons.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The sort-direction arrows; Saleor's column-reorder grip comes with column reordering.
+// The sort-direction arrows and Saleor's column-reorder grip.
 import type { SpriteMap } from "@glideapps/glide-data-grid";
 
 export const headerIcons: SpriteMap = {
@@ -17,5 +17,15 @@ export const headerIcons: SpriteMap = {
       fill="hsla(180, 4%, 15%, 1)"
       d="M15.932 10H8.067a.5.5 0 0 0-.384.82l3.933 4.72a.5.5 0 0 0 .768 0l3.933-4.72a.5.5 0 0 0-.385-.82Z"
       />
+    </svg>`,
+  gripVertical: (
+    p,
+  ) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="9" cy="5" r="1.5" fill="${p.fgColor}" />
+      <circle cx="9" cy="12" r="1.5" fill="${p.fgColor}" />
+      <circle cx="9" cy="19" r="1.5" fill="${p.fgColor}" />
+      <circle cx="15" cy="5" r="1.5" fill="${p.fgColor}" />
+      <circle cx="15" cy="12" r="1.5" fill="${p.fgColor}" />
+      <circle cx="15" cy="19" r="1.5" fill="${p.fgColor}" />
     </svg>`,
 };

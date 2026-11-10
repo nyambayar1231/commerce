@@ -2,7 +2,7 @@
  * Adapted from saleor-dashboard: src/components/Datagrid/styles.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
  * See THIRD_PARTY_LICENSES.md
  * Saleor's useStyles (legacy macaw-ui makeStyles) as plain CSS; only the classes a read-only list
- * grid uses (no row-action bar, column picker or cell-editor portal yet).
+ * grid uses (the column-picker slot, no row-action menu or cell-editor portal yet).
  */
 .actionBtnBar {
   position: absolute;
@@ -36,6 +36,23 @@
 .editorContainer {
   position: relative;
   height: 100%;
+}
+
+.rowActionBar {
+  height: 100%;
+  width: 40px;
+}
+
+.columnPicker {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 40px;
+  width: 100%;
+}
+
+.columnPickerBackground {
+  background: var(--mu-colors-background-default1);
 }
 
 .rowAnchor {
