@@ -103,3 +103,28 @@ export const productUrl = (id: string, params?: ProductUrlQueryParams): string =
   `${productPath(encodeURIComponent(id))}?${new URLSearchParams(
     queryEntries({ ...params }),
   ).toString()}`;
+
+// Saleor 3.23's variant paths: the edit page is /products/variant/:variantId and the create page
+// /products/:productId/variant/add.
+export const productVariantEditPath = (variantId: string): string =>
+  `${productSectionUrl}variant/${variantId}`;
+
+export type ProductVariantUrlDialog = "remove";
+
+export interface ProductVariantUrlQueryParams {
+  action?: ProductVariantUrlDialog;
+}
+
+export const productVariantEditUrl = (
+  variantId: string,
+  params?: ProductVariantUrlQueryParams,
+): string =>
+  `${productVariantEditPath(encodeURIComponent(variantId))}?${new URLSearchParams(
+    queryEntries({ ...params }),
+  ).toString()}`;
+
+export const productVariantAddPath = (productId: string): string =>
+  `${productSectionUrl}${productId}/variant/add`;
+
+export const productVariantAddUrl = (productId: string): string =>
+  `${productVariantAddPath(encodeURIComponent(productId))}?`;

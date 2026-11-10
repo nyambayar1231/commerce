@@ -155,7 +155,8 @@ Open items are listed under "Open items from finished milestones".
 | M2.4.1 | `productCreate/Update/Delete`, `productVariantCreate/Update/Delete`, publish invariant (category + ≥1 variant), price ≥ 0, shop currency; `ProductError` codes; guard + invariant tests | Done |
 | M2.4.2a | Product detail page: general info, category, publish toggle, Savebar, delete | Done |
 | M2.4.2b | Product create dialog (name + category) + "Create product" on the list → detail page | Done |
-| M2.4.3 | Variants card on the product page + variant detail page (SKU, name, price), create/delete | Proposed |
+| M2.4.3a | `productVariant(id, sku)` query; variant create + detail pages (name, price, SKU, track inventory, delete) | Done |
+| M2.4.3b | Variants card on the product page: read-only Datagrid (name, SKU, price), row → variant page, "Add variant" (owner 2026-11-10: read-only, not Saleor's editable grid) | Proposed |
 
 ### M2.5 Product media
 - Scope: local-disk file storage behind a tiny `storage` interface, upload via multipart GraphQL

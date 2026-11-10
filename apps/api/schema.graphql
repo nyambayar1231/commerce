@@ -868,6 +868,17 @@ type Query {
   ): Product
 
   """
+  Look up a product variant by ID or SKU. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
+  """
+  productVariant(
+    """ID of the product variant."""
+    id: ID
+
+    """SKU of the product variant."""
+    sku: String
+  ): ProductVariant
+
+  """
   List of the shop's products. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
   """
   products(

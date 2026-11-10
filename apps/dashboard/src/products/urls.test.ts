@@ -7,6 +7,10 @@ import {
   productListUrl,
   productPath,
   productUrl,
+  productVariantAddPath,
+  productVariantAddUrl,
+  productVariantEditPath,
+  productVariantEditUrl,
 } from "./urls";
 
 describe("product urls", () => {
@@ -25,6 +29,21 @@ describe("product urls", () => {
     expect(productUrl("UHJvZHVjdDox", { action: "remove" })).toBe(
       "/products/UHJvZHVjdDox?action=remove",
     );
+  });
+
+  it("builds Saleor 3.23's variant edit and add URLs", () => {
+    expect(productVariantEditPath("UHJvZHVjdFZhcmlhbnQ6MQ==")).toBe(
+      "/products/variant/UHJvZHVjdFZhcmlhbnQ6MQ==",
+    );
+    expect(productVariantEditUrl("UHJvZHVjdFZhcmlhbnQ6MQ==")).toBe(
+      "/products/variant/UHJvZHVjdFZhcmlhbnQ6MQ%3D%3D?",
+    );
+    expect(productVariantEditUrl("a=")).toBe("/products/variant/a%3D?");
+    expect(productVariantEditUrl("UHJvZHVjdFZhcmlhbnQ6MQ==", { action: "remove" })).toBe(
+      "/products/variant/UHJvZHVjdFZhcmlhbnQ6MQ%3D%3D?action=remove",
+    );
+    expect(productVariantAddPath("UHJvZHVjdDox")).toBe("/products/UHJvZHVjdDox/variant/add");
+    expect(productVariantAddUrl("a=")).toBe("/products/a%3D/variant/add?");
   });
 
   it("parses the list params, round-tripping what it builds", () => {

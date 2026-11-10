@@ -53,6 +53,7 @@ export {
   deleteProductVariant,
   getMinimalVariantPrice,
   getProduct,
+  getProductVariant,
   getProductVariants,
   ProductNotFoundError,
   toMoney,

@@ -5,10 +5,15 @@ import { Route, Routes } from "react-router";
 
 import { ProductList } from "./views/ProductList";
 import { ProductUpdate } from "./views/ProductUpdate/ProductUpdate";
+import { ProductVariant } from "./views/ProductVariant/ProductVariant";
+import { ProductVariantCreate } from "./views/ProductVariantCreate/ProductVariantCreate";
 
 export const ProductSection = () => (
   <Routes>
     <Route index element={<ProductList />} />
+    {/* Saleor 3.23's variant paths; both are declared before the product's own `:id` route. */}
+    <Route path="variant/:variantId" element={<ProductVariant />} />
+    <Route path=":productId/variant/add" element={<ProductVariantCreate />} />
     <Route path=":id" element={<ProductUpdate />} />
   </Routes>
 );

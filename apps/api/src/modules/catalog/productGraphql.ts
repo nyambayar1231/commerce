@@ -9,6 +9,7 @@ import { DateTime, Decimal, JSONString } from "../../graphql/scalars.ts";
 import { CategoryType, OrderDirection } from "./graphql.ts";
 import {
   getProduct,
+  getProductVariant,
   InvalidCursorError,
   listProducts,
   type ProductListArgs,
@@ -502,6 +503,36 @@ builder.queryField("product", (t) =>
         : await getProduct(ctx.db, { slug: String(slug) });
       if (!product || !(await isVisible(product, ctx))) return null;
       return product;
+    },
+  }),
+);
+
+builder.queryField("productVariant", (t) =>
+  t.field({
+    type: ProductVariantType,
+    nullable: true,
+    description: `Look up a product variant by ID or SKU. ${UNPUBLISHED_NOTE}`,
+    args: {
+      id: t.arg.id({ description: "ID of the product variant." }),
+      sku: t.arg.string({ description: "SKU of the product variant." }),
+    },
+    resolve: async (_parent, { id, sku }, ctx) => {
+      const hasId = Boolean(id);
+      const hasSku = Boolean(sku);
+      if (hasId && hasSku) {
+        throw new GraphQLError("Argument 'id' cannot be combined with 'sku'");
+      }
+      if (!hasId && !hasSku) {
+        throw new GraphQLError("At least one of arguments is required: 'id', 'sku'.");
+      }
+      const variant = hasId
+        ? await getProductVariant(ctx.db, { id: fromGlobalId("ProductVariant", String(id)) })
+        : await getProductVariant(ctx.db, { sku: String(sku) });
+      if (!variant) return null;
+
+      const product = await ctx.loaders.productById.load(variant.productId);
+      if (!product || !(await isVisible(product, ctx))) return null;
+      return variant;
     },
   }),
 );

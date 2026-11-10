@@ -40,3 +40,28 @@ export const productDetailsFragment = gql`
     updatedAt
   }
 `;
+
+// The variant detail page's fields: Saleor's ProductVariant fragment limited to the cards the page
+// shows, plus the product's variants for the navigation (no attributes, media, stocks, weight or
+// channel listings yet).
+export const productVariantDetailsFragment = gql`
+  fragment ProductVariantDetails on ProductVariant {
+    id
+    name
+    sku
+    trackInventory
+    price {
+      amount
+      currency
+    }
+    product {
+      id
+      name
+      variants {
+        id
+        name
+        sku
+      }
+    }
+  }
+`;

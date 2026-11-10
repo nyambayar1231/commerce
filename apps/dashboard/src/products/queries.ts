@@ -6,7 +6,11 @@
 import { gql } from "@apollo/client";
 
 import { pageInfoFragment } from "../fragments/pageInfo";
-import { productDetailsFragment, productListRowFragment } from "../fragments/products";
+import {
+  productDetailsFragment,
+  productListRowFragment,
+  productVariantDetailsFragment,
+} from "../fragments/products";
 
 export const productList = gql`
   query ProductList(
@@ -48,6 +52,31 @@ export const productDetails = gql`
     }
   }
   ${productDetailsFragment}
+`;
+
+export const productVariantDetails = gql`
+  query ProductVariantDetails($id: ID!) {
+    productVariant(id: $id) {
+      ...ProductVariantDetails
+    }
+  }
+  ${productVariantDetailsFragment}
+`;
+
+// Saleor's ProductVariantCreateData: the product the new variant belongs to, with its variants for
+// the navigation (no media, product type, attributes or channel listings yet).
+export const productVariantCreateData = gql`
+  query ProductVariantCreateData($id: ID!) {
+    product(id: $id) {
+      id
+      name
+      variants {
+        id
+        name
+        sku
+      }
+    }
+  }
 `;
 
 export const categorySearch = gql`

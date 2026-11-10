@@ -33,6 +33,18 @@ export async function getProduct(
   return row ?? null;
 }
 
+export async function getProductVariant(
+  db: Executor,
+  where: { id: string } | { sku: string },
+): Promise<ProductVariantRow | null> {
+  const condition =
+    "id" in where
+      ? eq(schema.productVariant.id, where.id)
+      : eq(schema.productVariant.sku, where.sku);
+  const [row] = await db.select().from(schema.productVariant).where(condition);
+  return row ?? null;
+}
+
 /** A product's variants in display order: `position`, then `id` so the order is total. */
 export async function getProductVariants(
   db: Executor,
