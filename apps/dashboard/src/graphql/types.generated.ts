@@ -102,6 +102,8 @@ export type ProductErrorCode =
   | 'GRAPHQL_ERROR'
   | 'INVALID'
   | 'NOT_FOUND'
+  | 'PRODUCT_WITHOUT_CATEGORY'
+  | 'PRODUCT_WITHOUT_VARIANTS'
   | 'REQUIRED'
   | 'UNIQUE';
 

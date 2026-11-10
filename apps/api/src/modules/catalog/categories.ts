@@ -1,6 +1,7 @@
 import { type Executor, schema } from "@commerce/db";
-import { and, eq, inArray, ne, sql } from "drizzle-orm";
-import { slugify } from "./slug.ts";
+import { eq, inArray, sql } from "drizzle-orm";
+import { parseDescription } from "./description.ts";
+import { generateUniqueSlug, slugTaken } from "./slug.ts";
 
 export type CategoryRow = typeof schema.category.$inferSelect;
 
@@ -66,35 +67,6 @@ function slugError(slug: string): CategoryError | null {
   return null;
 }
 
-async function slugTaken(db: Executor, slug: string, exceptId?: string): Promise<boolean> {
-  const [row] = await db
-    .select({ id: schema.category.id })
-    .from(schema.category)
-    .where(
-      exceptId
-        ? and(eq(schema.category.slug, slug), ne(schema.category.id, exceptId))
-        : eq(schema.category.slug, slug),
-    );
-  return row !== undefined;
-}
-
-/** Saleor's generate_unique_slug + prepare_unique_slug. */
-async function generateUniqueSlug(db: Executor, name: string): Promise<string> {
-  const base = slugify(name);
-  const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const rows = await db
-    .select({ slug: schema.category.slug })
-    .from(schema.category)
-    .where(sql`${schema.category.slug} ~* ${`^${escapedBase}(-[0-9]+)?$`}`);
-  const existing = new Set(rows.map((row) => row.slug.toLowerCase()));
-
-  if (!existing.has(base)) return base;
-  for (let suffix = 2; ; suffix += 1) {
-    const candidate = `${base}-${suffix}`;
-    if (!existing.has(candidate)) return candidate;
-  }
-}
-
 export async function getCategory(
   db: Executor,
   where: { id: string } | { slug: string },
@@ -131,27 +103,6 @@ export async function getCategoryLevel(db: Executor, id: string): Promise<number
   return rows[0]?.level ?? 0;
 }
 
-type ParsedDescription = { value: unknown; plaintext: string };
-
-function parseDescription(input: unknown): ParsedDescription | null {
-  if (input === null) return { value: null, plaintext: "" };
-  if (typeof input !== "object" || Array.isArray(input)) return null;
-  const blocks = (input as { blocks?: unknown }).blocks;
-  if (!Array.isArray(blocks)) return null;
-
-  const parts: string[] = [];
-  for (const block of blocks) {
-    if (typeof block !== "object" || block === null) continue;
-    const data = (block as { data?: unknown }).data;
-    if (typeof data !== "object" || data === null) continue;
-    const text = (data as { text?: unknown }).text;
-    if (typeof text !== "string") continue;
-    const part = text.replace(/<[^>]*>/g, "");
-    if (part) parts.push(part);
-  }
-  return { value: input, plaintext: parts.join(" ").trim() };
-}
-
 export async function createCategory(
   db: Executor,
   input: CategoryCreateInput,
@@ -165,11 +116,11 @@ export async function createCategory(
 
     let slug = input.slug;
     if (slug === undefined || slug === "") {
-      if (!invalidName) slug = await generateUniqueSlug(tx, name);
+      if (!invalidName) slug = await generateUniqueSlug(tx, schema.category, name);
     } else {
       const invalidSlug = slugError(slug);
       if (invalidSlug) errors.push(invalidSlug);
-      else if (await slugTaken(tx, slug)) {
+      else if (await slugTaken(tx, schema.category, slug)) {
         errors.push({ field: "slug", code: "UNIQUE", message: MESSAGES.slugTaken });
       }
     }
@@ -232,7 +183,7 @@ export async function updateCategory(
       } else {
         const invalidSlug = slugError(input.slug);
         if (invalidSlug) errors.push(invalidSlug);
-        else if (await slugTaken(tx, input.slug, id)) {
+        else if (await slugTaken(tx, schema.category, input.slug, id)) {
           errors.push({ field: "slug", code: "UNIQUE", message: MESSAGES.slugTaken });
         } else {
           values.slug = input.slug;

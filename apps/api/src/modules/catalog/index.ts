@@ -34,6 +34,29 @@ export type {
   ProductSortField,
 } from "./productList.ts";
 export { listProducts } from "./productList.ts";
-export type { ProductRow, ProductVariantRow } from "./products.ts";
-export { getMinimalVariantPrice, getProduct, getProductVariants, toMoney } from "./products.ts";
+export type {
+  ProductCreateInput,
+  ProductError,
+  ProductErrorCode,
+  ProductResult,
+  ProductRow,
+  ProductUpdateInput,
+  ProductVariantCreateInput,
+  ProductVariantResult,
+  ProductVariantRow,
+  ProductVariantUpdateInput,
+} from "./products.ts";
+export {
+  createProduct,
+  createProductVariant,
+  deleteProduct,
+  deleteProductVariant,
+  getMinimalVariantPrice,
+  getProduct,
+  getProductVariants,
+  ProductNotFoundError,
+  toMoney,
+  updateProduct,
+  updateProductVariant,
+} from "./products.ts";
 export { slugify } from "./slug.ts";

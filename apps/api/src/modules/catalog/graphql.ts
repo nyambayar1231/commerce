@@ -18,6 +18,7 @@ import {
   InvalidCursorError,
   listCategories,
   NotFoundError,
+  type ProductError,
   updateCategory,
 } from "./index.ts";
 
@@ -223,26 +224,36 @@ builder.queryField("categories", (t) =>
 );
 
 const ProductErrorCode = builder.enumType("ProductErrorCode", {
-  values: ["GRAPHQL_ERROR", "INVALID", "NOT_FOUND", "REQUIRED", "UNIQUE"] as const,
+  values: [
+    "GRAPHQL_ERROR",
+    "INVALID",
+    "NOT_FOUND",
+    "PRODUCT_WITHOUT_CATEGORY",
+    "PRODUCT_WITHOUT_VARIANTS",
+    "REQUIRED",
+    "UNIQUE",
+  ] as const,
 });
 
-const ProductErrorType = builder.objectRef<CategoryError>("ProductError").implement({
-  description: "Represents an error in the input of a mutation.",
-  fields: (t) => ({
-    field: t.exposeString("field", {
-      nullable: true,
-      description:
-        "Name of a field that caused the error. A value of `null` indicates that the error " +
-        "isn't associated with a particular field.",
+export const ProductErrorType = builder
+  .objectRef<CategoryError | ProductError>("ProductError")
+  .implement({
+    description: "Represents an error in the input of a mutation.",
+    fields: (t) => ({
+      field: t.exposeString("field", {
+        nullable: true,
+        description:
+          "Name of a field that caused the error. A value of `null` indicates that the error " +
+          "isn't associated with a particular field.",
+      }),
+      message: t.exposeString("message", { description: "The error message." }),
+      code: t.field({
+        type: ProductErrorCode,
+        description: "The error code.",
+        resolve: (error) => error.code,
+      }),
     }),
-    message: t.exposeString("message", { description: "The error message." }),
-    code: t.field({
-      type: ProductErrorCode,
-      description: "The error code.",
-      resolve: (error) => error.code,
-    }),
-  }),
-});
+  });
 
 const CategoryInput = builder.inputType("CategoryInput", {
   fields: (t) => ({

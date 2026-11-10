@@ -10,8 +10,8 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | M2 | Catalog | Approved |
 | M2.1 | Categories end-to-end (first Glide list + first save-bar form) | Done |
 | M2.2 | Products & variants API + product list grid | Done |
-| M2.3 | Product list filtering (URL state → variables → where → SQL) | In progress |
-| M2.4 | Product create/update form | Approved |
+| M2.3 | Product list filtering (URL state → variables → where → SQL) | Done |
+| M2.4 | Product create/update form | In progress |
 | M2.5 | Product media | Approved |
 | M3 | Inventory: warehouse, stock, availability | Draft |
 | M5 | Checkout | Draft |
@@ -138,12 +138,18 @@ Open items are listed under "Open items from finished milestones".
 ### M2.4 Product create/update form
 - Scope: product + variants editing (prices, SKU), publish toggle with invariant, delete;
   client+server validation; Savebar.
-- Decision: Saleor's product-type-driven create dialog vs simple create (no product types yet).
-- Status: Draft.
+- Create flow: simple dialog (name + category), no product types (M2 decision 5).
+- **Decisions (owner, 2026-11-10):** publishing needs a category (Saleor's
+  `PRODUCT_WITHOUT_CATEGORY`) and ≥1 variant (`PRODUCT_WITHOUT_VARIANTS`); deleting the last
+  variant of a published product is rejected; `productVariantBulkCreate` dropped for now.
+- Left out so far (carry to open items when M2.4 is done): `productVariantBulkCreate`, variant
+  `weight`, a `publishedAt` input (publishing sets it to now, unpublishing clears it); the
+  `productDelete` payload's `variants` resolve empty (the rows are gone).
+- Status: In progress.
 
 | Step | What | Status |
 |---|---|---|
-| M2.4.1 | `productCreate/Update/Delete`, `productVariantCreate/Update/Delete`, `productVariantBulkCreate` (as Saleor), publish invariant (≥1 variant), price ≥ 0, shop currency; `ProductError` codes; guard + invariant tests | Proposed |
+| M2.4.1 | `productCreate/Update/Delete`, `productVariantCreate/Update/Delete`, publish invariant (category + ≥1 variant), price ≥ 0, shop currency; `ProductError` codes; guard + invariant tests | Done |
 | M2.4.2 | Product create dialog (name + category) → product detail page: general info, category, publish toggle, Savebar, delete | Proposed |
 | M2.4.3 | Variants card on the product page + variant detail page (SKU, name, price), create/delete | Proposed |
 

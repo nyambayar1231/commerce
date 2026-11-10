@@ -329,6 +329,72 @@ type Mutation {
   ): PermissionGroupUpdate!
 
   """
+  Creates a new product.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productCreate(
+    """Fields required to create a product."""
+    input: ProductCreateInput!
+  ): ProductCreate!
+
+  """
+  Deletes a product.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productDelete(
+    """ID of a product to delete."""
+    id: ID!
+  ): ProductDelete!
+
+  """
+  Updates an existing product.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productUpdate(
+    """ID of a product to update."""
+    id: ID!
+
+    """Fields required to update a product."""
+    input: ProductInput!
+  ): ProductUpdate!
+
+  """
+  Creates a new variant for a product.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productVariantCreate(
+    """Fields required to create a product variant."""
+    input: ProductVariantCreateInput!
+  ): ProductVariantCreate!
+
+  """
+  Deletes a product variant.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productVariantDelete(
+    """ID of a product variant to delete."""
+    id: ID!
+  ): ProductVariantDelete!
+
+  """
+  Updates an existing variant for product.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productVariantUpdate(
+    """ID of a product variant to update."""
+    id: ID!
+
+    """Fields required to update a product variant."""
+    input: ProductVariantInput!
+  ): ProductVariantUpdate!
+
+  """
   Creates a new staff user. Requires one of the following permissions: MANAGE_STAFF.
   """
   staffCreate(
@@ -514,6 +580,48 @@ type ProductCountableEdge {
   node: Product!
 }
 
+"""
+Creates a new product.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductCreate {
+  errors: [ProductError!]!
+  product: Product
+}
+
+"""Fields required to create a product."""
+input ProductCreateInput {
+  """ID of the product's category."""
+  category: ID
+
+  """
+  Product description.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+
+  """Determines if object is visible to customers."""
+  isPublished: Boolean
+
+  """Product name."""
+  name: String
+
+  """Product slug."""
+  slug: String
+}
+
+"""
+Deletes a product.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductDelete {
+  errors: [ProductError!]!
+  product: Product
+}
+
 """Represents an error in the input of a mutation."""
 type ProductError {
   """The error code."""
@@ -532,8 +640,32 @@ enum ProductErrorCode {
   GRAPHQL_ERROR
   INVALID
   NOT_FOUND
+  PRODUCT_WITHOUT_CATEGORY
+  PRODUCT_WITHOUT_VARIANTS
   REQUIRED
   UNIQUE
+}
+
+"""Fields required to update a product."""
+input ProductInput {
+  """ID of the product's category."""
+  category: ID
+
+  """
+  Product description.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+
+  """Determines if object is visible to customers."""
+  isPublished: Boolean
+
+  """Product name."""
+  name: String
+
+  """Product slug."""
+  slug: String
 }
 
 input ProductOrder {
@@ -561,6 +693,16 @@ enum ProductOrderField {
   PUBLISHED
 }
 
+"""
+Updates an existing product.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductUpdate {
+  errors: [ProductError!]!
+  product: Product
+}
+
 """Represents a version of a product such as different size or color."""
 type ProductVariant implements Node {
   """The ID of the product variant."""
@@ -582,6 +724,73 @@ type ProductVariant implements Node {
   Determines if the inventory of this variant should be tracked. If false, the quantity won't change when customers buy this item.
   """
   trackInventory: Boolean!
+}
+
+"""
+Creates a new variant for a product.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductVariantCreate {
+  errors: [ProductError!]!
+  productVariant: ProductVariant
+}
+
+"""Fields required to create a product variant."""
+input ProductVariantCreateInput {
+  """Variant name."""
+  name: String
+
+  """The price of the product variant."""
+  price: Decimal
+
+  """Product ID of which type is the variant."""
+  product: ID!
+
+  """Stock keeping unit."""
+  sku: String
+
+  """
+  Determines if the inventory of this variant should be tracked. If false, the quantity won't change when customers buy this item.
+  """
+  trackInventory: Boolean
+}
+
+"""
+Deletes a product variant.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductVariantDelete {
+  errors: [ProductError!]!
+  productVariant: ProductVariant
+}
+
+"""Fields required to update a product variant."""
+input ProductVariantInput {
+  """Variant name."""
+  name: String
+
+  """The price of the product variant."""
+  price: Decimal
+
+  """Stock keeping unit."""
+  sku: String
+
+  """
+  Determines if the inventory of this variant should be tracked. If false, the quantity won't change when customers buy this item.
+  """
+  trackInventory: Boolean
+}
+
+"""
+Updates an existing variant for product.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductVariantUpdate {
+  errors: [ProductError!]!
+  productVariant: ProductVariant
 }
 
 input ProductWhereInput {

@@ -1,6 +1,10 @@
-import { CURRENCIES, type CurrencyCode, type Money } from "@commerce/contracts";
+import { CURRENCIES, type CurrencyCode, type Money, parseDecimal } from "@commerce/contracts";
 import { type Executor, schema } from "@commerce/db";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, ne, sql } from "drizzle-orm";
+import { getCategory, NotFoundError } from "./categories.ts";
+import { parseDescription } from "./description.ts";
+import { SHOP_CURRENCY } from "./productWhere.ts";
+import { generateUniqueSlug, slugTaken } from "./slug.ts";
 
 // Product and variant reads (ARCHITECTURE.md §3 "Catalog"). Products are single-channel (ADR-0005):
 // publication lives on the product and the price on each variant (ADR-0013).
@@ -56,4 +60,503 @@ export async function getMinimalVariantPrice(
     .orderBy(asc(schema.productVariant.priceAmount), asc(schema.productVariant.id))
     .limit(1);
   return row ? toMoney(row.amountMinor, row.currency) : null;
+}
+
+// Product and variant mutations (M2.4): Saleor's productCreate/Update/Delete and
+// productVariantCreate/Update/Delete, with our publish invariant (ARCHITECTURE.md §3 "Catalog").
+
+export type ProductErrorCode =
+  | "INVALID"
+  | "PRODUCT_WITHOUT_CATEGORY"
+  | "PRODUCT_WITHOUT_VARIANTS"
+  | "REQUIRED"
+  | "UNIQUE";
+
+export type ProductError = {
+  field: string | null;
+  code: ProductErrorCode;
+  message: string;
+};
+
+export type ProductResult =
+  | { ok: true; product: ProductRow }
+  | { ok: false; errors: ProductError[] };
+
+export type ProductVariantResult =
+  | { ok: true; variant: ProductVariantRow }
+  | { ok: false; errors: ProductError[] };
+
+export type ProductCreateInput = {
+  name: string;
+  slug?: string;
+  description?: unknown;
+  categoryId?: string | null;
+  isPublished?: boolean;
+};
+
+export type ProductUpdateInput = {
+  name?: string;
+  slug?: string;
+  description?: unknown;
+  /** `undefined` leaves the category unchanged; `null` unassigns it. */
+  categoryId?: string | null;
+  isPublished?: boolean;
+};
+
+export type ProductVariantCreateInput = {
+  productId: string;
+  sku?: string | null;
+  name?: string;
+  trackInventory?: boolean;
+  /** The GraphQL Decimal input, as typed (parsed and checked here). */
+  price?: string | null;
+};
+
+export type ProductVariantUpdateInput = {
+  sku?: string | null;
+  name?: string | null;
+  trackInventory?: boolean;
+  price?: string | null;
+};
+
+const MESSAGES = {
+  blank: "This field cannot be blank.",
+  invalidSlug: "Enter a valid “slug” consisting of letters, numbers, underscores or hyphens.",
+  blankSlug: "Slug value cannot be blank.",
+  slugTaken: "Product with this Slug already exists.",
+  invalidDescription: "Invalid EditorJS data.",
+  withoutCategory: "You must select a category to be able to publish.",
+  withoutVariants: "You must add at least one variant to be able to publish.",
+  lastVariant: "Cannot delete the last variant of a published product. Unpublish it first.",
+  skuTaken: "Product variant with this SKU already exists.",
+  priceRequired: "This field is required.",
+  negativePrice: "Price cannot be negative.",
+  tooManyDecimals: "Value cannot have more than 0 decimal places.",
+  invalidPrice: "Invalid price.",
+} as const;
+
+/** A product or variant id that matches no row (the GraphQL layer maps it to `nodesNotFound`). */
+export class ProductNotFoundError extends Error {
+  readonly kind: "Product" | "ProductVariant";
+  readonly ids: string[];
+
+  constructor(kind: "Product" | "ProductVariant", ids: string[]) {
+    super(`${kind} not found: ${ids.join(", ")}`);
+    this.name = "ProductNotFoundError";
+    this.kind = kind;
+    this.ids = ids;
+  }
+}
+
+function nameError(name: string): ProductError | null {
+  if (name === "") return { field: "name", code: "REQUIRED", message: MESSAGES.blank };
+  if (name.length > 250) {
+    return {
+      field: "name",
+      code: "INVALID",
+      message: `Ensure this value has at most 250 characters (it has ${name.length}).`,
+    };
+  }
+  return null;
+}
+
+function slugError(slug: string): ProductError | null {
+  if (slug.length > 255 || !/^[-a-zA-Z0-9_]+$/.test(slug)) {
+    return { field: "slug", code: "INVALID", message: MESSAGES.invalidSlug };
+  }
+  return null;
+}
+
+async function requireCategory(db: Executor, id: string): Promise<void> {
+  if (!(await getCategory(db, { id }))) throw new NotFoundError([id]);
+}
+
+async function variantSkuTaken(db: Executor, sku: string, exceptId?: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: schema.productVariant.id })
+    .from(schema.productVariant)
+    .where(
+      exceptId
+        ? and(eq(schema.productVariant.sku, sku), ne(schema.productVariant.id, exceptId))
+        : eq(schema.productVariant.sku, sku),
+    );
+  return row !== undefined;
+}
+
+async function hasVariants(db: Executor, productId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ id: schema.productVariant.id })
+    .from(schema.productVariant)
+    .where(eq(schema.productVariant.productId, productId))
+    .limit(1);
+  return row !== undefined;
+}
+
+async function bumpProduct(db: Executor, productId: string): Promise<void> {
+  await db
+    .update(schema.product)
+    .set({ updatedAt: sql`now()` })
+    .where(eq(schema.product.id, productId));
+}
+
+/** A variant sku: trimmed, an empty string stored as NULL (Saleor's clean_variant_sku). */
+function normalizeSku(sku: string | null): string | null {
+  if (sku === null) return null;
+  const trimmed = sku.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+/** The GraphQL Decimal input as minor units of the shop currency, or its INVALID error. */
+function parsePrice(price: string): { amountMinor: number } | { error: ProductError } {
+  try {
+    const { amountMinor } = parseDecimal(price, SHOP_CURRENCY);
+    if (amountMinor < 0) {
+      return { error: { field: "price", code: "INVALID", message: MESSAGES.negativePrice } };
+    }
+    return { amountMinor };
+  } catch (error) {
+    return {
+      error: {
+        field: "price",
+        code: "INVALID",
+        message: error instanceof RangeError ? MESSAGES.tooManyDecimals : MESSAGES.invalidPrice,
+      },
+    };
+  }
+}
+
+/** A product that must exist, locked for the rest of the transaction. */
+async function lockProduct(db: Executor, id: string): Promise<ProductRow> {
+  const [product] = await db
+    .select()
+    .from(schema.product)
+    .where(eq(schema.product.id, id))
+    .for("update");
+  if (!product) throw new ProductNotFoundError("Product", [id]);
+  return product;
+}
+
+export async function createProduct(
+  db: Executor,
+  input: ProductCreateInput,
+): Promise<ProductResult> {
+  const name = input.name.trim();
+
+  return db.transaction(async (tx) => {
+    const errors: ProductError[] = [];
+    const invalidName = nameError(name);
+    if (invalidName) errors.push(invalidName);
+
+    let slug = input.slug;
+    if (slug === undefined || slug === "") {
+      if (!invalidName) slug = await generateUniqueSlug(tx, schema.product, name);
+    } else {
+      const invalidSlug = slugError(slug);
+      if (invalidSlug) errors.push(invalidSlug);
+      else if (await slugTaken(tx, schema.product, slug)) {
+        errors.push({ field: "slug", code: "UNIQUE", message: MESSAGES.slugTaken });
+      }
+    }
+
+    let description: unknown = null;
+    let descriptionPlaintext = "";
+    if (input.description !== undefined) {
+      const parsed = parseDescription(input.description);
+      if (!parsed) {
+        errors.push({
+          field: "description",
+          code: "INVALID",
+          message: MESSAGES.invalidDescription,
+        });
+      } else {
+        description = parsed.value;
+        descriptionPlaintext = parsed.plaintext;
+      }
+    }
+
+    const categoryId = input.categoryId ?? null;
+    if (categoryId !== null) await requireCategory(tx, categoryId);
+
+    const isPublished = input.isPublished ?? false;
+    // A new product has no variants, so publishing it always violates the invariant.
+    if (isPublished) {
+      if (categoryId === null) {
+        errors.push({
+          field: "category",
+          code: "PRODUCT_WITHOUT_CATEGORY",
+          message: MESSAGES.withoutCategory,
+        });
+      }
+      errors.push({
+        field: "isPublished",
+        code: "PRODUCT_WITHOUT_VARIANTS",
+        message: MESSAGES.withoutVariants,
+      });
+    }
+
+    if (errors.length > 0) return { ok: false, errors };
+    if (!slug) throw new Error("valid product input produced no slug");
+
+    const [product] = await tx
+      .insert(schema.product)
+      .values({
+        name,
+        slug,
+        description,
+        descriptionPlaintext,
+        categoryId,
+        isPublished,
+        publishedAt: isPublished ? sql`now()` : null,
+      })
+      .returning();
+    if (!product) throw new Error("product insert returned no row");
+    return { ok: true, product };
+  });
+}
+
+export async function updateProduct(
+  db: Executor,
+  id: string,
+  input: ProductUpdateInput,
+): Promise<ProductResult> {
+  return db.transaction(async (tx) => {
+    const current = await lockProduct(tx, id);
+    const errors: ProductError[] = [];
+    const values: Partial<typeof schema.product.$inferInsert> = {};
+
+    if (input.name !== undefined) {
+      const name = input.name.trim();
+      const invalidName = nameError(name);
+      if (invalidName) errors.push(invalidName);
+      else values.name = name;
+    }
+
+    if (input.slug !== undefined) {
+      if (input.slug === "") {
+        errors.push({ field: "slug", code: "INVALID", message: MESSAGES.blankSlug });
+      } else {
+        const invalidSlug = slugError(input.slug);
+        if (invalidSlug) errors.push(invalidSlug);
+        else if (await slugTaken(tx, schema.product, input.slug, id)) {
+          errors.push({ field: "slug", code: "UNIQUE", message: MESSAGES.slugTaken });
+        } else {
+          values.slug = input.slug;
+        }
+      }
+    }
+
+    if (input.description !== undefined) {
+      const parsed = parseDescription(input.description);
+      if (!parsed) {
+        errors.push({
+          field: "description",
+          code: "INVALID",
+          message: MESSAGES.invalidDescription,
+        });
+      } else {
+        values.description = parsed.value;
+        values.descriptionPlaintext = parsed.plaintext;
+      }
+    }
+
+    let categoryId = current.categoryId;
+    if (input.categoryId !== undefined) {
+      categoryId = input.categoryId;
+      if (categoryId !== null) await requireCategory(tx, categoryId);
+      values.categoryId = categoryId;
+    }
+
+    const isPublished = input.isPublished ?? current.isPublished;
+    if (input.isPublished !== undefined) values.isPublished = isPublished;
+
+    // Saleor's publish rules run when the product is (or stays) published and a publish-relevant
+    // field changes; a plain rename of a published product never fails them.
+    const checkPublish = input.isPublished === true || (input.categoryId === null && isPublished);
+    if (checkPublish) {
+      if (categoryId === null) {
+        errors.push({
+          field: "category",
+          code: "PRODUCT_WITHOUT_CATEGORY",
+          message: MESSAGES.withoutCategory,
+        });
+      }
+      if (!(await hasVariants(tx, id))) {
+        errors.push({
+          field: "isPublished",
+          code: "PRODUCT_WITHOUT_VARIANTS",
+          message: MESSAGES.withoutVariants,
+        });
+      }
+    }
+
+    if (isPublished && !current.isPublished) values.publishedAt = new Date();
+    if (!isPublished) values.publishedAt = null;
+
+    if (errors.length > 0) return { ok: false, errors };
+
+    const [product] = await tx
+      .update(schema.product)
+      .set({ ...values, updatedAt: sql`now()` })
+      .where(eq(schema.product.id, id))
+      .returning();
+    if (!product) throw new ProductNotFoundError("Product", [id]);
+    return { ok: true, product };
+  });
+}
+
+/** Deletes a product; its variants go with it (`ON DELETE CASCADE`). */
+export async function deleteProduct(db: Executor, id: string): Promise<ProductRow> {
+  return db.transaction(async (tx) => {
+    const product = await lockProduct(tx, id);
+    await tx.delete(schema.product).where(eq(schema.product.id, id));
+    return product;
+  });
+}
+
+export async function createProductVariant(
+  db: Executor,
+  input: ProductVariantCreateInput,
+): Promise<ProductVariantResult> {
+  return db.transaction(async (tx) => {
+    await lockProduct(tx, input.productId);
+    const errors: ProductError[] = [];
+
+    const sku = input.sku === undefined || input.sku === null ? null : normalizeSku(input.sku);
+    if (sku !== null && (await variantSkuTaken(tx, sku))) {
+      errors.push({ field: "sku", code: "UNIQUE", message: MESSAGES.skuTaken });
+    }
+
+    let priceAmount: number | null = null;
+    if (input.price === undefined || input.price === null) {
+      errors.push({ field: "price", code: "REQUIRED", message: MESSAGES.priceRequired });
+    } else {
+      const parsed = parsePrice(input.price);
+      if ("error" in parsed) errors.push(parsed.error);
+      else priceAmount = parsed.amountMinor;
+    }
+
+    if (errors.length > 0) return { ok: false, errors };
+    if (priceAmount === null) throw new Error("valid variant input produced no price");
+
+    const [last] = await tx
+      .select({ position: sql<number | null>`max(${schema.productVariant.position})` })
+      .from(schema.productVariant)
+      .where(eq(schema.productVariant.productId, input.productId));
+    const position = (last?.position ?? -1) + 1;
+
+    const [variant] = await tx
+      .insert(schema.productVariant)
+      .values({
+        productId: input.productId,
+        sku,
+        name: input.name ?? "",
+        priceAmount,
+        currency: SHOP_CURRENCY,
+        position,
+        ...(input.trackInventory === undefined ? {} : { trackInventory: input.trackInventory }),
+      })
+      .returning();
+    if (!variant) throw new Error("product variant insert returned no row");
+    await bumpProduct(tx, input.productId);
+    return { ok: true, variant };
+  });
+}
+
+export async function updateProductVariant(
+  db: Executor,
+  id: string,
+  input: ProductVariantUpdateInput,
+): Promise<ProductVariantResult> {
+  return db.transaction(async (tx) => {
+    // Lock the product before the variant, in the same order as deleteProductVariant, so the two
+    // can't deadlock (bumpProduct below writes the product row).
+    const [existing] = await tx
+      .select({ productId: schema.productVariant.productId })
+      .from(schema.productVariant)
+      .where(eq(schema.productVariant.id, id));
+    if (!existing) throw new ProductNotFoundError("ProductVariant", [id]);
+    await lockProduct(tx, existing.productId);
+    const [current] = await tx
+      .select()
+      .from(schema.productVariant)
+      .where(eq(schema.productVariant.id, id))
+      .for("update");
+    if (!current) throw new ProductNotFoundError("ProductVariant", [id]);
+
+    const errors: ProductError[] = [];
+    const values: Partial<typeof schema.productVariant.$inferInsert> = {};
+
+    if (input.sku !== undefined) {
+      const sku = normalizeSku(input.sku);
+      if (sku !== null && (await variantSkuTaken(tx, sku, id))) {
+        errors.push({ field: "sku", code: "UNIQUE", message: MESSAGES.skuTaken });
+      } else {
+        values.sku = sku;
+      }
+    }
+
+    if (input.price !== undefined && input.price !== null) {
+      const parsed = parsePrice(input.price);
+      if ("error" in parsed) errors.push(parsed.error);
+      else values.priceAmount = parsed.amountMinor;
+    }
+
+    if (input.name !== undefined && input.name !== null) values.name = input.name;
+    if (input.trackInventory !== undefined) values.trackInventory = input.trackInventory;
+
+    if (errors.length > 0) return { ok: false, errors };
+
+    const [variant] = await tx
+      .update(schema.productVariant)
+      .set({ ...values, updatedAt: sql`now()` })
+      .where(eq(schema.productVariant.id, id))
+      .returning();
+    if (!variant) throw new ProductNotFoundError("ProductVariant", [id]);
+    await bumpProduct(tx, variant.productId);
+    return { ok: true, variant };
+  });
+}
+
+/**
+ * Deletes a variant. The product row is locked first, so the last-variant check and a concurrent
+ * publish can't both pass (Saleor has no such rule; ours is ARCHITECTURE.md §3).
+ */
+export async function deleteProductVariant(
+  db: Executor,
+  id: string,
+): Promise<ProductVariantResult> {
+  return db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ productId: schema.productVariant.productId })
+      .from(schema.productVariant)
+      .where(eq(schema.productVariant.id, id));
+    if (!existing) throw new ProductNotFoundError("ProductVariant", [id]);
+
+    const product = await lockProduct(tx, existing.productId);
+    const [variant] = await tx
+      .select()
+      .from(schema.productVariant)
+      .where(eq(schema.productVariant.id, id))
+      .for("update");
+    if (!variant) throw new ProductNotFoundError("ProductVariant", [id]);
+
+    if (product.isPublished) {
+      const [row] = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(schema.productVariant)
+        .where(eq(schema.productVariant.productId, product.id));
+      if ((row?.count ?? 0) <= 1) {
+        return {
+          ok: false,
+          errors: [
+            { field: null, code: "PRODUCT_WITHOUT_VARIANTS", message: MESSAGES.lastVariant },
+          ],
+        };
+      }
+    }
+
+    await tx.delete(schema.productVariant).where(eq(schema.productVariant.id, id));
+    await bumpProduct(tx, product.id);
+    return { ok: true, variant };
+  });
 }

@@ -32,8 +32,8 @@ const UNPUBLISHED_NOTE =
 // List rows also carry their minimal variant price, so the field needs no second query.
 type ProductModel = ProductRow & { minimalPrice?: Money | null };
 
-const ProductType = builder.objectRef<ProductModel>("Product");
-const ProductVariantType = builder.objectRef<ProductVariantRow>("ProductVariant");
+export const ProductType = builder.objectRef<ProductModel>("Product");
+export const ProductVariantType = builder.objectRef<ProductVariantRow>("ProductVariant");
 
 /** Staff with MANAGE_PRODUCTS see unpublished and future-dated products (ARCHITECTURE.md §8). */
 async function seesUnpublished(ctx: Context): Promise<boolean> {

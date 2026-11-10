@@ -1,3 +1,6 @@
+import type { Executor, schema } from "@commerce/db";
+import { and, eq, ne, sql } from "drizzle-orm";
+
 // unidecode's Cyrillic mappings used by Saleor. Uppercase characters use the same mapping;
 // Django's slugify lowercases the transliterated value afterwards.
 const CYRILLIC: Record<string, string> = {
@@ -54,4 +57,41 @@ export function slugify(value: string): string {
     .replace(/[-\s]+/g, "-")
     .replace(/^[-_]+|[-_]+$/g, "");
   return slug || "-";
+}
+
+/** The tables whose `slug` column is unique and gets a generated suffix (categories, products). */
+type SlugTable = typeof schema.category | typeof schema.product;
+
+export async function slugTaken(
+  db: Executor,
+  table: SlugTable,
+  slug: string,
+  exceptId?: string,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: table.id })
+    .from(table)
+    .where(exceptId ? and(eq(table.slug, slug), ne(table.id, exceptId)) : eq(table.slug, slug));
+  return row !== undefined;
+}
+
+/** Saleor's generate_unique_slug + prepare_unique_slug. */
+export async function generateUniqueSlug(
+  db: Executor,
+  table: SlugTable,
+  name: string,
+): Promise<string> {
+  const base = slugify(name);
+  const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const rows = await db
+    .select({ slug: table.slug })
+    .from(table)
+    .where(sql`${table.slug} ~* ${`^${escapedBase}(-[0-9]+)?$`}`);
+  const existing = new Set(rows.map((row) => row.slug.toLowerCase()));
+
+  if (!existing.has(base)) return base;
+  for (let suffix = 2; ; suffix += 1) {
+    const candidate = `${base}-${suffix}`;
+    if (!existing.has(candidate)) return candidate;
+  }
 }
