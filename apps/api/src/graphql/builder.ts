@@ -19,6 +19,8 @@ export const builder = new SchemaBuilder<{
   DefaultNodeNullability: false;
   Scalars: {
     DateTime: { Input: Date; Output: Date };
+    // A decimal number as text on input (see graphql/scalars.ts), a plain number on output.
+    Decimal: { Input: string; Output: number };
     JSONString: { Input: unknown; Output: unknown };
   };
 }>({

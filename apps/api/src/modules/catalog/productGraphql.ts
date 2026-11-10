@@ -1,11 +1,11 @@
-import type { Money } from "@commerce/contracts";
+import { type Money, parseDecimal } from "@commerce/contracts";
 import { GraphQLError } from "graphql";
 import { builder } from "../../graphql/builder.ts";
 import type { Context } from "../../graphql/context.ts";
 import { fromGlobalId } from "../../graphql/globalId.ts";
 import { MoneyType } from "../../graphql/money.ts";
 import { isEdgesRequested, validatePagination } from "../../graphql/pagination.ts";
-import { DateTime, JSONString } from "../../graphql/scalars.ts";
+import { DateTime, Decimal, JSONString } from "../../graphql/scalars.ts";
 import { CategoryType, OrderDirection } from "./graphql.ts";
 import {
   getProduct,
@@ -18,6 +18,12 @@ import {
   type ProductVariantRow,
   toMoney,
 } from "./index.ts";
+import {
+  type ConditionFilter,
+  type ProductWhere,
+  SHOP_CURRENCY,
+  type ValueFilter,
+} from "./productWhere.ts";
 
 const RICH_CONTENT = "\n\nRich text format. For reference see https://editorjs.io/";
 const UNPUBLISHED_NOTE =
@@ -271,6 +277,172 @@ const ProductOrder = builder.inputType("ProductOrder", {
   }),
 });
 
+// Saleor's filter inputs for `where` (saleor/graphql/core/types/filters.py), reduced to the
+// operators our fields implement.
+const StringFilterInput = builder.inputType("StringFilterInput", {
+  fields: (t) => ({
+    eq: t.string({ description: "The value equal to." }),
+    oneOf: t.stringList({ description: "The value included in." }),
+  }),
+});
+
+const GlobalIDFilterInput = builder.inputType("GlobalIDFilterInput", {
+  fields: (t) => ({
+    eq: t.id({ description: "The value equal to." }),
+    oneOf: t.idList({ description: "The value included in." }),
+  }),
+});
+
+const DecimalRangeInput = builder.inputType("DecimalRangeInput", {
+  fields: (t) => ({
+    gte: t.field({ type: Decimal, description: "Decimal value greater than or equal to." }),
+    lte: t.field({ type: Decimal, description: "Decimal value less than or equal to." }),
+  }),
+});
+
+const DecimalFilterInput = builder.inputType("DecimalFilterInput", {
+  fields: (t) => ({
+    eq: t.field({ type: Decimal, description: "The value equal to." }),
+    oneOf: t.field({ type: [Decimal], description: "The value included in." }),
+    range: t.field({ type: DecimalRangeInput, description: "The value in range." }),
+  }),
+});
+
+const DateTimeRangeInput = builder.inputType("DateTimeRangeInput", {
+  fields: (t) => ({
+    gte: t.field({ type: DateTime, description: "Start date." }),
+    lte: t.field({ type: DateTime, description: "End date." }),
+  }),
+});
+
+const DateTimeFilterInput = builder.inputType("DateTimeFilterInput", {
+  fields: (t) => ({
+    eq: t.field({ type: DateTime, description: "The value equal to." }),
+    oneOf: t.field({ type: [DateTime], description: "The value included in." }),
+    range: t.field({ type: DateTimeRangeInput, description: "The value in range." }),
+  }),
+});
+
+// The GraphQL shape of a where object, before global IDs and decimal amounts are parsed.
+interface ProductWhereData {
+  ids?: readonly string[] | null;
+  name?: { eq?: string | null; oneOf?: readonly string[] | null } | null;
+  slug?: { eq?: string | null; oneOf?: readonly string[] | null } | null;
+  category?: { eq?: string | null; oneOf?: readonly string[] | null } | null;
+  hasCategory?: boolean | null;
+  isPublished?: boolean | null;
+  price?: DecimalFilterData | null;
+  minimalPrice?: DecimalFilterData | null;
+  updatedAt?: DateTimeFilterData | null;
+  AND?: readonly ProductWhereData[] | null;
+  OR?: readonly ProductWhereData[] | null;
+}
+
+interface DecimalFilterData {
+  eq?: string | null;
+  oneOf?: readonly string[] | null;
+  range?: { gte?: string | null; lte?: string | null } | null;
+}
+
+interface DateTimeFilterData {
+  eq?: Date | null;
+  oneOf?: readonly Date[] | null;
+  range?: { gte?: Date | null; lte?: Date | null } | null;
+}
+
+// Saleor's ProductWhereInput, with the subset of fields we can answer (saleor/graphql/schema.graphql).
+// An explicit shape lets `AND`/`OR` refer to the input type inside its own definition.
+const ProductWhereInput = builder.inputRef<ProductWhereData>("ProductWhereInput");
+ProductWhereInput.implement({
+  fields: (t) => ({
+    ids: t.idList(),
+    name: t.field({ type: StringFilterInput, description: "Filter by product name." }),
+    slug: t.field({ type: StringFilterInput, description: "Filter by product slug." }),
+    category: t.field({ type: GlobalIDFilterInput, description: "Filter by product category." }),
+    hasCategory: t.boolean({ description: "Filter by product with category assigned." }),
+    isPublished: t.boolean({ description: "Filter by public visibility." }),
+    price: t.field({ type: DecimalFilterInput, description: "Filter by product variant price." }),
+    minimalPrice: t.field({
+      type: DecimalFilterInput,
+      description: "Filter by the lowest variant price after discounts.",
+    }),
+    updatedAt: t.field({
+      type: DateTimeFilterInput,
+      description: "Filter by when was the most recent update.",
+    }),
+    AND: t.field({
+      type: [ProductWhereInput],
+      description: "List of conditions that must be met.",
+    }),
+    OR: t.field({
+      type: [ProductWhereInput],
+      description: "A list of conditions of which at least one must be met.",
+    }),
+  }),
+});
+
+/** A decimal amount from the API (number or numeric string) as minor units of the shop currency. */
+function toMinorUnits(value: string): number {
+  try {
+    return parseDecimal(value, SHOP_CURRENCY).amountMinor;
+  } catch (error) {
+    // Saleor reports invalid decimals as a top-level GraphQL error, not as data.
+    throw new GraphQLError(error instanceof Error ? error.message : "Invalid decimal value.");
+  }
+}
+
+function toIdFilter(filter: NonNullable<ProductWhereData["category"]>, type: string): ValueFilter {
+  return {
+    eq: filter.eq === undefined || filter.eq === null ? filter.eq : fromGlobalId(type, filter.eq),
+    oneOf: filter.oneOf?.map((id) => fromGlobalId(type, id)),
+  };
+}
+
+function toDecimalFilter(filter: DecimalFilterData): ConditionFilter<number> {
+  return {
+    eq: filter.eq === undefined || filter.eq === null ? filter.eq : toMinorUnits(filter.eq),
+    oneOf: filter.oneOf?.map(toMinorUnits),
+    range:
+      filter.range === undefined || filter.range === null
+        ? filter.range
+        : {
+            gte:
+              filter.range.gte === undefined || filter.range.gte === null
+                ? filter.range.gte
+                : toMinorUnits(filter.range.gte),
+            lte:
+              filter.range.lte === undefined || filter.range.lte === null
+                ? filter.range.lte
+                : toMinorUnits(filter.range.lte),
+          },
+  };
+}
+
+/** The GraphQL `where` input as the catalog module's typed where model. */
+function toProductWhere(where: ProductWhereData): ProductWhere {
+  const result: ProductWhere = {};
+  if (where.ids !== undefined) {
+    result.ids = where.ids === null ? null : where.ids.map((id) => fromGlobalId("Product", id));
+  }
+  if (where.name !== undefined) result.name = where.name;
+  if (where.slug !== undefined) result.slug = where.slug;
+  if (where.category !== undefined) {
+    result.category = where.category === null ? null : toIdFilter(where.category, "Category");
+  }
+  if (where.hasCategory !== undefined) result.hasCategory = where.hasCategory;
+  if (where.isPublished !== undefined) result.isPublished = where.isPublished;
+  if (where.price !== undefined) {
+    result.price = where.price === null ? null : toDecimalFilter(where.price);
+  }
+  if (where.minimalPrice !== undefined) {
+    result.minimalPrice = where.minimalPrice === null ? null : toDecimalFilter(where.minimalPrice);
+  }
+  if (where.updatedAt !== undefined) result.updatedAt = where.updatedAt;
+  if (where.AND !== undefined) result.AND = where.AND?.map(toProductWhere);
+  if (where.OR !== undefined) result.OR = where.OR?.map(toProductWhere);
+  return result;
+}
+
 builder.queryField("products", (t) =>
   t.connection(
     {
@@ -279,15 +451,20 @@ builder.queryField("products", (t) =>
       description: `List of the shop's products. ${UNPUBLISHED_NOTE}`,
       args: {
         search: t.arg.string({ description: "Search products." }),
+        where: t.arg({
+          type: ProductWhereInput,
+          description: "Where filtering options for products.",
+        }),
         sortBy: t.arg({ type: ProductOrder, description: "Sort products." }),
       },
-      resolve: (_parent, { search, sortBy, ...page }, ctx, info) =>
+      resolve: (_parent, { search, sortBy, where, ...page }, ctx, info) =>
         productConnection(
           ctx,
           "products",
           {
             ...page,
             search,
+            where: where == null ? null : toProductWhere(where),
             sort: sortBy
               ? {
                   direction: sortBy.direction,

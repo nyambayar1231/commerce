@@ -63,6 +63,8 @@ export const product = pgTable(
     check("product_name_not_empty", sql`${table.name} <> ''`),
     check("product_slug_not_empty", sql`${table.slug} <> ''`),
     index("product_category_id_idx").on(table.categoryId),
+    // `products(where: {updatedAt: ...})` and the LAST_MODIFIED_AT sort.
+    index("product_updated_at_idx").on(table.updatedAt),
   ],
 );
 
@@ -98,5 +100,7 @@ export const productVariant = pgTable(
       sql`${table.weightGrams} IS NULL OR ${table.weightGrams} >= 0`,
     ),
     index("product_variant_product_id_idx").on(table.productId),
+    // `price` / `minimalPrice` filters: min(price_amount) per product and the EXISTS check.
+    index("product_variant_product_id_price_amount_idx").on(table.productId, table.priceAmount),
   ],
 );

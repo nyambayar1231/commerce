@@ -3,6 +3,7 @@ import type { Executor } from "@commerce/db";
 import { type SQL, sql } from "drizzle-orm";
 import { InvalidCursorError, type OrderDirection } from "./categoryList.ts";
 import { type ProductRow, toMoney } from "./products.ts";
+import { type ProductWhere, productWhereToSql } from "./productWhere.ts";
 
 // Saleor's `products` connection (saleor/graphql/core/connection.py): filtered, sorted,
 // keyset-paginated. The cursor format, the InvalidCursorError and the page-info rules are the
@@ -13,6 +14,8 @@ export type ProductSortField = "NAME" | "PRICE" | "PUBLISHED" | "CREATED_AT" | "
 
 export interface ProductListArgs {
   search?: string | null;
+  /** Saleor's `where` input, already parsed (global IDs decoded, amounts in minor units). */
+  where?: ProductWhere | null;
   /** Restrict to this category and all its descendants, as Saleor does for `Category.products`. */
   categoryId?: string | null;
   sort?: { field?: ProductSortField | null; direction: OrderDirection } | null;
@@ -109,6 +112,7 @@ export async function listProducts(db: Executor, args: ProductListArgs): Promise
   const cursor = backwards ? args.before : args.after;
 
   const filters: SQL[] = [];
+  if (args.where) filters.push(productWhereToSql(args.where));
   if (!args.includeUnpublished) {
     filters.push(sql`p.is_published AND (p.published_at IS NULL OR p.published_at <= now())`);
   }
