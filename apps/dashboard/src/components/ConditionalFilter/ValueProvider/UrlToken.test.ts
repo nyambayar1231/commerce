@@ -47,6 +47,49 @@ describe("UrlEntry", () => {
       "s2.category": ["cat-1", "cat-2"],
     });
   });
+
+  it("round-trips a category option as its global ID", () => {
+    // Our category options carry the global ID in both `value` and `slug` (M2.3.2: the URL holds
+    // IDs, not slugs), so picking one writes the ID and reading the URL back gives the same ID.
+    const id = "Q2F0ZWdvcnk6MWFiYy1kZWY=";
+    const option = { label: "Shoes", value: id, slug: id };
+    const condition = new ConditionSelected(
+      option,
+      {
+        type: "combobox",
+        label: "is",
+        value: "input-1",
+      },
+      [option],
+    );
+
+    const entry = UrlEntry.forStatic(condition, "category");
+
+    expect(entry).toEqual({ "s0.category": id });
+    expect(UrlToken.fromUrlEntry(entry)?.value).toBe(id);
+  });
+
+  it("round-trips several category options as an indexed list of global IDs", () => {
+    const shoes = {
+      label: "Shoes",
+      value: "Q2F0ZWdvcnk6MWFiYy1kZWY=",
+      slug: "Q2F0ZWdvcnk6MWFiYy1kZWY=",
+    };
+    const boots = {
+      label: "Boots",
+      value: "Q2F0ZWdvcnk6MmFiYy1kZWY=",
+      slug: "Q2F0ZWdvcnk6MmFiYy1kZWY=",
+    };
+    const condition = new ConditionSelected(
+      [shoes, boots],
+      { type: "multiselect", label: "in", value: "input-2" },
+      [shoes, boots],
+    );
+
+    expect(UrlEntry.forStatic(condition, "category")).toEqual({
+      "s2.category": [shoes.value, boots.value],
+    });
+  });
 });
 
 describe("UrlToken", () => {

@@ -139,5 +139,5 @@ scripts/ai/stop.sh <name>|--all                       # end the implementer (wor
 
 ## Current state
 
-M0 (foundations) and M1 (identity) done; M2 (catalog) approved: M2.1 (categories) and M2.2 (products API + list) done, M2.3 (filtering) next.
+M0 (foundations) and M1 (identity) done; M2 (catalog) approved: M2.1 (categories), M2.2 (products API + list) and M2.3 (filtering) done, M2.4 (product form) next.
 The AI team setup (`docs/ai-workflow/`) is in place. See `PLAN.md`.

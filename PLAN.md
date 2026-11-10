@@ -80,6 +80,23 @@ Awaiting the owner's approval (each was reported when its step finished):
     is duplicated in two files.
   - Column picker: static columns only; widths/order in localStorage (`columnPickerSettings`)
     instead of Saleor's user-account metadata; a plain button instead of macaw's IconButton.
+- **M2.3 (product filtering) left out or different from Saleor:**
+  - API: `products(where:)` is a subset of Saleor's `ProductWhereInput` (ids, name, slug, category
+    subtree, hasCategory, isPublished, price, minimalPrice, updatedAt, AND/OR); the shop currency is
+    a constant (`SHOP_CURRENCY = "MNT"` in `productWhere.ts`); the older
+    `product_variant_product_id_idx` is now redundant next to `(product_id, price_amount)` (drop it
+    in a later migration?). `CategoryFilterInput` gained `ids` only (no slugs/metadata/updatedAt);
+    a malformed or foreign ID is a top-level error (our `fromGlobalId`), Saleor's `filter.ids` is
+    laxer.
+  - URL: category values are global IDs (Saleor: slugs); labels are looked up with
+    `categories(filter: {ids})`. Everything else is Saleor's format (`0[s2.category][0]=…&1=AND`).
+  - Filter UI: panel layout only (no popover/inline), fields price, category, is published, has
+    category, updated at; no presets, attributes, channel, constraints or analytics; the left operand
+    is filtered locally (static operands). Saleor's range check tests the lower bound twice; ours
+    checks both ends.
+  - Known gap: the category picker does not load more on scroll (a Macaw 3.1.0 bug —
+    `useInfinityScroll` observes the input label, so `onScrollEnd` never fires; Saleor uses the same
+    version, its demo has only 18 categories). Typing searches all categories.
 
 ---
 
@@ -114,20 +131,9 @@ Open items are listed under "Open items from finished milestones".
 
 Open items are listed under "Open items from finished milestones".
 
-### M2.3 Product list filtering
-- Scope: `ProductWhereInput` (category oneOf, isPublished eq, price range, later stock), `search`;
-  filter UI adapted from ConditionalFilter UI; URL serialization; variables builder with unit tests;
-  "no results" empty state; presets deferred.
-- Concepts: the five separated concerns (ARCHITECTURE §9.3); index-aware SQL filtering.
-- Decisions: URL format for filters; which Saleor filter UI features to reproduce in v1.
-- Status: Draft.
+### M2.3 Product list filtering — Done (2026-11-10)
 
-| Step | What | Status |
-|---|---|---|
-| M2.3.1 | API `products(where:)`: Saleor's `ProductWhereInput` subset (ids, name, slug, category subtree, hasCategory, isPublished, price, minimalPrice, updatedAt, AND/OR), `Decimal` scalar, explicit SQL mapping, 2 indexes | Done |
-| M2.3.2 | Dashboard filter model: URL ⇄ filter state ⇄ query variables, pure functions + unit tests (Saleor's ConditionalFilter URL format, decided in this step's brief) | Done |
-| M2.3.3a | Filter panel adapted from ConditionalFilter (Saleor's Filters button + panel; price, published, hasCategory, updatedAt) | Done |
-| M2.3.3b | Category picker (API search, `categories(filter: {ids})` name lookup), "no results" empty state | Proposed |
+Open items are listed under "Open items from finished milestones".
 
 ### M2.4 Product create/update form
 - Scope: product + variants editing (prices, SKU), publish toggle with invariant, delete;

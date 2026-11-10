@@ -2,10 +2,10 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The right-hand control of a condition. Only the controls our product fields use: number,
-// number.range, datetime, datetime.range, select (Yes/No), and the static combobox/multiselect
-// used by category rows carried over from the URL. Saleor's API-backed async options, attributes,
-// bulk select, metadata and reference/swatch pickers are dropped.
-import { Combobox, Input, Multiselect, RangeInput, Select } from "@saleor/macaw-ui";
+// number.range, datetime, datetime.range, select (Yes/No), and the async combobox/multiselect
+// that pick categories from the API. Saleor's attributes, bulk select, metadata and
+// reference/swatch pickers are dropped.
+import { DynamicCombobox, DynamicMultiselect, Input, RangeInput, Select } from "@saleor/macaw-ui";
 
 import type { ConditionSelected } from "../FilterElement/ConditionSelected";
 import {
@@ -27,6 +27,12 @@ import {
   isSelect,
 } from "./operators";
 import { RangeInputWrapper } from "./RangeInputWrapper";
+import {
+  includeSelectedComboboxOptions,
+  isSelectedComboboxLabel,
+  isSelectedMultiselectLabel,
+  resolveComboboxValue,
+} from "./resolveAsyncComboboxState";
 
 interface RightOperatorProps {
   index: number;
@@ -47,7 +53,7 @@ const optionFromString = (value: string): ItemOption => ({
   slug: value,
 });
 
-/** The static options a category row's URL value already names (labels wait for M2.3.3b). */
+/** The options a value already names: loaded options, or raw URL strings until they are looked up. */
 const optionsFromValue = (value: ConditionValue): ItemOption[] => {
   if (isItemOptionArray(value)) {
     return value;
@@ -168,17 +174,30 @@ export const RightOperator = ({
   }
 
   if (isCombobox(selected)) {
-    const options = optionsFromValue(selected.value);
+    const selectedOptions = selected.options.filter(isItemOption);
+    const selectedValues = optionsFromValue(selected.value);
+    const options = includeSelectedComboboxOptions(selectedOptions, selectedValues);
+    const value = resolveComboboxValue(options, selectedValues[0] ?? null);
 
     return (
-      <Combobox
+      <DynamicCombobox
         id={getFilterControlId("right", index)}
         data-test-id={`right-${index}`}
-        value={options[0] ?? null}
+        value={value}
         options={options}
-        onChange={(value) => {
-          if (value) emitter.changeRightOperator(index, value);
+        loading={selected.loading}
+        onChange={(nextValue) => {
+          if (!nextValue) return;
+
+          emitter.changeRightOperator(index, nextValue);
         }}
+        onInputValueChange={(inputValue) => {
+          if (isSelectedComboboxLabel(selected.value, inputValue)) return;
+
+          emitter.inputChangeRightOperator(index, inputValue);
+        }}
+        onScrollEnd={() => emitter.scrollEndRightOperator(index)}
+        onFocus={() => emitter.focusRightOperator(index)}
         error={error}
         helperText={helperText}
         width="100%"
@@ -187,15 +206,25 @@ export const RightOperator = ({
   }
 
   if (isMultiselect(selected)) {
-    const options = optionsFromValue(selected.value);
+    const selectedOptions = selected.options.filter(isItemOption);
+    const selectedValues = optionsFromValue(selected.value);
+    const options = includeSelectedComboboxOptions(selectedOptions, selectedValues);
 
     return (
-      <Multiselect
+      <DynamicMultiselect
         id={getFilterControlId("right", index)}
         data-test-id={`right-${index}`}
-        value={options}
+        value={selectedValues}
         options={options}
+        loading={selected.loading}
         onChange={(value) => emitter.changeRightOperator(index, value)}
+        onInputValueChange={(inputValue) => {
+          if (isSelectedMultiselectLabel(selected.value, inputValue)) return;
+
+          emitter.inputChangeRightOperator(index, inputValue);
+        }}
+        onScrollEnd={() => emitter.scrollEndRightOperator(index)}
+        onFocus={() => emitter.focusRightOperator(index)}
         error={error}
         helperText={helperText}
         width="100%"

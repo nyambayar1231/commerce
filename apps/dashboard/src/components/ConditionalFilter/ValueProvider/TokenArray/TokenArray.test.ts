@@ -5,6 +5,7 @@
 // Saleor's tests are dropped, and values are checked directly instead of with snapshots.
 import { describe, expect, it } from "vitest";
 
+import { InitialProductStateResponse } from "../../API/initialState/product/InitialProductStateResponse";
 import { type FilterContainer, FilterElement } from "../../FilterElement/FilterElement";
 import { parseFilterContainer, TokenArray } from ".";
 
@@ -78,5 +79,47 @@ describe("ConditionalFilter / ValueProvider / TokenArray", () => {
       "isPublished",
       "category",
     ]);
+  });
+
+  it("fills a category row's names from the initial lookup and keeps its IDs in the URL", () => {
+    const shoes = {
+      label: "Shoes",
+      value: "Q2F0ZWdvcnk6MWFiYy1kZWY=",
+      slug: "Q2F0ZWdvcnk6MWFiYy1kZWY=",
+    };
+    const boots = {
+      label: "Boots",
+      value: "Q2F0ZWdvcnk6MmFiYy1kZWY=",
+      slug: "Q2F0ZWdvcnk6MmFiYy1kZWY=",
+    };
+    const container = new TokenArray(
+      "0[s2.category][0]=Q2F0ZWdvcnk6MWFiYy1kZWY=&0[s2.category][1]=Q2F0ZWdvcnk6MmFiYy1kZWY=",
+    ).asFilterValuesFromResponse(new InitialProductStateResponse([shoes, boots]));
+
+    const [row] = rows(container);
+
+    expect(row?.condition.selected.value).toEqual([shoes, boots]);
+    expect(row?.asUrlEntry()).toEqual({
+      "s2.category": ["Q2F0ZWdvcnk6MWFiYy1kZWY=", "Q2F0ZWdvcnk6MmFiYy1kZWY="],
+    });
+  });
+
+  it("keeps raw IDs when the lookup knows none of them", () => {
+    const container = new TokenArray(
+      "0[s0.category]=Q2F0ZWdvcnk6MWFiYy1kZWY=",
+    ).asFilterValuesFromResponse(InitialProductStateResponse.empty());
+
+    const [row] = rows(container);
+
+    expect(row?.condition.selected.value).toBe("Q2F0ZWdvcnk6MWFiYy1kZWY=");
+    expect(row?.asUrlEntry()).toEqual({ "s0.category": "Q2F0ZWdvcnk6MWFiYy1kZWY=" });
+  });
+
+  it("collects the category IDs the initial lookup has to fetch", () => {
+    const tokenized = new TokenArray(
+      "0[s0.price]=123&1[s2.category][0]=a&1[s2.category][1]=b&2[s0.category]=a",
+    );
+
+    expect(tokenized.getFetchingParams()).toEqual({ category: ["a", "b"] });
   });
 });

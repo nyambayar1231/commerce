@@ -1,8 +1,8 @@
 // Adapted from saleor-dashboard: src/components/ConditionalFilter/UI/types.ts
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The panel's row and event shapes. Saleor's attribute, constraint, bulkselect, metadata and
-// focus/blur/scroll event payloads are dropped with those controls.
+// The panel's row and event shapes. The right-hand focus/input/scroll payloads drive the category
+// picker; Saleor's attribute, constraint, bulkselect, metadata and blur payloads are dropped.
 import type { ConditionItem } from "../FilterElement/ConditionOptions";
 import type { ConditionValue } from "../FilterElement/ConditionValue";
 import type { FilterElement } from "../FilterElement/FilterElement";
@@ -29,7 +29,10 @@ export interface FilterEvent extends Event {
     | RowRemoveData
     | LeftOperatorChangeData
     | ConditionChangeData
-    | RightOperatorChangeData;
+    | RightOperatorChangeData
+    | RightOperatorFocusData
+    | RightOperatorInputValueChangeData
+    | RightOperatorScrollEndData;
 }
 
 export interface RowAddData {
@@ -61,4 +64,23 @@ export interface RightOperatorChangeData {
   path: `${number}.condition.selected.value`;
   index: number;
   value: ConditionValue;
+}
+
+export interface RightOperatorFocusData {
+  type: "rightOperator.onFocus";
+  path: `${number}.condition.selected.value`;
+  index: number;
+}
+
+export interface RightOperatorInputValueChangeData {
+  type: "rightOperator.onInputValueChange";
+  path: `${number}.condition.selected.value`;
+  index: number;
+  value: string;
+}
+
+export interface RightOperatorScrollEndData {
+  type: "rightOperator.onScrollEnd";
+  path: `${number}.condition.selected.value`;
+  index: number;
 }

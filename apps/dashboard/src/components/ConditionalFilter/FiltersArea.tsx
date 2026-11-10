@@ -2,8 +2,9 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The panel body below the toolbar: the rows, "+ Add condition" and the footer buttons. Apply is
-// disabled while a row is empty or nothing changed. Saleor's constraints, attributes, API option
-// fetching and popover/inline labels are dropped.
+// disabled while a row is empty or nothing changed. The category picker's focus/typing/scroll
+// events fetch its options. Saleor's constraints, attributes and popover/inline labels are
+// dropped.
 import { Box } from "@saleor/macaw-ui";
 import { type FC, useMemo, useState } from "react";
 
@@ -33,7 +34,7 @@ export const FiltersArea: FC<FiltersAreaProps> = ({
   errors,
   layout = "panel",
 }) => {
-  const { leftOperandsProvider, valueProvider } = useConditionalFilterContext();
+  const { apiProvider, leftOperandsProvider, valueProvider } = useConditionalFilterContext();
   const translations = useFiltersAreaTranslations();
   const {
     value,
@@ -43,7 +44,10 @@ export const FiltersArea: FC<FiltersAreaProps> = ({
     updateLeftOperator,
     updateRightOperator,
     updateCondition,
-  } = useFilterContainer();
+    updateRightOptions,
+    fetchRightOptionsList,
+    fetchMoreRightOptions,
+  } = useFilterContainer(apiProvider);
   const filteredOperands = useFilteredOperands(leftOperandsProvider.operands, value);
   const [committedKey, setCommittedKey] = useState(() =>
     getFilterContainerKey(valueProvider.value),
@@ -78,6 +82,18 @@ export const FiltersArea: FC<FiltersAreaProps> = ({
 
     if (event.type === "rightOperator.onChange") {
       updateRightOperator(event.path.split(".")[0] as string, event.value);
+    }
+
+    if (event.type === "rightOperator.onFocus") {
+      fetchRightOptionsList(event.path.split(".")[0] as string, "");
+    }
+
+    if (event.type === "rightOperator.onInputValueChange") {
+      updateRightOptions(event.path.split(".")[0] as string, event.value);
+    }
+
+    if (event.type === "rightOperator.onScrollEnd") {
+      fetchMoreRightOptions(event.path.split(".")[0] as string);
     }
   };
 

@@ -1,8 +1,8 @@
 // Adapted from saleor-dashboard: src/components/ConditionalFilter/FilterElement/ConditionSelected.ts
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The chosen condition and its value. Saleor's loading flag and the option-loading methods are
-// dropped; they belong to the async value pickers (M2.3.3).
+// The chosen condition and its value. `options` and `loading` feed the async pickers: a category
+// row keeps the options loaded for it, and shows a spinner while a page is in flight.
 import { getDefaultByControlName } from "../controlsType";
 import type { ConditionItem } from "./ConditionOptions";
 import { type ConditionValue, isItemOption, isItemOptionArray, isTuple } from "./ConditionValue";
@@ -24,6 +24,7 @@ export class ConditionSelected {
     public value: ConditionValue,
     public conditionValue: ConditionItem | null,
     public options: ConditionValue[],
+    public loading = false,
   ) {}
 
   public isEmpty() {
@@ -46,6 +47,18 @@ export class ConditionSelected {
     return new ConditionSelected(value, conditionItem, optionsFromSelectedValue(value));
   }
 
+  public enableLoading() {
+    this.loading = true;
+  }
+
+  public disableLoading() {
+    this.loading = false;
+  }
+
+  public isLoading() {
+    return this.loading;
+  }
+
   public setValue(value: ConditionValue) {
     this.value = value;
   }
@@ -59,6 +72,7 @@ export class ConditionSelected {
       cloneConditionValue(this.value),
       this.conditionValue,
       this.options.map(cloneConditionValue),
+      this.loading,
     );
   }
 }

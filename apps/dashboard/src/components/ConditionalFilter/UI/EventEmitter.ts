@@ -2,11 +2,15 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // Rows talk to FiltersArea through DOM events, as Saleor. Only the events the panel handles are
-// kept; the focus/blur/input/scroll events belong to Saleor's async option fetching.
+// kept: the right-hand focus/input/scroll events drive the category picker's API pages; the
+// attribute and blur events are dropped with those controls.
 import type {
   ConditionChangeData,
   LeftOperatorChangeData,
   RightOperatorChangeData,
+  RightOperatorFocusData,
+  RightOperatorInputValueChangeData,
+  RightOperatorScrollEndData,
   RowAddData,
   RowRemoveData,
 } from "./types";
@@ -69,6 +73,43 @@ export class FilterEventEmitter extends EventTarget {
           type: "rightOperator.onChange",
           path: `${index}.condition.selected.value`,
           value,
+          index,
+        },
+      }),
+    );
+  }
+
+  focusRightOperator(index: number) {
+    this.dispatchEvent(
+      new CustomEvent<RightOperatorFocusData>(this.type, {
+        detail: {
+          type: "rightOperator.onFocus",
+          path: `${index}.condition.selected.value`,
+          index,
+        },
+      }),
+    );
+  }
+
+  inputChangeRightOperator(index: number, value: string) {
+    this.dispatchEvent(
+      new CustomEvent<RightOperatorInputValueChangeData>(this.type, {
+        detail: {
+          type: "rightOperator.onInputValueChange",
+          path: `${index}.condition.selected.value`,
+          index,
+          value,
+        },
+      }),
+    );
+  }
+
+  scrollEndRightOperator(index: number) {
+    this.dispatchEvent(
+      new CustomEvent<RightOperatorScrollEndData>(this.type, {
+        detail: {
+          type: "rightOperator.onScrollEnd",
+          path: `${index}.condition.selected.value`,
           index,
         },
       }),

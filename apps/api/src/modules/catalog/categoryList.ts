@@ -13,6 +13,8 @@ export type OrderDirection = "ASC" | "DESC";
 
 export interface CategoryListArgs {
   search?: string | null;
+  /** Category primary keys; an explicitly empty list matches nothing. */
+  ids?: readonly string[] | null;
   /** Depth in the tree: 0 = top level. */
   level?: number | null;
   parentId?: string | null;
@@ -104,6 +106,19 @@ export async function listCategories(db: Executor, args: CategoryListArgs): Prom
     const pattern = `%${args.search.trim().replace(/[\\%_]/g, "\\$&")}%`;
     filters.push(
       sql`(c.name ILIKE ${pattern} OR c.slug ILIKE ${pattern} OR c.description_plaintext ILIKE ${pattern})`,
+    );
+  }
+  // Saleor's CategoryFilterInput.ids: exact primary keys. An explicit empty list matches
+  // nothing (Saleor's `filter_by_ids` returns an empty queryset), while an absent `ids` is no
+  // condition at all.
+  if (args.ids != null) {
+    filters.push(
+      args.ids.length === 0
+        ? sql`FALSE`
+        : sql`c.id IN (${sql.join(
+            args.ids.map((id) => sql`${id}::uuid`),
+            sql`, `,
+          )})`,
     );
   }
   if (args.level != null) filters.push(sql`t.level = ${args.level}`);

@@ -178,10 +178,11 @@ const CategorySortingInput = builder.inputType("CategorySortingInput", {
   }),
 });
 
-// Saleor's CategoryFilterInput, `search` only so far (no metadata, ids, slugs or updatedAt).
+// Saleor's CategoryFilterInput, `search` and `ids` so far (no metadata, slugs or updatedAt).
 const CategoryFilterInput = builder.inputType("CategoryFilterInput", {
   fields: (t) => ({
     search: t.string(),
+    ids: t.idList(),
   }),
 });
 
@@ -205,7 +206,15 @@ builder.queryField("categories", (t) =>
         categoryConnection(
           ctx.db,
           "categories",
-          { ...page, search: filter?.search, level, sort: sortBy },
+          {
+            ...page,
+            search: filter?.search,
+            // Saleor's global IDs decode to primary keys; a malformed or foreign ID is a
+            // top-level error, as in Saleor's `from_global_id_or_error`.
+            ids: filter?.ids?.map((id) => fromGlobalId("Category", id)),
+            level,
+            sort: sortBy,
+          },
           isEdgesRequested(info),
         ),
     },

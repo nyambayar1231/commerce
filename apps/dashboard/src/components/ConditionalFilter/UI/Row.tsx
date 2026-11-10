@@ -37,10 +37,11 @@ export const RowComponent = ({
   error,
   layout = "panel",
 }: RowProps): React.ReactNode => {
-  // A row carried over from the URL (category) is not in the "add" list; keep its current
-  // operand selectable so the select can show its label.
+  // The row's own operand is missing from the add list once its maxOccurrences is reached; keep
+  // it selectable so the select can show its label.
   const operands = useMemo(() => {
-    if (leftOptions.some((option) => option.value === item.value.value)) {
+    // An empty row has no operand yet: nothing to keep, or the list would get a blank option.
+    if (!item.value.value || leftOptions.some((option) => option.value === item.value.value)) {
       return leftOptions;
     }
 

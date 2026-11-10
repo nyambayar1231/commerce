@@ -4,8 +4,7 @@
 // The product list with filters, search, sort and cursor pagination, all from the URL as Saleor;
 // a URL without a sort is redirected to Saleor's default (name, ascending). The conditional
 // filters in the URL become the query's `where`; the filter panel edits a copy and applies it back
-// to the URL. Not yet: category labels in the filter (M2.3.3b), bulk actions and Create product
-// (M2.4), tiles view.
+// to the URL. Not yet: bulk actions and Create product (M2.4), filter presets, tiles view.
 import { useQuery } from "@apollo/client";
 import { useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router";

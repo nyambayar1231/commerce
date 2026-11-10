@@ -107,6 +107,9 @@ const renderArea = ({
     updateLeftOperator: vi.fn(),
     updateRightOperator: vi.fn(),
     updateCondition: vi.fn(),
+    updateRightOptions: vi.fn(),
+    fetchRightOptionsList: vi.fn(),
+    fetchMoreRightOptions: vi.fn(),
   });
 
   render(

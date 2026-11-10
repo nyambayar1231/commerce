@@ -169,6 +169,57 @@ describe("categories", () => {
     });
   });
 
+  it("filters by global IDs", async () => {
+    const page = await categories({
+      first: 10,
+      filter: {
+        ids: [
+          toGlobalId("Category", ids.get("Cat 01") ?? ""),
+          toGlobalId("Category", ids.get("Cat 03") ?? ""),
+        ],
+      },
+    });
+
+    expect(page.totalCount).toBe(2);
+    expect(names(page)).toEqual(["Cat 01", "Cat 03"]);
+  });
+
+  it("combines ids with search by AND", async () => {
+    const idsOfBoth = [
+      toGlobalId("Category", ids.get("Cat 01") ?? ""),
+      toGlobalId("Category", ids.get("Cat 07") ?? ""),
+    ];
+
+    expect(names(await categories({ first: 10, filter: { ids: idsOfBoth } }))).toEqual([
+      "Cat 01",
+      "Cat 07",
+    ]);
+    expect(
+      names(await categories({ first: 10, filter: { ids: idsOfBoth, search: "winter" } })),
+    ).toEqual(["Cat 07"]);
+  });
+
+  it("returns no categories for an empty id list", async () => {
+    const page = await categories({ first: 10, filter: { ids: [] } });
+
+    expect(page.totalCount).toBe(0);
+    expect(page.edges).toEqual([]);
+  });
+
+  it("rejects a malformed id", async () => {
+    expect(errorOf(await client.gql(CATEGORIES, { first: 10, filter: { ids: ["garbage"] } }))).toBe(
+      "Couldn't resolve id: garbage.",
+    );
+  });
+
+  it("rejects an id of another type", async () => {
+    const productId = toGlobalId("Product", ids.get("Cat 01") ?? "");
+
+    expect(errorOf(await client.gql(CATEGORIES, { first: 10, filter: { ids: [productId] } }))).toBe(
+      `Invalid ID: ${productId}. Expected: Category, received: Product.`,
+    );
+  });
+
   it("refuses Saleor's invalid arguments and cursors", async () => {
     expect(errorOf(await client.gql(CATEGORIES, {}))).toBe(
       "You must provide a `first` or `last` value to properly paginate the `categories` connection.",

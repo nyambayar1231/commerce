@@ -2,16 +2,17 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // One filter row: a left operand (the field), a condition and its value. Saleor's constraint
-// system, attribute selection, loading state and API-backed constraints are dropped: they serve
-// filters we don't support yet. The methods kept are the ones the panel needs.
+// system, attribute selection and attribute loading state are dropped: they serve filters we
+// don't support yet. The right-hand option/loading updates are kept for the category picker.
 
+import type { InitialProductStateResponse } from "../API/initialState/product/InitialProductStateResponse";
 import { STATIC_PRODUCT_OPTIONS } from "../constants";
 import type { LeftOperand } from "../LeftOperandsProvider";
 import { UrlEntry, type UrlToken } from "../ValueProvider/UrlToken";
 import { Condition } from "./Condition";
 import { type ConditionItem, ConditionOptions, type StaticElementName } from "./ConditionOptions";
 import { ConditionSelected } from "./ConditionSelected";
-import type { ConditionValue } from "./ConditionValue";
+import type { ConditionValue, ItemOption } from "./ConditionValue";
 
 export class ExpressionValue {
   constructor(
@@ -67,6 +68,20 @@ export class FilterElement {
     this.condition.selected.setValue(value);
   }
 
+  public updateRightOptions(options: ItemOption[]) {
+    this.condition.selected.setOptions(options);
+  }
+
+  public updateRightLoadingState(loading: boolean) {
+    if (loading) {
+      this.condition.selected.enableLoading();
+
+      return;
+    }
+
+    this.condition.selected.disableLoading();
+  }
+
   public isEmpty() {
     return this.value.isEmpty() || this.condition.isEmpty();
   }
@@ -88,12 +103,15 @@ export class FilterElement {
   }
 
   /** null when the token names an unknown field, condition or malformed value. */
-  public static fromUrlToken(token: UrlToken): FilterElement | null {
+  public static fromUrlToken(
+    token: UrlToken,
+    response?: InitialProductStateResponse,
+  ): FilterElement | null {
     if (!token.isStatic() || !ConditionOptions.isStaticName(token.name)) {
       return null;
     }
 
-    const condition = Condition.fromUrlToken(token);
+    const condition = Condition.fromUrlToken(token, response);
 
     return condition === null
       ? null

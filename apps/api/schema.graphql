@@ -111,6 +111,7 @@ type CategoryDelete {
 }
 
 input CategoryFilterInput {
+  ids: [ID!]
   search: String
 }
 

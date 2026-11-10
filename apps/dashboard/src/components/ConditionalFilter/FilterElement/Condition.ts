@@ -2,8 +2,11 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // A left operand's condition options plus the selected one. Unlike Saleor we have no initial
-// option response to look values up in: the value comes straight from the URL and is validated
-// per field here, so an invalid entry becomes an ignorable element instead of crashing the page.
+// option response to look values up in for static fields: the value comes straight from the URL
+// and is validated per field here, so an invalid entry becomes an ignorable element instead of
+// crashing the page. The exception is category, whose URL holds global IDs: the loaded options
+// replace the raw IDs so the row shows names (Saleor's `filterByUrlToken`).
+import type { InitialProductStateResponse } from "../API/initialState/product/InitialProductStateResponse";
 import type { UrlToken } from "../ValueProvider/UrlToken";
 import { ConditionOptions, type StaticElementName } from "./ConditionOptions";
 import { ConditionSelected } from "./ConditionSelected";
@@ -90,7 +93,10 @@ export class Condition {
   }
 
   /** null when the token names no condition this field supports or its value is malformed. */
-  public static fromUrlToken(token: UrlToken): Condition | null {
+  public static fromUrlToken(
+    token: UrlToken,
+    response?: InitialProductStateResponse,
+  ): Condition | null {
     if (!ConditionOptions.isStaticName(token.name)) {
       return null;
     }
@@ -102,6 +108,22 @@ export class Condition {
 
     if (!selectedOption) {
       return null;
+    }
+
+    // Category values are global IDs: use the loaded options so the row shows names. When none
+    // of the IDs is known (deleted category, failed lookup) keep the raw values as before.
+    if (token.name === "category" && response) {
+      const loaded = response.filterByUrlToken(token);
+      const [first] = loaded;
+
+      if (first) {
+        const value = selectedOption.type === "combobox" ? first : loaded;
+
+        return new Condition(
+          options,
+          ConditionSelected.fromConditionItemAndValue(selectedOption, value),
+        );
+      }
     }
 
     const value = valueFromToken(token.name, selectedOption.label, token.value);

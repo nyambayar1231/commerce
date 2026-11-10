@@ -2,7 +2,8 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { MockedProvider } from "@apollo/client/testing";
+import { cleanup, fireEvent, render, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -12,13 +13,16 @@ import { FiltersArea } from "./FiltersArea";
 
 const renderArea = () =>
   render(
-    <MemoryRouter initialEntries={["/products/?sort=name&asc=true"]}>
-      <LocaleProvider>
-        <ConditionalProductFilterProvider locationSearch="sort=name&asc=true">
-          <FiltersArea onConfirm={vi.fn()} />
-        </ConditionalProductFilterProvider>
-      </LocaleProvider>
-    </MemoryRouter>,
+    // No category filter in the URL, so the provider's initial-state lookup runs no query.
+    <MockedProvider mocks={[]}>
+      <MemoryRouter initialEntries={["/products/?sort=name&asc=true"]}>
+        <LocaleProvider>
+          <ConditionalProductFilterProvider locationSearch="sort=name&asc=true">
+            <FiltersArea onConfirm={vi.fn()} />
+          </ConditionalProductFilterProvider>
+        </LocaleProvider>
+      </MemoryRouter>
+    </MockedProvider>,
   );
 
 const byTestId = (id: string): HTMLElement | null =>
@@ -27,8 +31,11 @@ const byTestId = (id: string): HTMLElement | null =>
 afterEach(cleanup);
 
 describe("FiltersArea (real provider)", () => {
-  it("adds an empty row from the add-condition button", () => {
+  it("adds an empty row from the add-condition button", async () => {
     renderArea();
+
+    // The provider starts on its skeleton until the URL's filter values are looked up.
+    await waitFor(() => expect(byTestId("add-filter-button")).toBeTruthy());
 
     expect(byTestId("left-0")).toBeNull();
 
