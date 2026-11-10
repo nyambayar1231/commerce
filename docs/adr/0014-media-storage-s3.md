@@ -1,6 +1,6 @@
 # ADR-0014: Product media in S3-compatible storage, thumbnails on demand with sharp
 
-Status: Proposed (2026-11-10). Owner choices recorded the same day: S3 from the start, an S3
+Status: Accepted (2026-11-10). Owner choices recorded the same day: S3 from the start, an S3
 server in docker-compose for dev and tests, resizing with `sharp`, JPEG/PNG/WebP/GIF up to 10 MB.
 
 ## Context
