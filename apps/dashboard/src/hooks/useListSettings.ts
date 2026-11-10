@@ -10,7 +10,7 @@ export const listSettingsStorageKey = "listConfig";
 // Saleor's PAGINATE_BY (src/config.ts).
 export const PAGINATE_BY = 20;
 
-export type ListViews = "CATEGORY_LIST" | "COLLECTION_PRODUCTS_LIST";
+export type ListViews = "CATEGORY_LIST" | "COLLECTION_PRODUCTS_LIST" | "PRODUCT_LIST";
 
 export interface ListSettings {
   rowNumber: number;
@@ -27,6 +27,7 @@ const defaultListSettings: AppListViewSettings = {
   CATEGORY_LIST: { rowNumber: PAGINATE_BY },
   // Saleor's CategoryProducts uses ListViews.COLLECTION_PRODUCTS_LIST for the card's row count.
   COLLECTION_PRODUCTS_LIST: { rowNumber: PAGINATE_BY },
+  PRODUCT_LIST: { rowNumber: PAGINATE_BY },
 };
 
 const isRowNumber = (value: unknown): value is number =>

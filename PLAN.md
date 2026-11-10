@@ -109,7 +109,7 @@ Open items are listed under "Open items from finished milestones".
 | M2.2.2 | `products` connection (sort NAME / PRICE / CREATED_AT / PUBLISHED, `search`), `product(id\|slug)`; unpublished only for `MANAGE_PRODUCTS`; contract tests | Done |
 | M2.2.3 | DataLoaders for `Product.category`/`variants`/`defaultVariant`/`minimalVariantPrice`, `ProductVariant.product`, `Category.parent` (per request); a test that counts queries (6, constant with page size) | Done |
 | M2.2.4 | `Category.products` (subtree) + `PRODUCT_COUNT` sort; dashboard: "Number of products" / "Prods" columns and the read-only "Products in …" card (assign/unassign with M2.4) | Done |
-| M2.2.5 | Product list grid (`ProductListDatagrid` columns: name+thumbnail placeholder, category, price, availability), sort, pagination | Proposed |
+| M2.2.5 | Product list page: Saleor's grid (name, availability, price, category, updated, created), sortable headers, search, pagination, row links | Done |
 | M2.2.6 | Column picker adapted from `Datagrid/ColumnPicker` (static columns only), persisted per user in localStorage as Saleor | Proposed |
 
 ### M2.3 Product list filtering

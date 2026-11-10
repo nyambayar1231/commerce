@@ -12,6 +12,11 @@ describe("useListSettings", () => {
     expect(result.current.settings.rowNumber).toBe(PAGINATE_BY);
   });
 
+  it("defaults the product list to 20 rows too", () => {
+    const { result } = renderHook(() => useListSettings("PRODUCT_LIST"));
+    expect(result.current.settings.rowNumber).toBe(PAGINATE_BY);
+  });
+
   it("stores the row number per list under Saleor's key", () => {
     const { result } = renderHook(() => useListSettings("CATEGORY_LIST"));
     act(() => result.current.updateListSettings("rowNumber", 50));
@@ -20,6 +25,7 @@ describe("useListSettings", () => {
     expect(JSON.parse(localStorage.getItem(listSettingsStorageKey) ?? "{}")).toEqual({
       CATEGORY_LIST: { rowNumber: 50 },
       COLLECTION_PRODUCTS_LIST: { rowNumber: PAGINATE_BY },
+      PRODUCT_LIST: { rowNumber: PAGINATE_BY },
     });
   });
 

@@ -11,6 +11,7 @@ import { PlaceholderPage } from "./components/PlaceholderPage/PlaceholderPage";
 import { CONFIGURATION_PERMISSIONS } from "./components/Sidebar/menu/hooks/useMenuStructure";
 import { sectionNames } from "./intl";
 import { NotFound } from "./NotFound";
+import { ProductSection } from "./products";
 
 // Saleor's top-level <Switch> (src/index.tsx), limited to the sections on our roadmap.
 // "Catalog" is a menu group, not a route: Saleor has no /catalog page.
@@ -43,7 +44,7 @@ function Dashboard() {
             path="/products/*"
             element={
               <SectionRoute permissions={["MANAGE_PRODUCTS"]}>
-                <PlaceholderPage title={sectionNames.products} />
+                <ProductSection />
               </SectionRoute>
             }
           />
