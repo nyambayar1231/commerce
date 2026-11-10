@@ -1,8 +1,14 @@
 // Adapted from saleor-dashboard: src/products/urls.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The product list's state lives in the URL as Saleor's: `query` (search), `sort` + `asc` and the
-// page cursor (`after` / `before`). Not yet: Saleor's saved filter presets, filters, bulk-selection
-// `ids` and the dialogs (M2.3/M2.4).
+// The product list's state lives in the URL as Saleor's: the conditional filters (indexed
+// `0[s0.isPublished]=false` entries), `query` (search), `sort` + `asc` and the page cursor
+// (`after` / `before`). Not yet: Saleor's saved filter presets, bulk-selection `ids` and dialogs.
+import type { FilterContainer } from "../components/ConditionalFilter/FilterElement/FilterElement";
+import {
+  filterQueryEntries,
+  parseFilterContainer,
+} from "../components/ConditionalFilter/ValueProvider/TokenArray";
+import { prepareStructure } from "../components/ConditionalFilter/ValueProvider/utils";
 
 export const productSectionUrl = "/products/";
 export const productListPath = productSectionUrl;
@@ -26,17 +32,26 @@ export interface ProductListUrlQueryParams {
   asc?: boolean;
   after?: string;
   before?: string;
+  filters?: FilterContainer;
 }
 
-const query = (params?: Record<string, string | boolean | undefined>): string => {
-  const entries = Object.entries(params ?? {})
+type QueryEntry = [string, string];
+
+const queryEntries = (params: Record<string, string | boolean | undefined>): QueryEntry[] =>
+  Object.entries(params)
     .filter(([, value]) => value !== undefined && value !== "")
     .map(([key, value]) => [key, String(value)]);
-  return new URLSearchParams(entries).toString();
-};
 
-export const productListUrl = (params?: ProductListUrlQueryParams): string =>
-  `${productSectionUrl}?${query({ ...params })}`;
+/** The filter entries alone, as query-string entries: pagination keeps them in its links. */
+export const filterUrlEntries = (filters: FilterContainer): QueryEntry[] =>
+  filterQueryEntries(prepareStructure(filters));
+
+export const productListUrl = (params?: ProductListUrlQueryParams): string => {
+  const { filters, ...rest } = params ?? {};
+  const entries = [...(filters ? filterUrlEntries(filters) : []), ...queryEntries({ ...rest })];
+
+  return `${productSectionUrl}?${new URLSearchParams(entries).toString()}`;
+};
 
 const SORT_FIELDS = Object.values(ProductListUrlSortField) as string[];
 
@@ -52,8 +67,20 @@ export const parseProductListUrl = (search: URLSearchParams): ProductListUrlQuer
   if (search.get("after")) params.after = search.get("after") ?? undefined;
   else if (search.get("before")) params.before = search.get("before") ?? undefined;
 
+  const filters = parseFilterContainer(search.toString());
+
+  if (filters.some((entry) => typeof entry !== "string")) {
+    params.filters = filters;
+  }
+
   return params;
 };
+
+/** Changing filters, like search and sort, starts again from the first page. */
+export const getFiltersUrlParams = (
+  params: ProductListUrlQueryParams,
+  filters: FilterContainer,
+): ProductListUrlQueryParams => ({ ...params, after: undefined, before: undefined, filters });
 
 export const productPath = (id: string): string => `${productSectionUrl}${id}`;
 

@@ -125,7 +125,7 @@ Open items are listed under "Open items from finished milestones".
 | Step | What | Status |
 |---|---|---|
 | M2.3.1 | API `products(where:)`: Saleor's `ProductWhereInput` subset (ids, name, slug, category subtree, hasCategory, isPublished, price, minimalPrice, updatedAt, AND/OR), `Decimal` scalar, explicit SQL mapping, 2 indexes | Done |
-| M2.3.2 | Dashboard filter model: URL ⇄ filter state ⇄ query variables, pure functions + unit tests (Saleor's ConditionalFilter URL format, decided in this step's brief) | Proposed |
+| M2.3.2 | Dashboard filter model: URL ⇄ filter state ⇄ query variables, pure functions + unit tests (Saleor's ConditionalFilter URL format, decided in this step's brief) | Done |
 | M2.3.3 | Filter UI adapted from ConditionalFilter (category, published, price), "no results" empty state | Proposed |
 
 ### M2.4 Product create/update form

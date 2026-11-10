@@ -2,23 +2,26 @@
 // Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The product list with search, sort and cursor pagination, all from the URL as Saleor; a URL
-// without a sort is redirected to Saleor's default (name, ascending). Not yet: filters and saved
-// presets (M2.3), bulk actions and Create product (M2.4), tiles view.
+// without a sort is redirected to Saleor's default (name, ascending). The conditional filters in
+// the URL become the query's `where`. Not yet: the filter bar and saved presets (M2.3.3), bulk
+// actions and Create product (M2.4), tiles view.
 import { useQuery } from "@apollo/client";
 import { useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
+import { createProductQueryVariables } from "../../components/ConditionalFilter/queryVariables";
 import { ProductListDocument } from "../../graphql/types.generated";
 import useListSettings from "../../hooks/useListSettings";
 import { createPaginationState, usePaginator } from "../../hooks/usePaginator";
 import { ProductListPage } from "../components/ProductListPage/ProductListPage";
 import { getSortQueryVariables, getSortUrlParams } from "../sort";
-import { parseProductListUrl, productListUrl } from "../urls";
+import { filterUrlEntries, parseProductListUrl, productListUrl } from "../urls";
 
 export const ProductList = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const params = useMemo(() => parseProductListUrl(searchParams), [searchParams]);
+  const where = useMemo(() => createProductQueryVariables(params.filters ?? []), [params.filters]);
   const { settings, updateListSettings } = useListSettings("PRODUCT_LIST");
 
   // Saleor's useSortRedirects: a list URL always names its sort.
@@ -34,6 +37,7 @@ export const ProductList = () => {
       ...paginationState,
       search: params.query ?? null,
       sort: getSortQueryVariables(params) ?? null,
+      where,
     },
     skip: params.sort === undefined,
   });
@@ -44,7 +48,14 @@ export const ProductList = () => {
   const paginator = usePaginator({
     pageInfo: data?.products?.pageInfo,
     paginationState,
-    queryString: { query: params.query, sort: params.sort, asc: params.asc },
+    // Filters are indexed entries, so they are spread in by their query-string keys and the
+    // previous/next links keep the filtered list.
+    queryString: {
+      ...Object.fromEntries(params.filters ? filterUrlEntries(params.filters) : []),
+      query: params.query,
+      sort: params.sort,
+      asc: params.asc,
+    },
   });
 
   // Searching, re-sorting and a new page size all start again from the first page.
