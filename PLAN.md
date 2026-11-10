@@ -12,7 +12,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | M2.2 | Products & variants API + product list grid | Done |
 | M2.3 | Product list filtering (URL state → variables → where → SQL) | Done |
 | M2.4 | Product create/update form | Done |
-| M2.5 | Product media | Approved |
+| M2.5 | Product media | In progress |
 | M3 | Inventory: warehouse, stock, availability | Draft |
 | M5 | Checkout | Draft |
 | M5.1 | Cart: checkout + lines | Draft |
@@ -163,18 +163,19 @@ Open items are listed under "Open items from finished milestones".
 Open items are listed under "Open items from finished milestones".
 
 ### M2.5 Product media
-- Scope: local-disk file storage behind a tiny `storage` interface, upload via multipart GraphQL
-  or signed REST endpoint (decide), media reorder.
-- Owner (2026-11-09): leans to AWS S3 for uploads. Lead's proposal: S3 (Seoul/Tokyo) behind the
-  `storage` interface, MinIO/local disk in dev and tests, CloudFront in front, uploads through the
-  API (GraphQL multipart) first; compare Cloudflare R2 (no egress fees). ADR + setup checklist at
-  M2.5; the owner creates the AWS account/bucket/credentials.
-- Status: Draft.
+- Scope: product images in S3-compatible storage behind a small `storage` interface, upload via
+  GraphQL multipart (M2 decision 6), Saleor's on-demand thumbnails, media reorder.
+- **Decisions (owner, 2026-11-10):** S3 from the start with an S3 server in docker-compose for dev
+  and tests (SeaweedFS, as MinIO's images are discontinued); resizing with `sharp`;
+  JPEG/PNG/WebP/GIF up to 10 MB. Design in ADR-0014 (Proposed, awaiting the owner's acceptance).
+- AWS account, bucket, credentials and CloudFront are the owner's setup; checklist in M9.
+- Status: In progress.
 
 | Step | What | Status |
 |---|---|---|
-| M2.5.1 | `product_media` table; `storage` interface with a local-disk implementation + static serving; size/type limits | Proposed |
-| M2.5.2 | `productMediaCreate` (multipart `Upload`), `productMediaUpdate` (alt), `productMediaDelete`, `productMediaReorder`; tests | Proposed |
+| M2.5.0 | ADR-0014; SeaweedFS `s3` service in docker-compose (`pnpm db:up` starts it); `@aws-sdk/client-s3` + `sharp` added; env vars in `.env.example` | Done |
+| M2.5.1 | `storage` module (S3 client, ensureBucket, test bucket setup, `pnpm cli create-media-bucket`); `product_media` + `product_media_thumbnail` tables; `ProductMedia` type and `Product.media`; tests against the local S3 | Proposed |
+| M2.5.2 | `productMediaCreate` (multipart `Upload`, type/size checks), `productMediaUpdate` (alt), `productMediaDelete`, `productMediaReorder`; `/thumbnail/…` endpoint + `url(size, format)`; tests | Proposed |
 | M2.5.3 | Dashboard media card (upload, alt, reorder, delete) and the list grid thumbnail | Proposed |
 
 ---
