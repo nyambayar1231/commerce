@@ -69,12 +69,13 @@ describe("createContext", () => {
     expect(ctx.sessionToken).toBeNull();
   });
 
-  it("creates the catalog, inventory, checkout and payment loaders per request", async () => {
+  it("creates the catalog, inventory, checkout, payment and order loaders per request", async () => {
     const ctx = await createContext(db, request({}));
     expect(typeof ctx.loaders.categoryById.load).toBe("function");
     expect(typeof ctx.inventoryLoaders.stocksByVariantId.load).toBe("function");
     expect(typeof ctx.checkoutLoaders.linesByCheckoutId.load).toBe("function");
     expect(typeof ctx.paymentLoaders.transactionsByCheckoutId.load).toBe("function");
+    expect(typeof ctx.orderLoaders.linesByOrderId.load).toBe("function");
   });
 });
 

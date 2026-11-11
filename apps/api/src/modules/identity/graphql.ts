@@ -48,7 +48,7 @@ const UserPermissionType = builder.objectRef<Permission>("UserPermission").imple
 });
 
 // Relay nodes (implement Node), as Saleor's User and Group.
-const UserType = builder.node(builder.objectRef<SessionUser>("User"), {
+export const UserType = builder.node(builder.objectRef<SessionUser>("User"), {
   id: { resolve: (user) => user.id },
   description: "Represents user data.",
   fields: (t) => ({

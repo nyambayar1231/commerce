@@ -1,6 +1,6 @@
 import { addMoney, type CurrencyCode, type Money } from "@commerce/contracts";
 import { type Executor, schema } from "@commerce/db";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, type SQL, sql } from "drizzle-orm";
 
 // Payment transactions and their append-only events (ARCHITECTURE.md §3 "Payments"): Saleor's
 // TransactionItem / TransactionEvent, processed by one built-in gateway — Saleor's dummy payment
@@ -250,4 +250,14 @@ export async function getTransactionsByOrderIds(
     .from(schema.paymentTransaction)
     .where(inArray(schema.paymentTransaction.orderId, [...orderIds]))
     .orderBy(asc(schema.paymentTransaction.createdAt), asc(schema.paymentTransaction.id));
+}
+
+/**
+ * For the orders list's payment sort: an order's net charged amount (charged − refunded over its
+ * transactions, Saleor's `total_charged`) as a SQL subquery on the given order id expression. The
+ * payments module owns `payment_transaction`, so other modules get its SQL from here.
+ */
+export function orderNetChargedSql(orderId: SQL): SQL {
+  return sql`(SELECT COALESCE(sum(t.charged_amount - t.refunded_amount), 0)
+    FROM payment_transaction AS t WHERE t.order_id = ${orderId})`;
 }

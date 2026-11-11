@@ -3,6 +3,7 @@ import DataLoader from "dataloader";
 import {
   getEventsByTransactionIds,
   getTransactionsByCheckoutIds,
+  getTransactionsByOrderIds,
   type PaymentEventRow,
   type PaymentTransactionRow,
 } from "./transactions.ts";
@@ -13,6 +14,8 @@ import {
 export interface PaymentLoaders {
   /** `Checkout.transactions` and the checkout's payment statuses. */
   transactionsByCheckoutId: DataLoader<string, PaymentTransactionRow[]>;
+  /** `Order.transactions` and the order's payment fields. */
+  transactionsByOrderId: DataLoader<string, PaymentTransactionRow[]>;
   /** `TransactionItem.events`. */
   eventsByTransactionId: DataLoader<string, PaymentEventRow[]>;
 }
@@ -38,6 +41,10 @@ export function createPaymentLoaders(db: Executor): PaymentLoaders {
         (row) => row.checkoutId,
       );
       return checkoutIds.map((id) => groups.get(id) ?? []);
+    }),
+    transactionsByOrderId: new DataLoader(async (orderIds) => {
+      const groups = groupBy(await getTransactionsByOrderIds(db, orderIds), (row) => row.orderId);
+      return orderIds.map((id) => groups.get(id) ?? []);
     }),
     eventsByTransactionId: new DataLoader(async (transactionIds) => {
       const groups = groupBy(

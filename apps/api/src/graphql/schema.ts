@@ -13,6 +13,7 @@ import "../modules/payments/graphql.ts";
 import "../modules/identity/graphql.ts";
 import "../modules/inventory/graphql.ts";
 import "../modules/orders/graphql.ts";
+import "../modules/orders/orderListGraphql.ts";
 import "../modules/shop/graphql.ts";
 
 export const schema = builder.toSchema();

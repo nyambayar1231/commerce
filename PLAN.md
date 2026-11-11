@@ -138,6 +138,11 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   - Shipping prices (0013) and payment amounts (0014) were created as `integer` and widened to
     `bigint` in 0015 (variant prices and order totals are `bigint`).
   - No dashboard work: checkout has no Saleor dashboard pages; orders arrive in M6.
+- **Found during M6.1, not fixed (needs the owner's go):** the product list's `CREATED_AT` /
+  `LAST_MODIFIED_AT` cursors carry millisecond ISO strings while the columns hold microseconds, so
+  rows created within one millisecond repeat page after page (reproduced with four products; the
+  orders list sorts timestamps by epoch microseconds instead). Likely the same in other date-sorted
+  lists built on that pattern.
 
 ---
 
@@ -178,7 +183,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 
 | Step | What | Status |
 |---|---|---|
-| M6.1 | API reads: `orders` connection (`MANAGE_ORDERS`) with Saleor's `sortBy` (number, date, customer, payment, status), `search` (number, email), `where: { status }`; order payment fields (decision 6); order history `user`; loaders | Proposed |
+| M6.1 | API reads: `orders` connection (`MANAGE_ORDERS`) with Saleor's `sortBy` (number, date, customer, payment, status), `search` (number, email), `where: { status }`; order payment fields (decision 6); order history `user`; loaders | Done |
 | M6.2 | Dashboard order list: Orders menu item, Saleor's OrderListPage + datagrid (number, date, customer, payment, status, total), status filter, pagination, column settings | Proposed |
 | M6.3 | Dashboard order detail (read-only): title with status pill, unfulfilled lines, summary, transactions section, customer card, history | Proposed |
 | M6.4 | API lifecycle: `fulfillment` + `fulfillment_line` tables, `orderFulfill` (decrease stock + allocations, status recompute), `orderCancel` (deallocate), `orderMarkAsPaid`, `transactionRequestAction(REFUND)`; order events; concurrency tests | Proposed |

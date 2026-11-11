@@ -1,5 +1,7 @@
 import { type Executor, schema } from "@commerce/db";
+import { inArray } from "drizzle-orm";
 import { hashPassword } from "./password.ts";
+import type { SessionUser } from "./sessions.ts";
 
 // Staff account creation from the operator side. Today this is only `pnpm cli createsuperuser`;
 // the dashboard's staff-management screens will call the same function later (M1.x). Login and
@@ -94,4 +96,20 @@ function constraintNameOf(error: unknown): string | undefined {
   if (typeof cause !== "object" || cause === null) return undefined;
   const name = (cause as { constraint_name?: unknown }).constraint_name;
   return typeof name === "string" ? name : undefined;
+}
+
+/** The given users as the API exposes them (no password data). One query for any number of ids. */
+export async function getUsersByIds(db: Executor, ids: readonly string[]): Promise<SessionUser[]> {
+  if (ids.length === 0) return [];
+  return db
+    .select({
+      id: schema.user.id,
+      email: schema.user.email,
+      firstName: schema.user.firstName,
+      lastName: schema.user.lastName,
+      isStaff: schema.user.isStaff,
+      isSuperuser: schema.user.isSuperuser,
+    })
+    .from(schema.user)
+    .where(inArray(schema.user.id, [...ids]));
 }

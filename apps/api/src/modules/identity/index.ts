@@ -23,4 +23,4 @@ export {
   updatePermissionGroup,
 } from "./staff.ts";
 export type { CreateSuperuserInput } from "./users.ts";
-export { CreateSuperuserError, createSuperuser } from "./users.ts";
+export { CreateSuperuserError, createSuperuser, getUsersByIds } from "./users.ts";

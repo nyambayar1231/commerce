@@ -6,20 +6,13 @@ import { requirePermission } from "../../graphql/permissions.ts";
 import { DateTime } from "../../graphql/scalars.ts";
 import { ProductVariantType } from "../catalog/productGraphql.ts";
 import { TransactionItemType } from "../payments/graphql.ts";
-import { getTransactionsByOrderIds } from "../payments/index.ts";
-import {
-  getOrder,
-  getOrderEventsByOrderIds,
-  getOrderLinesByOrderIds,
-  type OrderEventRow,
-  type OrderLineRow,
-  type OrderRow,
-} from "./index.ts";
+import { getOrder, type OrderEventRow, type OrderLineRow, type OrderRow } from "./index.ts";
 
 // Saleor's Order, OrderLine and OrderEvent (saleor/graphql/order/types.py), read-only and reduced
 // to what M5.4 creates. The buyer receives the order in checkoutComplete's payload; looking one up
 // by id is staff-only (MANAGE_ORDERS). Addresses are added by the checkout module, which owns the
-// Address type (ARCHITECTURE §2 rule 2). Fulfillments, payment status and actions arrive with M6.
+// Address type (ARCHITECTURE §2 rule 2). The staff list and payment fields are in
+// orderListGraphql.ts (M6.1); fulfillments and actions arrive with M6.4.
 
 const MANAGE_ORDERS = "Requires one of the following permissions: MANAGE_ORDERS.";
 
@@ -34,11 +27,13 @@ const taxed = (amountMinor: number, currency: string) => {
   return { currency: value.currency, net: value, gross: value, tax: money(0, currency) };
 };
 
-const OrderStatusEnum = builder.enumType("OrderStatus", {
+export const OrderStatusEnum = builder.enumType("OrderStatus", {
   values: ["UNFULFILLED", "PARTIALLY_FULFILLED", "FULFILLED", "CANCELED"] as const,
 });
 
 const OrderEventsEnum = builder.enumType("OrderEventsEnum", { values: ["PLACED"] as const });
+
+export { money, taxed };
 
 export const OrderType = builder.objectRef<OrderRow>("Order");
 export const OrderLineType = builder.objectRef<OrderLineRow>("OrderLine");
@@ -152,17 +147,17 @@ builder.node(OrderType, {
     lines: t.field({
       type: [OrderLineType],
       description: "List of order lines.",
-      resolve: (order, _args, ctx) => getOrderLinesByOrderIds(ctx.db, [order.id]),
+      resolve: (order, _args, ctx) => ctx.orderLoaders.linesByOrderId.load(order.id),
     }),
     events: t.field({
       type: [OrderEventType],
       description: "List of events associated with the order.",
-      resolve: (order, _args, ctx) => getOrderEventsByOrderIds(ctx.db, [order.id]),
+      resolve: (order, _args, ctx) => ctx.orderLoaders.eventsByOrderId.load(order.id),
     }),
     transactions: t.field({
       type: [TransactionItemType],
       description: "List of transactions for the order.",
-      resolve: (order, _args, ctx) => getTransactionsByOrderIds(ctx.db, [order.id]),
+      resolve: (order, _args, ctx) => ctx.paymentLoaders.transactionsByOrderId.load(order.id),
     }),
   }),
 });

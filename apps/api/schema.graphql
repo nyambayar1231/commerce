@@ -1280,8 +1280,14 @@ interface Node {
 
 """Represents an order in the shop."""
 type Order implements Node {
+  """The authorize status of the order."""
+  authorizeStatus: OrderAuthorizeStatusEnum!
+
   """Billing address: the checkout's, copied at completion."""
   billingAddress: Address
+
+  """The charge status of the order."""
+  chargeStatus: OrderChargeStatusEnum!
 
   """ID of the checkout that the order was created from."""
   checkoutId: ID
@@ -1319,6 +1325,26 @@ type Order implements Node {
   """Total amount of the order."""
   total: TaxedMoney!
 
+  """
+  Total amount of ongoing authorize requests for the order's transactions.
+  """
+  totalAuthorizePending: Money!
+
+  """Amount authorized for the order."""
+  totalAuthorized: Money!
+
+  """The difference amount between the charged and the order total."""
+  totalBalance: Money!
+
+  """Total amount of ongoing charge requests for the order's transactions."""
+  totalChargePending: Money!
+
+  """Amount charged for the order (refunds deducted, as Saleor)."""
+  totalCharged: Money!
+
+  """Amount refunded for the order."""
+  totalRefunded: Money!
+
   """List of transactions for the order."""
   transactions: [TransactionItem!]!
 
@@ -1327,6 +1353,32 @@ type Order implements Node {
 
   """Email address of the customer."""
   userEmail: String
+}
+
+enum OrderAuthorizeStatusEnum {
+  FULL
+  NONE
+  PARTIAL
+}
+
+enum OrderChargeStatusEnum {
+  FULL
+  NONE
+  OVERCHARGED
+  PARTIAL
+}
+
+type OrderCountableConnection {
+  edges: [OrderCountableEdge!]!
+  pageInfo: PageInfo!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type OrderCountableEdge {
+  cursor: String!
+  node: Order!
 }
 
 enum OrderDirection {
@@ -1347,6 +1399,13 @@ type OrderEvent implements Node {
 
   """Order event type."""
   type: OrderEventsEnum
+
+  """
+  User who performed the action.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  user: User
 }
 
 enum OrderEventsEnum {
@@ -1385,11 +1444,64 @@ type OrderLine implements Node {
   variantName: String!
 }
 
+enum OrderSortField {
+  """Sort orders by creation date."""
+  CREATED_AT
+
+  """Sort orders by creation date."""
+  CREATION_DATE @deprecated(reason: "Use `CREATED_AT` instead.")
+
+  """Sort orders by customer."""
+  CUSTOMER
+
+  """Sort orders by fulfillment status."""
+  FULFILLMENT_STATUS
+
+  """Sort orders by last modified date."""
+  LAST_MODIFIED_AT
+
+  """Sort orders by number."""
+  NUMBER
+
+  """Sort orders by payment status."""
+  PAYMENT
+
+  """
+  Sort orders by rank. Note: This option is available only with the `search` filter.
+  """
+  RANK
+}
+
+input OrderSortingInput {
+  """Specifies the direction in which to sort orders."""
+  direction: OrderDirection!
+
+  """Sort orders by the selected field."""
+  field: OrderSortField!
+}
+
 enum OrderStatus {
   CANCELED
   FULFILLED
   PARTIALLY_FULFILLED
   UNFULFILLED
+}
+
+"""Filter by order status."""
+input OrderStatusEnumFilterInput {
+  """The value equal to."""
+  eq: OrderStatus
+
+  """The value included in."""
+  oneOf: [OrderStatus!]
+}
+
+input OrderWhereInput {
+  """Filter by order IDs."""
+  ids: [ID!]
+
+  """Filter by order status."""
+  status: OrderStatusEnumFilterInput
 }
 
 type PageInfo {
@@ -2055,6 +2167,27 @@ type Query {
     """ID of an order."""
     id: ID!
   ): Order
+
+  """
+  List of orders.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  orders(
+    after: String
+    before: String
+    first: Int
+    last: Int
+
+    """Search orders."""
+    search: String
+
+    """Sort orders."""
+    sortBy: OrderSortingInput
+
+    """Where filtering options for orders."""
+    where: OrderWhereInput
+  ): OrderCountableConnection
 
   """
   Look up a product by ID or slug. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
