@@ -20,6 +20,82 @@ enum AccountErrorCode {
   UNIQUE
 }
 
+"""Represents user address data."""
+type Address {
+  """The city of the address."""
+  city: String!
+
+  """The district of the address."""
+  cityArea: String!
+
+  """Company or organization name."""
+  companyName: String!
+
+  """The country of the address."""
+  country: CountryDisplay!
+
+  """The country area of the address."""
+  countryArea: String!
+
+  """The given name of the address."""
+  firstName: String!
+
+  """The family name of the address."""
+  lastName: String!
+
+  """The phone number assigned the address."""
+  phone: String
+
+  """The postal code of the address."""
+  postalCode: String!
+
+  """The first line of the address."""
+  streetAddress1: String!
+
+  """The second line of the address."""
+  streetAddress2: String!
+}
+
+input AddressInput {
+  """City."""
+  city: String
+
+  """District."""
+  cityArea: String
+
+  """Company or organization."""
+  companyName: String
+
+  """Country."""
+  country: CountryCode
+
+  """State or province."""
+  countryArea: String
+
+  """Given name."""
+  firstName: String
+
+  """Family name."""
+  lastName: String
+
+  """Phone number."""
+  phone: String
+
+  """Postal code."""
+  postalCode: String
+
+  """Address."""
+  streetAddress1: String
+
+  """Address."""
+  streetAddress2: String
+}
+
+enum AddressTypeEnum {
+  BILLING
+  SHIPPING
+}
+
 type BulkStockError {
   """The error code."""
   code: ProductErrorCode!
@@ -176,8 +252,14 @@ type CategoryUpdate {
 }
 
 type Checkout implements Node {
+  """The billing address of the checkout."""
+  billingAddress: Address
+
   """The date and time when the checkout was created."""
   created: DateTime!
+
+  """The delivery method selected for this checkout."""
+  delivery: Delivery
 
   """Email of a customer."""
   email: String
@@ -196,6 +278,15 @@ type Checkout implements Node {
   """The number of items purchased."""
   quantity: Int!
 
+  """The shipping address of the checkout."""
+  shippingAddress: Address
+
+  """Shipping methods that can be used with this checkout."""
+  shippingMethods: [ShippingMethod!]!
+
+  """The price of the shipping, with all the taxes included."""
+  shippingPrice: TaxedMoney!
+
   """The price of the checkout before shipping, with taxes included."""
   subtotalPrice: TaxedMoney!
 
@@ -209,6 +300,12 @@ type Checkout implements Node {
 
   """Time of last modification of the given checkout."""
   updatedAt: DateTime!
+}
+
+type CheckoutBillingAddressUpdate {
+  """An updated checkout."""
+  checkout: Checkout
+  errors: [CheckoutError!]!
 }
 
 type CheckoutCreate {
@@ -232,6 +329,12 @@ input CheckoutCreateInput {
   lines: [CheckoutLineInput!]!
 }
 
+type CheckoutDeliveryMethodUpdate {
+  """An updated checkout."""
+  checkout: Checkout
+  errors: [CheckoutError!]!
+}
+
 type CheckoutEmailUpdate {
   """An updated checkout."""
   checkout: Checkout
@@ -239,6 +342,9 @@ type CheckoutEmailUpdate {
 }
 
 type CheckoutError {
+  """A type of address that causes the error."""
+  addressType: AddressTypeEnum
+
   """The error code."""
   code: CheckoutErrorCode!
 
@@ -258,6 +364,7 @@ type CheckoutError {
 }
 
 enum CheckoutErrorCode {
+  DELIVERY_METHOD_NOT_APPLICABLE
   INSUFFICIENT_STOCK
   INVALID
   NOT_FOUND
@@ -327,6 +434,275 @@ type CheckoutLinesUpdate {
   errors: [CheckoutError!]!
 }
 
+type CheckoutShippingAddressUpdate {
+  """An updated checkout."""
+  checkout: Checkout
+  errors: [CheckoutError!]!
+}
+
+enum CountryCode {
+  AD
+  AE
+  AF
+  AG
+  AI
+  AL
+  AM
+  AO
+  AQ
+  AR
+  AS
+  AT
+  AU
+  AW
+  AX
+  AZ
+  BA
+  BB
+  BD
+  BE
+  BF
+  BG
+  BH
+  BI
+  BJ
+  BL
+  BM
+  BN
+  BO
+  BQ
+  BR
+  BS
+  BT
+  BV
+  BW
+  BY
+  BZ
+  CA
+  CC
+  CD
+  CF
+  CG
+  CH
+  CI
+  CK
+  CL
+  CM
+  CN
+  CO
+  CR
+  CU
+  CV
+  CW
+  CX
+  CY
+  CZ
+  DE
+  DJ
+  DK
+  DM
+  DO
+  DZ
+  EC
+  EE
+  EG
+  EH
+  ER
+  ES
+  ET
+  EU
+  FI
+  FJ
+  FK
+  FM
+  FO
+  FR
+  GA
+  GB
+  GD
+  GE
+  GF
+  GG
+  GH
+  GI
+  GL
+  GM
+  GN
+  GP
+  GQ
+  GR
+  GS
+  GT
+  GU
+  GW
+  GY
+  HK
+  HM
+  HN
+  HR
+  HT
+  HU
+  ID
+  IE
+  IL
+  IM
+  IN
+  IO
+  IQ
+  IR
+  IS
+  IT
+  JE
+  JM
+  JO
+  JP
+  KE
+  KG
+  KH
+  KI
+  KM
+  KN
+  KP
+  KR
+  KW
+  KY
+  KZ
+  LA
+  LB
+  LC
+  LI
+  LK
+  LR
+  LS
+  LT
+  LU
+  LV
+  LY
+  MA
+  MC
+  MD
+  ME
+  MF
+  MG
+  MH
+  MK
+  ML
+  MM
+  MN
+  MO
+  MP
+  MQ
+  MR
+  MS
+  MT
+  MU
+  MV
+  MW
+  MX
+  MY
+  MZ
+  NA
+  NC
+  NE
+  NF
+  NG
+  NI
+  NL
+  NO
+  NP
+  NR
+  NU
+  NZ
+  OM
+  PA
+  PE
+  PF
+  PG
+  PH
+  PK
+  PL
+  PM
+  PN
+  PR
+  PS
+  PT
+  PW
+  PY
+  QA
+  RE
+  RO
+  RS
+  RU
+  RW
+  SA
+  SB
+  SC
+  SD
+  SE
+  SG
+  SH
+  SI
+  SJ
+  SK
+  SL
+  SM
+  SN
+  SO
+  SR
+  SS
+  ST
+  SV
+  SX
+  SY
+  SZ
+  TC
+  TD
+  TF
+  TG
+  TH
+  TJ
+  TK
+  TL
+  TM
+  TN
+  TO
+  TR
+  TT
+  TV
+  TW
+  TZ
+  UA
+  UG
+  UM
+  US
+  UY
+  UZ
+  VA
+  VC
+  VE
+  VG
+  VI
+  VN
+  VU
+  WF
+  WS
+  XK
+  YE
+  YT
+  ZA
+  ZM
+  ZW
+}
+
+"""Represents country."""
+type CountryDisplay {
+  """Country code."""
+  code: String!
+
+  """Country name."""
+  country: String!
+}
+
 """
 Log in: on success, sets the HttpOnly session cookie and returns the user.
 """
@@ -386,6 +762,15 @@ input DecimalRangeInput {
 
   """Decimal value less than or equal to."""
   lte: Decimal
+}
+
+"""Represents a delivery method chosen for the checkout."""
+type Delivery {
+  """The ID of the delivery."""
+  id: ID!
+
+  """Shipping method represented by the delivery."""
+  shippingMethod: ShippingMethod
 }
 
 input GlobalIDFilterInput {
@@ -483,11 +868,29 @@ type Mutation {
     input: CategoryInput!
   ): CategoryUpdate!
 
+  """Update billing address in the existing checkout."""
+  checkoutBillingAddressUpdate(
+    """The billing address of the checkout."""
+    billingAddress: AddressInput!
+
+    """The checkout's ID."""
+    id: ID!
+  ): CheckoutBillingAddressUpdate
+
   """Creates a new checkout."""
   checkoutCreate(
     """Fields required to create checkout."""
     input: CheckoutCreateInput!
   ): CheckoutCreate
+
+  """Updates the delivery method (shipping method) of the checkout."""
+  checkoutDeliveryMethodUpdate(
+    """Delivery Method ID (`ShippingMethod`)."""
+    deliveryMethodId: ID
+
+    """The checkout's ID."""
+    id: ID!
+  ): CheckoutDeliveryMethodUpdate
 
   """Updates email address in the existing checkout object."""
   checkoutEmailUpdate(
@@ -530,6 +933,15 @@ type Mutation {
     """
     lines: [CheckoutLineUpdateInput!]!
   ): CheckoutLinesUpdate
+
+  """Update shipping address in the existing checkout."""
+  checkoutShippingAddressUpdate(
+    """The checkout's ID."""
+    id: ID!
+
+    """The mailing address to where the checkout will be shipped."""
+    shippingAddress: AddressInput!
+  ): CheckoutShippingAddressUpdate
 
   """End the current session. Succeeds when there is none."""
   logout: Logout!
@@ -719,6 +1131,39 @@ type Mutation {
     """Fields required to update a product variant."""
     input: ProductVariantInput!
   ): ProductVariantUpdate!
+
+  """
+  Creates a new shipping price.
+  
+  Requires one of the following permissions: MANAGE_SHIPPING.
+  """
+  shippingPriceCreate(
+    """Fields required to create a shipping price."""
+    input: ShippingPriceInput!
+  ): ShippingPriceCreate
+
+  """
+  Deletes a shipping price.
+  
+  Requires one of the following permissions: MANAGE_SHIPPING.
+  """
+  shippingPriceDelete(
+    """ID of a shipping price to delete."""
+    id: ID!
+  ): ShippingPriceDelete
+
+  """
+  Updates a new shipping price.
+  
+  Requires one of the following permissions: MANAGE_SHIPPING.
+  """
+  shippingPriceUpdate(
+    """ID of a shipping price to update."""
+    id: ID!
+
+    """Fields required to update a shipping price."""
+    input: ShippingPriceInput!
+  ): ShippingPriceUpdate
 
   """
   Creates a new staff user. Requires one of the following permissions: MANAGE_STAFF.
@@ -1438,6 +1883,13 @@ type Query {
     where: ProductWhereInput
   ): ProductCountableConnection
 
+  """
+  List of the shop's shipping methods, by name.
+  
+  Requires one of the following permissions: MANAGE_SHIPPING.
+  """
+  shippingMethods: [ShippingMethodType!]!
+
   """Return information about the shop."""
   shop: Shop!
 
@@ -1457,6 +1909,103 @@ type Query {
   Requires one of the following permissions: MANAGE_PRODUCTS, MANAGE_ORDERS, MANAGE_SHIPPING.
   """
   warehouses(after: String, before: String, first: Int, last: Int): WarehouseCountableConnection
+}
+
+type ShippingError {
+  """The error code."""
+  code: ShippingErrorCode!
+
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String!
+}
+
+enum ShippingErrorCode {
+  INVALID
+  NOT_FOUND
+  REQUIRED
+}
+
+"""
+Shipping methods that can be used as means of shipping for orders and checkouts.
+"""
+type ShippingMethod implements Node {
+  """Describes if this shipping method is active and can be selected."""
+  active: Boolean!
+
+  """Unique ID of ShippingMethod available for Order."""
+  id: ID!
+
+  """Message connected to this shipping method."""
+  message: String
+
+  """Shipping method name."""
+  name: String!
+
+  """The price of selected shipping method."""
+  price: Money!
+}
+
+"""
+Shipping method are the methods you'll use to get customer's orders to them. They are directly exposed to the customers.
+"""
+type ShippingMethodType implements Node {
+  """Shipping method ID."""
+  id: ID!
+
+  """Whether checkouts can choose this shipping method."""
+  isActive: Boolean!
+
+  """Shipping method name."""
+  name: String!
+
+  """The price of the shipping method."""
+  price: Money!
+}
+
+"""
+Creates a new shipping price.
+
+Requires one of the following permissions: MANAGE_SHIPPING.
+"""
+type ShippingPriceCreate {
+  errors: [ShippingError!]!
+  shippingMethod: ShippingMethodType
+}
+
+"""
+Deletes a shipping price.
+
+Requires one of the following permissions: MANAGE_SHIPPING.
+"""
+type ShippingPriceDelete {
+  errors: [ShippingError!]!
+  shippingMethod: ShippingMethodType
+}
+
+input ShippingPriceInput {
+  """Whether checkouts can choose the shipping method."""
+  isActive: Boolean
+
+  """Name of the shipping method."""
+  name: String
+
+  """The price of the shipping method."""
+  price: Decimal
+}
+
+"""
+Updates a new shipping price.
+
+Requires one of the following permissions: MANAGE_SHIPPING.
+"""
+type ShippingPriceUpdate {
+  errors: [ShippingError!]!
+  shippingMethod: ShippingMethodType
 }
 
 """

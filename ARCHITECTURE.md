@@ -238,6 +238,9 @@ Saleor stays obvious:
 | `ProductMedia.url` without `size` (or `0`) is the original's public URL | `size` defaults to 4096 (a thumbnail) | ADR-0014: the original is already a public object; no 4096 px copy is generated for it. |
 | `productVariantStocks*`: negative quantity or quantity below allocated → `INVALID` payload error; unknown `variantId` → top-level node error; no `bulkStockErrors`/`stockErrors` fields | DB `IntegrityError` (500); `NOT_FOUND` payload error; deprecated error fields | Our stock CHECKs are reported as input errors; not-found IDs as our other variant mutations; deprecated fields left out (as M1.2.3). |
 | `productVariantCreate(stocks)` reports stock errors on `stocks` before the variant is validated | stock duplicates and variant errors together | Stocks are validated (inventory) before the catalog create runs in the same transaction. |
+| `shippingPriceCreate/Update/Delete` without `shippingZone`; `ShippingPriceInput.price` and `isActive`; `ShippingMethodType.price`/`isActive`; `shippingMethods` query (`MANAGE_SHIPPING`) | methods inside `shippingZones`, prices in `shippingMethodChannelListingUpdate` | Flat shipping list, single channel (PLAN M5 decision 1). |
+| `Address` without `id`, metadata or default flags; addresses validated for required fields and country only | `Address` is a stored node; per-country rules from i18naddress | A checkout address is a JSON snapshot (§3); no address-data dependency (PLAN M5 decision 3). |
+| `Checkout.delivery.id` is the shipping method's `ShippingMethod` ID, which `checkoutDeliveryMethodUpdate` accepts; no `deliveryMethod`/`shippingMethod` (deprecated) | per-checkout `CheckoutDelivery` IDs | No per-checkout delivery rows; every active method applies to every checkout (no zones). |
 
 **The database** handles:
 - Invariants that must hold under concurrency: unique, foreign-key and `CHECK` constraints.

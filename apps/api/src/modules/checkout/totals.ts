@@ -2,7 +2,12 @@ import { addMoney, type CurrencyCode, type Money, multiplyMoney } from "@commerc
 import { type Executor, schema } from "@commerce/db";
 import { eq } from "drizzle-orm";
 import { getProductVariantsByIds, type ProductVariantRow, toMoney } from "../catalog/index.ts";
-import { type CheckoutLineRow, CheckoutNotFoundError, getCheckoutLines } from "./checkouts.ts";
+import {
+  type CheckoutLineRow,
+  CheckoutNotFoundError,
+  getCheckoutLines,
+  getCheckoutShippingMethod,
+} from "./checkouts.ts";
 
 // Saleor's checkout calculations (ARCHITECTURE.md §5.2): always computed from the current variant
 // prices, never stored. Tax is zero, but the API still returns Saleor's TaxedMoney with
@@ -24,6 +29,7 @@ export type CheckoutTotalsLine = {
 export type CheckoutTotals = {
   lines: CheckoutTotalsLine[];
   subtotal: TaxedMoney;
+  shipping: TaxedMoney;
   total: TaxedMoney;
 };
 
@@ -38,8 +44,9 @@ export function taxedMoney(money: Money): TaxedMoney {
 }
 
 /**
- * Live totals for a checkout: each line at the variant's current price, `total = subtotal` until
- * shipping arrives in M5.2. An empty checkout is zero in its own currency.
+ * Live totals for a checkout: each line at the variant's current price, plus the chosen shipping
+ * method's current price (zero without one, or when it was switched off). An empty checkout is
+ * zero in its own currency.
  */
 export async function calculateCheckoutTotals(
   db: Executor,
@@ -69,9 +76,15 @@ export async function calculateCheckoutTotals(
     return { line, unitPrice, totalPrice };
   });
 
+  const method = await getCheckoutShippingMethod(db, checkout);
+  const shipping = method
+    ? toMoney(method.priceAmount, method.currency)
+    : toMoney(0, checkout.currency);
+
   return {
     lines: pricedLines,
     subtotal: taxedMoney(subtotal),
-    total: taxedMoney(subtotal),
+    shipping: taxedMoney(shipping),
+    total: taxedMoney(addMoney(subtotal, shipping)),
   };
 }

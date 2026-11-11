@@ -143,6 +143,7 @@ builder.node(CheckoutLineType, {
 // these, so the enum lists only these; a new one is added with the feature that can return it.
 const CheckoutErrorCode = builder.enumType("CheckoutErrorCode", {
   values: [
+    "DELIVERY_METHOD_NOT_APPLICABLE",
     "INSUFFICIENT_STOCK",
     "INVALID",
     "NOT_FOUND",
@@ -155,12 +156,18 @@ const CheckoutErrorCode = builder.enumType("CheckoutErrorCode", {
 
 type CheckoutErrorCodeValue = (typeof CheckoutErrorCode)["$inferType"];
 
+// Saleor's AddressTypeEnum: which of the checkout's addresses an error belongs to.
+export const AddressTypeEnum = builder.enumType("AddressTypeEnum", {
+  values: ["BILLING", "SHIPPING"] as const,
+});
+
 type CheckoutErrorData = {
   field: string | null;
   message: string;
   code: CheckoutErrorCodeValue;
   variants: string[] | null;
   lines: string[] | null;
+  addressType: "BILLING" | "SHIPPING" | null;
 };
 
 const CheckoutErrorType = builder.objectRef<CheckoutErrorData>("CheckoutError").implement({
@@ -187,6 +194,12 @@ const CheckoutErrorType = builder.objectRef<CheckoutErrorData>("CheckoutError").
       description: "List of line Ids which cause the error.",
       resolve: (error) => error.lines,
     }),
+    addressType: t.field({
+      type: AddressTypeEnum,
+      nullable: true,
+      description: "A type of address that causes the error.",
+      resolve: (error) => error.addressType,
+    }),
   }),
 });
 
@@ -197,9 +210,10 @@ const toGraphqlError = (error: CheckoutError): CheckoutErrorData => ({
   code: error.code,
   variants: error.variants?.map((id) => toGlobalId("ProductVariant", id)) ?? null,
   lines: error.lines?.map((id) => toGlobalId("CheckoutLine", id)) ?? null,
+  addressType: error.addressType ?? null,
 });
 
-type CheckoutPayload = { checkout: CheckoutRow | null; errors: CheckoutErrorData[] };
+export type CheckoutPayload = { checkout: CheckoutRow | null; errors: CheckoutErrorData[] };
 type CheckoutCreatePayloadData = CheckoutPayload & { created: boolean };
 
 const CheckoutCreatePayload = builder
@@ -222,7 +236,7 @@ const CheckoutCreatePayload = builder
     }),
   });
 
-const checkoutLinesPayload = (name: string) =>
+export const checkoutLinesPayload = (name: string) =>
   builder.objectRef<CheckoutPayload>(name).implement({
     fields: (t) => ({
       checkout: t.field({
@@ -298,7 +312,7 @@ function checkoutPayload(
 }
 
 /** Unknown checkout ids are Saleor's top-level node error, as in the other modules' mutations. */
-async function runCheckoutWrite(
+export async function runCheckoutWrite(
   ctx: Context,
   checkoutId: string,
   call: () => Promise<CheckoutResult>,

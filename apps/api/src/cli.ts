@@ -14,6 +14,9 @@
 //   pnpm cli seed-catalog                                           # demo category tree
 //                                                                   # (local development;
 //                                                                   # safe to run again)
+//   pnpm cli seed-shipping                                          # demo shipping methods
+//                                                                   # (local development;
+//                                                                   # safe to run again)
 //   pnpm cli create-media-bucket                                    # the media bucket
 //                                                                   # (local development;
 //                                                                   # safe to run again)
@@ -23,6 +26,7 @@ import { Writable } from "node:stream";
 import { parseArgs } from "node:util";
 import { closeDb, getDb } from "@commerce/db";
 import { seedDemoCatalog } from "./modules/catalog/index.ts";
+import { seedDemoShippingMethods } from "./modules/checkout/index.ts";
 import { type CreateSuperuserInput, createSuperuser } from "./modules/identity/index.ts";
 import { getStorage, readStorageConfig } from "./storage/index.ts";
 
@@ -31,6 +35,7 @@ const USAGE = `Usage: pnpm cli <command> [options]
 Commands:
   createsuperuser      Create a staff superuser account
   seed-catalog         Create the demo category tree (local development; safe to run again)
+  seed-shipping        Create the demo shipping methods (local development; safe to run again)
   create-media-bucket  Create the media bucket when it does not exist (safe to run again)
 
 Options for createsuperuser:
@@ -132,6 +137,17 @@ async function main(): Promise<void> {
     try {
       const { created, skipped } = await seedDemoCatalog(getDb());
       console.log(`Demo catalog: ${created} categories created, ${skipped} already there.`);
+    } catch (error) {
+      console.error(`Error: ${errorText(error)}`);
+      process.exitCode = 1;
+    }
+    return;
+  }
+
+  if (command === "seed-shipping") {
+    try {
+      const { created, skipped } = await seedDemoShippingMethods(getDb());
+      console.log(`Demo shipping methods: ${created} created, ${skipped} already there.`);
     } catch (error) {
       console.error(`Error: ${errorText(error)}`);
       process.exitCode = 1;

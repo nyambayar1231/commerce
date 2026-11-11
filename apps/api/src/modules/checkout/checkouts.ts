@@ -8,6 +8,8 @@ import {
   type ProductVariantRow,
 } from "../catalog/index.ts";
 import { availableQuantity, getStocksByVariantIds, type StockRow } from "../inventory/index.ts";
+import { type AddressInput, type AddressType, cleanAddress } from "./addresses.ts";
+import { getShippingMethod } from "./shippingMethods.ts";
 
 // Checkout reads and writes (ARCHITECTURE.md §3 "Checkout", §5.2–5.3): Saleor's checkout
 // mutations translated to our single-channel, single-currency model. A checkout stores no
@@ -19,6 +21,7 @@ export type CheckoutLineRow = typeof schema.checkoutLine.$inferSelect;
 
 // Saleor's CheckoutErrorCode values these functions can return. The GraphQL layer adds nothing.
 export type CheckoutErrorCode =
+  | "DELIVERY_METHOD_NOT_APPLICABLE"
   | "INSUFFICIENT_STOCK"
   | "INVALID"
   | "NOT_FOUND"
@@ -33,6 +36,8 @@ export type CheckoutError = {
   message: string;
   variants: string[] | null;
   lines: string[] | null;
+  /** Set on address errors: which of the checkout's addresses the field belongs to. */
+  addressType?: AddressType | null;
 };
 
 export type CheckoutResult =
@@ -61,6 +66,7 @@ const MESSAGES = {
   insufficientStock: (label: string, available: number) =>
     `Could not add items ${label}. Only ${available} remaining in stock.`,
   currencyMismatch: "All checkout lines must use the same currency.",
+  deliveryMethodNotApplicable: "This shipping method is not applicable.",
 } as const;
 
 /** A checkout id that matches no row; the GraphQL layer maps it to Saleor's node error. */
@@ -508,4 +514,91 @@ export async function updateCheckoutEmail(
 export async function getCheckout(db: Executor, id: string): Promise<CheckoutRow | null> {
   const [checkout] = await db.select().from(schema.checkout).where(eq(schema.checkout.id, id));
   return checkout ?? null;
+}
+
+/** Locks the checkout, rejects a completed one, runs `write` and returns the fresh row. */
+async function writeCheckout(
+  db: Executor,
+  checkoutId: string,
+  write: (tx: Executor, checkout: CheckoutRow) => Promise<CheckoutError[]>,
+): Promise<CheckoutResult> {
+  return db.transaction(async (tx) => {
+    const checkout = await lockCheckout(tx, checkoutId);
+    const completed = completedError(checkout);
+    if (completed) return { ok: false, errors: [completed] };
+
+    const errors = await write(tx, checkout);
+    if (errors.length > 0) return { ok: false, errors };
+
+    const updated = await getCheckout(tx, checkoutId);
+    if (!updated) throw new CheckoutNotFoundError([checkoutId]);
+    return { ok: true, checkout: updated };
+  });
+}
+
+/**
+ * Saleor's checkoutShippingAddressUpdate / checkoutBillingAddressUpdate: the cleaned address
+ * replaces the stored snapshot. Errors carry Saleor's `addressType`.
+ */
+export async function updateCheckoutAddress(
+  db: Executor,
+  checkoutId: string,
+  addressType: AddressType,
+  input: AddressInput,
+): Promise<CheckoutResult> {
+  const cleaned = cleanAddress(input);
+  const column = addressType === "SHIPPING" ? "shippingAddress" : "billingAddress";
+
+  return writeCheckout(db, checkoutId, async (tx) => {
+    if (!cleaned.ok) {
+      return cleaned.errors.map((error) => ({
+        ...checkoutError(error.field, error.code, error.message),
+        addressType,
+      }));
+    }
+    await tx
+      .update(schema.checkout)
+      .set({ [column]: cleaned.address, updatedAt: sql`now()` })
+      .where(eq(schema.checkout.id, checkoutId));
+    return [];
+  });
+}
+
+/**
+ * Saleor's checkoutDeliveryMethodUpdate for shipping methods: `null` clears the choice; an unknown
+ * or inactive method is DELIVERY_METHOD_NOT_APPLICABLE. With a flat list (PLAN M5 decision 1)
+ * every active method applies, whatever the address.
+ */
+export async function updateCheckoutDeliveryMethod(
+  db: Executor,
+  checkoutId: string,
+  shippingMethodId: string | null,
+): Promise<CheckoutResult> {
+  return writeCheckout(db, checkoutId, async (tx, checkout) => {
+    if (shippingMethodId !== null) {
+      // A concurrent deactivation can still win the race; completion re-checks the method (§5.4).
+      const method = await getShippingMethod(tx, shippingMethodId);
+      if (!method?.isActive || method.currency !== checkout.currency) {
+        return [
+          checkoutError(
+            "deliveryMethodId",
+            "DELIVERY_METHOD_NOT_APPLICABLE",
+            MESSAGES.deliveryMethodNotApplicable,
+          ),
+        ];
+      }
+    }
+    await tx
+      .update(schema.checkout)
+      .set({ shippingMethodId, updatedAt: sql`now()` })
+      .where(eq(schema.checkout.id, checkoutId));
+    return [];
+  });
+}
+
+/** The checkout's chosen method while it is still active; an inactive one no longer applies. */
+export async function getCheckoutShippingMethod(db: Executor, checkout: CheckoutRow) {
+  if (checkout.shippingMethodId === null) return null;
+  const method = await getShippingMethod(db, checkout.shippingMethodId);
+  return method?.isActive ? method : null;
 }
