@@ -7,9 +7,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M6 | Orders in the dashboard | Draft |
-| M6.1 | Order list & detail | Draft |
-| M6.2 | Fulfill, cancel, mark paid, refund | Draft |
+| M6 | Orders: API reads, lifecycle actions and dashboard pages | In progress |
 | M7 | Customer accounts | Draft |
 | M8 | Background processing: outbox + transactional email | Draft |
 | M9 | Hardening & deployability | Draft |
@@ -143,11 +141,55 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 
 ---
 
-## M6 — Orders in the dashboard
-- **M6.1:** order list grid with filters (status, date range, customer email, payment status),
-  order detail (lines, totals, addresses, timeline) — adapted from `src/orders/`.
-- **M6.2:** fulfill (stock decrease), cancel (deallocate), mark as paid, refund; timeline events.
-- **Status:** Draft.
+## M6 — Orders (API + dashboard)
+- **Objective:** staff find orders, read them as Saleor shows them, fulfil, cancel, mark as paid and
+  refund, with stock and payments staying consistent (ARCHITECTURE §3 "Orders", §5.5, §6).
+- **Concepts:** state machine with DB guards (`0 ≤ quantity_fulfilled ≤ quantity`); fulfil =
+  allocation → stock decrease in one transaction under the lock order (order → stocks by id);
+  cancel = deallocation; payment status derived from transactions, never stored; append-only
+  order history.
+
+**Owner decisions (2026-11-11):**
+1. **Refunds are a transaction action:** Saleor's `transactionRequestAction(REFUND, amount)` from the
+   order's transaction tile (refund button + amount dialog); the dummy gateway answers
+   `REFUND_SUCCESS`. No grant-refund flow, refund reasons or line-level refunds.
+2. **Fulfil + cancel order only:** `orderFulfill` (quantities per line, the single warehouse) with
+   Saleor's Fulfill page and fulfillment cards, and `orderCancel` while nothing is fulfilled. No
+   fulfillment cancel, tracking numbers, approval, returns or warehouse change.
+3. **Order list filter: status only** (Saleor's conditional filters, as the product list).
+4. **Detail page: Saleor's read cards** — unfulfilled lines, fulfillments, summary, transactions with
+   events, customer (email + addresses, read-only), history (no notes). No draft orders, discounts,
+   invoices, metadata, channels, customer accounts or line editing.
+
+**Proposed by the lead, approved by the owner (2026-11-11):**
+5. **Mark as paid = Saleor's transaction-flow `orderMarkAsPaid(id, transactionReference)`:** creates a
+   manual `TransactionItem` charged with the order's uncovered total (provider `manual`, a
+   `CHARGE_SUCCESS` event), plus an order event.
+6. **Payment status on orders = Saleor's `chargeStatus`/`authorizeStatus`** (+ `totalCharged`,
+   `totalRefunded`, `totalBalance`), computed from transactions like the checkout's; the list's
+   "Payment" column shows Saleor's charge-status pill.
+7. **Order events added as the actions arrive:** Saleor's `FULFILLMENT_FULFILLED_ITEMS`, `CANCELED`,
+   `ORDER_MARKED_AS_PAID`, `TRANSACTION_REFUND_REQUESTED`/`REFUNDED`-style types with the staff user
+   who acted; events stay append-only (same trigger as `payment_event`).
+8. **Lock order for order actions:** order (`FOR UPDATE`) → its transactions → stock rows by id, so
+   actions on one order serialize and never deadlock with completions or stock writes.
+
+**Steps (each one commit, one report):**
+
+| Step | What | Status |
+|---|---|---|
+| M6.1 | API reads: `orders` connection (`MANAGE_ORDERS`) with Saleor's `sortBy` (number, date, customer, payment, status), `search` (number, email), `where: { status }`; order payment fields (decision 6); order history `user`; loaders | Proposed |
+| M6.2 | Dashboard order list: Orders menu item, Saleor's OrderListPage + datagrid (number, date, customer, payment, status, total), status filter, pagination, column settings | Proposed |
+| M6.3 | Dashboard order detail (read-only): title with status pill, unfulfilled lines, summary, transactions section, customer card, history | Proposed |
+| M6.4 | API lifecycle: `fulfillment` + `fulfillment_line` tables, `orderFulfill` (decrease stock + allocations, status recompute), `orderCancel` (deallocate), `orderMarkAsPaid`, `transactionRequestAction(REFUND)`; order events; concurrency tests | Proposed |
+| M6.5 | Dashboard actions: Fulfill page, fulfillment cards, cancel dialog, mark-as-paid dialog, refund action on the transaction tile | Proposed |
+
+- **Acceptance:** an order placed through the API appears in the list, filters by status, opens with
+  Saleor's cards; staff fulfil it (stock and allocation go down), or cancel it (allocation released),
+  mark it paid and refund part of it, and every action shows in its history.
+- **Out of scope:** draft orders, returns, invoices, order editing, discounts, notes, grant refunds,
+  fulfillment cancel/tracking/approval, emails (M8), customer accounts (M7).
+- **Status:** Approved by the owner 2026-11-11 (plan and decisions 1–8); in progress.
 
 ## M7 — Customer accounts
 - Customer accounts API (register/login/logout, order history queries); checkout attaches to
