@@ -1,8 +1,8 @@
 // Saleor's `payment.TransactionItem` and `payment.TransactionEvent` (ARCHITECTURE.md §3 "Payments"),
 // with far fewer states: no pending, canceled or charge-back amounts yet. Owned by the API's
 // `payments` module. A transaction belongs to a checkout *or* an order; completion (M5.4) moves it
-// from one to the other. Events are append-only: the
-// migration adds a trigger that rejects UPDATE and DELETE on `payment_event`.
+// from one to the other. Events are append-only: the migration adds a trigger that rejects UPDATE
+// and DELETE on `payment_event`.
 import { sql } from "drizzle-orm";
 import { bigint, check, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { checkout } from "./checkout.ts";

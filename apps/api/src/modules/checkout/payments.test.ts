@@ -1,5 +1,4 @@
 import { closeDb, getDb, schema } from "@commerce/db";
-import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { markCheckoutCompleted } from "../../../test/orders.ts";
 import type { PaymentTransactionRow } from "../payments/index.ts";
