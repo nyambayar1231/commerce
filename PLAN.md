@@ -7,7 +7,6 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M5 | Checkout (API) | In progress |
 | M6 | Orders in the dashboard | Draft |
 | M6.1 | Order list & detail | Draft |
 | M6.2 | Fulfill, cancel, mark paid, refund | Draft |
@@ -18,7 +17,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
-(foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11).
+(foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11), M5 (checkout API, 2026-11-11).
 
 ## Open items from finished milestones
 
@@ -131,55 +130,18 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
     payloads: their pre-update stocks otherwise overwrite the updated ones in Apollo's cache
     (found in the manual check).
 
+- **M5 (checkout API) left out or different from Saleor:** owner decisions 1–7 (2026-11-11): flat
+  shipping list with an API-only admin and `pnpm cli seed-shipping`; Saleor's transaction API with a
+  built-in dummy gateway; required-fields address validation; the checkout id is its token; public
+  checkout API; `shippingPrice*` without zones; minimal orders. API deviations are in ARCHITECTURE §4.
+  - Known gaps: a staff `shippingPriceDelete` racing a buyer's `checkoutDeliveryMethodUpdate` can
+    deadlock (Postgres aborts one, a 500); two `transactionInitialize` calls on different checkouts
+    with the same idempotency key at the same moment hit the unique constraint as a 500.
+  - Shipping prices (0013) and payment amounts (0014) were created as `integer` and widened to
+    `bigint` in 0015 (variant prices and order totals are `bigint`).
+  - No dashboard work: checkout has no Saleor dashboard pages; orders arrive in M6.
+
 ---
-
-## M5 — Checkout (API)
-- **Objective:** an anonymous buyer can build a cart, give an email, addresses and a shipping
-  method, pay with a dummy provider and complete it into an order, with no overselling and no
-  double orders (ARCHITECTURE §3 "Checkout/Payments/Orders", §5.2–5.4, §6).
-- **Concepts:** prices computed live, never stored (§5.2); advisory vs authoritative stock checks
-  (§5.3); one transaction across modules with explicit `tx`; lock order checkout → stocks by id;
-  idempotent completion; append-only payment events; order lines as snapshots.
-
-**Owner decisions (2026-11-11):**
-1. **Shipping is a flat `shipping_method` list** (ARCHITECTURE §3): no zones, countries, channels,
-   postal codes or weight rules. API only, no dashboard pages in M5; dev data via a CLI seed.
-2. **Payments use Saleor's transaction API** with a built-in dummy gateway (`transactionInitialize`
-   → `TransactionItem` + `TransactionEvent`), not the legacy `checkoutPaymentCreate`.
-3. **Addresses:** Saleor's `AddressInput` fields; `REQUIRED` for firstName, lastName,
-   streetAddress1, city, country; country must be an ISO 3166-1 alpha-2 code; no per-country
-   postal-code or area rules, no new dependency.
-
-**Proposed by the lead, approved by the owner (2026-11-11):**
-4. **Checkout id is its token:** the primary key is a random UUID (`gen_random_uuid()`, v4, not
-   time-ordered v7) and the global ID is `Checkout:<uuid>`, as Saleor's `Checkout.id` encodes its
-   token; no separate `token` column (ARCHITECTURE §3 updated). `order.checkout_token` stores it.
-5. **Checkout API is public** (anonymous, by id); no customer attach until M7, no staff checkout
-   list. A completed checkout is read-only (`CHECKOUT_COMPLETED`-style errors use Saleor's codes).
-6. **Shipping method admin API** keeps Saleor's mutation names without the zone:
-   `shippingPriceCreate/Update/Delete` (`MANAGE_SHIPPING`), type `ShippingMethodType`; one list
-   query `shippingMethods` (ours, Saleor lists them inside `shippingZones`) — recorded in §4's
-   deviations.
-7. **Orders arrive minimally in M5.4:** `order`, `order_line`, `order_event` and inventory's
-   `allocation` tables; `checkoutComplete` returns the order; staff `order(id)` read only.
-   Fulfillment tables and order pages are M6.
-
-**Steps (each one brief, one commit, one report):**
-
-| Step | What | Status |
-|---|---|---|
-| M5.1 | Cart API: `checkout` module, `checkout` + `checkout_line` tables (`quantity > 0`, unique (checkout, variant)); `checkout(id)`, `checkoutCreate(input: {email, lines})`, `checkoutLinesAdd/Update/Delete`, `checkoutEmailUpdate`; `Checkout`/`CheckoutLine` with live `TaxedMoney` subtotal/total (net = gross); Saleor's `CheckoutError` codes incl. advisory `INSUFFICIENT_STOCK`, `PRODUCT_NOT_PUBLISHED`, `ZERO_QUANTITY` | Done |
-| M5.2 | Shipping & addresses: `shipping_method` table + admin API (decision 6) + CLI seed; `checkoutShippingAddressUpdate`, `checkoutBillingAddressUpdate` (decision 3), `checkoutDeliveryMethodUpdate`; `Checkout.shippingMethods`, `deliveryMethod`, `shippingPrice`; totals include shipping | Done |
-| M5.3 | Payments: `payments` module, `payment_transaction` + `payment_event` (amount CHECKs, append-only); `transactionInitialize` with the dummy gateway (AUTHORIZE/CHARGE); `Checkout.transactions`, `authorizeStatus`, `chargeStatus` | Done |
-| M5.4 | Completion: `orders` module (`order`, `order_line`, `order_event`), inventory `allocation` + `allocate`; `checkoutComplete` per §5.4 (checkout lock, fresh totals, payment coverage, stock locks by id, snapshot, allocate, move transaction, idempotent retry); concurrency tests (two buyers / last unit; double submit) | Proposed |
-
-- **Acceptance:** an end-to-end API test walks create → lines → email → addresses → shipping →
-  pay → complete and gets an order whose totals and lines are snapshots; parallel completes never
-  oversell or create two orders.
-- **Out of scope:** dashboard and storefront work, customer accounts (M7), emails (M8), stock
-  reservations, taxes, promo codes/vouchers/gift cards, checkout metadata/notes/language,
-  checkout deletion or cleanup, real payment providers.
-- **Status:** Approved by the owner 2026-11-11 (plan and decisions 1–7); in progress.
 
 ## M6 — Orders in the dashboard
 - **M6.1:** order list grid with filters (status, date range, customer email, payment status),

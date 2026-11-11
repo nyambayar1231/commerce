@@ -1,6 +1,7 @@
 import { closeDb, getDb, schema } from "@commerce/db";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { markCheckoutCompleted } from "../../../test/orders.ts";
 import {
   calculateCheckoutTotals,
   createCheckout,
@@ -20,7 +21,7 @@ import {
 const db = getDb();
 
 beforeEach(async () => {
-  await db.$client.unsafe("TRUNCATE product, checkout, shipping_method CASCADE");
+  await db.$client.unsafe('TRUNCATE product, checkout, "order", shipping_method CASCADE');
 });
 
 afterAll(async () => {
@@ -154,10 +155,7 @@ describe("checkout addresses", () => {
 
   it("rejects writes to a completed checkout", async () => {
     const checkout = await emptyCheckout();
-    await db
-      .update(schema.checkout)
-      .set({ completedOrderId: crypto.randomUUID() })
-      .where(eq(schema.checkout.id, checkout.id));
+    await markCheckoutCompleted(db, checkout.id);
 
     expect(await updateCheckoutAddress(db, checkout.id, "SHIPPING", ADDRESS)).toMatchObject({
       ok: false,

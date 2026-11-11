@@ -52,7 +52,7 @@ const CountryDisplay = builder.objectRef<CountryCode>("CountryDisplay").implemen
 
 // Saleor's Address without `id`, metadata and the default-address flags: a checkout's address is a
 // JSON snapshot, not a row (ARCHITECTURE §3), so there is nothing for an id to point at.
-const AddressType = builder.objectRef<Address>("Address").implement({
+export const AddressType = builder.objectRef<Address>("Address").implement({
   description: "Represents user address data.",
   fields: (t) => ({
     firstName: t.exposeString("firstName", { description: "The given name of the address." }),

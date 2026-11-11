@@ -1,6 +1,7 @@
 import { closeDb, getDb, schema } from "@commerce/db";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { markCheckoutCompleted } from "../../../test/orders.ts";
 import type { PaymentTransactionRow } from "../payments/index.ts";
 import { DUMMY_GATEWAY_ID } from "../payments/index.ts";
 import {
@@ -57,7 +58,7 @@ describe("initializeCheckoutTransaction", () => {
   let checkoutId: string;
 
   beforeEach(async () => {
-    await db.$client.unsafe("TRUNCATE product, checkout CASCADE");
+    await db.$client.unsafe('TRUNCATE product, checkout, "order" CASCADE');
     const suffix = crypto.randomUUID();
     const [product] = await db
       .insert(schema.product)
@@ -105,10 +106,7 @@ describe("initializeCheckoutTransaction", () => {
   });
 
   it("refuses to pay for a completed checkout", async () => {
-    await db
-      .update(schema.checkout)
-      .set({ completedOrderId: crypto.randomUUID() })
-      .where(eq(schema.checkout.id, checkoutId));
+    await markCheckoutCompleted(db, checkoutId);
     expect(await pay()).toMatchObject({ ok: false, errors: [{ field: "id", code: "INVALID" }] });
   });
 });

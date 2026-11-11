@@ -26,6 +26,8 @@ export {
   updateCheckoutEmail,
   updateCheckoutLines,
 } from "./checkouts.ts";
+export type { CheckoutCompleteResult } from "./complete.ts";
+export { completeCheckout } from "./complete.ts";
 export type { CountryCode } from "./countries.ts";
 export { COUNTRY_CODES, countryName, isCountryCode } from "./countries.ts";
 export type { CheckoutLoaders } from "./loaders.ts";

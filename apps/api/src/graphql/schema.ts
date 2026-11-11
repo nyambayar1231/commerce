@@ -8,9 +8,11 @@ import "../modules/catalog/productMutations.ts";
 import "../modules/checkout/graphql.ts";
 import "../modules/checkout/shippingGraphql.ts";
 import "../modules/checkout/paymentGraphql.ts";
+import "../modules/checkout/completeGraphql.ts";
 import "../modules/payments/graphql.ts";
 import "../modules/identity/graphql.ts";
 import "../modules/inventory/graphql.ts";
+import "../modules/orders/graphql.ts";
 import "../modules/shop/graphql.ts";
 
 export const schema = builder.toSchema();

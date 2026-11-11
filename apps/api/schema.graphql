@@ -337,6 +337,23 @@ enum CheckoutChargeStatusEnum {
   PARTIAL
 }
 
+"""
+Completes the checkout. As a result a new order is created. The mutation allows to create the unpaid order when setting `orderSettings.allowUnpaidOrders` for given `Channel` is set to `true`.
+"""
+type CheckoutComplete {
+  """Confirmation data used to process additional authorization steps."""
+  confirmationData: JSONString
+
+  """
+  Set to true if payment needs to be confirmed before checkout is complete.
+  """
+  confirmationNeeded: Boolean!
+  errors: [CheckoutError!]!
+
+  """Placed order."""
+  order: Order
+}
+
 type CheckoutCreate {
   """The created checkout."""
   checkout: Checkout
@@ -393,13 +410,20 @@ type CheckoutError {
 }
 
 enum CheckoutErrorCode {
+  BILLING_ADDRESS_NOT_SET
+  CHECKOUT_NOT_FULLY_PAID
   DELIVERY_METHOD_NOT_APPLICABLE
+  EMAIL_NOT_SET
   INSUFFICIENT_STOCK
   INVALID
+  INVALID_SHIPPING_METHOD
   NOT_FOUND
+  NO_LINES
   PRODUCT_NOT_PUBLISHED
   QUANTITY_GREATER_THAN_LIMIT
   REQUIRED
+  SHIPPING_ADDRESS_NOT_SET
+  SHIPPING_METHOD_NOT_SET
   ZERO_QUANTITY
 }
 
@@ -911,6 +935,14 @@ type Mutation {
     id: ID!
   ): CheckoutBillingAddressUpdate
 
+  """
+  Completes the checkout. As a result a new order is created. The checkout must be fully covered by its transactions (`authorizeStatus` FULL). Completing an already completed checkout returns its order.
+  """
+  checkoutComplete(
+    """The checkout's ID."""
+    id: ID!
+  ): CheckoutComplete
+
   """Creates a new checkout."""
   checkoutCreate(
     """Fields required to create checkout."""
@@ -1246,12 +1278,118 @@ interface Node {
   id: ID!
 }
 
+"""Represents an order in the shop."""
+type Order implements Node {
+  """Billing address: the checkout's, copied at completion."""
+  billingAddress: Address
+
+  """ID of the checkout that the order was created from."""
+  checkoutId: ID
+
+  """Date and time when the order was created."""
+  created: DateTime!
+
+  """List of events associated with the order."""
+  events: [OrderEvent!]!
+
+  """ID of the order."""
+  id: ID!
+
+  """List of order lines."""
+  lines: [OrderLine!]!
+
+  """User-friendly number of an order."""
+  number: String!
+
+  """Shipping address: the checkout's, copied at completion."""
+  shippingAddress: Address
+
+  """Method used for shipping."""
+  shippingMethodName: String
+
+  """Total price of shipping."""
+  shippingPrice: TaxedMoney!
+
+  """Status of the order."""
+  status: OrderStatus!
+
+  """The sum of line prices not including shipping."""
+  subtotal: TaxedMoney!
+
+  """Total amount of the order."""
+  total: TaxedMoney!
+
+  """List of transactions for the order."""
+  transactions: [TransactionItem!]!
+
+  """Date and time when the order was last modified."""
+  updatedAt: DateTime!
+
+  """Email address of the customer."""
+  userEmail: String
+}
+
 enum OrderDirection {
   """Specifies an ascending sort order."""
   ASC
 
   """Specifies a descending sort order."""
   DESC
+}
+
+"""History log of the order."""
+type OrderEvent implements Node {
+  """Date when event happened at in ISO 8601 format."""
+  date: DateTime!
+
+  """The ID of the object."""
+  id: ID!
+
+  """Order event type."""
+  type: OrderEventsEnum
+}
+
+enum OrderEventsEnum {
+  PLACED
+}
+
+"""Represents order line of particular order."""
+type OrderLine implements Node {
+  """The ID of the order line."""
+  id: ID!
+
+  """Name of the product in order line."""
+  productName: String!
+
+  """SKU of the product variant."""
+  productSku: String
+
+  """Number of variant items ordered."""
+  quantity: Int!
+
+  """Number of variant items fulfilled."""
+  quantityFulfilled: Int!
+
+  """Price of the order line."""
+  totalPrice: TaxedMoney!
+
+  """Price of the single item in the order line."""
+  unitPrice: TaxedMoney!
+
+  """
+  A purchased product variant. Note: this field may be null if the variant has been removed from stock at all.
+  """
+  variant: ProductVariant
+
+  """Name of the variant of product in order line."""
+  variantName: String!
+}
+
+enum OrderStatus {
+  CANCELED
+  FULFILLED
+  PARTIALLY_FULFILLED
+  UNFULFILLED
 }
 
 type PageInfo {
@@ -1909,6 +2047,16 @@ type Query {
   me: User
 
   """
+  Look up an order by ID.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  order(
+    """ID of an order."""
+    id: ID!
+  ): Order
+
+  """
   Look up a product by ID or slug. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
   """
   product(
@@ -2383,6 +2531,9 @@ type TransactionItem implements Node {
 
   """Name of the transaction."""
   name: String!
+
+  """The related order."""
+  order: Order
 
   """PSP reference of transaction."""
   pspReference: String!

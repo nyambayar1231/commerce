@@ -3,6 +3,7 @@
 // from the current variant prices (§5.2).
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   check,
   index,
@@ -16,6 +17,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { productVariant } from "./catalog.ts";
 import { user } from "./identity.ts";
+import { order } from "./orders.ts";
 
 // A flat list of shipping methods (PLAN M5 decision 1): Saleor's ShippingMethod without its zone,
 // channel listings, postal-code or weight rules. The price lives on the row (single channel), as a
@@ -25,7 +27,7 @@ export const shippingMethod = pgTable(
   {
     id: uuid("id").primaryKey().default(sql`uuidv7()`),
     name: text("name").notNull(),
-    priceAmount: integer("price_amount").notNull(),
+    priceAmount: bigint("price_amount", { mode: "number" }).notNull(),
     currency: text("currency").notNull(),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -40,7 +42,7 @@ export const shippingMethod = pgTable(
 // The id is a random v4 UUID (PLAN M5 decision 4): it doubles as Saleor's checkout token, so it
 // must be unguessable — unlike the time-ordered uuidv7() every other table uses. Addresses are
 // JSON snapshots (ARCHITECTURE §3), validated by the checkout module. A deleted shipping method
-// leaves the checkout without one. `completed_order_id` gets its foreign key with orders (M5.4).
+// leaves the checkout without one.
 export const checkout = pgTable("checkout", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: uuid("user_id").references(() => user.id, { onDelete: "set null" }),
@@ -53,7 +55,8 @@ export const checkout = pgTable("checkout", {
   currency: text("currency").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  completedOrderId: uuid("completed_order_id"),
+  // Set once by checkoutComplete; the checkout is read-only from then on (ARCHITECTURE §5.4).
+  completedOrderId: uuid("completed_order_id").references(() => order.id),
 });
 
 // Saleor's CheckoutLine. One row per (checkout, variant): adding a variant already in the cart

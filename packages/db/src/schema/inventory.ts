@@ -4,6 +4,7 @@
 import { sql } from "drizzle-orm";
 import { check, index, integer, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { productVariant } from "./catalog.ts";
+import { orderLine } from "./orders.ts";
 
 // Saleor's Warehouse without address (added in M5.2 when shipping needs it), channels, shipping
 // zones, click-and-collect, `isPrivate` or metadata (PLAN M3 decisions 2–3).
@@ -51,5 +52,28 @@ export const stock = pgTable(
       sql`${table.quantityAllocated} <= ${table.quantity}`,
     ),
     index("stock_variant_id_idx").on(table.variantId),
+  ],
+);
+
+// Saleor's Allocation (saleor/warehouse/models.py): how much of an order line is held from which
+// stock row. Created at checkout completion together with `stock.quantity_allocated`, which is
+// their sum per stock (ARCHITECTURE §5.4); fulfillment and cancellation (M6) release them.
+export const allocation = pgTable(
+  "allocation",
+  {
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    orderLineId: uuid("order_line_id")
+      .notNull()
+      .references(() => orderLine.id),
+    stockId: uuid("stock_id")
+      .notNull()
+      .references(() => stock.id),
+    quantityAllocated: integer("quantity_allocated").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique("allocation_order_line_id_stock_id_unique").on(table.orderLineId, table.stockId),
+    check("allocation_quantity_positive", sql`${table.quantityAllocated} > 0`),
+    index("allocation_stock_id_idx").on(table.stockId),
   ],
 );

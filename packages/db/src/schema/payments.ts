@@ -1,11 +1,12 @@
 // Saleor's `payment.TransactionItem` and `payment.TransactionEvent` (ARCHITECTURE.md §3 "Payments"),
 // with far fewer states: no pending, canceled or charge-back amounts yet. Owned by the API's
 // `payments` module. A transaction belongs to a checkout *or* an order; completion (M5.4) moves it
-// from one to the other, and `order_id` gets its foreign key then. Events are append-only: the
+// from one to the other. Events are append-only: the
 // migration adds a trigger that rejects UPDATE and DELETE on `payment_event`.
 import { sql } from "drizzle-orm";
-import { check, index, integer, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { bigint, check, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { checkout } from "./checkout.ts";
+import { order } from "./orders.ts";
 
 export const paymentTransaction = pgTable(
   "payment_transaction",
@@ -13,16 +14,16 @@ export const paymentTransaction = pgTable(
     id: uuid("id").primaryKey().default(sql`uuidv7()`),
     // No ON DELETE action: a checkout with payments can't be deleted (its money must stay traceable).
     checkoutId: uuid("checkout_id").references(() => checkout.id),
-    orderId: uuid("order_id"),
+    orderId: uuid("order_id").references(() => order.id),
     /** The gateway that processed it, e.g. Saleor's dummy payment app identifier. */
     provider: text("provider").notNull(),
     /** Saleor's TransactionItem.name, shown to staff. */
     name: text("name").notNull(),
     pspReference: text("psp_reference").notNull().default(""),
     currency: text("currency").notNull(),
-    authorizedAmount: integer("authorized_amount").notNull().default(0),
-    chargedAmount: integer("charged_amount").notNull().default(0),
-    refundedAmount: integer("refunded_amount").notNull().default(0),
+    authorizedAmount: bigint("authorized_amount", { mode: "number" }).notNull().default(0),
+    chargedAmount: bigint("charged_amount", { mode: "number" }).notNull().default(0),
+    refundedAmount: bigint("refunded_amount", { mode: "number" }).notNull().default(0),
     /** Saleor's idempotency key: a retried initialize with the same key returns this transaction. */
     idempotencyKey: text("idempotency_key").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -68,7 +69,7 @@ export const paymentEvent = pgTable(
       .notNull()
       .references(() => paymentTransaction.id),
     type: text("type").notNull(),
-    amount: integer("amount").notNull(),
+    amount: bigint("amount", { mode: "number" }).notNull(),
     currency: text("currency").notNull(),
     pspReference: text("psp_reference").notNull().default(""),
     message: text("message").notNull().default(""),

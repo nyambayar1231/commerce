@@ -12,7 +12,7 @@ afterAll(async () => {
 });
 
 describe("Relay Node", () => {
-  it("is implemented by Category, Checkout, CheckoutLine, Product, ProductMedia, ProductVariant, ShippingMethod, ShippingMethodType, Stock, TransactionEvent, TransactionItem, User, Warehouse and Group, and Saleor has no node/nodes query", async () => {
+  it("is implemented by Category, Checkout, CheckoutLine, Order, OrderEvent, OrderLine, Product, ProductMedia, ProductVariant, ShippingMethod, ShippingMethodType, Stock, TransactionEvent, TransactionItem, User, Warehouse and Group, and Saleor has no node/nodes query", async () => {
     const { body } = await client.gql(`{
       node: __type(name: "Node") { kind possibleTypes { name } }
       query: __type(name: "Query") { fields { name } }
@@ -28,6 +28,9 @@ describe("Relay Node", () => {
       "Checkout",
       "CheckoutLine",
       "Group",
+      "Order",
+      "OrderEvent",
+      "OrderLine",
       "Product",
       "ProductMedia",
       "ProductVariant",

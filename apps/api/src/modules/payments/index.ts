@@ -18,4 +18,6 @@ export {
   DUMMY_GATEWAY_ID,
   getEventsByTransactionIds,
   getTransactionsByCheckoutIds,
+  getTransactionsByOrderIds,
+  moveCheckoutTransactionsToOrder,
 } from "./transactions.ts";

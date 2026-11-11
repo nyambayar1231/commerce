@@ -143,13 +143,20 @@ builder.node(CheckoutLineType, {
 // these, so the enum lists only these; a new one is added with the feature that can return it.
 const CheckoutErrorCode = builder.enumType("CheckoutErrorCode", {
   values: [
+    "BILLING_ADDRESS_NOT_SET",
+    "CHECKOUT_NOT_FULLY_PAID",
     "DELIVERY_METHOD_NOT_APPLICABLE",
+    "EMAIL_NOT_SET",
     "INSUFFICIENT_STOCK",
     "INVALID",
+    "INVALID_SHIPPING_METHOD",
+    "NO_LINES",
     "NOT_FOUND",
     "PRODUCT_NOT_PUBLISHED",
     "QUANTITY_GREATER_THAN_LIMIT",
     "REQUIRED",
+    "SHIPPING_ADDRESS_NOT_SET",
+    "SHIPPING_METHOD_NOT_SET",
     "ZERO_QUANTITY",
   ] as const,
 });
@@ -161,7 +168,7 @@ export const AddressTypeEnum = builder.enumType("AddressTypeEnum", {
   values: ["BILLING", "SHIPPING"] as const,
 });
 
-type CheckoutErrorData = {
+export type CheckoutErrorData = {
   field: string | null;
   message: string;
   code: CheckoutErrorCodeValue;
@@ -170,7 +177,7 @@ type CheckoutErrorData = {
   addressType: "BILLING" | "SHIPPING" | null;
 };
 
-const CheckoutErrorType = builder.objectRef<CheckoutErrorData>("CheckoutError").implement({
+export const CheckoutErrorType = builder.objectRef<CheckoutErrorData>("CheckoutError").implement({
   fields: (t) => ({
     field: t.exposeString("field", {
       nullable: true,
@@ -204,7 +211,7 @@ const CheckoutErrorType = builder.objectRef<CheckoutErrorData>("CheckoutError").
 });
 
 /** Domain errors carry primary keys; the API exposes global IDs. */
-const toGraphqlError = (error: CheckoutError): CheckoutErrorData => ({
+export const toGraphqlError = (error: CheckoutError): CheckoutErrorData => ({
   field: error.field,
   message: error.message,
   code: error.code,

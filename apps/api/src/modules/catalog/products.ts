@@ -267,6 +267,26 @@ async function lockProduct(db: Executor, id: string): Promise<ProductRow> {
 }
 
 /**
+ * The given variants with their products, locked `FOR KEY SHARE` in variant id order: other
+ * transactions can still read and update them, but not delete them or take `FOR UPDATE` until the
+ * caller commits. Checkout completion takes this before the stock rows, the same variant-before-stock
+ * order the stock writes use (ARCHITECTURE §2 rule 6), so the two can't deadlock.
+ */
+export async function lockVariantsForKeyShare(
+  db: Executor,
+  ids: readonly string[],
+): Promise<{ variant: ProductVariantRow; product: ProductRow }[]> {
+  if (ids.length === 0) return [];
+  return db
+    .select({ variant: schema.productVariant, product: schema.product })
+    .from(schema.productVariant)
+    .innerJoin(schema.product, eq(schema.productVariant.productId, schema.product.id))
+    .where(inArray(schema.productVariant.id, [...new Set(ids)]))
+    .orderBy(asc(schema.productVariant.id))
+    .for("key share", { of: schema.productVariant });
+}
+
+/**
  * A variant that must exist, locked for the rest of the transaction. Its product row is locked
  * first, the order every variant write uses (product → variant → stock rows), so concurrent
  * variant, product and stock writes can't deadlock. Must be called inside a transaction.

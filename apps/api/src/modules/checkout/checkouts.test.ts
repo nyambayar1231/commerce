@@ -1,6 +1,7 @@
 import { closeDb, getDb, schema } from "@commerce/db";
 import { eq, ne } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { markCheckoutCompleted } from "../../../test/orders.ts";
 import { updateProductVariant } from "../catalog/index.ts";
 import {
   addCheckoutLines,
@@ -20,7 +21,7 @@ const db = getDb();
 let warehouseId: string;
 
 beforeEach(async () => {
-  await db.$client.unsafe('TRUNCATE "user", product, checkout, permission_group CASCADE');
+  await db.$client.unsafe('TRUNCATE "user", product, checkout, "order", permission_group CASCADE');
   // Keep the migration's row and drop extras a previous test or failed run left behind.
   await db.delete(schema.warehouse).where(ne(schema.warehouse.slug, "default-warehouse"));
 
@@ -340,10 +341,7 @@ describe("addCheckoutLines", () => {
   it("rejects writes to a completed checkout", async () => {
     const variant = await seedVariant();
     const checkout = await mustCreate([{ variantId: variant.id, quantity: 1 }]);
-    await db
-      .update(schema.checkout)
-      .set({ completedOrderId: crypto.randomUUID() })
-      .where(eq(schema.checkout.id, checkout.id));
+    await markCheckoutCompleted(db, checkout.id);
 
     const result = await addCheckoutLines(db, checkout.id, [
       { variantId: variant.id, quantity: 1 },
@@ -464,10 +462,7 @@ describe("updateCheckoutLines", () => {
 
   it("rejects writes to a completed checkout", async () => {
     const checkout = await mustCreate([]);
-    await db
-      .update(schema.checkout)
-      .set({ completedOrderId: crypto.randomUUID() })
-      .where(eq(schema.checkout.id, checkout.id));
+    await markCheckoutCompleted(db, checkout.id);
 
     const result = await updateCheckoutLines(db, checkout.id, []);
     expect(result).toMatchObject({
@@ -508,10 +503,7 @@ describe("deleteCheckoutLines", () => {
 
   it("rejects writes to a completed checkout", async () => {
     const checkout = await mustCreate([]);
-    await db
-      .update(schema.checkout)
-      .set({ completedOrderId: crypto.randomUUID() })
-      .where(eq(schema.checkout.id, checkout.id));
+    await markCheckoutCompleted(db, checkout.id);
 
     const result = await deleteCheckoutLines(db, checkout.id, []);
     expect(result).toMatchObject({ ok: false, errors: [{ field: "id", code: "INVALID" }] });
@@ -541,10 +533,7 @@ describe("updateCheckoutEmail", () => {
 
   it("rejects writes to a completed checkout", async () => {
     const checkout = await mustCreate([]);
-    await db
-      .update(schema.checkout)
-      .set({ completedOrderId: crypto.randomUUID() })
-      .where(eq(schema.checkout.id, checkout.id));
+    await markCheckoutCompleted(db, checkout.id);
 
     const result = await updateCheckoutEmail(db, checkout.id, "buyer@example.com");
     expect(result).toMatchObject({ ok: false, errors: [{ field: "id", code: "INVALID" }] });

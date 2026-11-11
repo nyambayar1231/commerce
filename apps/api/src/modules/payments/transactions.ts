@@ -1,6 +1,6 @@
 import { addMoney, type CurrencyCode, type Money } from "@commerce/contracts";
 import { type Executor, schema } from "@commerce/db";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
 // Payment transactions and their append-only events (ARCHITECTURE.md §3 "Payments"): Saleor's
 // TransactionItem / TransactionEvent, processed by one built-in gateway — Saleor's dummy payment
@@ -222,4 +222,32 @@ export function coveredAmounts(
     });
   }
   return { authorized, charged };
+}
+
+/**
+ * Checkout completion's last payment step (ARCHITECTURE §5.4 step 8): the checkout's transactions
+ * now belong to the order. Must run inside the completion's transaction.
+ */
+export async function moveCheckoutTransactionsToOrder(
+  db: Executor,
+  checkoutId: string,
+  orderId: string,
+): Promise<void> {
+  await db
+    .update(schema.paymentTransaction)
+    .set({ checkoutId: null, orderId, modifiedAt: sql`now()` })
+    .where(eq(schema.paymentTransaction.checkoutId, checkoutId));
+}
+
+/** The transactions of the given orders, oldest first. One query for any number of ids. */
+export async function getTransactionsByOrderIds(
+  db: Executor,
+  orderIds: readonly string[],
+): Promise<PaymentTransactionRow[]> {
+  if (orderIds.length === 0) return [];
+  return db
+    .select()
+    .from(schema.paymentTransaction)
+    .where(inArray(schema.paymentTransaction.orderId, [...orderIds]))
+    .orderBy(asc(schema.paymentTransaction.createdAt), asc(schema.paymentTransaction.id));
 }

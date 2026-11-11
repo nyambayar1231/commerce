@@ -21,13 +21,20 @@ export type CheckoutLineRow = typeof schema.checkoutLine.$inferSelect;
 
 // Saleor's CheckoutErrorCode values these functions can return. The GraphQL layer adds nothing.
 export type CheckoutErrorCode =
+  | "BILLING_ADDRESS_NOT_SET"
+  | "CHECKOUT_NOT_FULLY_PAID"
   | "DELIVERY_METHOD_NOT_APPLICABLE"
+  | "EMAIL_NOT_SET"
   | "INSUFFICIENT_STOCK"
   | "INVALID"
+  | "INVALID_SHIPPING_METHOD"
+  | "NO_LINES"
   | "NOT_FOUND"
   | "PRODUCT_NOT_PUBLISHED"
   | "QUANTITY_GREATER_THAN_LIMIT"
   | "REQUIRED"
+  | "SHIPPING_ADDRESS_NOT_SET"
+  | "SHIPPING_METHOD_NOT_SET"
   | "ZERO_QUANTITY";
 
 export type CheckoutError = {
@@ -156,7 +163,7 @@ async function loadProducts(
 }
 
 /** Catalog's anonymous visibility rule (catalog/productGraphql.ts `isVisible`). */
-function isPublished(product: ProductRow): boolean {
+export function isPublished(product: ProductRow): boolean {
   return (
     product.isPublished &&
     (product.publishedAt === null || product.publishedAt.getTime() <= Date.now())

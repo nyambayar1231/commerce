@@ -78,6 +78,7 @@ export {
   getProductVariants,
   getProductVariantsByIds,
   lockProductVariant,
+  lockVariantsForKeyShare,
   ProductNotFoundError,
   toMoney,
   updateProduct,
