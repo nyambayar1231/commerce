@@ -1,11 +1,11 @@
 // Adapted from saleor-dashboard: src/products/components/ProductUpdatePage/ProductUpdatePage.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // Saleor's layout for the product update page: TopNav (all products, the ⋯ menu with Delete
-// product), General Information, the Media card and the read-only Variants card in the main
-// column, Organize Product and Availability in the right sidebar, and the Savebar (save-composition
-// hint, Back, Save). Not yet: attributes, variant editing/creation (the variants grid is
-// read-only), SEO/slug editing, product type, collections, taxes, metadata, translations, GraphiQL,
-// extension widgets and the availability diagnostics.
+// product), General Information, the Media card and the read-only Variants card (with one stock
+// column per warehouse) in the main column, Organize Product and Availability in the right sidebar,
+// and the Savebar (save-composition hint, Back, Save). Not yet: attributes, variant
+// editing/creation (the variants grid is read-only), SEO/slug editing, product type, collections,
+// taxes, metadata, translations, GraphiQL, extension widgets and the availability diagnostics.
 import type { FetchResult } from "@apollo/client";
 import { Box } from "@saleor/macaw-ui";
 import { Tag, Trash2 } from "lucide-react";
@@ -43,6 +43,8 @@ import { ProductSaveCompositionHint } from "./ProductSaveCompositionHint";
 
 interface ProductUpdatePageProps {
   product: ProductDetailsFragment | undefined | null;
+  /** The warehouses the Variants card turns into stock columns. */
+  warehouses: { id: string; name: string }[];
   errors: ProductErrorFragment[];
   disabled: boolean;
   saveButtonBarState: ConfirmButtonTransitionState;
@@ -56,6 +58,7 @@ interface ProductUpdatePageProps {
 
 export const ProductUpdatePage = ({
   product,
+  warehouses,
   errors,
   disabled,
   saveButtonBarState,
@@ -148,6 +151,7 @@ export const ProductUpdatePage = ({
             {product ? (
               <ProductVariants
                 variants={product.variants}
+                warehouses={warehouses}
                 onAddVariant={() => navigate(productVariantAddUrl(product.id))}
                 onRowClick={(variantId) => navigate(productVariantEditUrl(variantId))}
               />

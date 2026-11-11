@@ -6,7 +6,11 @@
 // product's media in display order, so Apollo's cache is the card's source of truth.
 import { gql } from "@apollo/client";
 
-import { productErrorFragment } from "../fragments/errors";
+import {
+  bulkStockErrorFragment,
+  productErrorFragment,
+  productVariantStocksDeleteErrorFragment,
+} from "../fragments/errors";
 import {
   productDetailsFragment,
   productMediaFragment,
@@ -159,8 +163,43 @@ export const variantCreateMutation = gql`
   ${productErrorFragment}
 `;
 
+// Saleor's composite VariantUpdate: the stock writes run first and the variant write last, in one
+// document, so one Save applies the whole card. Saleor's field order: delete, create, update.
+// The delete and create payloads select only the variant's id: their stocks are the values from
+// before the update, and Apollo would keep those in its cache over the later, updated ones (the
+// same Stock appears several times in one response). The update payloads carry the final stocks.
 export const variantUpdateMutation = gql`
-  mutation VariantUpdate($id: ID!, $input: ProductVariantInput!) {
+  mutation VariantUpdate(
+    $id: ID!
+    $input: ProductVariantInput!
+    $addStocks: [StockInput!]!
+    $removeStocks: [ID!]!
+    $stocks: [StockInput!]!
+  ) {
+    productVariantStocksDelete(warehouseIds: $removeStocks, variantId: $id) {
+      errors {
+        ...ProductVariantStocksDeleteError
+      }
+      productVariant {
+        id
+      }
+    }
+    productVariantStocksCreate(stocks: $addStocks, variantId: $id) {
+      errors {
+        ...BulkStockError
+      }
+      productVariant {
+        id
+      }
+    }
+    productVariantStocksUpdate(stocks: $stocks, variantId: $id) {
+      errors {
+        ...BulkStockError
+      }
+      productVariant {
+        ...ProductVariantDetails
+      }
+    }
     productVariantUpdate(id: $id, input: $input) {
       productVariant {
         ...ProductVariantDetails
@@ -172,6 +211,8 @@ export const variantUpdateMutation = gql`
   }
   ${productVariantDetailsFragment}
   ${productErrorFragment}
+  ${bulkStockErrorFragment}
+  ${productVariantStocksDeleteErrorFragment}
 `;
 
 export const variantDeleteMutation = gql`

@@ -33,6 +33,7 @@ import {
   ProductMediaDeleteDocument,
   ProductMediaReorderDocument,
   ProductUpdateDocument,
+  WarehouseListDocument,
 } from "../../../graphql/types.generated";
 import type { UseNotifierResult } from "../../../hooks/useNotifier/useNotifier";
 import { useNotifier } from "../../../hooks/useNotifier/useNotifier";
@@ -193,6 +194,10 @@ export const ProductUpdate = () => {
   const { data, loading } = useQuery(ProductDetailsDocument, { variables: { id } });
   const product = data?.product;
 
+  // The Variants card's stock columns; one warehouse in this project, no pagination.
+  const { data: warehousesData } = useQuery(WarehouseListDocument);
+  const warehouses = warehousesData?.warehouses?.edges.map((edge) => edge.node) ?? [];
+
   // Saleor's createDialogActionHandlers: the open dialog lives in the URL.
   const openModal = (dialog: ProductUrlDialog, params?: ProductUrlQueryParams) =>
     navigate(productUrl(id, { ...params, action: dialog }));
@@ -336,6 +341,7 @@ export const ProductUpdate = () => {
     <>
       <ProductUpdatePage
         product={product}
+        warehouses={warehouses}
         disabled={loading}
         errors={updateResult.data?.productUpdate.errors ?? []}
         saveButtonBarState={getMutationStatus({

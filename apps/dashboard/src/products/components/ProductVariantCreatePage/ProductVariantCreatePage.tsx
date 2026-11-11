@@ -2,10 +2,10 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // Saleor's layout for the variant create page: TopNav ("New variant") with a link back to the
-// product, the existing variants on the left, Variant Name / Pricing / Inventory in the main
-// column, and the Savebar (Back, Save). No Delete: the variant does not exist yet. Not yet:
-// attributes, media, channels, stocks/warehouses (M3), shipping/weight, checkout settings and
-// metadata.
+// product, the existing variants on the left, Variant Name / Pricing / Inventory (with its
+// per-warehouse stock table) in the main column, and the Savebar (Back, Save). No Delete: the
+// variant does not exist yet. Not yet: attributes, media, channels, shipping/weight, checkout
+// settings and metadata.
 import { Box } from "@saleor/macaw-ui";
 import { Tag } from "lucide-react";
 import { useMemo } from "react";
@@ -21,6 +21,7 @@ import { Savebar } from "../../../components/Savebar";
 import type {
   ProductErrorFragment,
   ProductVariantCreateDataQuery,
+  WarehouseFragment,
 } from "../../../graphql/types.generated";
 import { productUrl } from "../../urls";
 import { ProductStocks } from "../ProductStocks/ProductStocks";
@@ -45,6 +46,8 @@ const messages = defineMessages({
 interface ProductVariantCreatePageProps {
   productId: string;
   product: ProductVariantCreateDataQuery["product"] | undefined | null;
+  /** The warehouses the Inventory card's Assign Warehouses dialog lists. */
+  warehouses: WarehouseFragment[];
   errors: ProductErrorFragment[];
   disabled: boolean;
   saveButtonBarState: ConfirmButtonTransitionState;
@@ -54,6 +57,7 @@ interface ProductVariantCreatePageProps {
 export const ProductVariantCreatePage = ({
   productId,
   product,
+  warehouses,
   errors,
   disabled,
   saveButtonBarState,
@@ -63,12 +67,16 @@ export const ProductVariantCreatePage = ({
   const navigate = useNavigate();
   // The create form always starts empty; entering a value is the first unsaved change.
   const initial = useMemo(() => getProductVariantFormData(null), []);
-  const { data, change, changeTrackInventory, submit, isSaveDisabled } = useProductVariantForm(
-    initial,
-    onSubmit,
-    disabled,
-    false,
-  );
+  const {
+    data,
+    change,
+    changeTrackInventory,
+    changeStock,
+    addStock,
+    removeStock,
+    submit,
+    isSaveDisabled,
+  } = useProductVariantForm(initial, onSubmit, disabled, false);
 
   return (
     <form
@@ -108,12 +116,16 @@ export const ProductVariantCreatePage = ({
                   onChange={change}
                 />
                 <ProductStocks
-                  sku={data.sku}
-                  trackInventory={data.trackInventory}
+                  data={{ sku: data.sku, trackInventory: data.trackInventory }}
+                  stocks={data.stocks}
+                  warehouses={warehouses}
                   disabled={disabled}
                   errors={errors}
                   onChange={change}
                   onTrackInventoryChange={changeTrackInventory}
+                  onStockChange={changeStock}
+                  onStockAdd={addStock}
+                  onStockDelete={removeStock}
                 />
               </Box>
             </Box>

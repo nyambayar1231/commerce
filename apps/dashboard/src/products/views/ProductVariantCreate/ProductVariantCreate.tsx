@@ -1,10 +1,11 @@
 // Adapted from saleor-dashboard: src/products/views/ProductVariantCreate.tsx
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The variant create page's container: loads the product and its variants, creates the variant
-// through `productVariantCreate`, then notifies and navigates to the new variant's page. Field
-// errors stay on the form; anything without an input becomes an error notification. Not yet:
-// attributes, media, channel listings, stocks, metadata and warehouse search.
+// The variant create page's container: loads the product, its variants and the warehouses, creates
+// the variant through `productVariantCreate` (with the stock rows typed in the Inventory card), then
+// notifies and navigates to the new variant's page. Field errors stay on the form; anything without
+// an input becomes an error notification. Not yet: attributes, media, channel listings, metadata and
+// warehouse search.
 import { useMutation, useQuery } from "@apollo/client";
 import { useIntl } from "react-intl";
 import { useNavigate, useParams } from "react-router";
@@ -13,6 +14,8 @@ import { getMutationStatus } from "../../../categories/mutationStatus";
 import {
   ProductVariantCreateDataDocument,
   VariantCreateDocument,
+  type WarehouseFragment,
+  WarehouseListDocument,
 } from "../../../graphql/types.generated";
 import { useNotifier } from "../../../hooks/useNotifier/useNotifier";
 import { NotFound } from "../../../NotFound";
@@ -36,6 +39,10 @@ export const ProductVariantCreate = () => {
     variables: { id: productId },
   });
   const product = data?.product;
+
+  const { data: warehousesData } = useQuery(WarehouseListDocument);
+  const warehouses: WarehouseFragment[] =
+    warehousesData?.warehouses?.edges.map((edge) => edge.node) ?? [];
 
   const [createVariant, createResult] = useMutation(VariantCreateDocument, {
     onCompleted: (result) => {
@@ -87,6 +94,7 @@ export const ProductVariantCreate = () => {
     <ProductVariantCreatePage
       productId={productId}
       product={product}
+      warehouses={warehouses}
       disabled={loading || createResult.loading}
       errors={createResult.data?.productVariantCreate?.errors ?? []}
       saveButtonBarState={getMutationStatus({

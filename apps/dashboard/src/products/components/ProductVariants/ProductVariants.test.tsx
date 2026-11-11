@@ -17,7 +17,12 @@ const renderCard = () => {
     <ThemeProvider>
       <LocaleProvider>
         <MemoryRouter>
-          <ProductVariants variants={[]} onAddVariant={onAddVariant} onRowClick={onRowClick} />
+          <ProductVariants
+            variants={[]}
+            warehouses={[]}
+            onAddVariant={onAddVariant}
+            onRowClick={onRowClick}
+          />
         </MemoryRouter>
       </LocaleProvider>
     </ThemeProvider>,

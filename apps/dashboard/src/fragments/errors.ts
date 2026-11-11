@@ -9,3 +9,22 @@ export const productErrorFragment = gql`
     message
   }
 `;
+
+// Saleor's stock error fragments: BulkStockError for the stock create/update payloads (it carries
+// the position in the input list) and StockError for the delete payload.
+export const bulkStockErrorFragment = gql`
+  fragment BulkStockError on BulkStockError {
+    field
+    message
+    code
+    index
+  }
+`;
+
+export const productVariantStocksDeleteErrorFragment = gql`
+  fragment ProductVariantStocksDeleteError on StockError {
+    field
+    message
+    code
+  }
+`;

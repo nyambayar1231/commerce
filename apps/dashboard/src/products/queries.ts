@@ -11,6 +11,7 @@ import {
   productListRowFragment,
   productVariantDetailsFragment,
 } from "../fragments/products";
+import { warehouseFragment } from "../fragments/warehouses";
 
 export const productList = gql`
   query ProductList(
@@ -102,6 +103,22 @@ export const productVariantCreateData = gql`
       }
     }
   }
+`;
+
+// The warehouses the variant page's Assign Warehouses dialog lists and the product page's variants
+// grid turns into columns. This project has one warehouse, so `first: 100` (Saleor's page size) is
+// the whole list and there is no pagination.
+export const warehouseList = gql`
+  query WarehouseList {
+    warehouses(first: 100) {
+      edges {
+        node {
+          ...Warehouse
+        }
+      }
+    }
+  }
+  ${warehouseFragment}
 `;
 
 export const categorySearch = gql`

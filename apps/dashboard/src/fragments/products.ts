@@ -5,6 +5,8 @@
 // ThumbnailCell).
 import { gql } from "@apollo/client";
 
+import { stockFragment } from "./warehouses";
+
 export const productListRowFragment = gql`
   fragment ProductListRow on Product {
     id
@@ -42,7 +44,8 @@ export const productMediaFragment = gql`
 
 // The product detail page's fields: Saleor's ProductDetails fragment limited to what the update
 // page shows (no product type, attributes, SEO or metadata yet). The variants feed the read-only
-// Variants card; `media` feeds the Media card; `price` is the single channel's price.
+// Variants card (their stocks feed its per-warehouse columns); `media` feeds the Media card;
+// `price` is the single channel's price.
 export const productDetailsFragment = gql`
   fragment ProductDetails on Product {
     id
@@ -67,13 +70,20 @@ export const productDetailsFragment = gql`
         amount
         currency
       }
+      stocks {
+        id
+        quantity
+        warehouse {
+          id
+        }
+      }
     }
   }
 `;
 
 // The variant detail page's fields: Saleor's ProductVariant fragment limited to the cards the page
-// shows, plus the product's variants for the navigation (no attributes, media, stocks, weight or
-// channel listings yet).
+// shows — its per-warehouse stocks feed the Inventory card — plus the product's variants for the
+// navigation (no attributes, media, weight or channel listings yet).
 export const productVariantDetailsFragment = gql`
   fragment ProductVariantDetails on ProductVariant {
     id
@@ -83,6 +93,9 @@ export const productVariantDetailsFragment = gql`
     price {
       amount
       currency
+    }
+    stocks {
+      ...Stock
     }
     product {
       id
@@ -94,4 +107,5 @@ export const productVariantDetailsFragment = gql`
       }
     }
   }
+  ${stockFragment}
 `;

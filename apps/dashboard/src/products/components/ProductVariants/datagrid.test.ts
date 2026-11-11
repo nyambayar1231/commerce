@@ -3,7 +3,7 @@ import { createIntl } from "react-intl";
 import { describe, expect, it } from "vitest";
 
 import type { ProductVariantRow } from "./datagrid";
-import { createGetCellContent, variantsStaticColumns } from "./datagrid";
+import { createGetCellContent, parseWarehousesColumns, variantsStaticColumns } from "./datagrid";
 
 const intl = createIntl({ locale: "en" });
 
@@ -13,6 +13,7 @@ const variant = (overrides: Partial<ProductVariantRow> = {}): ProductVariantRow 
   name: "Size 39",
   sku: "BT-39",
   price: { __typename: "Money", amount: 15000, currency: "MNT" },
+  stocks: [],
   ...overrides,
 });
 
@@ -77,5 +78,49 @@ describe("variants datagrid", () => {
     const get = createGetCellContent([variant()], columns, intl);
 
     expect(get([0, 5])).toMatchObject({ data: "", cursor: "default" });
+  });
+});
+
+describe("variants datagrid warehouse columns", () => {
+  const warehouses = [
+    { id: "w1", name: "Main warehouse" },
+    { id: "w2", name: "Returns" },
+  ];
+
+  it("adds one column per warehouse after the static ones, titled with its name", () => {
+    expect(parseWarehousesColumns(warehouses)).toEqual([
+      { id: "warehouse:w1", title: "Main warehouse", width: 150 },
+      { id: "warehouse:w2", title: "Returns", width: 150 },
+    ]);
+  });
+
+  it("shows a variant's quantity in its warehouse column", () => {
+    const columns = [...variantsStaticColumns(intl), ...parseWarehousesColumns(warehouses)];
+    const get = createGetCellContent(
+      [
+        variant({
+          stocks: [
+            {
+              __typename: "Stock",
+              id: "s1",
+              quantity: 7,
+              warehouse: { __typename: "Warehouse", id: "w1" },
+            },
+          ],
+        }),
+      ],
+      columns,
+      intl,
+    );
+
+    expect(get([3, 0])).toMatchObject({ kind: GridCellKind.Text, data: "7", readonly: true });
+  });
+
+  it("shows an empty cell when the variant has no stock row in the warehouse", () => {
+    const columns = [...variantsStaticColumns(intl), ...parseWarehousesColumns(warehouses)];
+    const get = createGetCellContent([variant()], columns, intl);
+
+    expect(get([3, 0])).toMatchObject({ data: "" });
+    expect(get([4, 0])).toMatchObject({ data: "" });
   });
 });

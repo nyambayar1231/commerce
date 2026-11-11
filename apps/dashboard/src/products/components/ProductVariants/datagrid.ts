@@ -1,8 +1,10 @@
 // Adapted from saleor-dashboard: src/products/components/ProductVariants/datagrid.ts
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The variants card's three columns, in Saleor's order and widths: name, SKU and price. Our single
-// channel replaces Saleor's per-channel columns, so the price is one plain read-only cell. Empty
+// The variants card's columns, in Saleor's order and widths: name, SKU, price, then one per
+// warehouse (Saleor's parseWarehousesColumns) titled with the warehouse's name. Our single channel
+// replaces Saleor's per-channel columns, so the price is one plain read-only cell. A warehouse
+// column shows the variant's quantity there, empty when the variant has no stock row in it; empty
 // names and SKUs render as empty cells.
 import type { GridCell, Item } from "@glideapps/glide-data-grid";
 import type { IntlShape } from "react-intl";
@@ -33,6 +35,18 @@ export const variantsStaticColumns = (intl: IntlShape): AvailableColumn[] => [
   },
 ];
 
+const WAREHOUSE_COLUMN_PREFIX = "warehouse:";
+
+/** Saleor's parseWarehousesColumns: one column per warehouse, keyed by its id. */
+export const parseWarehousesColumns = (
+  warehouses: { id: string; name: string }[],
+): AvailableColumn[] =>
+  warehouses.map((warehouse) => ({
+    id: `${WAREHOUSE_COLUMN_PREFIX}${warehouse.id}`,
+    title: warehouse.name,
+    width: 150,
+  }));
+
 export const createGetCellContent =
   (rows: ProductVariantRow[], columns: AvailableColumn[], intl: IntlShape) =>
   ([column, row]: Item): GridCell => {
@@ -41,6 +55,13 @@ export const createGetCellContent =
 
     if (!columnId || !variant) {
       return readonlyTextCell("", false);
+    }
+
+    if (columnId.startsWith(WAREHOUSE_COLUMN_PREFIX)) {
+      const warehouseId = columnId.slice(WAREHOUSE_COLUMN_PREFIX.length);
+      const stock = (variant.stocks ?? []).find((item) => item.warehouse.id === warehouseId);
+
+      return readonlyTextCell(stock === undefined ? "" : String(stock.quantity));
     }
 
     switch (columnId) {

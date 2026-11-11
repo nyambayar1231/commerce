@@ -7,7 +7,6 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M3 | Inventory: warehouse, stock, availability | In progress |
 | M5 | Checkout | Draft |
 | M5.1 | Cart: checkout + lines | Draft |
 | M5.2 | Email, addresses, shipping methods, totals | Draft |
@@ -23,7 +22,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
-(foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11).
+(foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11).
 
 ## Open items from finished milestones
 
@@ -120,43 +119,23 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
     titled with the file name, before Saleor's "Couldn't process image" summary (Saleor shows only
     the summary).
 
+- **M3 (inventory) left out or different from Saleor:**
+  - Owner decisions (2026-11-11): no `allocation` table until order placement (M5.4;
+    `quantity_allocated` stays 0); one warehouse seeded by the migration, no address and no
+    warehouse pages; `stockAvailability` in the API only; catalog's GraphQL files compose with
+    inventory (ARCHITECTURE §2). API deviations (INVALID stock errors, top-level unknown variant,
+    variant-create error order) are in ARCHITECTURE §4.
+  - Dashboard (owner, 2026-11-11): Assign Warehouses is a simplified checkbox dialog (no search or
+    infinite scroll); no channel gating, stock visibility hint, spreadsheet paste or "configure a
+    warehouse" link. Stock errors are notifications (Saleor shows none on the card); warehouses are
+    loaded with `warehouses(first: 100)`, no paging.
+  - Known gap: after Assign Warehouses, the new row's quantity input doesn't keep focus (the modal
+    restores focus on close); not compared with Saleor.
+  - The composite `VariantUpdate` selects only `productVariant { id }` on the stock delete/create
+    payloads: their pre-update stocks otherwise overwrite the updated ones in Apollo's cache
+    (found in the manual check).
+
 ---
-
-## M3 — Inventory
-- **Objective:** stock per variant in the single warehouse, edited by staff on the variant page and
-  visible through the API (`ProductVariant.stocks`, `quantityAvailable`, a stock filter).
-- **Concepts:** DB constraints as invariants (`0 ≤ allocated ≤ quantity`); why stock is keyed by
-  (warehouse, variant) even with one warehouse (ADR-0005); module boundaries (`inventory` owns
-  `warehouse`/`stock`, catalog only reads them through its `index.ts`).
-- **Status:** Approved by the owner 2026-11-11 (plan and decisions 1–5); in progress.
-
-**Decisions (accepted by the owner 2026-11-11):**
-1. **Allocation table waits for orders.** ARCHITECTURE's `allocation(order_line_id, …)` references
-   `order_line`, which arrives in M5.4. M3 creates `stock.quantity_allocated` (always 0 until then,
-   shown as "Allocated" in the UI) and the `allocation` table comes with order placement.
-2. **Warehouse = one row created by the migration** (custom SQL in the generated migration), name
-   "Default Warehouse", slug `default-warehouse`. Columns now: `id, name, slug, email`; the address
-   (Saleor's required `Warehouse.address`) is added when shipping needs it (M5.2).
-3. **No warehouse management pages yet.** Saleor's Configuration → Warehouses list/detail is left
-   out (one warehouse, nothing to configure); the API has read-only `warehouses`/`warehouse`.
-4. **Stock filter in the API only.** `products(where: { stockAvailability: IN_STOCK|OUT_OF_STOCK })`
-   as Saleor; Saleor's dashboard has no stock filter, so none is added to the product list UI
-   (the draft's "stock filter in product list" is dropped).
-5. **Variants card gets a "Stock" column** (quantity in the single warehouse), as Saleor's variants
-   grid shows a column per warehouse.
-
-**Steps (each one brief, one commit, one report):**
-
-| Step | What | Status |
-|---|---|---|
-| M3.1 | API reads: `inventory` module; `warehouse` + `stock` tables (CHECKs: `quantity ≥ 0`, `quantity_allocated ≥ 0`, `quantity_allocated ≤ quantity`; unique (warehouse, variant); stock cascades with its variant) with the seeded warehouse; `Warehouse` and `Stock` node types, `warehouses`/`warehouse` queries, `ProductVariant.stocks` (staff only, as Saleor), `ProductVariant.quantityAvailable` (sum of `quantity − allocated`; null when `trackInventory` is off); constraint-violation tests | Done |
-| M3.2 | API writes: `productVariantStocksCreate` / `productVariantStocksUpdate` / `productVariantStocksDelete` (Saleor's args, `BulkStockError` codes), `stocks` on `productVariantCreate`; `ProductWhereInput.stockAvailability`; stock rows locked like variants (product → variant → stock) | Done |
-| M3.3 | Dashboard: Saleor's Inventory card stock table on the variant page (warehouse, Allocated, Quantity input, Assign Warehouse, remove) saved with Saleor's composite `VariantUpdate` (stocks delete/create/update + variant update); stocks on the variant create page; "Stock" column in the product's Variants card | Proposed |
-
-- **Acceptance:** CHECK violations proven by tests; staff set a quantity on the variant page and see
-  it in the Variants card and through `quantityAvailable`; `stockAvailability` filters correctly.
-- **Out of scope:** reservations (ARCHITECTURE §5.3), preorders, stock history/adjustment log,
-  multiple warehouses, warehouse addresses/pages, stock import.
 
 ## M5 — Checkout
 - **M5.1 Cart:** `checkoutCreate`, `checkoutLinesAdd/Update/Delete`, live price calculation,

@@ -3,11 +3,11 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The product page's read-only Variants card: Saleor's tinted header with the title and the
-// secondary "Add variant" button, then the ported Datagrid with Variant name, SKU and Price. A row
-// opens the variant page; an empty grid shows Saleor's "Use button above..." text. Not yet: cell
-// editing, bulk create/update/delete, the variant generator, row checkboxes, column picker, search,
-// per-channel/margin/availability/attribute/warehouse columns, staged rows and the unsaved-changes
-// dialog.
+// secondary "Add variant" button, then the ported Datagrid with Variant name, SKU, Price and one
+// column per warehouse. A row opens the variant page; an empty grid shows Saleor's "Use button
+// above..." text. Not yet: cell editing, bulk create/update/delete, the variant generator, row
+// checkboxes, column picker, search, per-channel/margin/availability/attribute columns, staged rows
+// and the unsaved-changes dialog.
 import type { Item } from "@glideapps/glide-data-grid";
 import { Box, Button, Text } from "@saleor/macaw-ui";
 import { Plus } from "lucide-react";
@@ -18,7 +18,7 @@ import { Datagrid } from "../../../components/Datagrid/Datagrid";
 import cardStyles from "../../../components/DetailSettingsCard/DetailSettingsCard.module.css";
 import type { ProductDetailsFragment } from "../../../graphql/types.generated";
 import { productVariantEditUrl } from "../../urls";
-import { createGetCellContent, variantsStaticColumns } from "./datagrid";
+import { createGetCellContent, parseWarehousesColumns, variantsStaticColumns } from "./datagrid";
 import { messages } from "./messages";
 
 const headerActionIconProps = {
@@ -28,13 +28,23 @@ const headerActionIconProps = {
 
 interface ProductVariantsProps {
   variants: ProductDetailsFragment["variants"];
+  /** One read-only column per warehouse (Saleor's warehouse columns, no column picker). */
+  warehouses: { id: string; name: string }[];
   onAddVariant: () => void;
   onRowClick: (variantId: string) => void;
 }
 
-export const ProductVariants = ({ variants, onAddVariant, onRowClick }: ProductVariantsProps) => {
+export const ProductVariants = ({
+  variants,
+  warehouses,
+  onAddVariant,
+  onRowClick,
+}: ProductVariantsProps) => {
   const intl = useIntl();
-  const columns = useMemo(() => variantsStaticColumns(intl), [intl]);
+  const columns = useMemo(
+    () => [...variantsStaticColumns(intl), ...parseWarehousesColumns(warehouses)],
+    [intl, warehouses],
+  );
   const getCellContent = useMemo(
     () => createGetCellContent(variants, columns, intl),
     [variants, columns, intl],
