@@ -154,8 +154,8 @@ export const productVariant = pgTable(
       "product_variant_weight_not_negative",
       sql`${table.weightGrams} IS NULL OR ${table.weightGrams} >= 0`,
     ),
-    index("product_variant_product_id_idx").on(table.productId),
-    // `price` / `minimalPrice` filters: min(price_amount) per product and the EXISTS check.
+    // `price` / `minimalPrice` filters: min(price_amount) per product and the EXISTS check. Its
+    // leading `product_id` also covers plain lookups by product, so there is no separate index.
     index("product_variant_product_id_price_amount_idx").on(table.productId, table.priceAmount),
   ],
 );

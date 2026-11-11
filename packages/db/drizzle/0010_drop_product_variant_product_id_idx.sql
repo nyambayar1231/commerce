@@ -1,0 +1,1 @@
+DROP INDEX "product_variant_product_id_idx";

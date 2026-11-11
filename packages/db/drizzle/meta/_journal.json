@@ -71,6 +71,13 @@
       "when": 1794316692258,
       "tag": "0009_product_media",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794384662878,
+      "tag": "0010_drop_product_variant_product_id_idx",
+      "breakpoints": true
     }
   ]
 }

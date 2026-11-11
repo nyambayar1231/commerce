@@ -53,6 +53,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("apollo client queries", () => {
+  it("defaults every watched query (useQuery) to cache-and-network", () => {
+    expect(apolloClient.defaultOptions.watchQuery?.fetchPolicy).toBe("cache-and-network");
+  });
+});
+
 describe("apollo client uploads", () => {
   it("sends a mutation with a File variable as a multipart request", async () => {
     const fetchMock = stubFetch({

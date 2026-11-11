@@ -64,9 +64,6 @@ const ProductListContent = () => {
 
   const paginationState = createPaginationState(settings.rowNumber, params);
   const { data, loading } = useQuery(ProductListDocument, {
-    // Saleor's makeQuery default: show the cached page, then refetch, so a product created or
-    // deleted elsewhere appears when coming back to the list.
-    fetchPolicy: "cache-and-network",
     variables: {
       ...paginationState,
       search: params.query ?? null,

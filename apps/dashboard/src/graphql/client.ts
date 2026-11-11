@@ -4,6 +4,10 @@
 // schema-lock transform. Those arrive when we need them (login is M1). `createUploadLink` is
 // Saleor's HTTP link: it sends a graphql-multipart-request-spec request when the variables contain
 // a `File`/`Blob` (product media uploads) and a regular JSON POST otherwise.
+//
+// Saleor's `makeQuery` defaults every query to `cache-and-network` (and additionally sets
+// `errorPolicy: "all"` and batched requests): a list shows its cached page at once and then
+// refetches, so data changed elsewhere is not stale on return. We port only the fetch policy.
 import { ApolloClient, InMemoryCache } from "@apollo/client";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
@@ -18,4 +22,9 @@ export const apolloClient = new ApolloClient({
     headers: { "x-graphql-yoga-csrf": "1" },
   }),
   cache: new InMemoryCache(),
+  defaultOptions: {
+    watchQuery: {
+      fetchPolicy: "cache-and-network",
+    },
+  },
 });

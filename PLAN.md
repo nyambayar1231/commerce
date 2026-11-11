@@ -25,13 +25,17 @@ Finished milestones are removed from this file; their specs, results and decisio
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
 (foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11).
 
+## Open-item fixes (approved by the owner 2026-11-11)
+
+| Step | What | Status |
+|---|---|---|
+| OI.1 | Apollo `cache-and-network` default (M2.4 proposal); drop the redundant `product_variant_product_id_idx` (M2.3); real thumbnails on the category's "Products in …" card (M2.2). (M0.3.11's dark-mode text colour was already fixed in d5b58e8.) | Done |
+| OI.2 | Product list bulk delete: API `productBulkDelete` (same rules as `productDelete`) + Saleor's bulk delete button and dialog for the selected rows | Proposed |
+
 ## Open items from finished milestones
 
-Awaiting the owner's approval (each was reported when its step finished):
+Accepted by the owner as documented (2026-11-11); each is revisited when a milestone needs it:
 
-- **M0.3.11:** in dark mode Saleor's root text colour is white, ours is the browser's black (Saleor
-  gets it from its legacy Macaw/MUI baseline). Not visible today; proposed fix: root text colour =
-  Macaw `text.default1` in `apps/dashboard/src/index.css`.
 - **M1.1.6 login page simplifications:** shop name instead of the Saleor logo (trademark); no
   "Forgot password?" link until M8; no OIDC buttons; Macaw `Spinner` instead of SaleorThrobber.
 - **M1.1.7:** no "Account Settings" item in the user menu until the staff detail page exists.
@@ -65,21 +69,18 @@ Awaiting the owner's approval (each was reported when its step finished):
     `ProductVariant.price` (ARCHITECTURE §4); no product types, attributes, media, `where`/`filter`
     (M2.3) or `productVariants` connection; `PRODUCT_COUNT` counts all products in the subtree
     (as Saleor) while `Category.products.totalCount` counts the visible ones.
-  - Category screens: the "Products in …" card is read-only (assign/unassign with M2.4), has
-    placeholder thumbnails, a plain list instead of Saleor's GridTable, and "Hidden" for future-dated
-    products (Saleor: "Scheduled").
-  - Product list: availability and dates as plain text cells (no status/date cells), no thumbnail,
-    price = lowest variant price (no range), checkboxes without a bulk action yet (M2.4), no
-    "Create product" (M2.4), filters/presets (M2.3), tiles view or export; the Published/Hidden rule
-    is duplicated in two files.
+  - Category screens: the "Products in …" card is read-only (owner, 2026-11-11: a product's
+    category is set on its page), a plain list instead of Saleor's GridTable, and "Hidden" for
+    future-dated products (Saleor: "Scheduled").
+  - Product list: availability and dates as plain text cells (no status/date cells), price =
+    lowest variant price (no range), no filter presets, tiles view or export; the
+    Published/Hidden rule is duplicated in two files.
   - Column picker: static columns only; widths/order in localStorage (`columnPickerSettings`)
     instead of Saleor's user-account metadata; a plain button instead of macaw's IconButton.
 - **M2.3 (product filtering) left out or different from Saleor:**
   - API: `products(where:)` is a subset of Saleor's `ProductWhereInput` (ids, name, slug, category
     subtree, hasCategory, isPublished, price, minimalPrice, updatedAt, AND/OR); the shop currency is
-    a constant (`SHOP_CURRENCY = "MNT"` in `productWhere.ts`); the older
-    `product_variant_product_id_idx` is now redundant next to `(product_id, price_amount)` (drop it
-    in a later migration?). `CategoryFilterInput` gained `ids` only (no slugs/metadata/updatedAt);
+    a constant (`SHOP_CURRENCY = "MNT"` in `productWhere.ts`). `CategoryFilterInput` gained `ids` only (no slugs/metadata/updatedAt);
     a malformed or foreign ID is a top-level error (our `fromGlobalId`), Saleor's `filter.ids` is
     laxer.
   - URL: category values are global IDs (Saleor: slugs); labels are looked up with
@@ -101,19 +102,13 @@ Awaiting the owner's approval (each was reported when its step finished):
     clears it); `productDelete`'s payload lists `variants` as empty (the rows are gone).
   - Dashboard: create dialog is name + category (no product-type picker, title "Create product");
     plain "Create Product" button (no split button / export menu); product page has no SEO/slug,
-    attributes, media, collections, taxes, metadata, GraphiQL, "product doctor"; the availability
+    attributes, collections, taxes, metadata, GraphiQL, "product doctor"; the availability
     card has no channels, available-for-purchase or scheduling; description is plain text. Variant
     pages: no reordering, search or thumbnails in the navigation, no attributes, media, stock
     (M3), weight, checkout limits or metadata; the two-column layout doesn't stack on narrow
     screens. Variants card: no search, column picker, row selection or per-channel columns.
-  - Still not built although M2.2 pointed them at M2.4: bulk delete on the product list's
-    checkboxes (`productBulkDelete`) and assign/unassign on the category's "Products in …" card
-    (a product's category is set on its page instead).
   - Every save sends the whole product form, so a published product that lost its category (the
     category was deleted) asks for a category on the next save.
-  - **Proposal awaiting approval:** make `cache-and-network` the Apollo client default (Saleor's
-    `makeQuery` default). Today only the product list uses it; other lists (e.g. categories)
-    keep showing cached data until a reload.
 
 - **M2.5 (product media) left out or different from Saleor:**
   - Owner decisions (2026-11-10/11): S3 from the start, SeaweedFS in dev/tests, `sharp`,
