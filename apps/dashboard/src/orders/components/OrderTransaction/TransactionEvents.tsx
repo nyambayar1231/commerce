@@ -5,7 +5,7 @@
 // The events table inside a transaction tile: status pill, type, PSP reference, amount and time.
 // Left out: the actor avatar (no apps or staff on our events), the message tooltip, PSP-reference
 // copy/hover linking and Saleor's "pending" fake events.
-import { Box, Text } from "@saleor/macaw-ui";
+import { Text } from "@saleor/macaw-ui";
 import { FormattedMessage, useIntl } from "react-intl";
 
 import { Pill } from "../../../components/Pill/Pill";

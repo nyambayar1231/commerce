@@ -101,7 +101,11 @@ export type OrderDirection =
   | 'DESC';
 
 export type OrderEventsEnum =
-  | 'PLACED';
+  | 'CANCELED'
+  | 'FULFILLMENT_FULFILLED_ITEMS'
+  | 'ORDER_MARKED_AS_PAID'
+  | 'PLACED'
+  | 'TRANSACTION_REFUND_REQUESTED';
 
 export type OrderSortField =
   /** Sort orders by creation date. */
@@ -150,6 +154,7 @@ export type OrderWhereInput = {
 };
 
 export type PermissionEnum =
+  | 'HANDLE_PAYMENTS'
   | 'MANAGE_CHECKOUTS'
   | 'MANAGE_ORDERS'
   | 'MANAGE_PRODUCTS'

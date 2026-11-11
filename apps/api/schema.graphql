@@ -826,6 +826,52 @@ type Delivery {
   shippingMethod: ShippingMethod
 }
 
+"""Represents order fulfillment."""
+type Fulfillment implements Node {
+  """Date and time when fulfillment was created."""
+  created: DateTime!
+
+  """Sequence in which the fulfillments were created for an order."""
+  fulfillmentOrder: Int!
+
+  """The ID of the object."""
+  id: ID!
+
+  """List of lines for the fulfillment."""
+  lines: [FulfillmentLine!]
+
+  """Status of fulfillment."""
+  status: FulfillmentStatus!
+
+  """Fulfillment tracking number."""
+  trackingNumber: String!
+
+  """Warehouse from fulfillment was fulfilled."""
+  warehouse: Warehouse
+}
+
+"""Represents line of the fulfillment."""
+type FulfillmentLine implements Node {
+  """The ID of the object."""
+  id: ID!
+
+  """The order line to which the fulfillment line is related."""
+  orderLine: OrderLine
+
+  """The number of items included in the fulfillment line."""
+  quantity: Int!
+}
+
+enum FulfillmentStatus {
+  CANCELED
+  FULFILLED
+  REFUNDED
+  REFUNDED_AND_RETURNED
+  REPLACED
+  RETURNED
+  WAITING_FOR_APPROVAL
+}
+
 input GlobalIDFilterInput {
   """The value equal to."""
   eq: ID
@@ -1011,6 +1057,42 @@ type Mutation {
 
   """End the current session. Succeeds when there is none."""
   logout: Logout!
+
+  """
+  Cancel an order.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  orderCancel(
+    """ID of the order to cancel."""
+    id: ID!
+  ): OrderCancel
+
+  """
+  Creates new fulfillments for an order.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  orderFulfill(
+    """Fields required to create a fulfillment."""
+    input: OrderFulfillInput!
+
+    """ID of the order to be fulfilled."""
+    order: ID
+  ): OrderFulfill
+
+  """
+  Mark order as manually paid.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  orderMarkAsPaid(
+    """ID of the order to mark paid."""
+    id: ID!
+
+    """The external transaction reference."""
+    transactionReference: String
+  ): OrderMarkAsPaid
 
   """
   Create new permission group. Requires one of the following permissions: MANAGE_STAFF.
@@ -1271,6 +1353,27 @@ type Mutation {
     """Payment gateway used to initialize the transaction."""
     paymentGateway: PaymentGatewayToInitialize!
   ): TransactionInitialize
+
+  """
+  Request an action for payment transaction.
+  
+  Requires one of the following permissions: HANDLE_PAYMENTS.
+  """
+  transactionRequestAction(
+    """Determines the action type."""
+    actionType: TransactionActionEnum!
+
+    """
+    Transaction request amount. If empty, maximal possible amount will be used.
+    """
+    amount: Decimal
+
+    """The ID of the transaction. One of field id or token is required."""
+    id: ID
+
+    """The token of the transaction. One of field id or token is required."""
+    token: UUID
+  ): TransactionRequestAction
 }
 
 interface Node {
@@ -1280,6 +1383,11 @@ interface Node {
 
 """Represents an order in the shop."""
 type Order implements Node {
+  """
+  List of actions that can be performed in the current state of an order. MARK_AS_PAID while the transactions leave part of the total uncharged.
+  """
+  actions: [OrderAction!]!
+
   """The authorize status of the order."""
   authorizeStatus: OrderAuthorizeStatusEnum!
 
@@ -1297,6 +1405,9 @@ type Order implements Node {
 
   """List of events associated with the order."""
   events: [OrderEvent!]!
+
+  """List of shipments for the order."""
+  fulfillments: [Fulfillment!]!
 
   """ID of the order."""
   id: ID!
@@ -1355,10 +1466,24 @@ type Order implements Node {
   userEmail: String
 }
 
+enum OrderAction {
+  CAPTURE
+  MARK_AS_PAID
+  REFUND
+  VOID
+}
+
 enum OrderAuthorizeStatusEnum {
   FULL
   NONE
   PARTIAL
+}
+
+type OrderCancel {
+  errors: [OrderError!]!
+
+  """Canceled order."""
+  order: Order
 }
 
 enum OrderChargeStatusEnum {
@@ -1389,13 +1514,54 @@ enum OrderDirection {
   DESC
 }
 
+type OrderError {
+  """The error code."""
+  code: OrderErrorCode!
+
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String!
+
+  """List of order line IDs that cause the error."""
+  orderLines: [ID!]
+
+  """Warehouse ID which causes the error."""
+  warehouse: ID
+}
+
+enum OrderErrorCode {
+  CANNOT_CANCEL_ORDER
+  DUPLICATED_INPUT_ITEM
+  FULFILL_ORDER_LINE
+  GRAPHQL_ERROR
+  INSUFFICIENT_STOCK
+  INVALID
+  INVALID_QUANTITY
+  NOT_FOUND
+  TRANSACTION_ERROR
+  ZERO_QUANTITY
+}
+
 """History log of the order."""
 type OrderEvent implements Node {
+  """Amount of money."""
+  amount: Float
+
   """Date when event happened at in ISO 8601 format."""
   date: DateTime!
 
+  """List of fulfilled items."""
+  fulfilledItems: [FulfillmentLine!]
+
   """The ID of the object."""
   id: ID!
+
+  """The transaction reference of captured payment."""
+  transactionReference: String
 
   """Order event type."""
   type: OrderEventsEnum
@@ -1409,7 +1575,42 @@ type OrderEvent implements Node {
 }
 
 enum OrderEventsEnum {
+  CANCELED
+  FULFILLMENT_FULFILLED_ITEMS
+  ORDER_MARKED_AS_PAID
   PLACED
+  TRANSACTION_REFUND_REQUESTED
+}
+
+type OrderFulfill {
+  errors: [OrderError!]!
+
+  """List of created fulfillments."""
+  fulfillments: [Fulfillment!]
+
+  """Fulfilled order."""
+  order: Order
+}
+
+input OrderFulfillInput {
+  """List of items informing how to fulfill the order."""
+  lines: [OrderFulfillLineInput!]!
+}
+
+input OrderFulfillLineInput {
+  """The ID of the order line."""
+  orderLineId: ID
+
+  """List of stock items to create."""
+  stocks: [OrderFulfillStockInput!]!
+}
+
+input OrderFulfillStockInput {
+  """The number of line items to be fulfilled from given warehouse."""
+  quantity: Int!
+
+  """ID of the warehouse from which the item will be fulfilled."""
+  warehouse: ID!
 }
 
 """Represents order line of particular order."""
@@ -1429,6 +1630,9 @@ type OrderLine implements Node {
   """Number of variant items fulfilled."""
   quantityFulfilled: Int!
 
+  """A quantity of items remaining to be fulfilled."""
+  quantityToFulfill: Int!
+
   """Price of the order line."""
   totalPrice: TaxedMoney!
 
@@ -1442,6 +1646,13 @@ type OrderLine implements Node {
 
   """Name of the variant of product in order line."""
   variantName: String!
+}
+
+type OrderMarkAsPaid {
+  errors: [OrderError!]!
+
+  """Order marked as paid."""
+  order: Order
 }
 
 enum OrderSortField {
@@ -1529,6 +1740,7 @@ type Permission {
 }
 
 enum PermissionEnum {
+  HANDLE_PAYMENTS
   MANAGE_CHECKOUTS
   MANAGE_ORDERS
   MANAGE_PRODUCTS
@@ -2617,7 +2829,7 @@ enum TransactionInitializeErrorCode {
 """Represents a payment transaction."""
 type TransactionItem implements Node {
   """
-  List of actions that can be requested for the transaction. The dummy gateway supports none yet.
+  List of actions that can be requested for the transaction. Our gateways support REFUND while a charged amount is left.
   """
   actions: [TransactionActionEnum!]!
 
@@ -2679,6 +2891,32 @@ type TransactionItem implements Node {
 
   """The transaction token."""
   token: UUID!
+}
+
+type TransactionRequestAction {
+  errors: [TransactionRequestActionError!]!
+  transaction: TransactionItem
+}
+
+type TransactionRequestActionError {
+  """The error code."""
+  code: TransactionRequestActionErrorCode!
+
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String!
+}
+
+enum TransactionRequestActionErrorCode {
+  GRAPHQL_ERROR
+  INVALID
+  MISSING_TRANSACTION_ACTION_REQUEST_WEBHOOK
+  NOT_FOUND
+  REQUIRED
 }
 
 """

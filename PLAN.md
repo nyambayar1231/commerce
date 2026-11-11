@@ -162,6 +162,11 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   expandable details or relative times ("Nov 11, 2026, 9:27 PM" instead of "22 minutes ago");
   "Placed …" uses the browser's time zone; amounts have no minor digits (Saleor prints two).
 
+- **M6.4 (order lifecycle API):** owner decision (2026-11-11): refunds need the new
+  `HANDLE_PAYMENTS` permission (Saleor's), so staff must be given it before they can refund. API
+  deviations (mark as paid charges the uncovered rest, REFUND-only actions, the extra fulfill
+  checks) are in ARCHITECTURE §4. Not built: Saleor's `TRANSACTION_MARK_AS_PAID_FAILED` event.
+
 ---
 
 ## M6 — Orders (API + dashboard)
@@ -204,7 +209,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M6.1 | API reads: `orders` connection (`MANAGE_ORDERS`) with Saleor's `sortBy` (number, date, customer, payment, status), `search` (number, email), `where: { status }`; order payment fields (decision 6); order history `user`; loaders | Done |
 | M6.2 | Dashboard order list: Orders menu item, Saleor's OrderListPage + datagrid (number, date, customer, payment, status, total), status filter, pagination, column settings | Done |
 | M6.3 | Dashboard order detail (read-only): title with status pill, unfulfilled lines, summary, transactions section, customer card, history | Done |
-| M6.4 | API lifecycle: `fulfillment` + `fulfillment_line` tables, `orderFulfill` (decrease stock + allocations, status recompute), `orderCancel` (deallocate), `orderMarkAsPaid`, `transactionRequestAction(REFUND)`; order events; concurrency tests | Proposed |
+| M6.4 | API lifecycle: `fulfillment` + `fulfillment_line` tables, `orderFulfill` (decrease stock + allocations, status recompute), `orderCancel` (deallocate), `orderMarkAsPaid`, `transactionRequestAction(REFUND)`; order events; concurrency tests | Done |
 | M6.5 | Dashboard actions: Fulfill page, fulfillment cards, cancel dialog, mark-as-paid dialog, refund action on the transaction tile | Proposed |
 
 - **Acceptance:** an order placed through the API appears in the list, filters by status, opens with

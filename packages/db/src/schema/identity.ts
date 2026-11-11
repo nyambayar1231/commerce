@@ -80,6 +80,8 @@ export const PERMISSIONS = [
   "MANAGE_STAFF",
   "MANAGE_SETTINGS",
   "MANAGE_SHIPPING",
+  // Saleor's payment.handle_payments: requesting transaction actions (refunds, M6.4).
+  "HANDLE_PAYMENTS",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];

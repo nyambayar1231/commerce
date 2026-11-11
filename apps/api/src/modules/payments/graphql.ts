@@ -2,13 +2,20 @@ import type { CurrencyCode, Money } from "@commerce/contracts";
 import { builder } from "../../graphql/builder.ts";
 import { MoneyType } from "../../graphql/money.ts";
 import { DateTime, UUID } from "../../graphql/scalars.ts";
-import type { PaymentEventRow, PaymentTransactionRow } from "./index.ts";
+import {
+  netCharged,
+  type PaymentEventRow,
+  type PaymentTransactionRow,
+  transactionActions,
+} from "./index.ts";
 
 // Saleor's TransactionItem and TransactionEvent (saleor/graphql/payment/types.py), read-only. They
 // are reached through `Checkout.transactions` (the checkout id is the access token, PLAN M5
 // decision 5) and the transactionInitialize payload; the checkout module adds
 // `TransactionItem.checkout` and the mutation (it composes payments, ARCHITECTURE §2 rule 5).
-// Amounts we don't track yet (pending, canceled) are always zero.
+// Amounts we don't track yet (pending, canceled) are always zero. As Saleor, a refund moves money
+// from `chargedAmount` to `refundedAmount` (we store the gross charge, so charged = charged −
+// refunded here).
 
 const money = (amountMinor: number, currency: string): Money => ({
   amountMinor,
@@ -39,7 +46,7 @@ const TransactionEventTypeEnum = builder.enumType("TransactionEventTypeEnum", {
   ] as const,
 });
 
-const TransactionActionEnum = builder.enumType("TransactionActionEnum", {
+export const TransactionActionEnum = builder.enumType("TransactionActionEnum", {
   values: ["CHARGE", "REFUND", "CANCEL"] as const,
 });
 
@@ -110,9 +117,9 @@ builder.node(TransactionItemType, {
       actions: t.field({
         type: [TransactionActionEnum],
         description:
-          "List of actions that can be requested for the transaction. The dummy gateway " +
-          "supports none yet.",
-        resolve: () => [],
+          "List of actions that can be requested for the transaction. Our gateways support " +
+          "REFUND while a charged amount is left.",
+        resolve: (transaction) => transactionActions(transaction),
       }),
       authorizedAmount: t.field({
         type: MoneyType,
@@ -133,7 +140,7 @@ builder.node(TransactionItemType, {
       chargedAmount: t.field({
         type: MoneyType,
         description: "Total amount charged for this payment.",
-        resolve: (transaction) => money(transaction.chargedAmount, transaction.currency),
+        resolve: (transaction) => money(netCharged(transaction), transaction.currency),
       }),
       chargePendingAmount: zero("Total amount of ongoing charge requests for the transaction."),
       name: t.exposeString("name", { description: "Name of the transaction." }),

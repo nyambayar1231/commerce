@@ -52,13 +52,16 @@ export const paymentTransaction = pgTable(
   ],
 );
 
-// Saleor's TransactionEventTypeEnum values our gateway can record (the rest arrive with refunds,
-// cancellation and real providers).
+// Saleor's TransactionEventTypeEnum values our gateways can record: the dummy gateway's
+// authorize/charge outcomes, the manual mark-as-paid charge, and refunds (a REFUND_REQUEST then the
+// gateway's REFUND_SUCCESS, M6.4). Cancellation and real providers would add more.
 export const PAYMENT_EVENT_TYPES = [
   "AUTHORIZATION_SUCCESS",
   "AUTHORIZATION_FAILURE",
   "CHARGE_SUCCESS",
   "CHARGE_FAILURE",
+  "REFUND_REQUEST",
+  "REFUND_SUCCESS",
 ] as const;
 
 export const paymentEvent = pgTable(

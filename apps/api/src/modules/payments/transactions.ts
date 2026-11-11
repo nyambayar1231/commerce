@@ -261,3 +261,121 @@ export function orderNetChargedSql(orderId: SQL): SQL {
   return sql`(SELECT COALESCE(sum(t.charged_amount - t.refunded_amount), 0)
     FROM payment_transaction AS t WHERE t.order_id = ${orderId})`;
 }
+
+// ── Order-side actions (M6.4) ────────────────────────────────────────────────────────────────
+// The orders module composes these under its own lock order: order → its transactions → stocks
+// (PLAN M6 decision 8). They only write payment rows.
+
+/** Saleor's MARK_AS_PAID_TRANSACTION_NAME; such transactions are processed by no gateway. */
+export const MANUAL_PROVIDER = "manual";
+const MARK_AS_PAID_TRANSACTION_NAME = "Mark-as-paid transaction";
+
+/** A transaction's charge that hasn't been refunded (Saleor's `charged_value`). */
+export const netCharged = (transaction: PaymentTransactionRow): number =>
+  transaction.chargedAmount - transaction.refundedAmount;
+
+/**
+ * Saleor's TransactionItem.actions for our gateways: both the dummy gateway and manual
+ * transactions accept a refund while something charged is left. Charge and cancel are not built.
+ */
+export function transactionActions(transaction: PaymentTransactionRow): "REFUND"[] {
+  return netCharged(transaction) > 0 ? ["REFUND"] : [];
+}
+
+export async function getTransaction(
+  db: Executor,
+  id: string,
+): Promise<PaymentTransactionRow | null> {
+  const [row] = await db
+    .select()
+    .from(schema.paymentTransaction)
+    .where(eq(schema.paymentTransaction.id, id));
+  return row ?? null;
+}
+
+/** An order's transactions, locked `FOR UPDATE` in id order. The caller holds the order's lock. */
+export async function lockOrderTransactions(
+  db: Executor,
+  orderId: string,
+): Promise<PaymentTransactionRow[]> {
+  return db
+    .select()
+    .from(schema.paymentTransaction)
+    .where(eq(schema.paymentTransaction.orderId, orderId))
+    .orderBy(asc(schema.paymentTransaction.id))
+    .for("update");
+}
+
+/**
+ * Saleor's create_transaction_for_order for orderMarkAsPaid (PLAN M6 decision 5): a manual
+ * transaction charged with `amount`, its CHARGE_SUCCESS event, and the staff's reference as the
+ * PSP reference. Must run inside the caller's transaction.
+ */
+export async function createManualOrderTransaction(
+  db: Executor,
+  input: { orderId: string; amount: number; currency: string; pspReference: string },
+): Promise<PaymentTransactionRow> {
+  const [transaction] = await db
+    .insert(schema.paymentTransaction)
+    .values({
+      orderId: input.orderId,
+      provider: MANUAL_PROVIDER,
+      name: MARK_AS_PAID_TRANSACTION_NAME,
+      pspReference: input.pspReference,
+      currency: input.currency,
+      chargedAmount: input.amount,
+      idempotencyKey: crypto.randomUUID(),
+    })
+    .returning();
+  if (!transaction) throw new Error("payment transaction insert returned no row");
+  await db.insert(schema.paymentEvent).values({
+    transactionId: transaction.id,
+    type: "CHARGE_SUCCESS",
+    amount: input.amount,
+    currency: input.currency,
+    pspReference: input.pspReference,
+  });
+  return transaction;
+}
+
+/**
+ * Saleor's transactionRequestAction(REFUND) answered at once (PLAN M6 decision 1): the
+ * REFUND_REQUEST event, then the gateway's REFUND_SUCCESS, moving `amount` from charged to
+ * refunded. The transaction must be locked by the caller and `0 < amount ≤ netCharged`; the
+ * `refunded ≤ charged` CHECK is the last guard.
+ */
+export async function refundTransaction(
+  db: Executor,
+  transaction: PaymentTransactionRow,
+  amount: number,
+): Promise<PaymentTransactionRow> {
+  if (amount <= 0 || amount > netCharged(transaction)) {
+    throw new Error(`refund of ${amount} is outside the transaction's charged amount`);
+  }
+  const pspReference = `${transaction.provider === MANUAL_PROVIDER ? "manual" : "dummy"}-refund-${crypto.randomUUID()}`;
+  await db.insert(schema.paymentEvent).values([
+    {
+      transactionId: transaction.id,
+      type: "REFUND_REQUEST",
+      amount,
+      currency: transaction.currency,
+    },
+    {
+      transactionId: transaction.id,
+      type: "REFUND_SUCCESS",
+      amount,
+      currency: transaction.currency,
+      pspReference,
+    },
+  ]);
+  const [updated] = await db
+    .update(schema.paymentTransaction)
+    .set({
+      refundedAmount: sql`${schema.paymentTransaction.refundedAmount} + ${amount}`,
+      modifiedAt: sql`now()`,
+    })
+    .where(eq(schema.paymentTransaction.id, transaction.id))
+    .returning();
+  if (!updated) throw new Error(`payment transaction ${transaction.id} disappeared`);
+  return updated;
+}

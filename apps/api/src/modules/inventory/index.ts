@@ -1,8 +1,15 @@
 // Public surface of the `inventory` module (ARCHITECTURE.md §2).
 
-export type { AllocationRow, InsufficientStock } from "./allocations.ts";
+export type {
+  AllocationRow,
+  InsufficientFulfillmentStock,
+  InsufficientStock,
+  StockDecrease,
+} from "./allocations.ts";
 export {
   allocateStocks,
+  deallocateOrderLines,
+  decreaseStocksForFulfillment,
   findInsufficientStock,
   getAllocationsByOrderLineIds,
   InsufficientStockError,

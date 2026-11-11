@@ -12,7 +12,8 @@ import { getOrder, type OrderEventRow, type OrderLineRow, type OrderRow } from "
 // to what M5.4 creates. The buyer receives the order in checkoutComplete's payload; looking one up
 // by id is staff-only (MANAGE_ORDERS). Addresses are added by the checkout module, which owns the
 // Address type (ARCHITECTURE §2 rule 2). The staff list and payment fields are in
-// orderListGraphql.ts (M6.1); fulfillments and actions arrive with M6.4.
+// orderListGraphql.ts (M6.1); fulfillments, actions and the lifecycle mutations in
+// lifecycleGraphql.ts (M6.4).
 
 const MANAGE_ORDERS = "Requires one of the following permissions: MANAGE_ORDERS.";
 
@@ -31,7 +32,16 @@ export const OrderStatusEnum = builder.enumType("OrderStatus", {
   values: ["UNFULFILLED", "PARTIALLY_FULFILLED", "FULFILLED", "CANCELED"] as const,
 });
 
-const OrderEventsEnum = builder.enumType("OrderEventsEnum", { values: ["PLACED"] as const });
+// Saleor's OrderEventsEnum values we record (PLACED at completion, the rest from M6.4's actions).
+const OrderEventsEnum = builder.enumType("OrderEventsEnum", {
+  values: [
+    "PLACED",
+    "FULFILLMENT_FULFILLED_ITEMS",
+    "CANCELED",
+    "ORDER_MARKED_AS_PAID",
+    "TRANSACTION_REFUND_REQUESTED",
+  ] as const,
+});
 
 export { money, taxed };
 

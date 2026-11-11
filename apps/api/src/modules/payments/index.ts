@@ -15,10 +15,17 @@ export type {
 export {
   coveredAmounts,
   createCheckoutTransaction,
+  createManualOrderTransaction,
   DUMMY_GATEWAY_ID,
   getEventsByTransactionIds,
+  getTransaction,
   getTransactionsByCheckoutIds,
   getTransactionsByOrderIds,
+  lockOrderTransactions,
+  MANUAL_PROVIDER,
   moveCheckoutTransactionsToOrder,
+  netCharged,
   orderNetChargedSql,
+  refundTransaction,
+  transactionActions,
 } from "./transactions.ts";

@@ -1,7 +1,8 @@
 // Saleor's `order.Order`, `order.OrderLine` and `order.OrderEvent` (ARCHITECTURE.md §3 "Orders"),
 // owned by the API's `orders` module. An order is a snapshot: lines copy names, SKU and prices,
 // addresses are JSON copies, and totals are fixed at creation, so later catalog or checkout changes
-// never alter it. Fulfillment tables arrive with M6.
+// never alter it. Fulfillments (M6.4) record what left a warehouse: Saleor's `order.Fulfillment` and
+// `order.FulfillmentLine`, one fulfillment per warehouse per orderFulfill.
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -12,10 +13,12 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 import { productVariant } from "./catalog.ts";
 import { user } from "./identity.ts";
+import { warehouse } from "./inventory.ts";
 
 /** Saleor's OrderStatus subset (ARCHITECTURE §3): UNFULFILLED → PARTIALLY_FULFILLED → FULFILLED, or CANCELED. */
 export const ORDER_STATUSES = [
@@ -25,8 +28,17 @@ export const ORDER_STATUSES = [
   "CANCELED",
 ] as const;
 
-/** Saleor's OrderEvents values we record so far (more arrive with M6's lifecycle actions). */
-export const ORDER_EVENT_TYPES = ["PLACED"] as const;
+/** Saleor's OrderEvents values we record (PLACED at completion, the rest from M6.4's actions). */
+export const ORDER_EVENT_TYPES = [
+  "PLACED",
+  "FULFILLMENT_FULFILLED_ITEMS",
+  "CANCELED",
+  "ORDER_MARKED_AS_PAID",
+  "TRANSACTION_REFUND_REQUESTED",
+] as const;
+
+/** Saleor's FulfillmentStatus values we create: only FULFILLED (no cancel, returns or approval). */
+export const FULFILLMENT_STATUSES = ["FULFILLED"] as const;
 
 const inList = (values: readonly string[]) => values.map((value) => `'${value}'`).join(", ");
 
@@ -114,5 +126,49 @@ export const orderEvent = pgTable(
   (table) => [
     check("order_event_type_known", sql.raw(`"type" IN (${inList(ORDER_EVENT_TYPES)})`)),
     index("order_event_order_id_idx").on(table.orderId),
+  ],
+);
+
+export const fulfillment = pgTable(
+  "fulfillment",
+  {
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => order.id),
+    // Saleor's per-order sequence, shown as "#<order number>-<fulfillment order>".
+    fulfillmentOrder: integer("fulfillment_order").notNull(),
+    status: text("status").notNull(),
+    // Where the items left from; kept if the warehouse is deleted later (Saleor reads it from the
+    // lines' stocks, which go away with the stock row).
+    warehouseId: uuid("warehouse_id").references(() => warehouse.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check("fulfillment_status_known", sql.raw(`"status" IN (${inList(FULFILLMENT_STATUSES)})`)),
+    check("fulfillment_order_positive", sql`${table.fulfillmentOrder} > 0`),
+    unique("fulfillment_order_id_fulfillment_order_unique").on(
+      table.orderId,
+      table.fulfillmentOrder,
+    ),
+  ],
+);
+
+export const fulfillmentLine = pgTable(
+  "fulfillment_line",
+  {
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    fulfillmentId: uuid("fulfillment_id")
+      .notNull()
+      .references(() => fulfillment.id),
+    orderLineId: uuid("order_line_id")
+      .notNull()
+      .references(() => orderLine.id),
+    quantity: integer("quantity").notNull(),
+  },
+  (table) => [
+    check("fulfillment_line_quantity_positive", sql`${table.quantity} > 0`),
+    index("fulfillment_line_fulfillment_id_idx").on(table.fulfillmentId),
+    index("fulfillment_line_order_line_id_idx").on(table.orderLineId),
   ],
 );

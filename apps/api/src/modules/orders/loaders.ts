@@ -2,6 +2,12 @@ import type { Executor } from "@commerce/db";
 import DataLoader from "dataloader";
 import { getUsersByIds, type SessionUser } from "../identity/index.ts";
 import {
+  type FulfillmentLineRow,
+  type FulfillmentRow,
+  getFulfillmentLinesByFulfillmentIds,
+  getFulfillmentsByOrderIds,
+} from "./lifecycle.ts";
+import {
   getOrderEventsByOrderIds,
   getOrderLinesByOrderIds,
   type OrderEventRow,
@@ -18,6 +24,10 @@ export interface OrderLoaders {
   eventsByOrderId: DataLoader<string, OrderEventRow[]>;
   /** `OrderEvent.user`: identity's public read, batched. */
   userById: DataLoader<string, SessionUser | null>;
+  /** `Order.fulfillments`. */
+  fulfillmentsByOrderId: DataLoader<string, FulfillmentRow[]>;
+  /** `Fulfillment.lines`. */
+  fulfillmentLinesByFulfillmentId: DataLoader<string, FulfillmentLineRow[]>;
 }
 
 function groupBy<T>(rows: readonly T[], key: (row: T) => string): Map<string, T[]> {
@@ -44,6 +54,17 @@ export function createOrderLoaders(db: Executor): OrderLoaders {
     userById: new DataLoader(async (ids) => {
       const byId = new Map((await getUsersByIds(db, ids)).map((user) => [user.id, user]));
       return ids.map((id) => byId.get(id) ?? null);
+    }),
+    fulfillmentsByOrderId: new DataLoader(async (orderIds) => {
+      const groups = groupBy(await getFulfillmentsByOrderIds(db, orderIds), (row) => row.orderId);
+      return orderIds.map((id) => groups.get(id) ?? []);
+    }),
+    fulfillmentLinesByFulfillmentId: new DataLoader(async (fulfillmentIds) => {
+      const groups = groupBy(
+        await getFulfillmentLinesByFulfillmentIds(db, fulfillmentIds),
+        (row) => row.fulfillmentId,
+      );
+      return fulfillmentIds.map((id) => groups.get(id) ?? []);
     }),
   };
 }

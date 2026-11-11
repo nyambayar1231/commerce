@@ -51,6 +51,7 @@ describe("me.userPermissions", () => {
         { code: "MANAGE_STAFF" },
         { code: "MANAGE_SETTINGS" },
         { code: "MANAGE_SHIPPING" },
+        { code: "HANDLE_PAYMENTS" },
       ],
     });
   });

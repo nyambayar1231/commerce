@@ -1,5 +1,29 @@
 // Public surface of the `orders` module (ARCHITECTURE.md §2).
 
+export type {
+  FulfillLineInput,
+  FulfillmentLineRow,
+  FulfillmentRow,
+  FulfillOrderResult,
+  OrderActionResult,
+  OrderError,
+  OrderErrorCode,
+  RefundError,
+  RefundErrorCode,
+  RefundResult,
+} from "./lifecycle.ts";
+export {
+  cancelOrder,
+  fulfillOrder,
+  getFulfillmentLinesByFulfillmentIds,
+  getFulfillmentLinesByIds,
+  getFulfillmentsByOrderIds,
+  getOrderLinesByIds,
+  lockOrder,
+  markOrderAsPaid,
+  refundOrderTransaction,
+  uncoveredAmount,
+} from "./lifecycle.ts";
 export type { OrderLoaders } from "./loaders.ts";
 export { createOrderLoaders } from "./loaders.ts";
 export type {
