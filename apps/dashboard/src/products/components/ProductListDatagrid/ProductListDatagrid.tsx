@@ -2,9 +2,9 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The product list grid: Saleor's static columns with sort arrows (header click sorts), column
-// picker, resizing and reordering, checkbox row markers, row link to the product,
-// loading/empty states and the pagination footer. Not yet: bulk actions behind the row checkboxes
-// (M2.4), Saleor's dynamic attribute columns, tiles view.
+// picker, resizing and reordering, checkbox row markers feeding the list's bulk delete, row link to
+// the product, loading/empty states and the pagination footer. Not yet: the other bulk actions,
+// Saleor's dynamic attribute columns, tiles view.
 import type { Item } from "@glideapps/glide-data-grid";
 import { useCallback, useMemo } from "react";
 import { useIntl } from "react-intl";
@@ -26,7 +26,11 @@ import {
   productUrl,
   ProductListUrlSortField as SortField,
 } from "../../urls";
-import { createGetCellContent, productListStaticColumnsAdapter } from "./datagrid";
+import {
+  createGetCellContent,
+  productListStaticColumnsAdapter,
+  selectedProductIds,
+} from "./datagrid";
 import { messages } from "./messages";
 
 interface ProductListDatagridProps {
@@ -40,6 +44,8 @@ interface ProductListDatagridProps {
   hasPreviousPage?: boolean;
   nextHref?: string;
   prevHref?: string;
+  /** Selected product ids, plus a callback that clears the grid's selection. */
+  onSelectedProductIdsChange?: (ids: string[], clearSelection: () => void) => void;
 }
 
 export const ProductListDatagrid = ({
@@ -53,6 +59,7 @@ export const ProductListDatagrid = ({
   hasPreviousPage,
   nextHref,
   prevHref,
+  onSelectedProductIdsChange,
 }: ProductListDatagridProps) => {
   const intl = useIntl();
   const navigate = useNavigate();
@@ -118,6 +125,13 @@ export const ProductListDatagrid = ({
     [visibleColumns, onSort],
   );
 
+  const handleRowSelectionChange = useCallback(
+    (selectedRows: number[], clearSelection: () => void) => {
+      onSelectedProductIdsChange?.(selectedProductIds(rows, selectedRows), clearSelection);
+    },
+    [rows, onSelectedProductIdsChange],
+  );
+
   return (
     <>
       <Datagrid
@@ -144,6 +158,7 @@ export const ProductListDatagrid = ({
         onClearRecentlyAddedColumn={handlers.onClearRecentlyAddedColumn}
         rowAnchor={handleRowAnchor}
         onRowClick={handleRowClick}
+        onRowSelectionChange={handleRowSelectionChange}
         showTopBorder
       />
       <DatagridPagination

@@ -70,6 +70,7 @@ export {
   createProduct,
   createProductVariant,
   deleteProduct,
+  deleteProducts,
   deleteProductVariant,
   getMinimalVariantPrice,
   getProduct,

@@ -1,5 +1,5 @@
 import { type Executor, schema } from "@commerce/db";
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq, inArray, sql } from "drizzle-orm";
 import { toGlobalId } from "../../graphql/globalId.ts";
 import { productMediaKey, type Storage } from "../../storage/index.ts";
 import { type UploadedFile, validateImageFile } from "./mediaFile.ts";
@@ -112,6 +112,45 @@ async function lockMedia(db: Executor, id: string): Promise<ProductMediaRow> {
     .for("update");
   if (!media) throw new ProductMediaNotFoundError([id]);
   return media;
+}
+
+/**
+ * The object keys of a set of products' media and their thumbnails. Read inside the transaction
+ * that deletes the rows, so the keys describe exactly what is about to go (ADR-0014).
+ */
+export async function getProductObjectKeys(db: Executor, productIds: string[]): Promise<string[]> {
+  if (productIds.length === 0) return [];
+
+  const media = await db
+    .select({ id: schema.productMedia.id, imageKey: schema.productMedia.imageKey })
+    .from(schema.productMedia)
+    .where(inArray(schema.productMedia.productId, productIds));
+  if (media.length === 0) return [];
+
+  const thumbnails = await db
+    .select({ imageKey: schema.productMediaThumbnail.imageKey })
+    .from(schema.productMediaThumbnail)
+    .where(
+      inArray(
+        schema.productMediaThumbnail.mediaId,
+        media.map((row) => row.id),
+      ),
+    );
+  return [...media.map((row) => row.imageKey), ...thumbnails.map((row) => row.imageKey)];
+}
+
+/**
+ * Deletes object keys after their rows committed. A failed delete is logged and never thrown: an
+ * orphan object is harmless, a mutation failing after the commit is not (ADR-0014).
+ */
+export async function deleteObjectsQuietly(storage: Storage, keys: string[]): Promise<void> {
+  for (const key of keys) {
+    try {
+      await storage.deleteObject(key);
+    } catch (error) {
+      console.error(`Failed to delete a product media object: ${key}`, error);
+    }
+  }
 }
 
 /** The keys of a media row's thumbnail objects (their rows cascade with the media row). */
@@ -251,13 +290,7 @@ export async function deleteProductMedia(
     return { product, media, keys };
   });
 
-  for (const key of deleted.keys) {
-    try {
-      await storage.deleteObject(key);
-    } catch (error) {
-      console.error(`Failed to delete a product media object: ${key}`, error);
-    }
-  }
+  await deleteObjectsQuietly(storage, deleted.keys);
   return { product: deleted.product, media: deleted.media };
 }
 

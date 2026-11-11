@@ -112,6 +112,17 @@ const formatDate = (intl: IntlShape, value: unknown): string => {
 
 const COMMON_CELL_PROPS = { cursor: "pointer" } as const;
 
+/** The ids of the rows Glide reports as selected, in the grid's row-index order. */
+export const selectedProductIds = (
+  rows: ProductListRowFragment[],
+  selectedRows: number[],
+): string[] =>
+  selectedRows.flatMap((index) => {
+    const product = rows[index];
+
+    return product ? [product.id] : [];
+  });
+
 /**
  * Saleor's getNameCellContent: the product's thumbnail next to its name. An empty thumbnail URL
  * renders Saleor's empty-image placeholder in the cell (there is no thumbnail, not a broken image).

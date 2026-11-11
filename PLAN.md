@@ -25,13 +25,6 @@ Finished milestones are removed from this file; their specs, results and decisio
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
 (foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11).
 
-## Open-item fixes (approved by the owner 2026-11-11)
-
-| Step | What | Status |
-|---|---|---|
-| OI.1 | Apollo `cache-and-network` default (M2.4 proposal); drop the redundant `product_variant_product_id_idx` (M2.3); real thumbnails on the category's "Products in …" card (M2.2). (M0.3.11's dark-mode text colour was already fixed in d5b58e8.) | Done |
-| OI.2 | Product list bulk delete: API `productBulkDelete` (same rules as `productDelete`) + Saleor's bulk delete button and dialog for the selected rows | Proposed |
-
 ## Open items from finished milestones
 
 Accepted by the owner as documented (2026-11-11); each is revisited when a milestone needs it:

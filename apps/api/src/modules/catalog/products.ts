@@ -1,8 +1,10 @@
 import { CURRENCIES, type CurrencyCode, type Money, parseDecimal } from "@commerce/contracts";
 import { type Executor, schema } from "@commerce/db";
-import { and, asc, eq, ne, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, ne, sql } from "drizzle-orm";
+import type { Storage } from "../../storage/index.ts";
 import { getCategory, NotFoundError } from "./categories.ts";
 import { parseDescription } from "./description.ts";
+import { deleteObjectsQuietly, getProductObjectKeys } from "./media.ts";
 import { SHOP_CURRENCY } from "./productWhere.ts";
 import { generateUniqueSlug, slugTaken } from "./slug.ts";
 
@@ -416,13 +418,60 @@ export async function updateProduct(
   });
 }
 
-/** Deletes a product; its variants go with it (`ON DELETE CASCADE`). */
-export async function deleteProduct(db: Executor, id: string): Promise<ProductRow> {
-  return db.transaction(async (tx) => {
+/**
+ * Deletes a product; its variants go with it (`ON DELETE CASCADE`). The product's media and
+ * thumbnail objects are deleted after the commit (ADR-0014).
+ */
+export async function deleteProduct(
+  db: Executor,
+  storage: Storage,
+  id: string,
+): Promise<ProductRow> {
+  const deleted = await db.transaction(async (tx) => {
     const product = await lockProduct(tx, id);
+    const keys = await getProductObjectKeys(tx, [id]);
     await tx.delete(schema.product).where(eq(schema.product.id, id));
-    return product;
+    return { product, keys };
   });
+
+  await deleteObjectsQuietly(storage, deleted.keys);
+  return deleted.product;
+}
+
+/**
+ * Deletes several products at once (Saleor's productBulkDelete); their variants and media rows go
+ * with them (FK cascade). All ids must exist, as Saleor's get_nodes_or_error; `count` is how many
+ * of the given products were deleted (a duplicate id is counted once). The products are locked in
+ * id order, the same order as the other product mutations, so bulk deletes can't deadlock. Media
+ * and thumbnail objects go after the commit (ADR-0014).
+ */
+export async function deleteProducts(
+  db: Executor,
+  storage: Storage,
+  ids: string[],
+): Promise<{ count: number }> {
+  const unique = [...new Set(ids)];
+
+  const deleted = await db.transaction(async (tx) => {
+    if (unique.length === 0) return { count: 0, keys: [] as string[] };
+
+    const found = await tx
+      .select({ id: schema.product.id })
+      .from(schema.product)
+      .where(inArray(schema.product.id, unique))
+      .orderBy(asc(schema.product.id))
+      .for("update");
+    const foundIds = new Set(found.map((row) => row.id));
+    const missing = unique.filter((id) => !foundIds.has(id));
+    if (missing.length > 0) throw new ProductNotFoundError("Product", missing);
+
+    const keys = await getProductObjectKeys(tx, unique);
+    await tx.delete(schema.product).where(inArray(schema.product.id, unique));
+    return { count: unique.length, keys };
+  });
+
+  await deleteObjectsQuietly(storage, deleted.keys);
+  return { count: deleted.count };
 }
 
 export async function createProductVariant(

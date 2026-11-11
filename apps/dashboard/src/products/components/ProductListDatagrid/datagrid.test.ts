@@ -8,6 +8,7 @@ import {
   getNameCellContent,
   getProductAvailability,
   productListStaticColumnsAdapter,
+  selectedProductIds,
 } from "./datagrid";
 
 const intl = createIntl({ locale: "en" });
@@ -136,5 +137,12 @@ describe("product list datagrid", () => {
       data: intl.formatDate(new Date("2026-01-02T10:00:00Z"), medium),
     });
     expect(get([0, 5])).toMatchObject({ data: "" });
+  });
+
+  it("maps the grid's selected row indexes to the products' ids", () => {
+    const rows = [product({ id: "a" }), product({ id: "b" }), product({ id: "c" })];
+
+    expect(selectedProductIds(rows, [2, 0])).toEqual(["c", "a"]);
+    expect(selectedProductIds(rows, [])).toEqual([]);
   });
 });

@@ -1,6 +1,7 @@
 import { closeDb, getDb, schema } from "@commerce/db";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import type { Storage } from "../../storage/index.ts";
 import {
   type CategoryRow,
   createCategory,
@@ -8,6 +9,7 @@ import {
   createProductVariant,
   deleteCategory,
   deleteProduct,
+  deleteProducts,
   deleteProductVariant,
   getProduct,
   getProductVariants,
@@ -25,6 +27,16 @@ import {
 
 // Domain tests use the real (test) database.
 const db = getDb();
+
+// The object deletes are exercised against the real bucket in media.test.ts; here a no-op storage
+// keeps these row-level tests independent of S3.
+const storage: Storage = {
+  putObject: async () => undefined,
+  getObject: async () => new Uint8Array(),
+  deleteObject: async () => undefined,
+  publicUrl: (key) => key,
+  ensureBucket: async () => undefined,
+};
 
 beforeEach(async () => {
   await db.$client.unsafe("TRUNCATE category, product CASCADE");
@@ -435,14 +447,71 @@ describe("deleteProduct", () => {
     const product = await mustCreateProduct({ name: "Boots" });
     await mustCreateVariant({ productId: product.id, price: "1000" });
 
-    await expect(deleteProduct(db, product.id)).resolves.toMatchObject({ id: product.id });
+    await expect(deleteProduct(db, storage, product.id)).resolves.toMatchObject({
+      id: product.id,
+    });
     expect(await db.select().from(schema.product)).toEqual([]);
     expect(await db.select().from(schema.productVariant)).toEqual([]);
   });
 
   it("throws ProductNotFoundError for an unknown id", async () => {
     const id = crypto.randomUUID();
-    await expect(deleteProduct(db, id)).rejects.toMatchObject({ kind: "Product", ids: [id] });
+    await expect(deleteProduct(db, storage, id)).rejects.toMatchObject({
+      kind: "Product",
+      ids: [id],
+    });
+  });
+});
+
+describe("deleteProducts", () => {
+  it("deletes every given product, counting each one once", async () => {
+    const first = await mustCreateProduct({ name: "Boots" });
+    const second = await mustCreateProduct({ name: "Shoes" });
+    await mustCreateVariant({ productId: first.id, price: "1000" });
+    await mustCreateVariant({ productId: second.id, price: "2000" });
+    await db.insert(schema.productMedia).values([
+      {
+        productId: first.id,
+        imageKey: `products/${first.id}/image.jpg`,
+        contentType: "image/jpeg",
+        alt: "",
+        sortOrder: 0,
+      },
+      {
+        productId: second.id,
+        imageKey: `products/${second.id}/image.jpg`,
+        contentType: "image/jpeg",
+        alt: "",
+        sortOrder: 0,
+      },
+    ]);
+    await mustCreateProduct({ name: "Hats" });
+
+    await expect(deleteProducts(db, storage, [first.id, second.id, first.id])).resolves.toEqual({
+      count: 2,
+    });
+
+    expect(await db.select().from(schema.product)).toHaveLength(1);
+    expect(await db.select().from(schema.productVariant)).toEqual([]);
+    expect(await db.select().from(schema.productMedia)).toEqual([]);
+  });
+
+  it("deletes nothing when any id is unknown", async () => {
+    const product = await mustCreateProduct({ name: "Boots" });
+    const unknown = crypto.randomUUID();
+
+    await expect(deleteProducts(db, storage, [product.id, unknown])).rejects.toMatchObject({
+      kind: "Product",
+      ids: [unknown],
+    });
+    expect(await db.select().from(schema.product)).toHaveLength(1);
+  });
+
+  it("is a no-op for an empty list", async () => {
+    await mustCreateProduct({ name: "Boots" });
+
+    await expect(deleteProducts(db, storage, [])).resolves.toEqual({ count: 0 });
+    expect(await db.select().from(schema.product)).toHaveLength(1);
   });
 });
 

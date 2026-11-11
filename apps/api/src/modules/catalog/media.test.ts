@@ -8,7 +8,9 @@ import { getStorage, type Storage, StorageObjectNotFoundError } from "../../stor
 import {
   createCatalogLoaders,
   createProductMedia,
+  deleteProduct,
   deleteProductMedia,
+  deleteProducts,
   getProductMedia,
   type ProductMediaRow,
   ProductNotFoundError,
@@ -498,6 +500,97 @@ describe("media mutations", () => {
       ).toEqual([]);
       // The orphan object is still there: the failure only logged, it did not roll back the row.
       expect((await storage.getObject(media.imageKey)).byteLength).toBeGreaterThan(0);
+      expect(logged).toHaveBeenCalled();
+    } finally {
+      logged.mockRestore();
+    }
+  });
+});
+
+// Deleting products removes their media rows by cascade and the media and thumbnail objects after
+// the commit (ADR-0014): on productDelete and on productBulkDelete, and never by failing on S3.
+describe("product delete media cleanup", () => {
+  const storage = getStorage();
+  const objects: string[] = [];
+  const bytes = new Uint8Array([1, 2, 3]);
+
+  async function addMedia(productId: string, mediaId: string) {
+    const key = `products/${productId}/${mediaId}.jpg`;
+    const thumbnailKey = `thumbnails/${mediaId}/128.jpg`;
+    await storage.putObject(key, bytes, "image/jpeg");
+    await storage.putObject(thumbnailKey, bytes, "image/jpeg");
+    objects.push(key, thumbnailKey);
+    await db.insert(schema.productMedia).values({
+      id: mediaId,
+      productId,
+      imageKey: key,
+      contentType: "image/jpeg",
+      alt: "",
+      sortOrder: 0,
+    });
+    await db.insert(schema.productMediaThumbnail).values({
+      mediaId,
+      size: 128,
+      format: "ORIGINAL",
+      imageKey: thumbnailKey,
+    });
+    return { key, thumbnailKey };
+  }
+
+  afterEach(async () => {
+    for (const key of objects) await storage.deleteObject(key).catch(() => undefined);
+    objects.length = 0;
+  });
+
+  it("deletes a product's media and thumbnail objects after the rows go", async () => {
+    const { key, thumbnailKey } = await addMedia(PRODUCT, ID(500));
+
+    await deleteProduct(db, storage, PRODUCT);
+
+    expect(
+      await db.select().from(schema.productMedia).where(eq(schema.productMedia.productId, PRODUCT)),
+    ).toEqual([]);
+    expect(await db.select().from(schema.productMediaThumbnail)).toEqual([]);
+    await expect(storage.getObject(key)).rejects.toBeInstanceOf(StorageObjectNotFoundError);
+    await expect(storage.getObject(thumbnailKey)).rejects.toBeInstanceOf(
+      StorageObjectNotFoundError,
+    );
+  });
+
+  it("deletes the objects of every product in a bulk delete", async () => {
+    const first = await addMedia(PRODUCT, ID(501));
+    const second = await addMedia(OTHER, ID(502));
+
+    await expect(deleteProducts(db, storage, [PRODUCT, OTHER])).resolves.toEqual({ count: 2 });
+
+    expect(await db.select().from(schema.productMedia)).toEqual([]);
+    expect(await db.select().from(schema.productMediaThumbnail)).toEqual([]);
+    for (const { key, thumbnailKey } of [first, second]) {
+      await expect(storage.getObject(key)).rejects.toBeInstanceOf(StorageObjectNotFoundError);
+      await expect(storage.getObject(thumbnailKey)).rejects.toBeInstanceOf(
+        StorageObjectNotFoundError,
+      );
+    }
+  });
+
+  it("still deletes products when S3 fails to delete an object", async () => {
+    const { key } = await addMedia(PRODUCT, ID(503));
+    const logged = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const failing: Storage = {
+        ...storage,
+        deleteObject: async () => {
+          throw new Error("S3 is down");
+        },
+      };
+
+      await expect(deleteProducts(db, failing, [PRODUCT, OTHER])).resolves.toEqual({
+        count: 2,
+      });
+
+      expect(await db.select().from(schema.product)).toEqual([]);
+      // The orphan object is still there: the failure only logged, it did not roll back the rows.
+      expect((await storage.getObject(key)).byteLength).toBeGreaterThan(0);
       expect(logged).toHaveBeenCalled();
     } finally {
       logged.mockRestore();

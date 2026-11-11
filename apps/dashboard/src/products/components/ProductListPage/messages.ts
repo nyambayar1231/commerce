@@ -18,4 +18,14 @@ export const messages = defineMessages({
     defaultMessage: "Create Product",
     description: "button",
   },
+  deleteProducts: {
+    id: "uwk5e9",
+    defaultMessage: "Delete products",
+    description: "bulk delete button",
+  },
+  productsDeleted: {
+    id: "wUWSv2",
+    defaultMessage: "Products deleted",
+    description: "product bulk delete success notification",
+  },
 });

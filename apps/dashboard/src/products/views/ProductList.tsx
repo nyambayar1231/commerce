@@ -5,10 +5,11 @@
 // a URL without a sort is redirected to Saleor's default (name, ascending). The conditional
 // filters in the URL become the query's `where`; the filter panel edits a copy and applies it back
 // to the URL. The URL's `action=create-product` opens Saleor's CreateProductDialog (name and
-// category only); on success a toast and a jump to the new product. Not yet: bulk actions, export,
-// filter presets, tiles view.
+// category only); on success a toast and a jump to the new product. Selected rows open Saleor's
+// bulk delete dialog on `action=delete`; confirming deletes them, clears the selection, toasts and
+// refetches the list. Not yet: the other bulk actions, export, filter presets, tiles view.
 import { useMutation, useQuery } from "@apollo/client";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIntl } from "react-intl";
 import { useNavigate, useSearchParams } from "react-router";
 
@@ -16,6 +17,7 @@ import { getMutationStatus } from "../../categories/mutationStatus";
 import { ConditionalProductFilterProvider } from "../../components/ConditionalFilter/context/provider";
 import { createProductQueryVariables } from "../../components/ConditionalFilter/queryVariables";
 import {
+  ProductBulkDeleteDocument,
   ProductCreateDocument,
   type ProductErrorFragment,
   ProductListDocument,
@@ -26,6 +28,8 @@ import { createPaginationState, usePaginator } from "../../hooks/usePaginator";
 import { getProductErrorMessage } from "../../utils/errors";
 import { CreateProductDialog } from "../components/CreateProductDialog/CreateProductDialog";
 import { messages as createProductMessages } from "../components/CreateProductDialog/messages";
+import { ProductBulkDeleteDialog } from "../components/ProductBulkDeleteDialog/ProductBulkDeleteDialog";
+import { messages as productListMessages } from "../components/ProductListPage/messages";
 import { ProductListPage } from "../components/ProductListPage/ProductListPage";
 import { getSortQueryVariables, getSortUrlParams } from "../sort";
 import {
@@ -63,7 +67,7 @@ const ProductListContent = () => {
   }, [navigate, params]);
 
   const paginationState = createPaginationState(settings.rowNumber, params);
-  const { data, loading } = useQuery(ProductListDocument, {
+  const { data, loading, refetch } = useQuery(ProductListDocument, {
     variables: {
       ...paginationState,
       search: params.query ?? null,
@@ -76,6 +80,17 @@ const ProductListContent = () => {
     () => data?.products?.edges.map((edge) => edge.node) ?? [],
     [data?.products?.edges],
   );
+  // Selected product ids, and the grid's own "clear selection" (Saleor's useRowSelection).
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const clearGridSelection = useRef<() => void>(() => {});
+  const handleSelectedIdsChange = useCallback((ids: string[], clearSelection: () => void) => {
+    clearGridSelection.current = clearSelection;
+    setSelectedIds((current) => (current.join() === ids.join() ? current : ids));
+  }, []);
+  const clearRowSelection = useCallback(() => {
+    clearGridSelection.current();
+    setSelectedIds([]);
+  }, []);
   const paginator = usePaginator({
     pageInfo: data?.products?.pageInfo,
     paginationState,
@@ -125,6 +140,26 @@ const ProductListContent = () => {
     },
   });
 
+  const [productBulkDelete, productBulkDeleteOpts] = useMutation(ProductBulkDeleteDocument, {
+    onCompleted: (result) => {
+      if ((result.productBulkDelete?.errors.length ?? 0) > 0) {
+        return;
+      }
+
+      closeModal();
+      notify({
+        status: "success",
+        text: intl.formatMessage(productListMessages.productsDeleted),
+      });
+      void refetch();
+      clearRowSelection();
+    },
+  });
+
+  const handleSubmitBulkDelete = () => {
+    void productBulkDelete({ variables: { ids: selectedIds } });
+  };
+
   return (
     <>
       <ProductListPage
@@ -133,6 +168,9 @@ const ProductListContent = () => {
           navigate(productListUrl({ ...params, ...firstPage, query }), { replace: true })
         }
         onAdd={() => openModal("create-product")}
+        selectedProductIds={selectedIds}
+        onProductsDelete={() => openModal("delete")}
+        onSelectedProductIdsChange={handleSelectedIdsChange}
         rows={products}
         disabled={loading && !data}
         sort={{ sort: params.sort, asc: params.asc }}
@@ -152,6 +190,16 @@ const ProductListContent = () => {
         hasPreviousPage={paginator.hasPreviousPage}
         nextHref={paginator.nextHref}
         prevHref={paginator.prevHref}
+      />
+      <ProductBulkDeleteDialog
+        open={params.action === "delete" && selectedIds.length > 0}
+        count={selectedIds.length}
+        confirmButtonState={getMutationStatus({
+          ...productBulkDeleteOpts,
+          errors: productBulkDeleteOpts.data?.productBulkDelete?.errors,
+        })}
+        onClose={closeModal}
+        onConfirm={handleSubmitBulkDelete}
       />
       <CreateProductDialog
         open={params.action === "create-product"}

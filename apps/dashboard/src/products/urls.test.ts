@@ -75,14 +75,18 @@ describe("product urls", () => {
     ).toEqual({ after: "a" });
   });
 
-  it("keeps the create-product dialog in the URL and ignores unknown actions", () => {
+  it("keeps the create-product and delete dialogs in the URL and ignores unknown actions", () => {
     expect(productListUrl({ action: "create-product", sort: "name", asc: true })).toBe(
       "/products/?action=create-product&sort=name&asc=true",
     );
     expect(
       parseProductListUrl(new URLSearchParams("action=create-product&sort=name&asc=true")),
     ).toEqual({ action: "create-product", sort: "name", asc: true });
-    expect(parseProductListUrl(new URLSearchParams("action=delete"))).toEqual({});
+    expect(productListUrl({ action: "delete" })).toBe("/products/?action=delete");
+    expect(parseProductListUrl(new URLSearchParams("action=delete"))).toEqual({
+      action: "delete",
+    });
+    expect(parseProductListUrl(new URLSearchParams("action=nuke"))).toEqual({});
   });
 
   it("keeps the conditional filters next to search, sort and pagination", () => {

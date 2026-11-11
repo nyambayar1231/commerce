@@ -53,6 +53,18 @@ export const productDeleteMutation = gql`
   ${productErrorFragment}
 `;
 
+// Saleor's ProductBulkDelete: the dialog only needs the errors; the list refetches afterwards.
+export const productBulkDeleteMutation = gql`
+  mutation ProductBulkDelete($ids: [ID!]!) {
+    productBulkDelete(ids: $ids) {
+      errors {
+        ...ProductError
+      }
+    }
+  }
+  ${productErrorFragment}
+`;
+
 // Saleor's ProductMediaCreate without the external-URL input (images only): each file is one
 // multipart upload. `media` gives the new row's id; `product.media` updates the card's cache.
 export const productMediaCreateMutation = gql`

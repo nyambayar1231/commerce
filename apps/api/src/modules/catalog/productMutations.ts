@@ -2,11 +2,13 @@ import { builder } from "../../graphql/builder.ts";
 import { fromGlobalId, nodesNotFound, toGlobalId } from "../../graphql/globalId.ts";
 import { requirePermission } from "../../graphql/permissions.ts";
 import { Decimal, JSONString } from "../../graphql/scalars.ts";
+import { getStorage } from "../../storage/index.ts";
 import { ProductErrorType } from "./graphql.ts";
 import {
   createProduct,
   createProductVariant,
   deleteProduct,
+  deleteProducts,
   deleteProductVariant,
   NotFoundError,
   type ProductError,
@@ -209,9 +211,39 @@ builder.mutationField("productDelete", (t) =>
     resolve: async (_parent, { id }, ctx) => {
       await requirePermission(ctx, "MANAGE_PRODUCTS");
       const product = await runProduct(() =>
-        deleteProduct(ctx.db, fromGlobalId("Product", String(id))),
+        deleteProduct(ctx.db, getStorage(), fromGlobalId("Product", String(id))),
       );
       return { product, errors: [] };
+    },
+  }),
+);
+
+type ProductBulkDeletePayload = { count: number; errors: ProductError[] };
+
+const ProductBulkDelete = builder
+  .objectRef<ProductBulkDeletePayload>("ProductBulkDelete")
+  .implement({
+    description: `Deletes products.\n\n${PERMISSION}`,
+    fields: (t) => ({
+      count: t.exposeInt("count", { description: "Returns how many objects were affected." }),
+      errors: t.field({ type: [ProductErrorType], resolve: (p) => p.errors }),
+    }),
+  });
+
+builder.mutationField("productBulkDelete", (t) =>
+  t.field({
+    type: ProductBulkDelete,
+    nullable: true,
+    description: `Deletes products.\n\n${PERMISSION}`,
+    args: {
+      ids: t.arg.idList({ required: true, description: "List of product IDs to delete." }),
+    },
+    resolve: async (_parent, { ids }, ctx) => {
+      await requirePermission(ctx, "MANAGE_PRODUCTS");
+      const productIds = ids.map((id) => fromGlobalId("Product", String(id)));
+      const { count } = await runProduct(() => deleteProducts(ctx.db, getStorage(), productIds));
+
+      return { count, errors: [] };
     },
   }),
 );

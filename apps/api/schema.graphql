@@ -338,6 +338,16 @@ type Mutation {
   ): PermissionGroupUpdate!
 
   """
+  Deletes products.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productBulkDelete(
+    """List of product IDs to delete."""
+    ids: [ID!]!
+  ): ProductBulkDelete
+
+  """
   Creates a new product.
   
   Requires one of the following permissions: MANAGE_PRODUCTS.
@@ -649,6 +659,17 @@ type Product implements Node {
 
   """List of variants for the product."""
   variants: [ProductVariant!]!
+}
+
+"""
+Deletes products.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  errors: [ProductError!]!
 }
 
 type ProductCountableConnection {

@@ -4,14 +4,16 @@
 // The header and card. Saleor shows "All products" as the label of its filter-presets dropdown
 // (FilterPresetsSelect) next to a hidden TopNav title; without presets we show that label as text.
 // Saleor's create-button dropdown becomes a plain "Create Product" button (no product types or
-// extensions). Then Saleor's card: search and the grid with its pagination. Not yet: export/extension
-// menus, the create-button dropdown, limits, the view switch, bulk delete and filter presets.
+// extensions). Then Saleor's card: search and, while rows are selected, the bulk delete button
+// from Saleor's list toolbar, then the grid with its pagination. Not yet: export/extension menus,
+// the create-button dropdown, limits, the view switch and filter presets.
 import { Box, Button, Text } from "@saleor/macaw-ui";
 import type { ComponentProps } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
 import { ListFilters } from "../../../components/AppLayout/ListFilters/ListFilters";
 import { TopNav } from "../../../components/AppLayout/TopNav";
+import { BulkDeleteButton } from "../../../components/BulkDeleteButton/BulkDeleteButton";
 import { DashboardCard } from "../../../components/Card";
 import { ListPageLayout } from "../../../components/Layouts/List/Root";
 import { sectionNames } from "../../../intl";
@@ -22,12 +24,16 @@ interface ProductListPageProps extends ComponentProps<typeof ProductListDatagrid
   initialSearch: string;
   onSearchChange: (query: string) => void;
   onAdd: () => void;
+  selectedProductIds: string[];
+  onProductsDelete: () => void;
 }
 
 export const ProductListPage = ({
   initialSearch,
   onSearchChange,
   onAdd,
+  selectedProductIds,
+  onProductsDelete,
   ...listProps
 }: ProductListPageProps) => {
   const intl = useIntl();
@@ -55,6 +61,13 @@ export const ProductListPage = ({
           initialSearch={initialSearch}
           searchPlaceholder={intl.formatMessage(messages.searchProducts)}
           onSearchChange={onSearchChange}
+          actions={
+            selectedProductIds.length > 0 && (
+              <BulkDeleteButton count={selectedProductIds.length} onClick={onProductsDelete}>
+                <FormattedMessage {...messages.deleteProducts} />
+              </BulkDeleteButton>
+            )
+          }
         />
         <ProductListDatagrid {...listProps} />
       </DashboardCard>

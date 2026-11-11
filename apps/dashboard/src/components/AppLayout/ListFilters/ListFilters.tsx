@@ -2,7 +2,8 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The toolbar above a list: Filters button, our ListSearchInput, then the filter panel. Saleor's
-// legacy-presets alert, search tooltip and trailing actions slot are dropped.
+// legacy-presets alert and search tooltip are dropped; the trailing `actions` slot holds list
+// actions such as the product list's bulk delete button.
 import { Box } from "@saleor/macaw-ui";
 import type { ReactNode } from "react";
 
@@ -13,12 +14,14 @@ interface ListFiltersProps {
   initialSearch: string;
   searchPlaceholder: string;
   onSearchChange: (value: string) => void;
+  actions?: ReactNode;
 }
 
 export const ListFilters = ({
   initialSearch,
   searchPlaceholder,
   onSearchChange,
+  actions,
 }: ListFiltersProps): ReactNode => (
   <Box display="flex" flexDirection="column" gap={3} paddingBottom={2} paddingX={6}>
     <Box display="grid" __gridTemplateColumns="auto 1fr" gap={4}>
@@ -31,6 +34,9 @@ export const ListFilters = ({
             onSearchChange={onSearchChange}
           />
         </Box>
+      </Box>
+      <Box display="flex" justifyContent="flex-end" alignItems="center">
+        {actions}
       </Box>
     </Box>
     <ExpressionFilterPanel />

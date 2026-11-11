@@ -27,7 +27,7 @@ export const ProductListUrlSortField = {
 export type ProductListUrlSortField =
   (typeof ProductListUrlSortField)[keyof typeof ProductListUrlSortField];
 
-export type ProductListUrlDialog = "create-product";
+export type ProductListUrlDialog = "create-product" | "delete";
 
 export interface ProductListUrlQueryParams {
   action?: ProductListUrlDialog;
@@ -58,7 +58,7 @@ export const productListUrl = (params?: ProductListUrlQueryParams): string => {
 };
 
 const SORT_FIELDS = Object.values(ProductListUrlSortField) as string[];
-const LIST_DIALOGS: ProductListUrlDialog[] = ["create-product"];
+const LIST_DIALOGS: ProductListUrlDialog[] = ["create-product", "delete"];
 
 /** The list's URL params, ignoring values that aren't valid (a hand-edited URL). */
 export const parseProductListUrl = (search: URLSearchParams): ProductListUrlQueryParams => {
