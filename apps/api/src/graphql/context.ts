@@ -6,6 +6,7 @@ import {
   type Permission,
   type SessionUser,
 } from "../modules/identity/index.ts";
+import { createInventoryLoaders, type InventoryLoaders } from "../modules/inventory/index.ts";
 
 // What every resolver receives as its third argument. Created once per request (see app.ts).
 export interface Context {
@@ -13,6 +14,7 @@ export interface Context {
   // Batch loaders for nested fields, created once per request (they cache, so they must never be
   // shared across requests). Created eagerly: a DataLoader costs nothing until its first load.
   loaders: CatalogLoaders;
+  inventoryLoaders: InventoryLoaders;
   // The logged-in user, or null for anonymous requests and ended sessions.
   user: SessionUser | null;
   // The token the request authenticated with (needed to revoke it on logout), or null.
@@ -58,6 +60,7 @@ export async function createContext(db: Db, request: Request): Promise<Omit<Cont
   return {
     db,
     loaders: createCatalogLoaders(db),
+    inventoryLoaders: createInventoryLoaders(db),
     user,
     sessionToken: user === null ? null : sessionToken,
     permissions: () => {

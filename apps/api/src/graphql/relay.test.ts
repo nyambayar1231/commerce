@@ -12,7 +12,7 @@ afterAll(async () => {
 });
 
 describe("Relay Node", () => {
-  it("is implemented by Category, Product, ProductMedia, ProductVariant, User and Group, and Saleor has no node/nodes query", async () => {
+  it("is implemented by Category, Product, ProductMedia, ProductVariant, Stock, User, Warehouse and Group, and Saleor has no node/nodes query", async () => {
     const { body } = await client.gql(`{
       node: __type(name: "Node") { kind possibleTypes { name } }
       query: __type(name: "Query") { fields { name } }
@@ -29,7 +29,9 @@ describe("Relay Node", () => {
       "Product",
       "ProductMedia",
       "ProductVariant",
+      "Stock",
       "User",
+      "Warehouse",
     ]);
     expect(data.query.fields.map((f) => f.name)).not.toContain("node");
     expect(data.query.fields.map((f) => f.name)).not.toContain("nodes");

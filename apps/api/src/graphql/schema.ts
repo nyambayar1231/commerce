@@ -6,6 +6,7 @@ import "../modules/catalog/mediaMutations.ts";
 import "../modules/catalog/productGraphql.ts";
 import "../modules/catalog/productMutations.ts";
 import "../modules/identity/graphql.ts";
+import "../modules/inventory/graphql.ts";
 import "../modules/shop/graphql.ts";
 
 export const schema = builder.toSchema();

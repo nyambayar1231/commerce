@@ -68,6 +68,12 @@ describe("createContext", () => {
     expect(ctx.user).toBeNull();
     expect(ctx.sessionToken).toBeNull();
   });
+
+  it("creates the catalog and inventory loaders per request", async () => {
+    const ctx = await createContext(db, request({}));
+    expect(typeof ctx.loaders.categoryById.load).toBe("function");
+    expect(typeof ctx.inventoryLoaders.stocksByVariantId.load).toBe("function");
+  });
 });
 
 describe("publicUrl", () => {

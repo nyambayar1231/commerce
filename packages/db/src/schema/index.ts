@@ -2,4 +2,5 @@
 
 export * from "./catalog.ts";
 export * from "./identity.ts";
+export * from "./inventory.ts";
 export * from "./shop.ts";

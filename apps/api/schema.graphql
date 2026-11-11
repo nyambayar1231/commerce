@@ -937,8 +937,20 @@ type ProductVariant implements Node {
   """The product to which the variant belongs."""
   product: Product!
 
+  """
+  Quantity of a product available for sale in one checkout. Field value will be `null` when `productVariant` stocks are not tracked.
+  """
+  quantityAvailable: Int
+
   """The SKU (stock keeping unit) of the product variant."""
   sku: String
+
+  """
+  Stocks for the product variant.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS, MANAGE_ORDERS.
+  """
+  stocks: [Stock!]
 
   """
   Determines if the inventory of this variant should be tracked. If false, the quantity won't change when customers buy this item.
@@ -1119,6 +1131,23 @@ type Query {
 
   """Return information about the shop."""
   shop: Shop!
+
+  """
+  Look up a warehouse by ID.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS, MANAGE_ORDERS, MANAGE_SHIPPING.
+  """
+  warehouse(
+    """ID of a warehouse."""
+    id: ID
+  ): Warehouse
+
+  """
+  List of warehouses.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS, MANAGE_ORDERS, MANAGE_SHIPPING.
+  """
+  warehouses(after: String, before: String, first: Int, last: Int): WarehouseCountableConnection
 }
 
 """
@@ -1180,6 +1209,39 @@ type StaffError {
   users: [ID!]
 }
 
+"""Represents stock."""
+type Stock implements Node {
+  """The ID of stock."""
+  id: ID!
+
+  """Information about the product variant."""
+  productVariant: ProductVariant!
+
+  """
+  Quantity of a product in the warehouse's possession, including the allocated stock that is waiting for shipment.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS, MANAGE_ORDERS.
+  """
+  quantity: Int!
+
+  """
+  Quantity allocated for orders.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS, MANAGE_ORDERS.
+  """
+  quantityAllocated: Int!
+
+  """
+  Quantity reserved for checkouts.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS, MANAGE_ORDERS.
+  """
+  quantityReserved: Int!
+
+  """The warehouse associated with the stock."""
+  warehouse: Warehouse!
+}
+
 input StringFilterInput {
   """The value equal to."""
   eq: String
@@ -1235,4 +1297,32 @@ type UserPermission {
 
   """Describe action(s) allowed to do by permission."""
   name: String!
+}
+
+"""Represents warehouse."""
+type Warehouse implements Node {
+  """Warehouse email."""
+  email: String!
+
+  """The ID of the warehouse."""
+  id: ID!
+
+  """Warehouse name."""
+  name: String!
+
+  """Warehouse slug."""
+  slug: String!
+}
+
+type WarehouseCountableConnection {
+  edges: [WarehouseCountableEdge!]!
+  pageInfo: PageInfo!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type WarehouseCountableEdge {
+  cursor: String!
+  node: Warehouse!
 }

@@ -73,7 +73,10 @@ GraphQL package: each one runs codegen against `apps/api/schema.graphql` itself.
 
 1. A module's tables are written **only** by that module's own code.
 2. Other modules import only from `modules/<m>/index.ts`, which holds plain functions. No classes,
-   DI container or event bus.
+   DI container or event bus. The one exception is the GraphQL layer: a module may extend another
+   module's GraphQL object (e.g. inventory adds `ProductVariant.stocks`) by importing that object's
+   ref from the owning module's GraphQL file; its resolvers still read data through `index.ts`
+   functions or loaders.
 3. Cross-module functions receive the caller's transaction (`tx`) explicitly. That is how
    checkout completion spans `checkout`, `inventory`, `payments` and `orders` atomically.
 4. Reads across modules also go through public functions or DataLoaders, so the dependency stays
