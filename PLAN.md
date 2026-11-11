@@ -123,12 +123,41 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 ---
 
 ## M3 — Inventory
-- **Objective:** stock per variant in the single warehouse; availability visible to staff and API.
-- **Scope:** `warehouse` (seeded), `stock`, `allocation` tables with CHECK constraints;
-  stock editing in variant form; `quantityAvailable` field; stock filter in product list.
-- **Concepts:** DB constraints as invariants; why allocations are a table, not just a counter.
-- **Acceptance:** constraint violation tests; stock updates visible in grid.
-- **Status:** Draft.
+- **Objective:** stock per variant in the single warehouse, edited by staff on the variant page and
+  visible through the API (`ProductVariant.stocks`, `quantityAvailable`, a stock filter).
+- **Concepts:** DB constraints as invariants (`0 ≤ allocated ≤ quantity`); why stock is keyed by
+  (warehouse, variant) even with one warehouse (ADR-0005); module boundaries (`inventory` owns
+  `warehouse`/`stock`, catalog only reads them through its `index.ts`).
+- **Status:** Draft — plan written 2026-11-11; decisions 1–5 accepted by the owner the same day.
+  Awaiting the owner's approval of the milestone to start M3.1.
+
+**Decisions (accepted by the owner 2026-11-11):**
+1. **Allocation table waits for orders.** ARCHITECTURE's `allocation(order_line_id, …)` references
+   `order_line`, which arrives in M5.4. M3 creates `stock.quantity_allocated` (always 0 until then,
+   shown as "Allocated" in the UI) and the `allocation` table comes with order placement.
+2. **Warehouse = one row created by the migration** (custom SQL in the generated migration), name
+   "Default Warehouse", slug `default-warehouse`. Columns now: `id, name, slug, email`; the address
+   (Saleor's required `Warehouse.address`) is added when shipping needs it (M5.2).
+3. **No warehouse management pages yet.** Saleor's Configuration → Warehouses list/detail is left
+   out (one warehouse, nothing to configure); the API has read-only `warehouses`/`warehouse`.
+4. **Stock filter in the API only.** `products(where: { stockAvailability: IN_STOCK|OUT_OF_STOCK })`
+   as Saleor; Saleor's dashboard has no stock filter, so none is added to the product list UI
+   (the draft's "stock filter in product list" is dropped).
+5. **Variants card gets a "Stock" column** (quantity in the single warehouse), as Saleor's variants
+   grid shows a column per warehouse.
+
+**Steps (each one brief, one commit, one report):**
+
+| Step | What | Status |
+|---|---|---|
+| M3.1 | API reads: `inventory` module; `warehouse` + `stock` tables (CHECKs: `quantity ≥ 0`, `quantity_allocated ≥ 0`, `quantity_allocated ≤ quantity`; unique (warehouse, variant); stock cascades with its variant) with the seeded warehouse; `Warehouse` and `Stock` node types, `warehouses`/`warehouse` queries, `ProductVariant.stocks` (staff only, as Saleor), `ProductVariant.quantityAvailable` (sum of `quantity − allocated`; null when `trackInventory` is off); constraint-violation tests | Proposed |
+| M3.2 | API writes: `productVariantStocksCreate` / `productVariantStocksUpdate` / `productVariantStocksDelete` (Saleor's args, `BulkStockError` codes), `stocks` on `productVariantCreate`; `ProductWhereInput.stockAvailability`; stock rows locked like variants (product → variant → stock) | Proposed |
+| M3.3 | Dashboard: Saleor's Inventory card stock table on the variant page (warehouse, Allocated, Quantity input, Assign Warehouse, remove) saved with Saleor's composite `VariantUpdate` (stocks delete/create/update + variant update); stocks on the variant create page; "Stock" column in the product's Variants card | Proposed |
+
+- **Acceptance:** CHECK violations proven by tests; staff set a quantity on the variant page and see
+  it in the Variants card and through `quantityAvailable`; `stockAvailability` filters correctly.
+- **Out of scope:** reservations (ARCHITECTURE §5.3), preorders, stock history/adjustment log,
+  multiple warehouses, warehouse addresses/pages, stock import.
 
 ## M5 — Checkout
 - **M5.1 Cart:** `checkoutCreate`, `checkoutLinesAdd/Update/Delete`, live price calculation,
