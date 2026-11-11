@@ -4,7 +4,7 @@
 // Saleor's TokenArray, reduced: no attribute tokens, and no Array subclass. Invalid entries are
 // skipped, never thrown. `asFilterValuesFromResponse` is what fills the names of the categories a
 // reloaded URL selected; without a response, values stay the raw URL strings.
-import type { InitialProductStateResponse } from "../../API/initialState/product/InitialProductStateResponse";
+import type { InitialStateResponse } from "../../API/initialState/InitialStateResponse";
 import { type FilterContainer, FilterElement } from "../../FilterElement/FilterElement";
 import { UrlToken } from "../UrlToken";
 import type { Structure } from "../utils";
@@ -24,8 +24,8 @@ export class TokenArray {
     return this.toFilterContainer();
   }
 
-  /** The same rows, with the loaded values (category names) in place of raw URL values. */
-  public asFilterValuesFromResponse(response: InitialProductStateResponse): FilterContainer {
+  /** The same rows, with the loaded labels (category names, status names) in place of raw URL values. */
+  public asFilterValuesFromResponse(response: InitialStateResponse): FilterContainer {
     return this.toFilterContainer(response);
   }
 
@@ -50,7 +50,7 @@ export class TokenArray {
     return { category };
   }
 
-  private toFilterContainer(response?: InitialProductStateResponse): FilterContainer {
+  private toFilterContainer(response?: InitialStateResponse): FilterContainer {
     const container: FilterContainer = [];
 
     for (const entry of this.entries) {

@@ -14,7 +14,7 @@ import {
 import { ConditionSelected } from "./FilterElement/ConditionSelected";
 import type { ConditionValue } from "./FilterElement/ConditionValue";
 import { ExpressionValue, FilterElement } from "./FilterElement/FilterElement";
-import { createProductQueryVariables } from "./queryVariables";
+import { createOrderQueryVariables, createProductQueryVariables } from "./queryVariables";
 import { parseFilterContainer } from "./ValueProvider/TokenArray";
 
 const conditionItem = (field: StaticElementName, label: string): ConditionItem => {
@@ -99,5 +99,36 @@ describe("ConditionalFilter / queryVariables / createProductQueryVariables", () 
 
   it("skips empty rows", () => {
     expect(createProductQueryVariables([element("price", "is", "")])).toBeNull();
+  });
+});
+
+describe("createOrderQueryVariables", () => {
+  const orderWhereOfUrl = (search: string) =>
+    createOrderQueryVariables(parseFilterContainer(search));
+
+  it("maps `is` to eq and `in` to oneOf, from the URL", () => {
+    expect(orderWhereOfUrl("0[s0.status]=UNFULFILLED")).toEqual({
+      status: { eq: "UNFULFILLED" },
+    });
+    expect(orderWhereOfUrl("0[s2.status][0]=FULFILLED&0[s2.status][1]=CANCELED")).toEqual({
+      status: { oneOf: ["FULFILLED", "CANCELED"] },
+    });
+  });
+
+  it("reads picked options", () => {
+    const option = { label: "Unfulfilled", value: "UNFULFILLED", slug: "UNFULFILLED" };
+
+    expect(createOrderQueryVariables([element("status", "is", option)])).toEqual({
+      status: { eq: "UNFULFILLED" },
+    });
+    expect(createOrderQueryVariables([element("status", "in", [option])])).toEqual({
+      status: { oneOf: ["UNFULFILLED"] },
+    });
+  });
+
+  it("ignores unknown statuses, other fields and empty rows", () => {
+    expect(orderWhereOfUrl("0[s0.status]=DRAFT")).toBeNull();
+    expect(orderWhereOfUrl("0[s0.isPublished]=true")).toBeNull();
+    expect(createOrderQueryVariables([element("status", "in", [])])).toBeNull();
   });
 });

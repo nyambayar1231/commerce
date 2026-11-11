@@ -5,8 +5,8 @@
 // system, attribute selection and attribute loading state are dropped: they serve filters we
 // don't support yet. The right-hand option/loading updates are kept for the category picker.
 
-import type { InitialProductStateResponse } from "../API/initialState/product/InitialProductStateResponse";
-import { STATIC_PRODUCT_OPTIONS } from "../constants";
+import type { InitialStateResponse } from "../API/initialState/InitialStateResponse";
+import { STATIC_OPTIONS } from "../constants";
 import type { LeftOperand } from "../LeftOperandsProvider";
 import { UrlEntry, type UrlToken } from "../ValueProvider/UrlToken";
 import { Condition } from "./Condition";
@@ -31,7 +31,7 @@ export class ExpressionValue {
 
   /** The label and type of the left operand named by `slug`, or the slug itself when unknown. */
   public static fromSlug(slug: string) {
-    const option = STATIC_PRODUCT_OPTIONS.find((o) => o.slug === slug);
+    const option = STATIC_OPTIONS.find((o) => o.slug === slug);
 
     if (!option) {
       return new ExpressionValue(slug, slug, slug);
@@ -105,7 +105,7 @@ export class FilterElement {
   /** null when the token names an unknown field, condition or malformed value. */
   public static fromUrlToken(
     token: UrlToken,
-    response?: InitialProductStateResponse,
+    response?: InitialStateResponse,
   ): FilterElement | null {
     if (!token.isStatic() || !ConditionOptions.isStaticName(token.name)) {
       return null;

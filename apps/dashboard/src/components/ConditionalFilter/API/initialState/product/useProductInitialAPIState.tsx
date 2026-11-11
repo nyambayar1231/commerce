@@ -15,6 +15,7 @@ import {
 } from "../../../../../graphql/types.generated";
 import { useNotifier } from "../../../../../hooks/useNotifier/useNotifier";
 import { createOptionsFromAPI } from "../../Handler";
+import type { InitialAPIState } from "../InitialStateResponse";
 import { InitialProductStateResponse } from "./InitialProductStateResponse";
 
 export interface FetchingParams {
@@ -22,10 +23,8 @@ export interface FetchingParams {
   category: string[];
 }
 
-export interface InitialProductAPIState {
+export interface InitialProductAPIState extends InitialAPIState {
   data: InitialProductStateResponse;
-  loading: boolean;
-  fetchQueries: (params: FetchingParams) => Promise<void>;
 }
 
 export const useProductInitialAPIState = (): InitialProductAPIState => {

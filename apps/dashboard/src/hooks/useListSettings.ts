@@ -21,7 +21,22 @@ export const PRODUCT_LIST_DEFAULT_COLUMNS = [
   "created",
 ];
 
-export type ListViews = "CATEGORY_LIST" | "COLLECTION_PRODUCTS_LIST" | "PRODUCT_LIST";
+// Saleor's ORDER_LIST default columns minus delivery, net and channel, which our order list cannot
+// show (single channel, no delivery methods or net subtotal in the list query).
+export const ORDER_LIST_DEFAULT_COLUMNS = [
+  "number",
+  "date",
+  "customer",
+  "payment",
+  "status",
+  "total",
+];
+
+export type ListViews =
+  | "CATEGORY_LIST"
+  | "COLLECTION_PRODUCTS_LIST"
+  | "ORDER_LIST"
+  | "PRODUCT_LIST";
 
 export interface ListSettings {
   columns?: string[];
@@ -39,6 +54,10 @@ const defaultListSettings: AppListViewSettings = {
   CATEGORY_LIST: { rowNumber: PAGINATE_BY },
   // Saleor's CategoryProducts uses ListViews.COLLECTION_PRODUCTS_LIST for the card's row count.
   COLLECTION_PRODUCTS_LIST: { rowNumber: PAGINATE_BY },
+  ORDER_LIST: {
+    rowNumber: PAGINATE_BY,
+    columns: ORDER_LIST_DEFAULT_COLUMNS,
+  },
   PRODUCT_LIST: {
     rowNumber: PAGINATE_BY,
     columns: PRODUCT_LIST_DEFAULT_COLUMNS,

@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 
-import type { InitialProductAPIState } from "../API/initialState/product/useProductInitialAPIState";
+import type { InitialAPIState } from "../API/initialState/InitialStateResponse";
 import { cloneFilterContainer, type FilterContainer } from "../FilterElement/FilterElement";
 import type { FilterValueProvider } from "../FilterValueProvider";
 import { stringifyFilterQuery, TokenArray } from "./TokenArray";
@@ -39,7 +39,7 @@ const buildSearch = (
 
 export const useUrlValueProvider = (
   locationSearch: string,
-  initialState: InitialProductAPIState,
+  initialState: InitialAPIState,
 ): FilterValueProvider => {
   const navigate = useNavigate();
   const location = useLocation();

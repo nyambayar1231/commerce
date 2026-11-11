@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import useListSettings, {
   listSettingsStorageKey,
+  ORDER_LIST_DEFAULT_COLUMNS,
   PAGINATE_BY,
   PRODUCT_LIST_DEFAULT_COLUMNS,
 } from "./useListSettings";
@@ -38,6 +39,7 @@ describe("useListSettings", () => {
     expect(JSON.parse(localStorage.getItem(listSettingsStorageKey) ?? "{}")).toEqual({
       CATEGORY_LIST: { rowNumber: 50 },
       COLLECTION_PRODUCTS_LIST: { rowNumber: PAGINATE_BY },
+      ORDER_LIST: { columns: ORDER_LIST_DEFAULT_COLUMNS, rowNumber: PAGINATE_BY },
       PRODUCT_LIST: { columns: PRODUCT_LIST_DEFAULT_COLUMNS, rowNumber: PAGINATE_BY },
     });
   });

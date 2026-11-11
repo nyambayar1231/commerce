@@ -5,12 +5,13 @@
 // (attributes, channels, collections, product types…); category is our only one.
 import type { ItemOption } from "../../../FilterElement/ConditionValue";
 import type { UrlToken } from "../../../ValueProvider/UrlToken";
+import type { InitialStateResponse } from "../InitialStateResponse";
 
 export interface InitialProductState {
   category: ItemOption[];
 }
 
-export class InitialProductStateResponse implements InitialProductState {
+export class InitialProductStateResponse implements InitialProductState, InitialStateResponse {
   constructor(public category: ItemOption[] = []) {}
 
   public static empty() {
@@ -22,6 +23,10 @@ export class InitialProductStateResponse implements InitialProductState {
    * holds slugs; our URL holds category global IDs, so the match is on the option's value.
    */
   public filterByUrlToken(token: UrlToken): ItemOption[] {
+    if (token.name !== "category") {
+      return [];
+    }
+
     const values = Array.isArray(token.value) ? token.value : [token.value];
 
     return this.category.filter((option) => values.includes(option.value));

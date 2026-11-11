@@ -1,11 +1,16 @@
 // Adapted from saleor-dashboard: src/components/ConditionalFilter/queryVariables.ts
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The product list's `where` variables. Saleor routes every field through
+// The product and order lists' `where` variables. Saleor routes every field through
 // FiltersQueryBuilder + QueryVarsBuilderUtils; we keep the same output shape for the five fields
 // our API answers and write the mapping explicitly, one branch per field (ARCHITECTURE.md §9.3:
 // no generic filter engine on either side).
-import type { ProductWhereInput } from "../../graphql/types.generated";
+import type {
+  OrderStatus,
+  OrderWhereInput,
+  ProductWhereInput,
+} from "../../graphql/types.generated";
+import { ORDER_STATUSES } from "./constants";
 import { type ConditionValue, isItemOption } from "./FilterElement/ConditionValue";
 import { type FilterContainer, FilterElement } from "./FilterElement/FilterElement";
 
@@ -151,4 +156,34 @@ export const createProductQueryVariables = (
   }
 
   return { AND: filters };
+};
+
+const isOrderStatus = (value: string): value is OrderStatus =>
+  (ORDER_STATUSES as string[]).includes(value);
+
+/**
+ * The `where` argument of the order list query, or null when no filter applies. Status is the only
+ * field (Saleor's `status: { eq | oneOf }`), and it occurs at most once.
+ */
+export const createOrderQueryVariables = (
+  filterContainer: FilterContainer,
+): OrderWhereInput | null => {
+  const element = filterContainer
+    .filter(FilterElement.isFilterElement)
+    .find((element) => element.value.value === "status" && !element.isEmpty());
+
+  if (!element) {
+    return null;
+  }
+
+  const { value, conditionValue } = element.condition.selected;
+  const statuses = valueStrings(value).filter(isOrderStatus);
+
+  if (conditionValue?.label === "is") {
+    const [status] = statuses;
+
+    return status ? { status: { eq: status } } : null;
+  }
+
+  return statuses.length > 0 ? { status: { oneOf: statuses } } : null;
 };

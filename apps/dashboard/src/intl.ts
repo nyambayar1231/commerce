@@ -93,6 +93,11 @@ export const sectionNames = defineMessages({
     defaultMessage: "Customers",
     description: "customers section name",
   },
+  fulfillment: {
+    id: "9XYfOt",
+    defaultMessage: "Fulfillment",
+    description: "fulfillment section name",
+  },
   home: {
     id: "4JW9iJ",
     defaultMessage: "Home",
@@ -107,5 +112,81 @@ export const sectionNames = defineMessages({
     id: "K8xNLe",
     defaultMessage: "Products",
     description: "products section name",
+  },
+});
+
+// Saleor's commonStatusMessages, orderStatusMessages and paymentStatusMessages, limited to the
+// statuses our orders can have (no draft, unconfirmed, returned or expired orders).
+export const commonStatusMessages = defineMessages({
+  cancelled: {
+    id: "dOQB9o",
+    defaultMessage: "Cancelled",
+    description: "payment status",
+  },
+});
+
+export const orderStatusMessages = defineMessages({
+  fulfilled: {
+    id: "pkjXPD",
+    defaultMessage: "Fulfilled",
+    description: "order status",
+  },
+  partiallyFulfilled: {
+    id: "PbqNhi",
+    defaultMessage: "Partially fulfilled",
+    description: "order status",
+  },
+  unfulfilled: {
+    id: "oB0y5Y",
+    defaultMessage: "Unfulfilled",
+    description: "order status",
+  },
+});
+
+export const paymentStatusMessages = defineMessages({
+  paid: {
+    id: "2pw5dQ",
+    defaultMessage: "Fully paid",
+    description: "payment status",
+  },
+  partiallyPaid: {
+    id: "INNPVX",
+    defaultMessage: "Partially paid",
+    description: "payment status",
+  },
+  partiallyRefunded: {
+    id: "OGemtu",
+    defaultMessage: "Partially refunded",
+    description: "payment status",
+  },
+  refunded: {
+    id: "XJSRDK",
+    defaultMessage: "Fully refunded",
+    description: "payment status",
+  },
+  unpaid: {
+    id: "FBtqtl",
+    defaultMessage: "Unpaid",
+    description: "payment status",
+  },
+  pending: {
+    id: "hLUYBt",
+    defaultMessage: "Pending",
+    description: "payment status",
+  },
+  authorized: {
+    id: "SJhFLU",
+    defaultMessage: "Authorised",
+    description: "payment status",
+  },
+  partiallyAuthorized: {
+    id: "IIlJDr",
+    defaultMessage: "Partially authorised",
+    description: "payment status",
+  },
+  overcharged: {
+    id: "4VLj3S",
+    defaultMessage: "Overcharged",
+    description: "overcharged order status",
   },
 });

@@ -64,12 +64,22 @@ export function useMenuStructure(): SidebarMenuItem[] {
       type: "itemGroup",
     },
     {
+      // Saleor's Fulfillment group; its "Draft orders" item is left out (no draft orders).
+      children: [
+        {
+          label: intl.formatMessage(sectionNames.orders),
+          permissions: ["MANAGE_ORDERS"],
+          id: "orders",
+          url: "/orders/",
+          type: "item",
+        },
+      ],
       icon: renderIcon(<OrdersIcon />),
-      label: intl.formatMessage(sectionNames.orders),
+      label: intl.formatMessage(sectionNames.fulfillment),
+      permissions: ["MANAGE_ORDERS"],
       id: "orders",
       url: "/orders/",
-      permissions: ["MANAGE_ORDERS"],
-      type: "item",
+      type: "itemGroup",
     },
     {
       icon: renderIcon(<CustomersIcon />),

@@ -144,6 +144,14 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   orders list sorts timestamps by epoch microseconds instead). Likely the same in other date-sorted
   lists built on that pattern.
 
+- **M6.2 (order list) left out or different from Saleor, awaiting the owner's OK:** no "Create
+  order" button (no draft orders), help link, GraphiQL/settings menu, filter presets or search
+  tooltip; no Net, Delivery or Channel columns and no empty spacer column; the menu's Fulfillment
+  group has only Orders; a URL without a sort is redirected to number descending (Saleor's
+  effective default); search keeps the chosen sort (Saleor: `rank`); pill colors are OKLCH only (no
+  chroma-js fallback); a row opens the not-found page until M6.3. Found, not fixed: the sort arrow
+  doesn't show in list headers (the product list too, so it predates M6.2).
+
 ---
 
 ## M6 — Orders (API + dashboard)
@@ -184,7 +192,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | Step | What | Status |
 |---|---|---|
 | M6.1 | API reads: `orders` connection (`MANAGE_ORDERS`) with Saleor's `sortBy` (number, date, customer, payment, status), `search` (number, email), `where: { status }`; order payment fields (decision 6); order history `user`; loaders | Done |
-| M6.2 | Dashboard order list: Orders menu item, Saleor's OrderListPage + datagrid (number, date, customer, payment, status, total), status filter, pagination, column settings | Proposed |
+| M6.2 | Dashboard order list: Orders menu item, Saleor's OrderListPage + datagrid (number, date, customer, payment, status, total), status filter, pagination, column settings | Done |
 | M6.3 | Dashboard order detail (read-only): title with status pill, unfulfilled lines, summary, transactions section, customer card, history | Proposed |
 | M6.4 | API lifecycle: `fulfillment` + `fulfillment_line` tables, `orderFulfill` (decrease stock + allocations, status recompute), `orderCancel` (deallocate), `orderMarkAsPaid`, `transactionRequestAction(REFUND)`; order events; concurrency tests | Proposed |
 | M6.5 | Dashboard actions: Fulfill page, fulfillment cards, cancel dialog, mark-as-paid dialog, refund action on the transaction tile | Proposed |

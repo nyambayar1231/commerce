@@ -11,6 +11,7 @@ import { PlaceholderPage } from "./components/PlaceholderPage/PlaceholderPage";
 import { CONFIGURATION_PERMISSIONS } from "./components/Sidebar/menu/hooks/useMenuStructure";
 import { sectionNames } from "./intl";
 import { NotFound } from "./NotFound";
+import { OrderSection } from "./orders";
 import { ProductSection } from "./products";
 
 // Saleor's top-level <Switch> (src/index.tsx), limited to the sections on our roadmap.
@@ -60,7 +61,7 @@ function Dashboard() {
             path="/orders/*"
             element={
               <SectionRoute permissions={["MANAGE_ORDERS"]}>
-                <PlaceholderPage title={sectionNames.orders} />
+                <OrderSection />
               </SectionRoute>
             }
           />

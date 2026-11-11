@@ -4,9 +4,11 @@
 // A left operand's condition options plus the selected one. Unlike Saleor we have no initial
 // option response to look values up in for static fields: the value comes straight from the URL
 // and is validated per field here, so an invalid entry becomes an ignorable element instead of
-// crashing the page. The exception is category, whose URL holds global IDs: the loaded options
-// replace the raw IDs so the row shows names (Saleor's `filterByUrlToken`).
-import type { InitialProductStateResponse } from "../API/initialState/product/InitialProductStateResponse";
+// crashing the page. The exceptions are category, whose URL holds global IDs, and the order
+// status, whose URL holds enum values: the loaded options replace the raw values so the row shows
+// names (Saleor's `filterByUrlToken`).
+import type { InitialStateResponse } from "../API/initialState/InitialStateResponse";
+import { ORDER_STATUSES } from "../constants";
 import type { UrlToken } from "../ValueProvider/UrlToken";
 import { ConditionOptions, type StaticElementName } from "./ConditionOptions";
 import { ConditionSelected } from "./ConditionSelected";
@@ -17,6 +19,7 @@ const DECIMAL = /^-?\d+(\.\d+)?$/;
 const isDecimal = (value: string): boolean => DECIMAL.test(value);
 const isBoolean = (value: string): boolean => value === "true" || value === "false";
 const isDate = (value: string): boolean => !Number.isNaN(new Date(value).getTime());
+const isOrderStatus = (value: string): boolean => (ORDER_STATUSES as string[]).includes(value);
 
 const toValues = (value: string | string[]): string[] => (Array.isArray(value) ? value : [value]);
 
@@ -63,6 +66,15 @@ function valueFromToken(
         : single(tokenValue, isDecimal);
     case "updatedAt":
       return conditionLabel === "between" ? pair(tokenValue, isDate) : single(tokenValue, isDate);
+    case "status": {
+      if (conditionLabel === "is") {
+        return single(tokenValue, isOrderStatus);
+      }
+
+      const values = toValues(tokenValue);
+
+      return values.length > 0 && values.every(isOrderStatus) ? values : null;
+    }
     default:
       return null;
   }
@@ -93,10 +105,7 @@ export class Condition {
   }
 
   /** null when the token names no condition this field supports or its value is malformed. */
-  public static fromUrlToken(
-    token: UrlToken,
-    response?: InitialProductStateResponse,
-  ): Condition | null {
+  public static fromUrlToken(token: UrlToken, response?: InitialStateResponse): Condition | null {
     if (!ConditionOptions.isStaticName(token.name)) {
       return null;
     }
@@ -110,9 +119,10 @@ export class Condition {
       return null;
     }
 
-    // Category values are global IDs: use the loaded options so the row shows names. When none
-    // of the IDs is known (deleted category, failed lookup) keep the raw values as before.
-    if (token.name === "category" && response) {
+    // Category values are global IDs and status values enum names: use the loaded options so the
+    // row shows names. When none of the values is known (deleted category, failed lookup) keep
+    // the raw values as before.
+    if ((token.name === "category" || token.name === "status") && response) {
       const loaded = response.filterByUrlToken(token);
       const [first] = loaded;
 

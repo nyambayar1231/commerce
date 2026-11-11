@@ -38,7 +38,7 @@ import type { NavigateOptions } from "react-router";
 import { DashboardCard } from "../Card";
 import { Placeholder } from "../Placeholder/Placeholder";
 import { DEFAULT_ROW_MARKER_WIDTH } from "./const";
-import { customRenderers } from "./customCells/customRenderers";
+import { useCustomCellRenderers } from "./customCells/customRenderers";
 import styles from "./Datagrid.module.css";
 import { headerIcons } from "./headerIcons";
 import { usePointerDragClickGuard } from "./hooks/usePointerDragClickGuard";
@@ -128,6 +128,7 @@ export const Datagrid = ({
   rowMarkerTheme: rowMarkerThemeOverride,
 }: DatagridProps): ReactElement => {
   const { themeValues, theme } = useTheme();
+  const customRenderers = useCustomCellRenderers();
   const datagridTheme = useDatagridTheme(readonly);
   const finalTheme = useMemo(
     () => ({ ...datagridTheme, ...themeOverride }),

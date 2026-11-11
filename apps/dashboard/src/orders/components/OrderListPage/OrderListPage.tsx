@@ -1,0 +1,52 @@
+// Adapted from saleor-dashboard: src/orders/components/OrderListPage/OrderListPage.tsx
+// (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+// See THIRD_PARTY_LICENSES.md
+// The header and card. Saleor shows "All orders" as the label of its filter-presets dropdown next
+// to a hidden TopNav title; without presets we show that label as text. Then Saleor's card: the
+// status filter and search, and the datagrid with its pagination. Left out: the "Create order"
+// button (no draft orders, M6 out of scope), the help link, the GraphiQL/settings menu, limits,
+// extensions and the search syntax tooltip.
+import { Box, Text } from "@saleor/macaw-ui";
+import type { ComponentProps } from "react";
+import { FormattedMessage, useIntl } from "react-intl";
+
+import { ListFilters } from "../../../components/AppLayout/ListFilters/ListFilters";
+import { TopNav } from "../../../components/AppLayout/TopNav";
+import { DashboardCard } from "../../../components/Card";
+import { ListPageLayout } from "../../../components/Layouts/List/Root";
+import { sectionNames } from "../../../intl";
+import { OrderListDatagrid } from "../OrderListDatagrid/OrderListDatagrid";
+import { messages } from "./messages";
+
+interface OrderListPageProps extends ComponentProps<typeof OrderListDatagrid> {
+  initialSearch: string;
+  onSearchChange: (query: string) => void;
+}
+
+export const OrderListPage = ({
+  initialSearch,
+  onSearchChange,
+  ...listProps
+}: OrderListPageProps) => {
+  const intl = useIntl();
+
+  return (
+    <ListPageLayout>
+      <TopNav title={intl.formatMessage(sectionNames.orders)} withoutBorder isAlignToRight={false}>
+        <Box __flex={1} display="flex" justifyContent="space-between" alignItems="center">
+          <Text size={6}>
+            <FormattedMessage {...messages.allOrders} />
+          </Text>
+        </Box>
+      </TopNav>
+      <DashboardCard>
+        <ListFilters
+          initialSearch={initialSearch}
+          searchPlaceholder={intl.formatMessage(messages.searchOrders)}
+          onSearchChange={onSearchChange}
+        />
+        <OrderListDatagrid {...listProps} />
+      </DashboardCard>
+    </ListPageLayout>
+  );
+};

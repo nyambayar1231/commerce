@@ -9,6 +9,10 @@ import {
   type Theme,
 } from "@glideapps/glide-data-grid";
 
+import type { DateCell } from "./DateCell";
+import type { MoneyCell } from "./MoneyCell";
+import type { PillCell, PillColor } from "./PillCell";
+
 export function readonlyTextCell(
   value: string,
   hasCursorPointer = true,
@@ -110,5 +114,56 @@ export function thumbnailCell(
       image,
       name,
     },
+  };
+}
+
+/** Saleor's moneyCell, read-only: an amount right-aligned with its currency. */
+export function moneyCell(
+  value: number | null,
+  currency: string,
+  opts?: Partial<GridCell>,
+): MoneyCell {
+  return {
+    allowOverlay: false,
+    readonly: true,
+    ...opts,
+    kind: GridCellKind.Custom,
+    data: {
+      kind: "money-cell",
+      value,
+      currency,
+    },
+    copyData: value?.toString() ?? "",
+  };
+}
+
+/** Saleor's pillCell: a colored status pill (the order list's payment and status columns). */
+export function pillCell(value: string, color: PillColor, opts?: Partial<GridCell>): PillCell {
+  return {
+    allowOverlay: false,
+    readonly: true,
+    ...opts,
+    copyData: value ?? "",
+    data: {
+      kind: "auto-tags-cell",
+      value,
+      color,
+    },
+    kind: GridCellKind.Custom,
+  };
+}
+
+/** Saleor's dateCell: an ISO date-time drawn as date and time. */
+export function dateCell(value: string, opts?: Partial<GridCell>): DateCell {
+  return {
+    allowOverlay: false,
+    readonly: true,
+    ...opts,
+    copyData: value ?? "",
+    data: {
+      kind: "date-cell",
+      value,
+    },
+    kind: GridCellKind.Custom,
   };
 }
