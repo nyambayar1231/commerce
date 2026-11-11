@@ -7,12 +7,6 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M2 | Catalog | Approved |
-| M2.1 | Categories end-to-end (first Glide list + first save-bar form) | Done |
-| M2.2 | Products & variants API + product list grid | Done |
-| M2.3 | Product list filtering (URL state → variables → where → SQL) | Done |
-| M2.4 | Product create/update form | Done |
-| M2.5 | Product media | Done |
 | M3 | Inventory: warehouse, stock, availability | Draft |
 | M5 | Checkout | Draft |
 | M5.1 | Cart: checkout + lines | Draft |
@@ -29,7 +23,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
-(foundations), M1 (identity: staff auth & permissions).
+(foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11).
 
 ## Open items from finished milestones
 
@@ -134,54 +128,9 @@ Awaiting the owner's approval (each was reported when its step finished):
     translations button on the image page; an unknown image id shows NotFound (Saleor: endless
     skeleton); the alt field shows the API's error message (Saleor shows none); Save is disabled
     without changes; the product list has no tile view.
-  - **Awaiting approval:** a failed upload shows a toast per file with the API's reason, titled
-    with the file name, before Saleor's "Couldn't process image" summary (Saleor shows only the
-    summary). Kept because the queue's type+title dedup would otherwise hide the reason.
-
----
-
-## M2 — Catalog
-
-**Approved by the owner (2026-11-09), with every decision below as recommended.** Each step is one
-commit with a report. Owner priority: creating a category exactly like Saleor comes first, so M2.1
-starts with the create flow and the list follows.
-
-**Decisions (accepted 2026-11-09):**
-1. **New dependencies** (CLAUDE.md asks first): `@pothos/plugin-relay` (Node interface, cursor
-   connections; global IDs still encoded/decoded by `graphql/globalId.ts`) in M2.1.5; `@glideapps/glide-data-grid`
-   (+ its peer deps, the versions Saleor pins) in M2.1.7; `dataloader` in M2.2.3.
-2. **Category tree in the list:** as the running Saleor 3.23: top-level rows that expand to show
-   subcategories ("Collapse all"), plus the detail page's Subcategories card. (The draft assumed a
-   top-level-only list; the real dashboard checked on 2026-11-09 shows expandable rows.)
-3. **Category delete:** Saleor deletes the subtree (`CASCADE`) and leaves products without a
-   category (`SET_NULL`). Recommended: same, so `product.category_id` is nullable (M2.2).
-4. **Category fields in v1:** name, slug, description (stored as EditorJS JSON like Saleor; the
-   create dialog takes plain text as Saleor's does; the detail page's editor is plain text until a
-   rich-text editor is chosen), parent. Left out: background image (needs M2.5 storage), SEO fields, metadata.
-5. **Product types:** none (ARCHITECTURE §3). The create flow in M2.4 is a simple dialog (name +
-   category), not Saleor's product-type picker.
-6. **Media upload (M2.5):** GraphQL multipart (Saleor's `productMediaCreate(image: Upload)`) vs a
-   REST endpoint. Recommended: GraphQL multipart, as Saleor; Yoga supports it built-in.
-
-### M2.1 Categories end-to-end — Done (2026-11-09)
-
-Open items are listed under "Open items from finished milestones".
-
-### M2.2 Products & variants API + list grid — Done (2026-11-10)
-
-Open items are listed under "Open items from finished milestones".
-
-### M2.3 Product list filtering — Done (2026-11-10)
-
-Open items are listed under "Open items from finished milestones".
-
-### M2.4 Product create/update form — Done (2026-11-10)
-
-Open items are listed under "Open items from finished milestones".
-
-### M2.5 Product media — Done (2026-11-11)
-
-Open items are listed under "Open items from finished milestones".
+  - Owner decision (2026-11-11): a failed upload shows a toast per file with the API's reason,
+    titled with the file name, before Saleor's "Couldn't process image" summary (Saleor shows only
+    the summary).
 
 ---
 
