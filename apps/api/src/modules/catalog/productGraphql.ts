@@ -309,6 +309,19 @@ builder.node(ProductType, {
       description: "List of media for the product.",
       resolve: (product, _args, ctx) => ctx.loaders.mediaByProductId.load(product.id),
     }),
+    mediaById: t.field({
+      type: ProductMediaType,
+      nullable: true,
+      description: "Get a single product media by ID.",
+      args: { id: t.arg.id({ required: true, description: "ID of a product media." }) },
+      // Saleor's resolve_media_by_id: the media must belong to this product, else null. The id's
+      // type and shape are checked first, so a malformed id is a top-level error, not null.
+      resolve: async (product, { id }, ctx) => {
+        const mediaId = fromGlobalId("ProductMedia", String(id));
+        const media = await ctx.loaders.mediaByProductId.load(product.id);
+        return media.find((row) => row.id === mediaId) ?? null;
+      },
+    }),
     thumbnail: t.field({
       type: ImageType,
       nullable: true,

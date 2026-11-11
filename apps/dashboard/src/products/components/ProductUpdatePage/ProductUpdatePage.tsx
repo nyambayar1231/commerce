@@ -25,7 +25,12 @@ import type {
   ProductErrorFragment,
   ProductMediaCreateMutation,
 } from "../../../graphql/types.generated";
-import { productListPath, productVariantAddUrl, productVariantEditUrl } from "../../urls";
+import {
+  productImageUrl,
+  productListPath,
+  productVariantAddUrl,
+  productVariantEditUrl,
+} from "../../urls";
 import { ProductAvailabilityCard } from "../ProductAvailabilityCard/ProductAvailabilityCard";
 import { ProductDetailsForm } from "../ProductDetailsForm/ProductDetailsForm";
 import { type ImagesUploadCompleteResult, ProductMedia } from "../ProductMedia/ProductMedia";
@@ -135,6 +140,9 @@ export const ProductUpdatePage = ({
               onImageUpload={onImageUpload}
               onImagesUploadComplete={onImagesUploadComplete}
               onImageDelete={onImageDelete}
+              getImageEditHref={
+                product ? (mediaId) => productImageUrl(product.id, mediaId) : undefined
+              }
               onImageReorder={onImageReorder}
             />
             {product ? (

@@ -4,6 +4,8 @@ import { parseFilterContainer } from "../components/ConditionalFilter/ValueProvi
 import {
   getFiltersUrlParams,
   parseProductListUrl,
+  productImagePath,
+  productImageUrl,
   productListUrl,
   productPath,
   productUrl,
@@ -44,6 +46,19 @@ describe("product urls", () => {
     );
     expect(productVariantAddPath("UHJvZHVjdDox")).toBe("/products/UHJvZHVjdDox/variant/add");
     expect(productVariantAddUrl("a=")).toBe("/products/a%3D/variant/add?");
+  });
+
+  it("builds Saleor's image page URL and its remove dialog", () => {
+    expect(productImagePath("UHJvZHVjdDox", "UHJvZHVjdE1lZGlhOjE=")).toBe(
+      "/products/UHJvZHVjdDox/image/UHJvZHVjdE1lZGlhOjE=",
+    );
+    expect(productImageUrl("UHJvZHVjdDox", "UHJvZHVjdE1lZGlhOjE=")).toBe(
+      "/products/UHJvZHVjdDox/image/UHJvZHVjdE1lZGlhOjE%3D?",
+    );
+    expect(productImageUrl("a=", "b=")).toBe("/products/a%3D/image/b%3D?");
+    expect(productImageUrl("UHJvZHVjdDox", "UHJvZHVjdE1lZGlhOjE=", { action: "remove" })).toBe(
+      "/products/UHJvZHVjdDox/image/UHJvZHVjdE1lZGlhOjE%3D?action=remove",
+    );
   });
 
   it("parses the list params, round-tripping what it builds", () => {

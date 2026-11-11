@@ -12,7 +12,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | M2.2 | Products & variants API + product list grid | Done |
 | M2.3 | Product list filtering (URL state → variables → where → SQL) | Done |
 | M2.4 | Product create/update form | Done |
-| M2.5 | Product media | In progress |
+| M2.5 | Product media | Done |
 | M3 | Inventory: warehouse, stock, availability | Draft |
 | M5 | Checkout | Draft |
 | M5.1 | Cart: checkout + lines | Draft |
@@ -121,6 +121,23 @@ Awaiting the owner's approval (each was reported when its step finished):
     `makeQuery` default). Today only the product list uses it; other lists (e.g. categories)
     keep showing cached data until a reload.
 
+- **M2.5 (product media) left out or different from Saleor:**
+  - Owner decisions (2026-11-10/11): S3 from the start, SeaweedFS in dev/tests, `sharp`,
+    JPEG/PNG/WebP/GIF up to 10 MB (ADR-0014); drag reorder with `@dnd-kit`; single delete only;
+    native file drop (no `react-dropzone`); uploads via `apollo-upload-client` 18.0.1 (the Apollo
+    Client 3 line).
+  - API: images only (no `mediaUrl`/oEmbed/video); `ProductMedia.url` without `size` is the
+    original (Saleor: 4096 thumbnail); thumbnails are auto-oriented from EXIF (Saleor doesn't);
+    reorder maps an unknown id to `NOT_PRODUCTS_IMAGE` (Saleor: `NOT_FOUND`); no original-image
+    proxy (`/thumbnail/<id>/`), no `productMediaBulkDelete`, no rate limiting on `/thumbnail/` (M9).
+  - Dashboard: no "Upload URL", no tile selection / Select all / Delete (n), no metadata dialog or
+    translations button on the image page; an unknown image id shows NotFound (Saleor: endless
+    skeleton); the alt field shows the API's error message (Saleor shows none); Save is disabled
+    without changes; the product list has no tile view.
+  - **Awaiting approval:** a failed upload shows a toast per file with the API's reason, titled
+    with the file name, before Saleor's "Couldn't process image" summary (Saleor shows only the
+    summary). Kept because the queue's type+title dedup would otherwise hide the reason.
+
 ---
 
 ## M2 — Catalog
@@ -162,23 +179,9 @@ Open items are listed under "Open items from finished milestones".
 
 Open items are listed under "Open items from finished milestones".
 
-### M2.5 Product media
-- Scope: product images in S3-compatible storage behind a small `storage` interface, upload via
-  GraphQL multipart (M2 decision 6), Saleor's on-demand thumbnails, media reorder.
-- **Decisions (owner, 2026-11-10):** S3 from the start with an S3 server in docker-compose for dev
-  and tests (SeaweedFS, as MinIO's images are discontinued); resizing with `sharp`;
-  JPEG/PNG/WebP/GIF up to 10 MB. Design in ADR-0014 (Accepted 2026-11-10).
-- AWS account, bucket, credentials and CloudFront are the owner's setup; checklist in M9.
-- Status: In progress.
+### M2.5 Product media — Done (2026-11-11)
 
-| Step | What | Status |
-|---|---|---|
-| M2.5.0 | ADR-0014; SeaweedFS `s3` service in docker-compose (`pnpm db:up` starts it); `@aws-sdk/client-s3` + `sharp` added; env vars in `.env.example` | Done |
-| M2.5.1 | `storage` module (S3 client, ensureBucket, test bucket setup, `pnpm cli create-media-bucket`); `product_media` + `product_media_thumbnail` tables; `ProductMedia` type and `Product.media`; tests against the local S3 | Done |
-| M2.5.2a | `Upload` scalar; `productMediaCreate` (multipart, magic-byte type check, 10 MiB, sharp decode), `productMediaUpdate` (alt), `productMediaDelete` (objects removed after commit), `productMediaReorder`; tests | Done |
-| M2.5.2b | `/thumbnail/…` endpoint (sharp, stored + recorded, 302) + `ProductMedia.url(size, format)` + `Product.thumbnail`; tests | Done |
-| M2.5.3a | Dashboard Media card: upload (button + native file drop, multipart Apollo link), tiles, delete dialog, drag reorder (`@dnd-kit`, owner 2026-11-11); single delete only | Done |
-| M2.5.3b | Image detail page (alt, navigation, delete) + product list thumbnail | Proposed |
+Open items are listed under "Open items from finished milestones".
 
 ---
 

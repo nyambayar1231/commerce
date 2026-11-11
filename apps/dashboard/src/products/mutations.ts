@@ -76,6 +76,25 @@ export const productMediaCreateMutation = gql`
   ${productErrorFragment}
 `;
 
+// Saleor's ProductMediaUpdate: the alt text only (our images carry no title or external URL).
+export const productMediaUpdateMutation = gql`
+  mutation ProductMediaUpdate($id: ID!, $alt: String!) {
+    productMediaUpdate(id: $id, input: { alt: $alt }) {
+      errors {
+        ...ProductError
+      }
+      product {
+        id
+        media {
+          ...ProductMedia
+        }
+      }
+    }
+  }
+  ${productMediaFragment}
+  ${productErrorFragment}
+`;
+
 export const productMediaDeleteMutation = gql`
   mutation ProductMediaDelete($id: ID!) {
     productMediaDelete(id: $id) {

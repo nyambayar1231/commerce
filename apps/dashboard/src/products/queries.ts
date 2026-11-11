@@ -54,6 +54,31 @@ export const productDetails = gql`
   ${productDetailsFragment}
 `;
 
+// Saleor's ProductMediaById: the image open in the URL (`mainImage: mediaById`) and the product's
+// other images for the navigation, as small WebP thumbnails. No metadata dialog in our page.
+export const productMediaById = gql`
+  query ProductMediaById($productId: ID!, $mediaId: ID!) {
+    product(id: $productId) {
+      id
+      name
+      mainImage: mediaById(id: $mediaId) {
+        id
+        alt
+        url
+        type
+        oembedData
+      }
+      media {
+        id
+        url(size: 128, format: WEBP)
+        alt
+        type
+        oembedData
+      }
+    }
+  }
+`;
+
 export const productVariantDetails = gql`
   query ProductVariantDetails($id: ID!) {
     productVariant(id: $id) {

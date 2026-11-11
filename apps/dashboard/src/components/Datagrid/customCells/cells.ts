@@ -3,6 +3,7 @@
 // Only the cells our lists use so far.
 import {
   type CustomCell,
+  type GridCell,
   GridCellKind,
   type TextCell,
   type Theme,
@@ -79,6 +80,35 @@ export function loadingCell(): ThrobberCell {
     copyData: "",
     data: {
       kind: "throbber-cell",
+    },
+  };
+}
+
+interface ThumbnailCellData {
+  kind: "thumbnail-cell";
+  /** The thumbnail URL; "" draws Saleor's empty-image placeholder. */
+  image: string;
+  name: string;
+}
+
+export type ThumbnailCell = CustomCell<ThumbnailCellData>;
+
+/** Saleor's thumbnailCell: a small image next to the name, e.g. the product list's name column. */
+export function thumbnailCell(
+  name: string,
+  image: string,
+  opts?: Partial<GridCell>,
+): ThumbnailCell {
+  return {
+    allowOverlay: false,
+    readonly: true,
+    ...opts,
+    kind: GridCellKind.Custom,
+    copyData: name ?? "",
+    data: {
+      kind: "thumbnail-cell",
+      image,
+      name,
     },
   };
 }

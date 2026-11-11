@@ -2,13 +2,18 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The product list's columns, in Saleor's default order minus the ones we can't fill: name,
-// availability, price, category, last updated and created. Name is plain text (no thumbnail until
-// M2.5); availability is Saleor's Published/Hidden wording but a text cell, not its dot/status
-// cell (our Datagrid has no status renderer yet). Price and dates are formatted with react-intl.
+// availability, price, category, last updated and created. Name is Saleor's thumbnail cell (the
+// product's image next to its name); availability is Saleor's Published/Hidden wording but a text
+// cell, not its dot/status cell (our Datagrid has no status renderer yet). Price and dates are
+// formatted with react-intl.
 import type { GridCell, Item } from "@glideapps/glide-data-grid";
 import type { IntlShape } from "react-intl";
 
-import { readonlyTextCell } from "../../../components/Datagrid/customCells/cells";
+import {
+  readonlyTextCell,
+  type ThumbnailCell,
+  thumbnailCell,
+} from "../../../components/Datagrid/customCells/cells";
 import type { AvailableColumn } from "../../../components/Datagrid/types";
 import type { ProductListRowFragment } from "../../../graphql/types.generated";
 import {
@@ -105,6 +110,17 @@ const formatDate = (intl: IntlShape, value: unknown): string => {
     : "";
 };
 
+const COMMON_CELL_PROPS = { cursor: "pointer" } as const;
+
+/**
+ * Saleor's getNameCellContent: the product's thumbnail next to its name. An empty thumbnail URL
+ * renders Saleor's empty-image placeholder in the cell (there is no thumbnail, not a broken image).
+ */
+export const getNameCellContent = (
+  rowData: Pick<ProductListRowFragment, "name" | "thumbnail"> | undefined,
+): ThumbnailCell =>
+  thumbnailCell(rowData?.name ?? "", rowData?.thumbnail?.url ?? "", COMMON_CELL_PROPS);
+
 interface CreateGetCellContentOptions {
   intl: IntlShape;
   dateNow?: number;
@@ -126,7 +142,7 @@ export const createGetCellContent =
 
     switch (columnId) {
       case "name":
-        return readonlyTextCell(product.name);
+        return getNameCellContent(product);
       case "availability":
         return readonlyTextCell(
           intl.formatMessage(

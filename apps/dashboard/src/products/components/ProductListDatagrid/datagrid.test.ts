@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import type { ProductListRowFragment } from "../../../graphql/types.generated";
 import {
   createGetCellContent,
+  getNameCellContent,
   getProductAvailability,
   productListStaticColumnsAdapter,
 } from "./datagrid";
@@ -22,6 +23,7 @@ const product = (overrides: Partial<ProductListRowFragment> = {}): ProductListRo
   category: { __typename: "Category", id: "c1", name: "Shoes" },
   created: "2026-01-02T10:00:00Z",
   updatedAt: "2026-02-03T10:00:00Z",
+  thumbnail: { __typename: "Image", url: "https://example.com/thumb.png" },
   ...overrides,
 });
 
@@ -45,14 +47,18 @@ describe("product list datagrid", () => {
     ).toBe("arrowUp");
   });
 
-  it("renders the name, category and formatted price as read-only text", () => {
+  it("renders the name as Saleor's thumbnail cell, and the price as formatted text", () => {
     const rows = [product()];
     const columns = productListStaticColumnsAdapter(intl);
     const get = createGetCellContent(rows, columns, { intl, dateNow: now });
 
     expect(get([0, 0])).toMatchObject({
-      kind: GridCellKind.Text,
-      data: "Prod",
+      kind: GridCellKind.Custom,
+      data: {
+        kind: "thumbnail-cell",
+        name: "Prod",
+        image: "https://example.com/thumb.png",
+      },
       readonly: true,
       cursor: "pointer",
     });
@@ -64,6 +70,16 @@ describe("product list datagrid", () => {
       }),
     });
     expect(get([3, 0])).toMatchObject({ data: "Shoes" });
+  });
+
+  it("falls back to the empty-image placeholder when the product has no thumbnail", () => {
+    expect(getNameCellContent(product({ thumbnail: null }))).toMatchObject({
+      kind: GridCellKind.Custom,
+      data: { kind: "thumbnail-cell", name: "Prod", image: "" },
+    });
+    expect(getNameCellContent(product({ name: "Shoes" }))).toMatchObject({
+      data: { kind: "thumbnail-cell", name: "Shoes", image: "https://example.com/thumb.png" },
+    });
   });
 
   it("leaves the price and category empty when the product has neither", () => {

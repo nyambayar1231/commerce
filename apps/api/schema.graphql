@@ -606,6 +606,12 @@ type Product implements Node {
   """List of media for the product."""
   media: [ProductMedia!]!
 
+  """Get a single product media by ID."""
+  mediaById(
+    """ID of a product media."""
+    id: ID!
+  ): ProductMedia
+
   """The minimal price of a product's variants."""
   minimalVariantPrice: Money
 

@@ -3,8 +3,9 @@
 // See THIRD_PARTY_LICENSES.md
 // Saleor's Media card, reduced to images and single delete (owner, M2.5.3a): the Upload button
 // opens the file picker, files can be dropped on the card, each upload shows a pending tile with
-// its local object URL until the saved media arrives, tiles can be dragged to reorder. No external
-// "Upload URL" menu, selection checkboxes, bulk delete or edit links (the image page is M2.5.3b).
+// its local object URL until the saved media arrives, tiles can be dragged to reorder and each
+// saved tile links to its image page. No external "Upload URL" menu, selection checkboxes or bulk
+// delete.
 import type { FetchResult } from "@apollo/client";
 import { closestCenter, DndContext, DragOverlay } from "@dnd-kit/core";
 import { SortableContext, type SortingStrategy } from "@dnd-kit/sortable";
@@ -49,6 +50,8 @@ interface ProductMediaProps {
   onImageUpload: (file: File) => Promise<FetchResult<ProductMediaCreateMutation>>;
   onImagesUploadComplete?: (result: ImagesUploadCompleteResult) => void;
   onImageDelete: (id: string) => () => void;
+  /** The image detail page's URL for a saved media; pending uploads have no page yet. */
+  getImageEditHref?: (id: string) => string;
   onImageReorder?: (event: ReorderEvent) => void;
 }
 
@@ -73,6 +76,7 @@ export const ProductMedia = ({
   onImageUpload,
   onImagesUploadComplete,
   onImageDelete,
+  getImageEditHref,
   onImageReorder,
 }: ProductMediaProps) => {
   const intl = useIntl();
@@ -303,6 +307,7 @@ export const ProductMedia = ({
                           >
                             <MediaTile
                               media={mediaObject}
+                              editHref={getImageEditHref?.(mediaObject.id)}
                               onDelete={onImageDelete(mediaObject.id)}
                               disableOverlay={isDragging}
                             />

@@ -167,6 +167,54 @@ describe("Product.media", () => {
   });
 });
 
+describe("Product.mediaById", () => {
+  const MEDIA_BY_ID = `query MediaById($product: ID!, $media: ID!) {
+    product(id: $product) { mediaById(id: $media) { id alt } }
+  }`;
+
+  it("resolves one of the product's own media", async () => {
+    const result = await client.gql(MEDIA_BY_ID, {
+      product: toGlobalId("Product", PRODUCT),
+      media: toGlobalId("ProductMedia", SECOND),
+    });
+
+    expect(result.body.errors).toBeUndefined();
+    expect(result.body.data).toEqual({
+      product: {
+        mediaById: { id: toGlobalId("ProductMedia", SECOND), alt: "Second" },
+      },
+    });
+  });
+
+  it("is null for another product's media", async () => {
+    const result = await client.gql(MEDIA_BY_ID, {
+      product: toGlobalId("Product", PRODUCT),
+      media: toGlobalId("ProductMedia", SOLO),
+    });
+
+    expect(result.body.errors).toBeUndefined();
+    expect((result.body.data as { product: { mediaById: unknown } }).product.mediaById).toBeNull();
+  });
+
+  it("rejects a malformed id or one of another type with Saleor's top-level error", async () => {
+    const malformed = await client.gql(MEDIA_BY_ID, {
+      product: toGlobalId("Product", PRODUCT),
+      media: "not-a-global-id",
+    });
+
+    expect(malformed.body.errors?.[0]?.message).toBe("Couldn't resolve id: not-a-global-id.");
+
+    const wrongType = await client.gql(MEDIA_BY_ID, {
+      product: toGlobalId("Product", PRODUCT),
+      media: toGlobalId("Product", OTHER),
+    });
+
+    expect(wrongType.body.errors?.[0]?.message).toBe(
+      `Invalid ID: ${toGlobalId("Product", OTHER)}. Expected: ProductMedia, received: Product.`,
+    );
+  });
+});
+
 describe("ProductMedia.url", () => {
   const ORIGIN = "http://test";
   const proxyUrl = (mediaId: string, size: number, format = "") =>

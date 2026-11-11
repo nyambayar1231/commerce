@@ -130,3 +130,22 @@ export const productVariantAddPath = (productId: string): string =>
 
 export const productVariantAddUrl = (productId: string): string =>
   `${productVariantAddPath(encodeURIComponent(productId))}?`;
+
+// Saleor's image page: /products/:productId/image/:imageId. The dialog in the URL is a url query.
+export const productImagePath = (productId: string, imageId: string): string =>
+  `${productSectionUrl}${productId}/image/${imageId}`;
+
+export type ProductImageUrlDialog = "remove";
+
+export interface ProductImageUrlQueryParams {
+  action?: ProductImageUrlDialog;
+}
+
+export const productImageUrl = (
+  productId: string,
+  imageId: string,
+  params?: ProductImageUrlQueryParams,
+): string =>
+  `${productImagePath(encodeURIComponent(productId), encodeURIComponent(imageId))}?${new URLSearchParams(
+    queryEntries({ ...params }),
+  ).toString()}`;

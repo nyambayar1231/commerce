@@ -1,0 +1,38 @@
+/*
+ * Adapted from saleor-dashboard: src/products/components/ProductMediaNavigation/ProductMediaNavigation.tsx
+ * (makeStyles) (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ */
+.root {
+  display: grid;
+  grid-column-gap: var(--mu-spacing-2);
+  grid-row-gap: var(--mu-spacing-1);
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.imageContainer {
+  background: none;
+  border: 2px solid var(--mu-colors-border-default1);
+  border-radius: 8px;
+  cursor: pointer;
+  height: 48px;
+  overflow: hidden;
+  padding: calc(var(--mu-spacing-1) / 2);
+  position: relative;
+}
+
+.highlightedImageContainer {
+  border: 2px solid var(--mu-colors-text-default1);
+}
+
+.skeleton {
+  cursor: default;
+  pointer-events: none;
+}
+
+.image {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+  user-select: none;
+}
