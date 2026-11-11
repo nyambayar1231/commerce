@@ -1,12 +1,18 @@
+import { GraphQLError } from "graphql";
 import { builder } from "../../graphql/builder.ts";
 import { fromGlobalId, nodesNotFound, toGlobalId } from "../../graphql/globalId.ts";
 import { requirePermission } from "../../graphql/permissions.ts";
 import { Decimal, JSONString } from "../../graphql/scalars.ts";
 import { getStorage } from "../../storage/index.ts";
+// GraphQL files may import the inventory module (module boundary, PLAN M3 decision).
+import {
+  createProductVariantWithStocks,
+  type StockInput as StockInputData,
+  WarehouseNotFoundError,
+} from "../inventory/index.ts";
 import { ProductErrorType } from "./graphql.ts";
 import {
   createProduct,
-  createProductVariant,
   deleteProduct,
   deleteProducts,
   deleteProductVariant,
@@ -63,6 +69,15 @@ const ProductVariantInput = builder.inputType("ProductVariantInput", {
   }),
 });
 
+// Saleor's StockInput (saleor/graphql/product/mutations/product/product_create.py). The warehouse
+// is a global ID here; the inventory module receives primary keys.
+export const StockInput = builder.inputType("StockInput", {
+  fields: (t) => ({
+    warehouse: t.id({ required: true, description: "Warehouse in which stock is located." }),
+    quantity: t.int({ required: true, description: "Quantity of items available for sell." }),
+  }),
+});
+
 const ProductVariantCreateInput = builder.inputType("ProductVariantCreateInput", {
   description: "Fields required to create a product variant.",
   fields: (t) => ({
@@ -75,6 +90,10 @@ const ProductVariantCreateInput = builder.inputType("ProductVariantCreateInput",
         "won't change when customers buy this item.",
     }),
     product: t.id({ required: true, description: "Product ID of which type is the variant." }),
+    stocks: t.field({
+      type: [StockInput],
+      description: "Stocks of a product available for sale.",
+    }),
   }),
 });
 
@@ -137,6 +156,16 @@ const productPayload = (result: ProductResult): ProductPayload =>
 
 const variantPayload = (result: ProductVariantResult): ProductVariantPayload =>
   result.ok ? { variant: result.variant, errors: [] } : { variant: null, errors: result.errors };
+
+/** Saleor's `nodesNotFound` message for warehouse ids that match no row. */
+const warehousesNotFoundMessage = (ids: string[]) =>
+  nodesNotFound(ids.map((id) => toGlobalId("Warehouse", id))).message;
+
+/** A warehouse that can't be resolved is Saleor's payload error, never a top-level one. */
+const warehouseError = (message: string): ProductVariantPayload => ({
+  variant: null,
+  errors: [{ field: "warehouse", code: "GRAPHQL_ERROR", message }],
+});
 
 /** The category argument: omitted means unchanged, `null` unassigns, an ID is decoded. */
 const categoryId = (category: string | null | undefined): string | null | undefined => {
@@ -261,16 +290,38 @@ builder.mutationField("productVariantCreate", (t) =>
     },
     resolve: async (_parent, { input }, ctx) => {
       await requirePermission(ctx, "MANAGE_PRODUCTS");
-      const result = await runProduct(() =>
-        createProductVariant(ctx.db, {
-          productId: fromGlobalId("Product", String(input.product)),
-          sku: input.sku,
-          name: input.name ?? undefined,
-          trackInventory: input.trackInventory ?? undefined,
-          price: input.price,
-        }),
-      );
-      return variantPayload(result);
+      const productId = fromGlobalId("Product", String(input.product));
+
+      let stocks: StockInputData[];
+      try {
+        stocks = (input.stocks ?? []).map((stock) => ({
+          warehouseId: fromGlobalId("Warehouse", String(stock.warehouse)),
+          quantity: stock.quantity,
+        }));
+      } catch (error) {
+        if (!(error instanceof GraphQLError)) throw error;
+        return warehouseError(error.message);
+      }
+
+      try {
+        const result = await runProduct(() =>
+          createProductVariantWithStocks(
+            ctx.db,
+            {
+              productId,
+              sku: input.sku,
+              name: input.name ?? undefined,
+              trackInventory: input.trackInventory ?? undefined,
+              price: input.price,
+            },
+            stocks,
+          ),
+        );
+        return variantPayload(result);
+      } catch (error) {
+        if (!(error instanceof WarehouseNotFoundError)) throw error;
+        return warehouseError(warehousesNotFoundMessage(error.ids));
+      }
     },
   }),
 );

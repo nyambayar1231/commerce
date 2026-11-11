@@ -224,7 +224,7 @@ builder.queryField("categories", (t) =>
   ),
 );
 
-const ProductErrorCode = builder.enumType("ProductErrorCode", {
+export const ProductErrorCode = builder.enumType("ProductErrorCode", {
   values: [
     "FILE_SIZE_LIMIT_EXCEEDED",
     "GRAPHQL_ERROR",

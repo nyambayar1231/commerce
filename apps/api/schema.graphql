@@ -20,6 +20,22 @@ enum AccountErrorCode {
   UNIQUE
 }
 
+type BulkStockError {
+  """The error code."""
+  code: ProductErrorCode!
+
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """Index of an input list item that caused the error."""
+  index: Int
+
+  """The error message."""
+  message: String!
+}
+
 """
 Represents a single category of products. Categories allow to organize products in a tree-hierarchies which can be used for navigation in the storefront.
 """
@@ -445,6 +461,51 @@ type Mutation {
     """ID of a product variant to delete."""
     id: ID!
   ): ProductVariantDelete!
+
+  """
+  Creates stocks for product variant.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productVariantStocksCreate(
+    """Input list of stocks to create."""
+    stocks: [StockInput!]!
+
+    """ID of a product variant for which stocks will be created."""
+    variantId: ID!
+  ): ProductVariantStocksCreate
+
+  """
+  Deletes stocks from product variant.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productVariantStocksDelete(
+    """SKU of product variant for which stocks will be deleted."""
+    sku: String
+
+    """ID of product variant for which stocks will be deleted."""
+    variantId: ID
+
+    """Input list of warehouse IDs."""
+    warehouseIds: [ID!]
+  ): ProductVariantStocksDelete
+
+  """
+  Updates stocks for product variant.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productVariantStocksUpdate(
+    """SKU of product variant for which stocks will be updated."""
+    sku: String
+
+    """Input list of stocks to create or update."""
+    stocks: [StockInput!]!
+
+    """ID of a product variant for which stocks will be updated."""
+    variantId: ID
+  ): ProductVariantStocksUpdate
 
   """
   Updates an existing variant for product.
@@ -982,6 +1043,9 @@ input ProductVariantCreateInput {
   """Stock keeping unit."""
   sku: String
 
+  """Stocks of a product available for sale."""
+  stocks: [StockInput!]
+
   """
   Determines if the inventory of this variant should be tracked. If false, the quantity won't change when customers buy this item.
   """
@@ -1013,6 +1077,42 @@ input ProductVariantInput {
   Determines if the inventory of this variant should be tracked. If false, the quantity won't change when customers buy this item.
   """
   trackInventory: Boolean
+}
+
+"""
+Creates stocks for product variant.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductVariantStocksCreate {
+  errors: [BulkStockError!]!
+
+  """Updated product variant."""
+  productVariant: ProductVariant
+}
+
+"""
+Deletes stocks from product variant.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductVariantStocksDelete {
+  errors: [StockError!]!
+
+  """Updated product variant."""
+  productVariant: ProductVariant
+}
+
+"""
+Updates stocks for product variant.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductVariantStocksUpdate {
+  errors: [BulkStockError!]!
+
+  """Updated product variant."""
+  productVariant: ProductVariant
 }
 
 """
@@ -1053,6 +1153,9 @@ input ProductWhereInput {
 
   """Filter by product slug."""
   slug: StringFilterInput
+
+  """Filter by variants having specific stock status."""
+  stockAvailability: StockAvailability
 
   """Filter by when was the most recent update."""
   updatedAt: DateTimeFilterInput
@@ -1240,6 +1343,41 @@ type Stock implements Node {
 
   """The warehouse associated with the stock."""
   warehouse: Warehouse!
+}
+
+enum StockAvailability {
+  IN_STOCK
+  OUT_OF_STOCK
+}
+
+type StockError {
+  """The error code."""
+  code: StockErrorCode!
+
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String!
+}
+
+enum StockErrorCode {
+  ALREADY_EXISTS
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  REQUIRED
+  UNIQUE
+}
+
+input StockInput {
+  """Quantity of items available for sell."""
+  quantity: Int!
+
+  """Warehouse in which stock is located."""
+  warehouse: ID!
 }
 
 input StringFilterInput {

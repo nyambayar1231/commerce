@@ -79,6 +79,38 @@ const VARIANT_DELETE = `mutation ($id: ID!) {
   productVariantDelete(id: $id) { ${VARIANT_FIELDS} ${ERRORS} }
 }`;
 
+// `productVariantCreate` with `stocks` (PLAN M3.2): the payload's variant resolves the stock
+// fields the inventory module adds.
+const VARIANT_CREATE_WITH_STOCKS = `mutation ($input: ProductVariantCreateInput!) {
+  productVariantCreate(input: $input) {
+    productVariant {
+      id
+      quantityAvailable
+      stocks { quantity quantityAllocated warehouse { id } }
+    }
+    errors { field code message }
+  }
+}`;
+
+type VariantWithStocksData = VariantData & {
+  quantityAvailable: number | null;
+  stocks: { quantity: number; quantityAllocated: number; warehouse: { id: string } }[] | null;
+};
+type VariantWithStocksPayload = {
+  productVariant: VariantWithStocksData | null;
+  errors: ErrorData[];
+};
+
+/** The seeded warehouse's global ID. */
+async function warehouseId(): Promise<string> {
+  const [row] = await db
+    .select()
+    .from(schema.warehouse)
+    .where(eq(schema.warehouse.slug, "default-warehouse"));
+  if (!row) throw new Error("the migration did not seed a warehouse");
+  return row.id;
+}
+
 const productId = (id: string) => toGlobalId("Product", id);
 const variantId = (id: string) => toGlobalId("ProductVariant", id);
 const categoryId = (id: string) => toGlobalId("Category", id);
@@ -392,5 +424,82 @@ describe("product variant mutations", () => {
     expect(update.body.errors?.[0]?.message).toBe(
       `Could not resolve to a node with the global id list of '["${unknownVariant}"]'.`,
     );
+  });
+
+  it("creates a variant with stocks, visible in stocks and quantityAvailable", async () => {
+    const admin = await createStaff(db, ["MANAGE_PRODUCTS"]);
+    const product = await mustCreateProduct({ name: "Boots" });
+    const warehouse = toGlobalId("Warehouse", await warehouseId());
+
+    const result = await client.gql(
+      VARIANT_CREATE_WITH_STOCKS,
+      {
+        input: {
+          product: productId(product.id),
+          price: "1000",
+          stocks: [{ warehouse, quantity: 4 }],
+        },
+      },
+      admin.token,
+    );
+    expect(result.body.errors).toBeUndefined();
+    const created = payload<VariantWithStocksPayload>(result, "productVariantCreate");
+    expect(created.errors).toEqual([]);
+    expect(created.productVariant).toMatchObject({
+      quantityAvailable: 4,
+      stocks: [{ quantity: 4, quantityAllocated: 0, warehouse: { id: warehouse } }],
+    });
+  });
+
+  it("reports stock errors of productVariantCreate without creating the variant", async () => {
+    const admin = await createStaff(db, ["MANAGE_PRODUCTS"]);
+    const product = await mustCreateProduct({ name: "Boots" });
+    const warehouse = toGlobalId("Warehouse", await warehouseId());
+
+    const duplicated = await client.gql(
+      VARIANT_CREATE_WITH_STOCKS,
+      {
+        input: {
+          product: productId(product.id),
+          price: "1000",
+          stocks: [
+            { warehouse, quantity: 1 },
+            { warehouse, quantity: 2 },
+          ],
+        },
+      },
+      admin.token,
+    );
+    expect(duplicated.body.errors).toBeUndefined();
+    expect(payload<VariantWithStocksPayload>(duplicated, "productVariantCreate")).toEqual({
+      productVariant: null,
+      errors: [{ field: "stocks", code: "UNIQUE", message: "Duplicated warehouse ID." }],
+    });
+    expect(await db.select().from(schema.productVariant)).toEqual([]);
+
+    const unknown = toGlobalId("Warehouse", crypto.randomUUID());
+    const missing = await client.gql(
+      VARIANT_CREATE_WITH_STOCKS,
+      {
+        input: {
+          product: productId(product.id),
+          price: "1000",
+          stocks: [{ warehouse: unknown, quantity: 1 }],
+        },
+      },
+      admin.token,
+    );
+    expect(missing.body.errors).toBeUndefined();
+    expect(payload<VariantWithStocksPayload>(missing, "productVariantCreate")).toEqual({
+      productVariant: null,
+      errors: [
+        {
+          field: "warehouse",
+          code: "GRAPHQL_ERROR",
+          message: `Could not resolve to a node with the global id list of '["${unknown}"]'.`,
+        },
+      ],
+    });
+    expect(await db.select().from(schema.productVariant)).toEqual([]);
   });
 });

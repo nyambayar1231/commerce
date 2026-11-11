@@ -76,14 +76,20 @@ GraphQL package: each one runs codegen against `apps/api/schema.graphql` itself.
    DI container or event bus. The one exception is the GraphQL layer: a module may extend another
    module's GraphQL object (e.g. inventory adds `ProductVariant.stocks`) by importing that object's
    ref from the owning module's GraphQL file; its resolvers still read data through `index.ts`
-   functions or loaders.
+   functions or loaders. The GraphQL layer is also where modules compose (owner, 2026-11-11):
+   catalog's GraphQL files call `inventory/index.ts` for `productVariantCreate(stocks)` and the
+   `stockAvailability` filter (inventory supplies the in-stock subquery as SQL, so `stock` is
+   only queried by inventory code).
 3. Cross-module functions receive the caller's transaction (`tx`) explicitly. That is how
    checkout completion spans `checkout`, `inventory`, `payments` and `orders` atomically.
 4. Reads across modules also go through public functions or DataLoaders, so the dependency stays
    visible in the code.
 5. Dependency direction is acyclic:
    `orders → inventory, catalog, payments, identity`; `checkout → catalog, inventory, payments,
-   orders, identity`. `catalog` depends on nothing.
+   orders, identity`; `inventory → catalog`. `catalog`'s domain code depends on nothing (its
+   GraphQL files may use `inventory`, rule 2).
+6. Lock order for catalog and stock writes: product → variant → stock rows by `id`
+   (`lockProductVariant`), so stock, variant and product writes can't deadlock.
 
 **Inside a module:**
 
@@ -229,6 +235,8 @@ Saleor stays obvious:
 | `ProductErrorCode.PRODUCT_WITHOUT_VARIANTS` | *(none)* | Our invariant: a published product has at least one variant. |
 | `ProductMediaCreateInput` without `mediaUrl`; `ProductMedia.type` always `IMAGE`, `oembedData` always `"{}"` | `mediaUrl` (external/oEmbed video) | Images only for now (ADR-0014); uploads go through `image: Upload`. |
 | `ProductMedia.url` without `size` (or `0`) is the original's public URL | `size` defaults to 4096 (a thumbnail) | ADR-0014: the original is already a public object; no 4096 px copy is generated for it. |
+| `productVariantStocks*`: negative quantity or quantity below allocated → `INVALID` payload error; unknown `variantId` → top-level node error; no `bulkStockErrors`/`stockErrors` fields | DB `IntegrityError` (500); `NOT_FOUND` payload error; deprecated error fields | Our stock CHECKs are reported as input errors; not-found IDs as our other variant mutations; deprecated fields left out (as M1.2.3). |
+| `productVariantCreate(stocks)` reports stock errors on `stocks` before the variant is validated | stock duplicates and variant errors together | Stocks are validated (inventory) before the catalog create runs in the same transaction. |
 
 **The database** handles:
 - Invariants that must hold under concurrency: unique, foreign-key and `CHECK` constraints.

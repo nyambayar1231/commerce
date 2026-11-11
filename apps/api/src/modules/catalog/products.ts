@@ -79,7 +79,11 @@ export async function getMinimalVariantPrice(
 // Product and variant mutations (M2.4): Saleor's productCreate/Update/Delete and
 // productVariantCreate/Update/Delete, with our publish invariant (ARCHITECTURE.md §3 "Catalog").
 
+// Saleor's ProductErrorCode values our payloads can carry. GRAPHQL_ERROR is the GraphQL layer's
+// code for an input it can't resolve (e.g. productVariantCreate's warehouse IDs); the catalog
+// functions themselves never return it.
 export type ProductErrorCode =
+  | "GRAPHQL_ERROR"
   | "INVALID"
   | "PRODUCT_WITHOUT_CATEGORY"
   | "PRODUCT_WITHOUT_VARIANTS"
@@ -248,6 +252,31 @@ async function lockProduct(db: Executor, id: string): Promise<ProductRow> {
     .for("update");
   if (!product) throw new ProductNotFoundError("Product", [id]);
   return product;
+}
+
+/**
+ * A variant that must exist, locked for the rest of the transaction. Its product row is locked
+ * first, the order every variant write uses (product → variant → stock rows), so concurrent
+ * variant, product and stock writes can't deadlock. Must be called inside a transaction.
+ */
+export async function lockProductVariant(
+  db: Executor,
+  variantId: string,
+): Promise<ProductVariantRow> {
+  const [existing] = await db
+    .select({ productId: schema.productVariant.productId })
+    .from(schema.productVariant)
+    .where(eq(schema.productVariant.id, variantId));
+  if (!existing) throw new ProductNotFoundError("ProductVariant", [variantId]);
+
+  await lockProduct(db, existing.productId);
+  const [variant] = await db
+    .select()
+    .from(schema.productVariant)
+    .where(eq(schema.productVariant.id, variantId))
+    .for("update");
+  if (!variant) throw new ProductNotFoundError("ProductVariant", [variantId]);
+  return variant;
 }
 
 export async function createProduct(
@@ -529,20 +558,9 @@ export async function updateProductVariant(
   input: ProductVariantUpdateInput,
 ): Promise<ProductVariantResult> {
   return db.transaction(async (tx) => {
-    // Lock the product before the variant, in the same order as deleteProductVariant, so the two
-    // can't deadlock (bumpProduct below writes the product row).
-    const [existing] = await tx
-      .select({ productId: schema.productVariant.productId })
-      .from(schema.productVariant)
-      .where(eq(schema.productVariant.id, id));
-    if (!existing) throw new ProductNotFoundError("ProductVariant", [id]);
-    await lockProduct(tx, existing.productId);
-    const [current] = await tx
-      .select()
-      .from(schema.productVariant)
-      .where(eq(schema.productVariant.id, id))
-      .for("update");
-    if (!current) throw new ProductNotFoundError("ProductVariant", [id]);
+    // The product row is locked before the variant, in the same order as deleteProductVariant,
+    // so the two can't deadlock (bumpProduct below writes the product row).
+    await lockProductVariant(tx, id);
 
     const errors: ProductError[] = [];
     const values: Partial<typeof schema.productVariant.$inferInsert> = {};
@@ -587,19 +605,9 @@ export async function deleteProductVariant(
   id: string,
 ): Promise<ProductVariantResult> {
   return db.transaction(async (tx) => {
-    const [existing] = await tx
-      .select({ productId: schema.productVariant.productId })
-      .from(schema.productVariant)
-      .where(eq(schema.productVariant.id, id));
-    if (!existing) throw new ProductNotFoundError("ProductVariant", [id]);
-
-    const product = await lockProduct(tx, existing.productId);
-    const [variant] = await tx
-      .select()
-      .from(schema.productVariant)
-      .where(eq(schema.productVariant.id, id))
-      .for("update");
-    if (!variant) throw new ProductNotFoundError("ProductVariant", [id]);
+    const variant = await lockProductVariant(tx, id);
+    const product = await getProduct(tx, { id: variant.productId });
+    if (!product) throw new ProductNotFoundError("Product", [variant.productId]);
 
     if (product.isPublished) {
       const [row] = await tx

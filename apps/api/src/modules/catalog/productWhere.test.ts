@@ -1,4 +1,5 @@
 import { closeDb, getDb, schema } from "@commerce/db";
+import { asc, eq, ne } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createStaff, createTestClient, type GqlResult } from "../../../test/graphql.ts";
 import { toGlobalId } from "../../graphql/globalId.ts";
@@ -75,13 +76,47 @@ async function seed(): Promise<void> {
         priceAmount: price,
         currency: "MNT",
         position,
+        // P04's variant doesn't track inventory; the stock filter ignores `trackInventory`.
+        trackInventory: product.n !== 4,
       });
     }
+  }
+
+  // Stock rows for `stockAvailability`: P01 is in stock (one variant of two), P02's only stock is
+  // fully allocated, P04's variant is untracked but in stock, P07 is in stock but staff-only.
+  const [warehouse] = await db
+    .select()
+    .from(schema.warehouse)
+    .where(eq(schema.warehouse.slug, "default-warehouse"));
+  if (!warehouse) throw new Error("the migration did not seed a warehouse");
+  const variantId = async (product: number): Promise<string> => {
+    const [row] = await db
+      .select({ id: schema.productVariant.id })
+      .from(schema.productVariant)
+      .where(eq(schema.productVariant.productId, ID(product)))
+      .orderBy(asc(schema.productVariant.position))
+      .limit(1);
+    if (!row) throw new Error(`product ${product} has no variant`);
+    return row.id;
+  };
+  for (const [product, quantity, quantityAllocated] of [
+    [1, 5, 0],
+    [2, 3, 3],
+    [4, 2, 0],
+    [7, 1, 0],
+  ] as const) {
+    await db.insert(schema.stock).values({
+      warehouseId: warehouse.id,
+      variantId: await variantId(product),
+      quantity,
+      quantityAllocated,
+    });
   }
 }
 
 beforeEach(async () => {
   await db.$client.unsafe('TRUNCATE "user", permission_group, category, product CASCADE');
+  await db.delete(schema.warehouse).where(ne(schema.warehouse.slug, "default-warehouse"));
   await seed();
 });
 
@@ -205,6 +240,36 @@ describe("products(where: ProductWhereInput)", () => {
     expect(await names({ minimalPrice: { range: { lte: 2000 } } })).toEqual(namesOf([2, 3]));
     // An empty range (like an empty filter) matches nothing, as Saleor.
     expect(await names({ price: { range: {} } })).toEqual([]);
+  });
+
+  it("filters by stockAvailability, ignoring trackInventory", async () => {
+    // P01 is in stock through one of its two variants, P04 through an untracked variant, P02's
+    // only stock is fully allocated, and P03/P05 have no stock (P05 no variants at all).
+    expect(await names({ stockAvailability: "IN_STOCK" })).toEqual(namesOf([1, 4]));
+    expect(await names({ stockAvailability: "OUT_OF_STOCK" })).toEqual(namesOf([2, 3, 5]));
+
+    // P07 is published in the future, so only staff see it.
+    const admin = await createStaff(db, ["MANAGE_PRODUCTS"]);
+    expect(await names({ stockAvailability: "IN_STOCK" }, admin.token)).toEqual(namesOf([1, 4, 7]));
+    expect(await names({ stockAvailability: "OUT_OF_STOCK" }, admin.token)).toEqual(
+      namesOf([2, 3, 5, 6]),
+    );
+  });
+
+  it("combines stockAvailability with AND and OR", async () => {
+    const admin = await createStaff(db, ["MANAGE_PRODUCTS"]);
+    expect(
+      await names(
+        { AND: [{ stockAvailability: "IN_STOCK" }, { name: { eq: name(1) } }] },
+        admin.token,
+      ),
+    ).toEqual(namesOf([1]));
+    expect(
+      await names(
+        { OR: [{ stockAvailability: "IN_STOCK" }, { slug: { eq: "prod-03" } }] },
+        admin.token,
+      ),
+    ).toEqual(namesOf([1, 3, 4, 7]));
   });
 
   it("filters by updatedAt with eq, oneOf and range", async () => {

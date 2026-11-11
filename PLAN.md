@@ -150,7 +150,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | Step | What | Status |
 |---|---|---|
 | M3.1 | API reads: `inventory` module; `warehouse` + `stock` tables (CHECKs: `quantity ≥ 0`, `quantity_allocated ≥ 0`, `quantity_allocated ≤ quantity`; unique (warehouse, variant); stock cascades with its variant) with the seeded warehouse; `Warehouse` and `Stock` node types, `warehouses`/`warehouse` queries, `ProductVariant.stocks` (staff only, as Saleor), `ProductVariant.quantityAvailable` (sum of `quantity − allocated`; null when `trackInventory` is off); constraint-violation tests | Done |
-| M3.2 | API writes: `productVariantStocksCreate` / `productVariantStocksUpdate` / `productVariantStocksDelete` (Saleor's args, `BulkStockError` codes), `stocks` on `productVariantCreate`; `ProductWhereInput.stockAvailability`; stock rows locked like variants (product → variant → stock) | Proposed |
+| M3.2 | API writes: `productVariantStocksCreate` / `productVariantStocksUpdate` / `productVariantStocksDelete` (Saleor's args, `BulkStockError` codes), `stocks` on `productVariantCreate`; `ProductWhereInput.stockAvailability`; stock rows locked like variants (product → variant → stock) | Done |
 | M3.3 | Dashboard: Saleor's Inventory card stock table on the variant page (warehouse, Allocated, Quantity input, Assign Warehouse, remove) saved with Saleor's composite `VariantUpdate` (stocks delete/create/update + variant update); stocks on the variant create page; "Stock" column in the product's Variants card | Proposed |
 
 - **Acceptance:** CHECK violations proven by tests; staff set a quantity on the variant page and see

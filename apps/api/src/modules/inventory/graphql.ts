@@ -1,19 +1,32 @@
 import { GraphQLError } from "graphql";
 import { builder } from "../../graphql/builder.ts";
 import type { Context } from "../../graphql/context.ts";
-import { fromGlobalId } from "../../graphql/globalId.ts";
+import { fromGlobalId, nodesNotFound, toGlobalId } from "../../graphql/globalId.ts";
 import { isEdgesRequested, validatePagination } from "../../graphql/pagination.ts";
 import { requirePermission } from "../../graphql/permissions.ts";
-// GraphQL layer: the object ref is imported from catalog's GraphQL file, not its index.ts
+// GraphQL layer: object refs are imported from catalog's GraphQL files, not its index.ts
 // (ARCHITECTURE §2 rule 2).
+import { ProductErrorCode } from "../catalog/graphql.ts";
+import {
+  getProductVariant,
+  ProductNotFoundError,
+  type ProductVariantRow,
+} from "../catalog/index.ts";
 import { ProductVariantType } from "../catalog/productGraphql.ts";
+import { StockInput } from "../catalog/productMutations.ts";
 import {
   availableQuantity,
+  createVariantStocks,
+  deleteVariantStocks,
   getWarehouse,
   InvalidCursorError,
   listWarehouses,
+  type StockInput as StockInputData,
   type StockRow,
+  updateVariantStocks,
+  type VariantStocksResult,
   type WarehouseListArgs,
+  WarehouseNotFoundError,
   type WarehousePage,
   type WarehouseRow,
 } from "./index.ts";
@@ -197,4 +210,366 @@ builder.queryField("warehouses", (t) =>
     },
     WarehouseConnection,
   ),
+);
+
+// ---------------------------------------------------------------------------------------------
+// Stock writes: Saleor's productVariantStocksCreate/Update/Delete
+// (saleor/graphql/product/bulk_mutations/product_variant_stocks_*.py).
+
+const MANAGE_PRODUCTS_PERMISSION = "Requires one of the following permissions: MANAGE_PRODUCTS.";
+const FIELD_DESCRIPTION =
+  "Name of a field that caused the error. A value of `null` indicates that the error isn't " +
+  "associated with a particular field.";
+const MESSAGE_DESCRIPTION = "The error message.";
+const CODE_DESCRIPTION = "The error code.";
+
+type ProductErrorCodeValue = (typeof ProductErrorCode)["$inferType"];
+
+/** The GraphQL shape of a stock error: the domain's narrower code, plus the GraphQL-only ones. */
+type BulkStockErrorData = {
+  field: string | null;
+  code: ProductErrorCodeValue;
+  message: string;
+  index: number | null;
+};
+
+const BulkStockErrorType = builder.objectRef<BulkStockErrorData>("BulkStockError").implement({
+  fields: (t) => ({
+    field: t.exposeString("field", { nullable: true, description: FIELD_DESCRIPTION }),
+    message: t.exposeString("message", { description: MESSAGE_DESCRIPTION }),
+    code: t.field({
+      type: ProductErrorCode,
+      description: CODE_DESCRIPTION,
+      resolve: (error) => error.code,
+    }),
+    index: t.exposeInt("index", {
+      nullable: true,
+      description: "Index of an input list item that caused the error.",
+    }),
+  }),
+});
+
+const StockErrorCode = builder.enumType("StockErrorCode", {
+  values: [
+    "ALREADY_EXISTS",
+    "GRAPHQL_ERROR",
+    "INVALID",
+    "NOT_FOUND",
+    "REQUIRED",
+    "UNIQUE",
+  ] as const,
+});
+
+type StockErrorCodeValue = (typeof StockErrorCode)["$inferType"];
+type StockErrorData = { field: string | null; code: StockErrorCodeValue; message: string };
+
+const StockErrorType = builder.objectRef<StockErrorData>("StockError").implement({
+  fields: (t) => ({
+    field: t.exposeString("field", { nullable: true, description: FIELD_DESCRIPTION }),
+    message: t.exposeString("message", { description: MESSAGE_DESCRIPTION }),
+    code: t.field({
+      type: StockErrorCode,
+      description: CODE_DESCRIPTION,
+      resolve: (error) => error.code,
+    }),
+  }),
+});
+
+type StocksPayload = { productVariant: ProductVariantRow | null; errors: BulkStockErrorData[] };
+type StocksDeletePayload = { productVariant: ProductVariantRow | null; errors: StockErrorData[] };
+
+const CREATE_DESCRIPTION = `Creates stocks for product variant.\n\n${MANAGE_PRODUCTS_PERMISSION}`;
+const UPDATE_DESCRIPTION = `Updates stocks for product variant.\n\n${MANAGE_PRODUCTS_PERMISSION}`;
+const DELETE_DESCRIPTION = `Deletes stocks from product variant.\n\n${MANAGE_PRODUCTS_PERMISSION}`;
+
+const ProductVariantStocksCreate = builder
+  .objectRef<StocksPayload>("ProductVariantStocksCreate")
+  .implement({
+    description: CREATE_DESCRIPTION,
+    fields: (t) => ({
+      productVariant: t.field({
+        type: ProductVariantType,
+        nullable: true,
+        description: "Updated product variant.",
+        resolve: (payload) => payload.productVariant,
+      }),
+      errors: t.field({ type: [BulkStockErrorType], resolve: (payload) => payload.errors }),
+    }),
+  });
+
+const ProductVariantStocksUpdate = builder
+  .objectRef<StocksPayload>("ProductVariantStocksUpdate")
+  .implement({
+    description: UPDATE_DESCRIPTION,
+    fields: (t) => ({
+      productVariant: t.field({
+        type: ProductVariantType,
+        nullable: true,
+        description: "Updated product variant.",
+        resolve: (payload) => payload.productVariant,
+      }),
+      errors: t.field({ type: [BulkStockErrorType], resolve: (payload) => payload.errors }),
+    }),
+  });
+
+const ProductVariantStocksDelete = builder
+  .objectRef<StocksDeletePayload>("ProductVariantStocksDelete")
+  .implement({
+    description: DELETE_DESCRIPTION,
+    fields: (t) => ({
+      productVariant: t.field({
+        type: ProductVariantType,
+        nullable: true,
+        description: "Updated product variant.",
+        resolve: (payload) => payload.productVariant,
+      }),
+      errors: t.field({ type: [StockErrorType], resolve: (payload) => payload.errors }),
+    }),
+  });
+
+/** Saleor's `nodesNotFound` message for warehouse ids that match no row. */
+const warehousesNotFoundMessage = (ids: string[]) =>
+  nodesNotFound(ids.map((id) => toGlobalId("Warehouse", id))).message;
+
+/** A `fromGlobalId` failure as its GraphQLError message; anything else is a bug and rethrows. */
+function idErrorMessage(error: unknown): string {
+  if (error instanceof GraphQLError) return error.message;
+  throw error;
+}
+
+/** Stock inputs with their warehouse global IDs decoded (Warehouse primary keys). */
+function decodeStockInputs(
+  stocks: readonly { warehouse: string; quantity: number }[],
+): { ok: true; stocks: StockInputData[] } | { ok: false; message: string } {
+  try {
+    return {
+      ok: true,
+      stocks: stocks.map((stock) => ({
+        warehouseId: fromGlobalId("Warehouse", String(stock.warehouse)),
+        quantity: stock.quantity,
+      })),
+    };
+  } catch (error) {
+    return { ok: false, message: idErrorMessage(error) };
+  }
+}
+
+function decodeWarehouseIds(
+  globalIds: readonly string[],
+): { ok: true; ids: string[] } | { ok: false; message: string } {
+  try {
+    return { ok: true, ids: globalIds.map((id) => fromGlobalId("Warehouse", id)) };
+  } catch (error) {
+    return { ok: false, message: idErrorMessage(error) };
+  }
+}
+
+/** Saleor's validate_one_of_args_is_in_mutation for `variantId` and `sku`. */
+function oneOfArgsError(
+  variantId: string | null | undefined,
+  sku: string | null | undefined,
+): string | null {
+  if (variantId != null && sku != null) {
+    return "Argument 'sku' cannot be combined with 'variant_id'";
+  }
+  if (variantId == null && sku == null) {
+    return "At least one of arguments is required: 'sku', 'variant_id'.";
+  }
+  return null;
+}
+
+/** Unknown variants are Saleor's top-level node error, as the catalog's variant mutations. */
+async function runStockWrite<T>(call: () => Promise<T>): Promise<T> {
+  try {
+    return await call();
+  } catch (error) {
+    if (error instanceof ProductNotFoundError) {
+      throw nodesNotFound(error.ids.map((id) => toGlobalId(error.kind, id)));
+    }
+    throw error;
+  }
+}
+
+/**
+ * The `variantId`/`sku` target of an update or delete: a primary key, or the payload's sku error
+ * for a SKU that matches nothing. A `variantId` is resolved by the write (and becomes the
+ * top-level node error when unknown).
+ */
+async function stockMutationVariantId(
+  ctx: Context,
+  variantId: string | null | undefined,
+  sku: string | null | undefined,
+): Promise<{ ok: true; id: string } | { ok: false; message: string }> {
+  if (variantId != null) return { ok: true, id: fromGlobalId("ProductVariant", String(variantId)) };
+  const variant = await getProductVariant(ctx.db, { sku: String(sku) });
+  if (!variant) return { ok: false, message: `Couldn't resolve to a node: ${sku}` };
+  return { ok: true, id: variant.id };
+}
+
+const stockResultPayload = (
+  variantId: string,
+  result: VariantStocksResult,
+  ctx: Context,
+): StocksPayload => {
+  if (!result.ok) return { productVariant: null, errors: result.errors };
+  ctx.inventoryLoaders.stocksByVariantId.clear(variantId);
+  return { productVariant: result.variant, errors: [] };
+};
+
+const graphqlError = (field: string | null, message: string): BulkStockErrorData => ({
+  field,
+  code: "GRAPHQL_ERROR",
+  message,
+  index: null,
+});
+
+/** A `sku` that matches no variant, for the create/update payloads and the delete payload. */
+const bulkSkuNotFound = (message: string): BulkStockErrorData => ({
+  field: "sku",
+  code: "NOT_FOUND",
+  message,
+  index: null,
+});
+const stockSkuNotFound = (message: string): StockErrorData => ({
+  field: "sku",
+  code: "NOT_FOUND",
+  message,
+});
+const stockGraphqlError = (field: string | null, message: string): StockErrorData => ({
+  field,
+  code: "GRAPHQL_ERROR",
+  message,
+});
+
+builder.mutationField("productVariantStocksCreate", (t) =>
+  t.field({
+    type: ProductVariantStocksCreate,
+    nullable: true,
+    description: CREATE_DESCRIPTION,
+    args: {
+      variantId: t.arg.id({
+        required: true,
+        description: "ID of a product variant for which stocks will be created.",
+      }),
+      stocks: t.arg({
+        type: [StockInput],
+        required: true,
+        description: "Input list of stocks to create.",
+      }),
+    },
+    resolve: async (_parent, { variantId, stocks }, ctx) => {
+      await requirePermission(ctx, "MANAGE_PRODUCTS");
+      const id = fromGlobalId("ProductVariant", String(variantId));
+
+      const decoded = decodeStockInputs(stocks);
+      if (!decoded.ok) {
+        return { productVariant: null, errors: [graphqlError("warehouse", decoded.message)] };
+      }
+
+      try {
+        const result = await runStockWrite(() => createVariantStocks(ctx.db, id, decoded.stocks));
+        return stockResultPayload(id, result, ctx);
+      } catch (error) {
+        if (!(error instanceof WarehouseNotFoundError)) throw error;
+        return {
+          productVariant: null,
+          errors: [graphqlError("warehouse", warehousesNotFoundMessage(error.ids))],
+        };
+      }
+    },
+  }),
+);
+
+builder.mutationField("productVariantStocksUpdate", (t) =>
+  t.field({
+    type: ProductVariantStocksUpdate,
+    nullable: true,
+    description: UPDATE_DESCRIPTION,
+    args: {
+      variantId: t.arg.id({
+        description: "ID of a product variant for which stocks will be updated.",
+      }),
+      sku: t.arg.string({
+        description: "SKU of product variant for which stocks will be updated.",
+      }),
+      stocks: t.arg({
+        type: [StockInput],
+        required: true,
+        description: "Input list of stocks to create or update.",
+      }),
+    },
+    resolve: async (_parent, { variantId, sku, stocks }, ctx) => {
+      await requirePermission(ctx, "MANAGE_PRODUCTS");
+      const argsError = oneOfArgsError(variantId, sku);
+      if (argsError !== null) {
+        return { productVariant: null, errors: [graphqlError(null, argsError)] };
+      }
+
+      const variant = await stockMutationVariantId(ctx, variantId, sku);
+      if (!variant.ok) {
+        return { productVariant: null, errors: [bulkSkuNotFound(variant.message)] };
+      }
+
+      const decoded = decodeStockInputs(stocks);
+      if (!decoded.ok) {
+        return { productVariant: null, errors: [graphqlError("warehouse", decoded.message)] };
+      }
+
+      try {
+        const result = await runStockWrite(() =>
+          updateVariantStocks(ctx.db, variant.id, decoded.stocks),
+        );
+        return stockResultPayload(variant.id, result, ctx);
+      } catch (error) {
+        if (!(error instanceof WarehouseNotFoundError)) throw error;
+        return {
+          productVariant: null,
+          errors: [graphqlError("warehouse", warehousesNotFoundMessage(error.ids))],
+        };
+      }
+    },
+  }),
+);
+
+builder.mutationField("productVariantStocksDelete", (t) =>
+  t.field({
+    type: ProductVariantStocksDelete,
+    nullable: true,
+    description: DELETE_DESCRIPTION,
+    args: {
+      variantId: t.arg.id({
+        description: "ID of product variant for which stocks will be deleted.",
+      }),
+      sku: t.arg.string({
+        description: "SKU of product variant for which stocks will be deleted.",
+      }),
+      warehouseIds: t.arg.idList({ description: "Input list of warehouse IDs." }),
+    },
+    resolve: async (_parent, { variantId, sku, warehouseIds }, ctx) => {
+      await requirePermission(ctx, "MANAGE_PRODUCTS");
+      const argsError = oneOfArgsError(variantId, sku);
+      if (argsError !== null) {
+        return { productVariant: null, errors: [stockGraphqlError(null, argsError)] };
+      }
+
+      const variant = await stockMutationVariantId(ctx, variantId, sku);
+      if (!variant.ok) {
+        return { productVariant: null, errors: [stockSkuNotFound(variant.message)] };
+      }
+
+      const decoded = decodeWarehouseIds(warehouseIds ?? []);
+      if (!decoded.ok) {
+        return {
+          productVariant: null,
+          errors: [stockGraphqlError("warehouseIds", decoded.message)],
+        };
+      }
+
+      const result = await runStockWrite(() =>
+        deleteVariantStocks(ctx.db, variant.id, decoded.ids),
+      );
+      ctx.inventoryLoaders.stocksByVariantId.clear(variant.id);
+      return { productVariant: result.variant, errors: [] };
+    },
+  }),
 );

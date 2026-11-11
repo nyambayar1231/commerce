@@ -7,6 +7,7 @@ import { MoneyType } from "../../graphql/money.ts";
 import { isEdgesRequested, validatePagination } from "../../graphql/pagination.ts";
 import { DateTime, Decimal, JSONString } from "../../graphql/scalars.ts";
 import { getStorage, type ThumbnailFormat } from "../../storage/index.ts";
+import { inStockVariantIdsSql } from "../inventory/index.ts";
 import { CategoryType, OrderDirection } from "./graphql.ts";
 import {
   getProduct,
@@ -466,6 +467,14 @@ const ProductOrder = builder.inputType("ProductOrder", {
   }),
 });
 
+// Saleor's StockAvailability (saleor/graphql/product/enums.py): whether any variant is in stock.
+const StockAvailability = builder.enumType("StockAvailability", {
+  values: {
+    IN_STOCK: {},
+    OUT_OF_STOCK: {},
+  } as const,
+});
+
 // Saleor's filter inputs for `where` (saleor/graphql/core/types/filters.py), reduced to the
 // operators our fields implement.
 const StringFilterInput = builder.inputType("StringFilterInput", {
@@ -522,6 +531,7 @@ interface ProductWhereData {
   isPublished?: boolean | null;
   price?: DecimalFilterData | null;
   minimalPrice?: DecimalFilterData | null;
+  stockAvailability?: "IN_STOCK" | "OUT_OF_STOCK" | null;
   updatedAt?: DateTimeFilterData | null;
   AND?: readonly ProductWhereData[] | null;
   OR?: readonly ProductWhereData[] | null;
@@ -554,6 +564,10 @@ ProductWhereInput.implement({
     minimalPrice: t.field({
       type: DecimalFilterInput,
       description: "Filter by the lowest variant price after discounts.",
+    }),
+    stockAvailability: t.field({
+      type: StockAvailability,
+      description: "Filter by variants having specific stock status.",
     }),
     updatedAt: t.field({
       type: DateTimeFilterInput,
@@ -625,6 +639,12 @@ function toProductWhere(where: ProductWhereData): ProductWhere {
   }
   if (where.minimalPrice !== undefined) {
     result.minimalPrice = where.minimalPrice === null ? null : toDecimalFilter(where.minimalPrice);
+  }
+  if (where.stockAvailability !== undefined) {
+    result.stockAvailability =
+      where.stockAvailability === null
+        ? null
+        : { value: where.stockAvailability, inStockVariantIds: inStockVariantIdsSql() };
   }
   if (where.updatedAt !== undefined) result.updatedAt = where.updatedAt;
   if (where.AND !== undefined) result.AND = where.AND?.map(toProductWhere);

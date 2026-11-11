@@ -182,6 +182,8 @@ export type ProductVariantCreateInput = {
   product: string | number;
   /** Stock keeping unit. */
   sku?: string | null | undefined;
+  /** Stocks of a product available for sale. */
+  stocks?: Array<StockInput> | null | undefined;
   /** Determines if the inventory of this variant should be tracked. If false, the quantity won't change when customers buy this item. */
   trackInventory?: boolean | null | undefined;
 };
@@ -218,8 +220,21 @@ export type ProductWhereInput = {
   price?: DecimalFilterInput | null | undefined;
   /** Filter by product slug. */
   slug?: StringFilterInput | null | undefined;
+  /** Filter by variants having specific stock status. */
+  stockAvailability?: StockAvailability | null | undefined;
   /** Filter by when was the most recent update. */
   updatedAt?: DateTimeFilterInput | null | undefined;
+};
+
+export type StockAvailability =
+  | 'IN_STOCK'
+  | 'OUT_OF_STOCK';
+
+export type StockInput = {
+  /** Quantity of items available for sell. */
+  quantity: number;
+  /** Warehouse in which stock is located. */
+  warehouse: string | number;
 };
 
 export type StringFilterInput = {

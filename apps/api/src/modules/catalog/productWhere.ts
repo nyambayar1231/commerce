@@ -52,6 +52,13 @@ export interface ProductWhere {
   price?: ConditionFilter<number> | null;
   /** Matches when the lowest variant price satisfies the condition. */
   minimalPrice?: ConditionFilter<number> | null;
+  /**
+   * Saleor's `stockAvailability`. The `stock` table belongs to the inventory module and this one
+   * may not read it (ARCHITECTURE.md §2), so the caller supplies the subquery of the variant ids
+   * that are in stock (`inventory`'s `inStockVariantIdsSql`). Products without variants are
+   * out of stock; like Saleor, `trackInventory` is ignored.
+   */
+  stockAvailability?: { value: "IN_STOCK" | "OUT_OF_STOCK"; inStockVariantIds: SQL } | null;
   updatedAt?: ConditionFilter<Date> | null;
   AND?: readonly ProductWhere[] | null;
   OR?: readonly ProductWhere[] | null;
@@ -135,6 +142,19 @@ const minimalPrice = (filter: ConditionFilter<number>): SQL =>
   );
 
 /**
+ * `stockAvailability`: some variant is in stock (Saleor's filter_products_by_stock_availability).
+ * IN_STOCK is an `EXISTS`, OUT_OF_STOCK its negation, so a product without variants is out of
+ * stock.
+ */
+function stockAvailability(filter: NonNullable<ProductWhere["stockAvailability"]>): SQL {
+  const inStock = sql`EXISTS (
+    SELECT 1 FROM product_variant AS v
+    WHERE v.product_id = p.id AND v.id IN (${filter.inStockVariantIds})
+  )`;
+  return filter.value === "IN_STOCK" ? inStock : sql`NOT ${inStock}`;
+}
+
+/**
  * One `WHERE` fragment for a `ProductWhereInput`. Fields in one object AND together; `AND`/`OR`
  * combine their objects. An object may not mix an operator with other fields (Saleor:
  * "Cannot mix operators with other filter inputs.").
@@ -166,6 +186,7 @@ export function productWhereToSql(where: ProductWhere, depth = 1): SQL {
   if (where.isPublished != null) conditions.push(sql`p.is_published = ${where.isPublished}`);
   if (where.price != null) conditions.push(variantPrice(where.price));
   if (where.minimalPrice != null) conditions.push(minimalPrice(where.minimalPrice));
+  if (where.stockAvailability != null) conditions.push(stockAvailability(where.stockAvailability));
   if (where.updatedAt != null) conditions.push(conditionFilter(sql`p.updated_at`, where.updatedAt));
 
   if (where.AND && where.AND.length > 0) {
