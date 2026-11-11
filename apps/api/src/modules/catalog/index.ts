@@ -76,6 +76,7 @@ export {
   getProduct,
   getProductVariant,
   getProductVariants,
+  getProductVariantsByIds,
   lockProductVariant,
   ProductNotFoundError,
   toMoney,

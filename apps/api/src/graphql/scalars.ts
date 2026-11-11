@@ -25,8 +25,27 @@ export const DateTime = builder.scalarType("DateTime", {
   parseLiteral: (node) => parseDateTime(stringLiteral(node, "DateTime")),
 });
 
-const DECIMAL = /^-?\d+(\.\d+)?$/;
+// Saleor's UUID scalar (saleor/graphql/core/scalars.py): a string in canonical form. Checkout's
+// `token` is the only user; the format check lives in graphql/globalId.ts when an ID is decoded.
+export const UUID = builder.scalarType("UUID", {
+  description:
+    "Represents a Universally Unique Identifier (UUID) string, for example " +
+    '"5e8bfb3c-3db5-4a8e-8d4e-1c6f6e2c1a2b".',
+  serialize: (value) => {
+    if (typeof value !== "string") throw new GraphQLError("UUID must be a string.");
+    return value;
+  },
+  parseValue: (value) => {
+    if (typeof value !== "string") throw new GraphQLError("UUID must be a string.");
+    return value;
+  },
+  parseLiteral: (node) => {
+    if (node.kind !== Kind.STRING) throw new GraphQLError("UUID must be a string.");
+    return node.value;
+  },
+});
 
+const DECIMAL = /^-?\d+(\.\d+)?$/;
 /**
  * Saleor's Decimal scalar (saleor/graphql/core/scalars.py): output as a number, input as a number
  * or a numeric string. The string is kept as typed, so no binary float rounding happens before the

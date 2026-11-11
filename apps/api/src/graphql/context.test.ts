@@ -69,10 +69,11 @@ describe("createContext", () => {
     expect(ctx.sessionToken).toBeNull();
   });
 
-  it("creates the catalog and inventory loaders per request", async () => {
+  it("creates the catalog, inventory and checkout loaders per request", async () => {
     const ctx = await createContext(db, request({}));
     expect(typeof ctx.loaders.categoryById.load).toBe("function");
     expect(typeof ctx.inventoryLoaders.stocksByVariantId.load).toBe("function");
+    expect(typeof ctx.checkoutLoaders.linesByCheckoutId.load).toBe("function");
   });
 });
 

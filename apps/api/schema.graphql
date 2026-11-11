@@ -175,6 +175,158 @@ type CategoryUpdate {
   errors: [ProductError!]!
 }
 
+type Checkout implements Node {
+  """The date and time when the checkout was created."""
+  created: DateTime!
+
+  """Email of a customer."""
+  email: String
+
+  """The ID of the checkout."""
+  id: ID!
+
+  """Returns True, if checkout requires shipping."""
+  isShippingRequired: Boolean!
+
+  """
+  A list of checkout lines, each containing information about an item in the checkout.
+  """
+  lines: [CheckoutLine!]!
+
+  """The number of items purchased."""
+  quantity: Int!
+
+  """The price of the checkout before shipping, with taxes included."""
+  subtotalPrice: TaxedMoney!
+
+  """The checkout's token."""
+  token: UUID!
+
+  """
+  The sum of the checkout line prices, with all the taxes, shipping costs, and discounts included.
+  """
+  totalPrice: TaxedMoney!
+
+  """Time of last modification of the given checkout."""
+  updatedAt: DateTime!
+}
+
+type CheckoutCreate {
+  """The created checkout."""
+  checkout: Checkout
+
+  """
+  Whether the checkout was created or the current active one was returned. Refer to checkoutLinesAdd and checkoutLinesUpdate to merge a cart with an active checkout.
+  """
+  created: Boolean
+  errors: [CheckoutError!]!
+}
+
+input CheckoutCreateInput {
+  """The customer's email address."""
+  email: String
+
+  """
+  A list of checkout lines, each containing information about an item in the checkout.
+  """
+  lines: [CheckoutLineInput!]!
+}
+
+type CheckoutEmailUpdate {
+  """An updated checkout."""
+  checkout: Checkout
+  errors: [CheckoutError!]!
+}
+
+type CheckoutError {
+  """The error code."""
+  code: CheckoutErrorCode!
+
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """List of line Ids which cause the error."""
+  lines: [ID!]
+
+  """The error message."""
+  message: String!
+
+  """List of variant IDs which causes the error."""
+  variants: [ID!]
+}
+
+enum CheckoutErrorCode {
+  INSUFFICIENT_STOCK
+  INVALID
+  NOT_FOUND
+  PRODUCT_NOT_PUBLISHED
+  QUANTITY_GREATER_THAN_LIMIT
+  REQUIRED
+  ZERO_QUANTITY
+}
+
+type CheckoutLine implements Node {
+  """The ID of the checkout line."""
+  id: ID!
+
+  """The quantity of product variant assigned to the checkout line."""
+  quantity: Int!
+
+  """Indicates whether the item need to be delivered."""
+  requiresShipping: Boolean!
+
+  """The sum of the checkout line price, taxes and discounts."""
+  totalPrice: TaxedMoney!
+
+  """The sum of the checkout line price, without discounts."""
+  undiscountedTotalPrice: Money!
+
+  """The unit price of the checkout line, without discounts."""
+  undiscountedUnitPrice: Money!
+
+  """The unit price of the checkout line, with taxes and discounts."""
+  unitPrice: TaxedMoney!
+
+  """The product variant from which the checkout line was created."""
+  variant: ProductVariant!
+}
+
+input CheckoutLineInput {
+  """The number of items purchased."""
+  quantity: Int!
+
+  """ID of the product variant."""
+  variantId: ID!
+}
+
+input CheckoutLineUpdateInput {
+  """ID of the line."""
+  lineId: ID!
+
+  """The number of items purchased."""
+  quantity: Int!
+}
+
+type CheckoutLinesAdd {
+  """An updated checkout."""
+  checkout: Checkout
+  errors: [CheckoutError!]!
+}
+
+type CheckoutLinesDelete {
+  """An updated checkout."""
+  checkout: Checkout
+  errors: [CheckoutError!]!
+}
+
+type CheckoutLinesUpdate {
+  """An updated checkout."""
+  checkout: Checkout
+  errors: [CheckoutError!]!
+}
+
 """
 Log in: on success, sets the HttpOnly session cookie and returns the user.
 """
@@ -330,6 +482,54 @@ type Mutation {
     """Fields required to update a category."""
     input: CategoryInput!
   ): CategoryUpdate!
+
+  """Creates a new checkout."""
+  checkoutCreate(
+    """Fields required to create checkout."""
+    input: CheckoutCreateInput!
+  ): CheckoutCreate
+
+  """Updates email address in the existing checkout object."""
+  checkoutEmailUpdate(
+    """email."""
+    email: String!
+
+    """The checkout's ID."""
+    id: ID!
+  ): CheckoutEmailUpdate
+
+  """
+  Adds a checkout line to the existing checkout.If line was already in checkout, its quantity will be increased.
+  """
+  checkoutLinesAdd(
+    """The checkout's ID."""
+    id: ID!
+
+    """
+    A list of checkout lines, each containing information about an item in the checkout.
+    """
+    lines: [CheckoutLineInput!]!
+  ): CheckoutLinesAdd
+
+  """Deletes checkout lines."""
+  checkoutLinesDelete(
+    """The checkout's ID."""
+    id: ID!
+
+    """A list of checkout lines."""
+    linesIds: [ID!]!
+  ): CheckoutLinesDelete
+
+  """Updates checkout line in the existing checkout."""
+  checkoutLinesUpdate(
+    """The checkout's ID."""
+    id: ID!
+
+    """
+    A list of checkout lines, each containing information about an item in the checkout.
+    """
+    lines: [CheckoutLineUpdateInput!]!
+  ): CheckoutLinesUpdate
 
   """End the current session. Succeeds when there is none."""
   logout: Logout!
@@ -1188,6 +1388,12 @@ type Query {
     slug: String
   ): Category
 
+  """Look up a checkout by id."""
+  checkout(
+    """The checkout's ID."""
+    id: ID
+  ): Checkout
+
   """Return the currently authenticated user."""
   me: User
 
@@ -1388,6 +1594,20 @@ input StringFilterInput {
   oneOf: [String!]
 }
 
+type TaxedMoney {
+  """Currency code."""
+  currency: String!
+
+  """Amount of money including taxes."""
+  gross: Money!
+
+  """Amount of money without taxes."""
+  net: Money!
+
+  """Amount of taxes."""
+  tax: Money!
+}
+
 enum ThumbnailFormatEnum {
   AVIF
   ORIGINAL
@@ -1406,6 +1626,11 @@ enum ThumbnailSizeRoundingEnum {
   NEAREST
   UP
 }
+
+"""
+Represents a Universally Unique Identifier (UUID) string, for example "5e8bfb3c-3db5-4a8e-8d4e-1c6f6e2c1a2b".
+"""
+scalar UUID
 
 """
 Variables of this type must be set to null in mutations. They will be replaced with a filename from a following multipart part containing a binary file. See: https://github.com/jaydenseric/graphql-multipart-request-spec.

@@ -24,6 +24,8 @@ export const builder = new SchemaBuilder<{
     JSONString: { Input: unknown; Output: unknown };
     // The multipart file part of a request (graphql/scalars.ts); never a JSON value.
     Upload: { Input: File; Output: File };
+    // A UUID string (graphql/scalars.ts), used by Checkout.token.
+    UUID: { Input: string; Output: string };
   };
 }>({
   plugins: [RelayPlugin],

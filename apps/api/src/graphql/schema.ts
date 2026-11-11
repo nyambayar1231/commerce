@@ -5,6 +5,7 @@ import "../modules/catalog/graphql.ts";
 import "../modules/catalog/mediaMutations.ts";
 import "../modules/catalog/productGraphql.ts";
 import "../modules/catalog/productMutations.ts";
+import "../modules/checkout/graphql.ts";
 import "../modules/identity/graphql.ts";
 import "../modules/inventory/graphql.ts";
 import "../modules/shop/graphql.ts";

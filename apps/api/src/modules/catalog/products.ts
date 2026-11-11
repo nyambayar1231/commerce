@@ -47,6 +47,18 @@ export async function getProductVariant(
   return row ?? null;
 }
 
+/** The variants with the given ids; one query for any number of ids, order unspecified. */
+export async function getProductVariantsByIds(
+  db: Executor,
+  ids: readonly string[],
+): Promise<ProductVariantRow[]> {
+  if (ids.length === 0) return [];
+  return db
+    .select()
+    .from(schema.productVariant)
+    .where(inArray(schema.productVariant.id, [...ids]));
+}
+
 /** A product's variants in display order: `position`, then `id` so the order is total. */
 export async function getProductVariants(
   db: Executor,

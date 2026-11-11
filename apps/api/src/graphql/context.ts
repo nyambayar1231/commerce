@@ -1,5 +1,6 @@
 import type { Db } from "@commerce/db";
 import { type CatalogLoaders, createCatalogLoaders } from "../modules/catalog/index.ts";
+import { type CheckoutLoaders, createCheckoutLoaders } from "../modules/checkout/index.ts";
 import {
   getEffectivePermissions,
   getSessionUser,
@@ -15,6 +16,7 @@ export interface Context {
   // shared across requests). Created eagerly: a DataLoader costs nothing until its first load.
   loaders: CatalogLoaders;
   inventoryLoaders: InventoryLoaders;
+  checkoutLoaders: CheckoutLoaders;
   // The logged-in user, or null for anonymous requests and ended sessions.
   user: SessionUser | null;
   // The token the request authenticated with (needed to revoke it on logout), or null.
@@ -61,6 +63,7 @@ export async function createContext(db: Db, request: Request): Promise<Omit<Cont
     db,
     loaders: createCatalogLoaders(db),
     inventoryLoaders: createInventoryLoaders(db),
+    checkoutLoaders: createCheckoutLoaders(db),
     user,
     sessionToken: user === null ? null : sessionToken,
     permissions: () => {
