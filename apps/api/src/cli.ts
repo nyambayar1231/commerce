@@ -76,6 +76,21 @@ type FlagValues = {
   "last-name"?: string;
 };
 
+/**
+ * One line for an error: its message (or its name when the message is empty, as some SDK errors
+ * have) and the messages of its `cause` chain, where the SDK and the driver keep the real reason
+ * (e.g. an S3 connection failure's `ECONNREFUSED`).
+ */
+function errorText(error: unknown): string {
+  const messages: string[] = [];
+  let current: unknown = error;
+  while (current instanceof Error && messages.length < 10) {
+    messages.push(current.message || current.name);
+    current = current.cause;
+  }
+  return messages.length > 0 ? messages.join(": ") : String(error);
+}
+
 async function main(): Promise<void> {
   let command: string | undefined;
   let values: FlagValues;
@@ -95,7 +110,7 @@ async function main(): Promise<void> {
     values = parsed.values as FlagValues;
   } catch (error) {
     // e.g. an unknown flag such as --password
-    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`Error: ${errorText(error)}`);
     console.error(USAGE);
     process.exitCode = 2;
     return;
@@ -107,7 +122,7 @@ async function main(): Promise<void> {
       await getStorage().ensureBucket();
       console.log(`Media bucket ready: ${bucket}`);
     } catch (error) {
-      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`Error: ${errorText(error)}`);
       process.exitCode = 1;
     }
     return;
@@ -118,7 +133,7 @@ async function main(): Promise<void> {
       const { created, skipped } = await seedDemoCatalog(getDb());
       console.log(`Demo catalog: ${created} categories created, ${skipped} already there.`);
     } catch (error) {
-      console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`Error: ${errorText(error)}`);
       process.exitCode = 1;
     }
     return;
@@ -135,7 +150,7 @@ async function main(): Promise<void> {
     const created = await createSuperuser(getDb(), input);
     console.log(`Superuser created: ${created.email}`);
   } catch (error) {
-    console.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`Error: ${errorText(error)}`);
     process.exitCode = 1;
   }
 }

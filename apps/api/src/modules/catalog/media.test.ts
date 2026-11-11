@@ -1,11 +1,21 @@
 import { closeDb, createDb, getDb, schema } from "@commerce/db";
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { eq } from "drizzle-orm";
+import sharp from "sharp";
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestClient } from "../../../test/graphql.ts";
 import { toGlobalId } from "../../graphql/globalId.ts";
-import { createCatalogLoaders, getProductMedia } from "./index.ts";
+import { getStorage, type Storage, StorageObjectNotFoundError } from "../../storage/index.ts";
+import {
+  createCatalogLoaders,
+  createProductMedia,
+  deleteProductMedia,
+  getProductMedia,
+  type ProductMediaRow,
+  ProductNotFoundError,
+} from "./index.ts";
 
-// Product media reads (ADR-0014): the rows are images in S3, and `Product.media` resolves them
-// through a per-request loader. Uploads arrive with M2.5.2.
+// Product media reads and writes (ADR-0014): the rows are images in S3, `Product.media` resolves
+// them through a per-request loader, and the write path keeps the row and the objects in step.
 
 const db = getDb();
 const counted: string[] = [];
@@ -171,5 +181,156 @@ describe("mediaByProductId loader", () => {
     expect(other.map((row) => row.alt)).toEqual(["Solo"]);
     expect(missing).toEqual([]);
     expect(domainQueries()).toHaveLength(1);
+  });
+});
+
+// The media write path (M2.5.2a): the row and its objects are one unit, with the object put before
+// the row and deleted after it (ADR-0014), also when the storage call fails.
+describe("media mutations", () => {
+  const storage = getStorage();
+  const PRODUCT_WITH_IMAGES = ID(330);
+  // Objects this test created; deleted after it, as the rows are truncated before the next one.
+  const objects: string[] = [];
+
+  const image = async () => {
+    const bytes = await sharp({
+      create: { width: 8, height: 8, channels: 3, background: "#ff0000" },
+    })
+      .jpeg()
+      .toBuffer();
+    return new File([bytes], "image.jpg", { type: "image/jpeg" });
+  };
+
+  async function mustCreate(): Promise<ProductMediaRow> {
+    const result = await createProductMedia(db, storage, {
+      productId: PRODUCT_WITH_IMAGES,
+      file: await image(),
+    });
+    if (!result.ok) throw new Error(JSON.stringify(result.errors));
+    objects.push(result.media.imageKey);
+    return result.media;
+  }
+
+  beforeEach(async () => {
+    objects.length = 0;
+    await db
+      .insert(schema.product)
+      .values({ id: PRODUCT_WITH_IMAGES, name: "Beanie", slug: "beanie" });
+  });
+
+  afterEach(async () => {
+    for (const key of objects) await storage.deleteObject(key).catch(() => undefined);
+  });
+
+  it("puts the image and appends the row after the product's last sort order", async () => {
+    const first = await mustCreate();
+    const second = await mustCreate();
+
+    expect(first).toMatchObject({
+      productId: PRODUCT_WITH_IMAGES,
+      imageKey: `products/${PRODUCT_WITH_IMAGES}/${first.id}.jpg`,
+      contentType: "image/jpeg",
+      alt: "",
+      sortOrder: 0,
+    });
+    expect(second.sortOrder).toBe(1);
+    expect((await storage.getObject(first.imageKey)).byteLength).toBeGreaterThan(0);
+  });
+
+  it("rejects an unknown product without writing an object", async () => {
+    const puts: string[] = [];
+    const recording: Storage = {
+      ...storage,
+      async putObject(key, body, contentType) {
+        puts.push(key);
+        await storage.putObject(key, body, contentType);
+      },
+    };
+
+    await expect(
+      createProductMedia(db, recording, { productId: MISSING, file: await image() }),
+    ).rejects.toBeInstanceOf(ProductNotFoundError);
+    expect(puts).toEqual([]);
+  });
+
+  it("removes the object when the row insert fails after the upload", async () => {
+    const raceProduct = ID(340);
+    await db.insert(schema.product).values({ id: raceProduct, name: "Race", slug: "race" });
+
+    const written: string[] = [];
+    const racing: Storage = {
+      ...storage,
+      async putObject(key, body, contentType) {
+        await storage.putObject(key, body, contentType);
+        written.push(key);
+        // The product is deleted between our existence check and the transaction's lock.
+        await db.delete(schema.product).where(eq(schema.product.id, raceProduct));
+      },
+    };
+
+    await expect(
+      createProductMedia(db, racing, { productId: raceProduct, file: await image() }),
+    ).rejects.toBeInstanceOf(ProductNotFoundError);
+    expect(written).toHaveLength(1);
+    await expect(storage.getObject(written[0] ?? "")).rejects.toBeInstanceOf(
+      StorageObjectNotFoundError,
+    );
+  });
+
+  it("deletes the row, the media object and the thumbnail objects", async () => {
+    const media = await mustCreate();
+    const thumbnailKey = `thumbnails/${media.id}/128.jpg`;
+    objects.push(thumbnailKey);
+    const thumbnailBytes = await sharp({
+      create: { width: 8, height: 8, channels: 3, background: "#00ff00" },
+    })
+      .jpeg()
+      .toBuffer();
+    await storage.putObject(thumbnailKey, thumbnailBytes, "image/jpeg");
+    await db.insert(schema.productMediaThumbnail).values({
+      mediaId: media.id,
+      size: 128,
+      format: "ORIGINAL",
+      imageKey: thumbnailKey,
+    });
+
+    const deleted = await deleteProductMedia(db, storage, media.id);
+
+    expect(deleted.media.id).toBe(media.id);
+    expect(
+      await db.select().from(schema.productMedia).where(eq(schema.productMedia.id, media.id)),
+    ).toEqual([]);
+    expect(await db.select().from(schema.productMediaThumbnail)).toEqual([]);
+    await expect(storage.getObject(media.imageKey)).rejects.toBeInstanceOf(
+      StorageObjectNotFoundError,
+    );
+    await expect(storage.getObject(thumbnailKey)).rejects.toBeInstanceOf(
+      StorageObjectNotFoundError,
+    );
+  });
+
+  it("still deletes the row when S3 fails to delete the object", async () => {
+    const media = await mustCreate();
+    const logged = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const failing: Storage = {
+        ...storage,
+        deleteObject: async () => {
+          throw new Error("S3 is down");
+        },
+      };
+
+      const deleted = await deleteProductMedia(db, failing, media.id);
+
+      expect(deleted.media.id).toBe(media.id);
+      expect(
+        await db.select().from(schema.productMedia).where(eq(schema.productMedia.id, media.id)),
+      ).toEqual([]);
+      // The orphan object is still there: the failure only logged, it did not roll back the row.
+      expect((await storage.getObject(media.imageKey)).byteLength).toBeGreaterThan(0);
+      expect(logged).toHaveBeenCalled();
+    } finally {
+      logged.mockRestore();
+    }
   });
 });

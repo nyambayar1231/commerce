@@ -73,3 +73,43 @@ export const JSONString = builder.scalarType("JSONString", {
   parseValue: parseJSON,
   parseLiteral: (node) => parseJSON(stringLiteral(node, "JSONString")),
 });
+
+/**
+ * A WHATWG `File` as the multipart parser yields it. Yoga's fetch implementation (whatwg-node)
+ * brings its own `File` class, so `instanceof File` is not enough: check the File/Blob surface.
+ */
+function isFile(value: unknown): value is File {
+  if (value instanceof File) return true;
+  if (typeof value !== "object" || value === null) return false;
+  const file = value as Partial<File>;
+  return (
+    typeof file.name === "string" &&
+    typeof file.type === "string" &&
+    typeof file.size === "number" &&
+    typeof file.arrayBuffer === "function"
+  );
+}
+
+/**
+ * Saleor's Upload scalar (saleor/graphql/core/types/upload.py): a mutation variable whose value is
+ * a file part of a multipart request (the graphql-multipart-request-spec). It is never a JSON
+ * value, so literals and serialization are rejected; `parseValue` receives the file part.
+ */
+export const Upload = builder.scalarType("Upload", {
+  description:
+    "Variables of this type must be set to null in mutations. They will be replaced with a " +
+    "filename from a following multipart part containing a binary file. " +
+    "See: https://github.com/jaydenseric/graphql-multipart-request-spec.",
+  serialize: () => {
+    throw new GraphQLError("Upload can only be used as an input.");
+  },
+  parseValue: (value) => {
+    if (!isFile(value)) {
+      throw new GraphQLError("Upload must be a file in a multipart request.");
+    }
+    return value;
+  },
+  parseLiteral: () => {
+    throw new GraphQLError("Upload must be provided as a multipart file.");
+  },
+});

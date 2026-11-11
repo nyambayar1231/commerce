@@ -19,6 +19,7 @@ import {
   listCategories,
   NotFoundError,
   type ProductError,
+  type ProductMediaError,
   updateCategory,
 } from "./index.ts";
 
@@ -225,18 +226,22 @@ builder.queryField("categories", (t) =>
 
 const ProductErrorCode = builder.enumType("ProductErrorCode", {
   values: [
+    "FILE_SIZE_LIMIT_EXCEEDED",
     "GRAPHQL_ERROR",
     "INVALID",
+    "INVALID_FILE_TYPE",
     "NOT_FOUND",
+    "NOT_PRODUCTS_IMAGE",
     "PRODUCT_WITHOUT_CATEGORY",
     "PRODUCT_WITHOUT_VARIANTS",
     "REQUIRED",
     "UNIQUE",
+    "UNSUPPORTED_MIME_TYPE",
   ] as const,
 });
 
 export const ProductErrorType = builder
-  .objectRef<CategoryError | ProductError>("ProductError")
+  .objectRef<CategoryError | ProductError | ProductMediaError>("ProductError")
   .implement({
     description: "Represents an error in the input of a mutation.",
     fields: (t) => ({

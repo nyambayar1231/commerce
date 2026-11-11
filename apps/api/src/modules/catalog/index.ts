@@ -27,8 +27,26 @@ export { InvalidCursorError, listCategories } from "./categoryList.ts";
 export { DEMO_CATEGORIES, seedDemoCatalog } from "./demoCatalog.ts";
 export type { CatalogLoaders } from "./loaders.ts";
 export { createCatalogLoaders } from "./loaders.ts";
-export type { ProductMediaRow, ProductMediaThumbnailRow } from "./media.ts";
-export { getProductMedia } from "./media.ts";
+export type {
+  ProductMediaCreateInput,
+  ProductMediaError,
+  ProductMediaErrorCode,
+  ProductMediaReorderResult,
+  ProductMediaResult,
+  ProductMediaRow,
+  ProductMediaThumbnailRow,
+  ProductMediaUpdateInput,
+} from "./media.ts";
+export {
+  createProductMedia,
+  deleteProductMedia,
+  getProductMedia,
+  ProductMediaNotFoundError,
+  reorderProductMedia,
+  updateProductMedia,
+} from "./media.ts";
+export type { ImageFile, ImageFormat, UploadedFile } from "./mediaFile.ts";
+export { detectImageFormat, MAX_IMAGE_BYTES, validateImageFile } from "./mediaFile.ts";
 export type {
   ProductListArgs,
   ProductListRow,

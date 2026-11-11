@@ -224,6 +224,7 @@ Saleor stays obvious:
 | `ProductVariant.price: Money!`, `Product.minimalVariantPrice: Money` | `ProductVariant.channelListings[].price`, `Product.pricing.priceRange` | Single channel and no taxes/discounts yet: one stored price per variant; the product's lowest variant price (Saleor 2.x's `minimalVariantPrice`) for lists and sorting. |
 | `ProductCreateInput`/`ProductInput.isPublished`, `ProductVariantCreateInput`/`ProductVariantInput.price`; no `productType` | `productChannelListingUpdate`, `productVariantChannelListingUpdate`; `ProductCreateInput.productType!` | Single channel and no product types: publication and price are plain fields of the product and variant inputs. |
 | `ProductErrorCode.PRODUCT_WITHOUT_VARIANTS` | *(none)* | Our invariant: a published product has at least one variant. |
+| `ProductMediaCreateInput` without `mediaUrl`; `ProductMedia.type` always `IMAGE`, `oembedData` always `"{}"` | `mediaUrl` (external/oEmbed video) | Images only for now (ADR-0014); uploads go through `image: Upload`. |
 
 **The database** handles:
 - Invariants that must hold under concurrency: unique, foreign-key and `CHECK` constraints.

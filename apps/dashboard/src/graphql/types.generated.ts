@@ -117,13 +117,17 @@ export type ProductCreateInput = {
 };
 
 export type ProductErrorCode =
+  | 'FILE_SIZE_LIMIT_EXCEEDED'
   | 'GRAPHQL_ERROR'
   | 'INVALID'
+  | 'INVALID_FILE_TYPE'
   | 'NOT_FOUND'
+  | 'NOT_PRODUCTS_IMAGE'
   | 'PRODUCT_WITHOUT_CATEGORY'
   | 'PRODUCT_WITHOUT_VARIANTS'
   | 'REQUIRED'
-  | 'UNIQUE';
+  | 'UNIQUE'
+  | 'UNSUPPORTED_MIME_TYPE';
 
 /** Fields required to update a product. */
 export type ProductInput = {

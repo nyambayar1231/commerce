@@ -349,6 +349,52 @@ type Mutation {
   ): ProductDelete!
 
   """
+  Create a media object (image or video URL) associated with product. For image, this mutation must be sent as a `multipart` request. More detailed specs of the upload format can be found here: https://github.com/jaydenseric/graphql-multipart-request-spec
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productMediaCreate(
+    """Fields required to create a product media."""
+    input: ProductMediaCreateInput!
+  ): ProductMediaCreate!
+
+  """
+  Deletes a product media.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productMediaDelete(
+    """ID of a product media to delete."""
+    id: ID!
+  ): ProductMediaDelete!
+
+  """
+  Changes ordering of the product media.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productMediaReorder(
+    """IDs of a product media in the desired order."""
+    mediaIds: [ID!]!
+
+    """ID of product that media order will be altered."""
+    productId: ID!
+  ): ProductMediaReorder!
+
+  """
+  Updates a product media.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  productMediaUpdate(
+    """ID of a product media to update."""
+    id: ID!
+
+    """Fields required to update a product media."""
+    input: ProductMediaUpdateInput!
+  ): ProductMediaUpdate!
+
+  """
   Updates an existing product.
   
   Requires one of the following permissions: MANAGE_PRODUCTS.
@@ -640,13 +686,17 @@ type ProductError {
 }
 
 enum ProductErrorCode {
+  FILE_SIZE_LIMIT_EXCEEDED
   GRAPHQL_ERROR
   INVALID
+  INVALID_FILE_TYPE
   NOT_FOUND
+  NOT_PRODUCTS_IMAGE
   PRODUCT_WITHOUT_CATEGORY
   PRODUCT_WITHOUT_VARIANTS
   REQUIRED
   UNIQUE
+  UNSUPPORTED_MIME_TYPE
 }
 
 """Fields required to update a product."""
@@ -695,12 +745,74 @@ type ProductMedia implements Node {
   url: String!
 }
 
+"""
+Create a media object (image or video URL) associated with product. For image, this mutation must be sent as a `multipart` request. More detailed specs of the upload format can be found here: https://github.com/jaydenseric/graphql-multipart-request-spec
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductMediaCreate {
+  errors: [ProductError!]!
+  media: ProductMedia
+  product: Product
+}
+
+"""Fields required to create a product media."""
+input ProductMediaCreateInput {
+  """Alt text for a product media."""
+  alt: String
+
+  """Represents an image file in a multipart request."""
+  image: Upload
+
+  """ID of an product."""
+  product: ID!
+}
+
+"""
+Deletes a product media.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductMediaDelete {
+  errors: [ProductError!]!
+  media: ProductMedia
+  product: Product
+}
+
+"""
+Changes ordering of the product media.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductMediaReorder {
+  errors: [ProductError!]!
+  media: [ProductMedia!]!
+  product: Product
+}
+
 enum ProductMediaType {
   """An uploaded image or an URL to an image"""
   IMAGE
 
   """A URL to an external video"""
   VIDEO
+}
+
+"""
+Updates a product media.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type ProductMediaUpdate {
+  errors: [ProductError!]!
+  media: ProductMedia
+  product: Product
+}
+
+"""Fields required to update a product media."""
+input ProductMediaUpdateInput {
+  """Alt text for a product media."""
+  alt: String
 }
 
 input ProductOrder {
@@ -1002,6 +1114,11 @@ input StringFilterInput {
   """The value included in."""
   oneOf: [String!]
 }
+
+"""
+Variables of this type must be set to null in mutations. They will be replaced with a filename from a following multipart part containing a binary file. See: https://github.com/jaydenseric/graphql-multipart-request-spec.
+"""
+scalar Upload
 
 """Represents user data."""
 type User implements Node {

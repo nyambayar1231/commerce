@@ -29,6 +29,10 @@ export function createApp(db: Db, { allowedOrigins }: AppOptions) {
 
   return createYoga<Record<string, unknown>, Context>({
     schema,
+    // The multipart body of a product image upload is buffered by the request parser before our
+    // 10 MiB check runs (modules/catalog/mediaFile.ts); cap the body just above it so a huge
+    // request is rejected with 413 instead of being read. Yoga's default is 25 MB.
+    maxRequestBodySize: 11 * 1024 * 1024,
     context: async ({ request }) => {
       const cookies: string[] = [];
       cookiesByRequest.set(request, cookies);
