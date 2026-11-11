@@ -8,6 +8,7 @@ import {
   type SessionUser,
 } from "../modules/identity/index.ts";
 import { createInventoryLoaders, type InventoryLoaders } from "../modules/inventory/index.ts";
+import { createPaymentLoaders, type PaymentLoaders } from "../modules/payments/index.ts";
 
 // What every resolver receives as its third argument. Created once per request (see app.ts).
 export interface Context {
@@ -17,6 +18,7 @@ export interface Context {
   loaders: CatalogLoaders;
   inventoryLoaders: InventoryLoaders;
   checkoutLoaders: CheckoutLoaders;
+  paymentLoaders: PaymentLoaders;
   // The logged-in user, or null for anonymous requests and ended sessions.
   user: SessionUser | null;
   // The token the request authenticated with (needed to revoke it on logout), or null.
@@ -64,6 +66,7 @@ export async function createContext(db: Db, request: Request): Promise<Omit<Cont
     loaders: createCatalogLoaders(db),
     inventoryLoaders: createInventoryLoaders(db),
     checkoutLoaders: createCheckoutLoaders(db),
+    paymentLoaders: createPaymentLoaders(db),
     user,
     sessionToken: user === null ? null : sessionToken,
     permissions: () => {

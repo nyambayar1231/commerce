@@ -22,6 +22,8 @@ export const builder = new SchemaBuilder<{
     // A decimal number as text on input (see graphql/scalars.ts), a plain number on output.
     Decimal: { Input: string; Output: number };
     JSONString: { Input: unknown; Output: unknown };
+    // Any JSON value as-is (Saleor's GenericScalar `JSON`), e.g. a payment gateway's data.
+    JSON: { Input: unknown; Output: unknown };
     // The multipart file part of a request (graphql/scalars.ts); never a JSON value.
     Upload: { Input: File; Output: File };
     // A UUID string (graphql/scalars.ts), used by Checkout.token.

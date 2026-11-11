@@ -1,4 +1,4 @@
-import { GraphQLError, Kind, type ValueNode } from "graphql";
+import { GraphQLError, Kind, type ValueNode, valueFromASTUntyped } from "graphql";
 import { builder } from "./builder.ts";
 
 function parseDateTime(value: unknown): Date {
@@ -91,6 +91,17 @@ export const JSONString = builder.scalarType("JSONString", {
   serialize: (value) => JSON.stringify(value),
   parseValue: parseJSON,
   parseLiteral: (node) => parseJSON(stringLiteral(node, "JSONString")),
+});
+
+// Saleor's `JSON` (graphene's GenericScalar): any JSON value, passed through unchanged. Used where
+// Saleor takes free-form data, e.g. `PaymentGatewayToInitialize.data`.
+export const JSON_SCALAR = builder.scalarType("JSON", {
+  description:
+    "The `JSON` scalar type represents JSON values as specified by " +
+    "[ECMA-404](https://ecma-international.org/publications-and-standards/standards/ecma-404/).",
+  serialize: (value) => value,
+  parseValue: (value) => value,
+  parseLiteral: (node) => valueFromASTUntyped(node),
 });
 
 /**

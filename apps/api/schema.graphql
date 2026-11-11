@@ -252,8 +252,18 @@ type CategoryUpdate {
 }
 
 type Checkout implements Node {
+  """
+  The authorize status of the checkout: whether the transactions cover the checkout total.
+  """
+  authorizeStatus: CheckoutAuthorizeStatusEnum!
+
   """The billing address of the checkout."""
   billingAddress: Address
+
+  """
+  The charge status of the checkout: how much of the total has been charged.
+  """
+  chargeStatus: CheckoutChargeStatusEnum!
 
   """The date and time when the checkout was created."""
   created: DateTime!
@@ -293,19 +303,38 @@ type Checkout implements Node {
   """The checkout's token."""
   token: UUID!
 
+  """The difference between the paid and the checkout total amount."""
+  totalBalance: Money!
+
   """
   The sum of the checkout line prices, with all the taxes, shipping costs, and discounts included.
   """
   totalPrice: TaxedMoney!
 
+  """List of transactions for the checkout."""
+  transactions: [TransactionItem!]
+
   """Time of last modification of the given checkout."""
   updatedAt: DateTime!
+}
+
+enum CheckoutAuthorizeStatusEnum {
+  FULL
+  NONE
+  PARTIAL
 }
 
 type CheckoutBillingAddressUpdate {
   """An updated checkout."""
   checkout: Checkout
   errors: [CheckoutError!]!
+}
+
+enum CheckoutChargeStatusEnum {
+  FULL
+  NONE
+  OVERCHARGED
+  PARTIAL
 }
 
 type CheckoutCreate {
@@ -803,6 +832,11 @@ type Image {
   url: String!
 }
 
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/publications-and-standards/standards/ecma-404/).
+"""
+scalar JSON
+
 scalar JSONString
 
 """Log out: ends the current session and clears the cookie."""
@@ -1181,6 +1215,30 @@ type Mutation {
     """Password of a user."""
     password: String!
   ): CreateToken!
+
+  """
+  Initializes a transaction session. It triggers the payment gateway to process the payment of the checkout (our built-in dummy gateway, `saleor.io.dummy-payment-app`).
+  """
+  transactionInitialize(
+    """The expected action called for the transaction. Defaults to CHARGE."""
+    action: TransactionFlowStrategyEnum
+
+    """
+    The amount requested for initializing the payment. If not provided, the difference between checkout.total - transactions that are already processed will be send.
+    """
+    amount: Decimal
+
+    """The ID of the checkout."""
+    id: ID!
+
+    """
+    The idempotency key assigned to the action. It will be passed to the payment app to discover potential duplicate actions. If not provided, the default one will be generated.
+    """
+    idempotencyKey: String
+
+    """Payment gateway used to initialize the transaction."""
+    paymentGateway: PaymentGatewayToInitialize!
+  ): TransactionInitialize
 }
 
 interface Node {
@@ -1201,6 +1259,14 @@ type PageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   startCursor: String
+}
+
+input PaymentGatewayToInitialize {
+  """The data that will be passed to the payment gateway."""
+  data: JSON
+
+  """The identifier of the payment gateway app to initialize."""
+  id: String!
 }
 
 """Represents a permission object in a friendly form."""
@@ -2174,6 +2240,161 @@ Added in Saleor 3.23.
 enum ThumbnailSizeRoundingEnum {
   NEAREST
   UP
+}
+
+enum TransactionActionEnum {
+  CANCEL
+  CHARGE
+  REFUND
+}
+
+"""Represents transaction's event."""
+type TransactionEvent implements Node {
+  """The amount related to this event."""
+  amount: Money!
+
+  """Date and time at which a transaction event was created."""
+  createdAt: DateTime!
+
+  """
+  The url that will allow to redirect user to payment provider page with event details.
+  """
+  externalUrl: String!
+
+  """The ID of the object."""
+  id: ID!
+
+  """Message related to the transaction's event."""
+  message: String!
+
+  """PSP reference of transaction."""
+  pspReference: String!
+
+  """The type of action related to this event."""
+  type: TransactionEventTypeEnum
+}
+
+enum TransactionEventTypeEnum {
+  AUTHORIZATION_ACTION_REQUIRED
+  AUTHORIZATION_ADJUSTMENT
+  AUTHORIZATION_FAILURE
+  AUTHORIZATION_REQUEST
+  AUTHORIZATION_SUCCESS
+  CANCEL_FAILURE
+  CANCEL_REQUEST
+  CANCEL_SUCCESS
+  CHARGE_ACTION_REQUIRED
+  CHARGE_BACK
+  CHARGE_FAILURE
+  CHARGE_REQUEST
+  CHARGE_SUCCESS
+  INFO
+  REFUND_FAILURE
+  REFUND_REQUEST
+  REFUND_REVERSE
+  REFUND_SUCCESS
+}
+
+enum TransactionFlowStrategyEnum {
+  AUTHORIZATION
+  CHARGE
+}
+
+"""Initializes a transaction session."""
+type TransactionInitialize {
+  """The JSON data required to finalize the payment."""
+  data: JSON
+  errors: [TransactionInitializeError!]!
+
+  """The initialized transaction."""
+  transaction: TransactionItem
+
+  """The event created for the initialized transaction."""
+  transactionEvent: TransactionEvent
+}
+
+type TransactionInitializeError {
+  """The error code."""
+  code: TransactionInitializeErrorCode!
+
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String!
+}
+
+enum TransactionInitializeErrorCode {
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  UNIQUE
+}
+
+"""Represents a payment transaction."""
+type TransactionItem implements Node {
+  """
+  List of actions that can be requested for the transaction. The dummy gateway supports none yet.
+  """
+  actions: [TransactionActionEnum!]!
+
+  """Total amount of ongoing authorization requests for the transaction."""
+  authorizePendingAmount: Money!
+
+  """Total amount authorized for this payment."""
+  authorizedAmount: Money!
+
+  """Total amount of ongoing cancel requests for the transaction."""
+  cancelPendingAmount: Money!
+
+  """Total amount canceled for this payment."""
+  canceledAmount: Money!
+
+  """Total amount of ongoing charge requests for the transaction."""
+  chargePendingAmount: Money!
+
+  """Total amount charged for this payment."""
+  chargedAmount: Money!
+
+  """The related checkout."""
+  checkout: Checkout
+
+  """Date and time at which payment transaction was created."""
+  createdAt: DateTime!
+
+  """List of all transaction's events."""
+  events: [TransactionEvent!]!
+
+  """
+  The url that will allow to redirect user to payment provider page with transaction details.
+  """
+  externalUrl: String!
+
+  """The ID of the object."""
+  id: ID!
+
+  """Message related to the transaction."""
+  message: String!
+
+  """Date and time at which payment transaction was modified."""
+  modifiedAt: DateTime!
+
+  """Name of the transaction."""
+  name: String!
+
+  """PSP reference of transaction."""
+  pspReference: String!
+
+  """Total amount of ongoing refund requests for the transaction."""
+  refundPendingAmount: Money!
+
+  """Total amount refunded for this payment."""
+  refundedAmount: Money!
+
+  """The transaction token."""
+  token: UUID!
 }
 
 """

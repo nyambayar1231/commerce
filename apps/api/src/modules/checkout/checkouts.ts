@@ -123,7 +123,7 @@ function completedError(checkout: CheckoutRow): CheckoutError | null {
 }
 
 /** A checkout that must exist, locked for the rest of the transaction. */
-async function lockCheckout(db: Executor, id: string): Promise<CheckoutRow> {
+export async function lockCheckout(db: Executor, id: string): Promise<CheckoutRow> {
   const [checkout] = await db
     .select()
     .from(schema.checkout)

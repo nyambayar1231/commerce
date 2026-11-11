@@ -31,6 +31,17 @@ export { COUNTRY_CODES, countryName, isCountryCode } from "./countries.ts";
 export type { CheckoutLoaders } from "./loaders.ts";
 export { createCheckoutLoaders } from "./loaders.ts";
 export type {
+  CheckoutAuthorizeStatus,
+  CheckoutChargeStatus,
+  CheckoutTransactionRequest,
+  CheckoutTransactionResult,
+} from "./payments.ts";
+export {
+  checkoutPaymentStatuses,
+  initializeCheckoutTransaction,
+  uncoveredAmount,
+} from "./payments.ts";
+export type {
   ShippingError,
   ShippingErrorCode,
   ShippingMethodInput,
