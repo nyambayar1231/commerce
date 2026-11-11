@@ -241,6 +241,15 @@ type Group implements Node {
   users: [User!]
 }
 
+"""Represents an image."""
+type Image {
+  """Alt text for an image."""
+  alt: String
+
+  """The URL of the image."""
+  url: String!
+}
+
 scalar JSONString
 
 """Log out: ends the current session and clears the cookie."""
@@ -609,6 +618,26 @@ type Product implements Node {
   """Slug of the product."""
   slug: String!
 
+  """Thumbnail of the product."""
+  thumbnail(
+    """
+    The format of the image. When not provided, format of the original image will be used.
+    """
+    format: ThumbnailFormatEnum = ORIGINAL
+
+    """
+    Desired longest side the image in pixels. Images are never cropped. Thumbnails are generated only in the available sizes: 32, 64, 128, 256, 512, 1024, 2048, 4096; `sizeRounding` determines which one is used.
+    """
+    size: Int = 256
+
+    """
+    Determines how the requested size is matched to an available thumbnail size.
+    
+    Added in Saleor 3.23.
+    """
+    sizeRounding: ThumbnailSizeRoundingEnum = NEAREST
+  ): Image
+
   """The date and time when the product was last updated."""
   updatedAt: DateTime!
 
@@ -742,7 +771,24 @@ type ProductMedia implements Node {
   type: ProductMediaType!
 
   """The URL of the media."""
-  url: String!
+  url(
+    """
+    The format of the image. When not provided, format of the original image will be used.
+    """
+    format: ThumbnailFormatEnum = ORIGINAL
+
+    """
+    Desired longest side the image in pixels. Omit it or pass 0 to retrieve the original image. Images are never cropped. Thumbnails are generated only in the available sizes: 32, 64, 128, 256, 512, 1024, 2048, 4096; `sizeRounding` determines which one is used.
+    """
+    size: Int
+
+    """
+    Determines how the requested size is matched to an available thumbnail size.
+    
+    Added in Saleor 3.23.
+    """
+    sizeRounding: ThumbnailSizeRoundingEnum = NEAREST
+  ): String!
 }
 
 """
@@ -1113,6 +1159,25 @@ input StringFilterInput {
 
   """The value included in."""
   oneOf: [String!]
+}
+
+enum ThumbnailFormatEnum {
+  AVIF
+  ORIGINAL
+  WEBP
+}
+
+"""
+Determines how a requested size is matched to an available thumbnail size: 32, 64, 128, 256, 512, 1024, 2048, 4096.
+
+NEAREST - the closest available size; it may be smaller than requested.
+UP - the smallest available size not smaller than requested, so the image is never smaller than requested unless the original is smaller or the requested size exceeds 4096.
+
+Added in Saleor 3.23.
+"""
+enum ThumbnailSizeRoundingEnum {
+  NEAREST
+  UP
 }
 
 """

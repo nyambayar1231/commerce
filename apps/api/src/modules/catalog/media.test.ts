@@ -44,6 +44,7 @@ const SOLO = ID(320);
 const imageKey = (mediaId: string, ext: string) => `products/${PRODUCT}/${mediaId}.${ext}`;
 
 beforeEach(async () => {
+  delete process.env.PUBLIC_URL;
   await db.$client.unsafe('TRUNCATE "user", permission_group, category, product CASCADE');
   await db.insert(schema.product).values([
     { id: PRODUCT, name: "Hoodie", slug: "hoodie", isPublished: true },
@@ -163,6 +164,127 @@ describe("Product.media", () => {
 
     expect(result.body.errors).toBeUndefined();
     expect((result.body.data as { product: { media: unknown[] } }).product.media).toEqual([]);
+  });
+});
+
+describe("ProductMedia.url", () => {
+  const ORIGIN = "http://test";
+  const proxyUrl = (mediaId: string, size: number, format = "") =>
+    `${ORIGIN}/thumbnail/${toGlobalId("ProductMedia", mediaId)}/${size}/${format}`;
+
+  const urlOfFirst = async (args = "") => {
+    const result = await client.gql(
+      `query ($id: ID!) { product(id: $id) { media { url${args} } } }`,
+      { id: toGlobalId("Product", PRODUCT) },
+    );
+    expect(result.body.errors).toBeUndefined();
+    const media = (result.body.data as { product: { media: { url: string }[] } }).product.media;
+    const url = media[0]?.url;
+    if (url === undefined) throw new Error("expected the first media");
+    return url;
+  };
+
+  it("returns the original image's public URL without a size or with size 0", async () => {
+    const original = `${process.env.MEDIA_PUBLIC_URL}/${imageKey(FIRST, "jpg")}`;
+    expect(await urlOfFirst()).toBe(original);
+
+    const zero = await client.gql(
+      `query ($id: ID!) { product(id: $id) { media { url(size: 0) } } }`,
+      { id: toGlobalId("Product", PRODUCT) },
+    );
+    const media = (zero.body.data as { product: { media: { url: string }[] } }).product.media;
+    expect(media[0]?.url).toBe(original);
+  });
+
+  it("returns the proxy URL at the request origin before the thumbnail is generated", async () => {
+    expect(await urlOfFirst("(size: 256)")).toBe(proxyUrl(FIRST, 256));
+  });
+
+  it("rounds the requested size and adds the format segment", async () => {
+    const result = await client.gql(
+      `query ($id: ID!) {
+        product(id: $id) { media { url(size: 300, format: WEBP) } }
+      }`,
+      { id: toGlobalId("Product", PRODUCT) },
+    );
+    const media = (result.body.data as { product: { media: { url: string }[] } }).product.media;
+    expect(media[0]?.url).toBe(proxyUrl(FIRST, 256, "webp/"));
+  });
+
+  it("uses PUBLIC_URL (without a trailing slash) when it is set", async () => {
+    const previous = process.env.PUBLIC_URL;
+    process.env.PUBLIC_URL = "https://api.example.com/";
+    try {
+      expect(await urlOfFirst("(size: 256)")).toBe(
+        `https://api.example.com/thumbnail/${toGlobalId("ProductMedia", FIRST)}/256/`,
+      );
+    } finally {
+      if (previous === undefined) delete process.env.PUBLIC_URL;
+      else process.env.PUBLIC_URL = previous;
+    }
+  });
+
+  it("returns the stored thumbnail's public URL once it exists", async () => {
+    const key = `thumbnails/${FIRST}/256.jpg`;
+    await db.insert(schema.productMediaThumbnail).values({
+      mediaId: FIRST,
+      size: 256,
+      format: "ORIGINAL",
+      imageKey: key,
+    });
+
+    expect(await urlOfFirst("(size: 256)")).toBe(`${process.env.MEDIA_PUBLIC_URL}/${key}`);
+  });
+});
+
+describe("Product.thumbnail", () => {
+  it("is the first media's thumbnail at 256 by default", async () => {
+    const result = await client.gql(
+      `query ($id: ID!) { product(id: $id) { thumbnail { url alt } } }`,
+      { id: toGlobalId("Product", PRODUCT) },
+    );
+
+    expect(result.body.errors).toBeUndefined();
+    expect(
+      (result.body.data as { product: { thumbnail: { url: string; alt: string } } }).product
+        .thumbnail,
+    ).toEqual({
+      url: `http://test/thumbnail/${toGlobalId("ProductMedia", FIRST)}/256/`,
+      alt: "First",
+    });
+  });
+
+  it("rounds with sizeRounding and takes a format", async () => {
+    const result = await client.gql(
+      `query ($id: ID!) {
+        product(id: $id) { thumbnail(size: 300, sizeRounding: UP, format: WEBP) { url alt } }
+      }`,
+      { id: toGlobalId("Product", PRODUCT) },
+    );
+
+    expect(
+      (result.body.data as { product: { thumbnail: { url: string; alt: string } } }).product
+        .thumbnail,
+    ).toEqual({
+      url: `http://test/thumbnail/${toGlobalId("ProductMedia", FIRST)}/512/webp/`,
+      alt: "First",
+    });
+  });
+
+  it("is null for a product without media", async () => {
+    await db.insert(schema.product).values({
+      id: ID(350),
+      name: "Bare",
+      slug: "bare-thumbnail",
+      isPublished: true,
+    });
+
+    const result = await client.gql(
+      `{ product(id: "${toGlobalId("Product", ID(350))}") { thumbnail { url } } }`,
+    );
+
+    expect(result.body.errors).toBeUndefined();
+    expect((result.body.data as { product: { thumbnail: unknown } }).product.thumbnail).toBeNull();
   });
 });
 

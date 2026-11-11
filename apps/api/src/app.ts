@@ -4,6 +4,7 @@ import { GraphQLError } from "graphql";
 import { createYoga, maskError } from "graphql-yoga";
 import { type Context, createContext } from "./graphql/context.ts";
 import { schema } from "./graphql/schema.ts";
+import { thumbnailRoute } from "./thumbnailRoute.ts";
 
 // The GraphQL app as a request handler, with no HTTP server attached. server.ts serves it over
 // HTTP; tests (M0.2.7) will call it directly.
@@ -57,6 +58,9 @@ export function createApp(db: Db, { allowedOrigins }: AppOptions) {
       },
     },
     plugins: [
+      // The image endpoint (ADR-0014) is anonymous and answers before every GraphQL concern;
+      // placing it before CSRF is what lets an image URL be used without the CSRF header.
+      thumbnailRoute(db),
       // CSRF: rejects requests a browser could send cross-site without a CORS preflight
       // (GET, or POST with a form/text content type) unless they carry this header.
       useCSRFPrevention({ requestHeaders: ["x-graphql-yoga-csrf"] }),

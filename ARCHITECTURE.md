@@ -225,6 +225,7 @@ Saleor stays obvious:
 | `ProductCreateInput`/`ProductInput.isPublished`, `ProductVariantCreateInput`/`ProductVariantInput.price`; no `productType` | `productChannelListingUpdate`, `productVariantChannelListingUpdate`; `ProductCreateInput.productType!` | Single channel and no product types: publication and price are plain fields of the product and variant inputs. |
 | `ProductErrorCode.PRODUCT_WITHOUT_VARIANTS` | *(none)* | Our invariant: a published product has at least one variant. |
 | `ProductMediaCreateInput` without `mediaUrl`; `ProductMedia.type` always `IMAGE`, `oembedData` always `"{}"` | `mediaUrl` (external/oEmbed video) | Images only for now (ADR-0014); uploads go through `image: Upload`. |
+| `ProductMedia.url` without `size` (or `0`) is the original's public URL | `size` defaults to 4096 (a thumbnail) | ADR-0014: the original is already a public object; no 4096 px copy is generated for it. |
 
 **The database** handles:
 - Invariants that must hold under concurrency: unique, foreign-key and `CHECK` constraints.

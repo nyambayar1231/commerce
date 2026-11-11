@@ -20,6 +20,9 @@ export interface Context {
   // The user's effective permissions, loaded on first use and then reused for the request (as
   // Saleor caches `User.effective_permissions`). Empty for anonymous requests.
   permissions: () => Promise<readonly Permission[]>;
+  // Absolute base URL of the API for links we build (thumbnail proxy URLs). `PUBLIC_URL` when
+  // set (trailing slashes stripped), else the request's origin.
+  publicUrl: string;
   // Adds a `Set-Cookie` header to this request's response (app.ts).
   setCookie: (header: string) => void;
 }
@@ -62,7 +65,15 @@ export async function createContext(db: Db, request: Request): Promise<Omit<Cont
       permissions ??= getEffectivePermissions(db, user.id);
       return permissions;
     },
+    publicUrl: publicUrlOf(request),
   };
+}
+
+/** Saleor's `PUBLIC_URL`, falling back to the request's origin (ADR-0014 thumbnail URLs). */
+function publicUrlOf(request: Request): string {
+  const configured = process.env.PUBLIC_URL?.trim();
+  if (configured) return configured.replace(/\/+$/, "");
+  return new URL(request.url).origin;
 }
 
 function cookieValue(header: string | null, name: string): string | null {

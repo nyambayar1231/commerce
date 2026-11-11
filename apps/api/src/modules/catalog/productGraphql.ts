@@ -6,11 +6,12 @@ import { fromGlobalId, toGlobalId } from "../../graphql/globalId.ts";
 import { MoneyType } from "../../graphql/money.ts";
 import { isEdgesRequested, validatePagination } from "../../graphql/pagination.ts";
 import { DateTime, Decimal, JSONString } from "../../graphql/scalars.ts";
-import { getStorage } from "../../storage/index.ts";
+import { getStorage, type ThumbnailFormat } from "../../storage/index.ts";
 import { CategoryType, OrderDirection } from "./graphql.ts";
 import {
   getProduct,
   getProductVariant,
+  getThumbnailSize,
   InvalidCursorError,
   listProducts,
   type ProductListArgs,
@@ -19,6 +20,8 @@ import {
   type ProductRow,
   type ProductSortField,
   type ProductVariantRow,
+  type ThumbnailSizeRounding,
+  thumbnailUrlFormat,
   toMoney,
 } from "./index.ts";
 import {
@@ -38,6 +41,78 @@ type ProductModel = ProductRow & { minimalPrice?: Money | null };
 export const ProductType = builder.objectRef<ProductModel>("Product");
 export const ProductVariantType = builder.objectRef<ProductVariantRow>("ProductVariant");
 export const ProductMediaType = builder.objectRef<ProductMediaRow>("ProductMedia");
+
+// Saleor's Image (saleor/graphql/core/types/common.py).
+export const ImageType = builder.objectRef<{ url: string; alt: string | null }>("Image").implement({
+  description: "Represents an image.",
+  fields: (t) => ({
+    url: t.exposeString("url", { description: "The URL of the image." }),
+    alt: t.exposeString("alt", { nullable: true, description: "Alt text for an image." }),
+  }),
+});
+
+// Saleor's ThumbnailField arguments (saleor/graphql/core/types/common.py) and descriptions.
+// Saleor's ThumbnailField text without "Defaults to 4096." (wrong for both fields here: `url`
+// returns the original without a size, ADR-0014; `thumbnail` defaults to 256 as Saleor's resolver).
+const THUMBNAIL_SIZES_TEXT =
+  "Images are never cropped. Thumbnails are generated only in the available sizes: 32, 64, " +
+  "128, 256, 512, 1024, 2048, 4096; `sizeRounding` determines which one is used.";
+const THUMBNAIL_SIZE_DESCRIPTION = `Desired longest side the image in pixels. ${THUMBNAIL_SIZES_TEXT}`;
+const MEDIA_URL_SIZE_DESCRIPTION =
+  "Desired longest side the image in pixels. Omit it or pass 0 to retrieve the original image. " +
+  THUMBNAIL_SIZES_TEXT;
+const THUMBNAIL_ROUNDING_DESCRIPTION =
+  "Determines how the requested size is matched to an available thumbnail size.\n\nAdded in " +
+  "Saleor 3.23.";
+const THUMBNAIL_FORMAT_DESCRIPTION =
+  "The format of the image. When not provided, format of the original image will be used.";
+
+// Saleor's ThumbnailSizeRoundingEnum (saleor/graphql/core/enums.py).
+const ThumbnailSizeRoundingEnum = builder.enumType("ThumbnailSizeRoundingEnum", {
+  description:
+    "Determines how a requested size is matched to an available thumbnail size: 32, 64, 128, " +
+    "256, 512, 1024, 2048, 4096.\n\nNEAREST - the closest available size; it may be smaller " +
+    "than requested.\nUP - the smallest available size not smaller than requested, so the image " +
+    "is never smaller than requested unless the original is smaller or the requested size " +
+    "exceeds 4096.\n\nAdded in Saleor 3.23.",
+  values: {
+    NEAREST: {},
+    UP: {},
+  } as const,
+});
+
+// Saleor's ThumbnailFormatEnum (saleor/thumbnail/__init__.py).
+const ThumbnailFormatEnum = builder.enumType("ThumbnailFormatEnum", {
+  values: {
+    ORIGINAL: {},
+    AVIF: {},
+    WEBP: {},
+  } as const,
+});
+
+/**
+ * The public URL of a media's `size` thumbnail: the stored thumbnail when it was generated,
+ * otherwise the API's on-demand endpoint (ADR-0014, Saleor's `get_image_or_proxy_url`).
+ */
+async function mediaThumbnailUrl(
+  ctx: Context,
+  media: ProductMediaRow,
+  size: number,
+  sizeRounding: ThumbnailSizeRounding,
+  format: ThumbnailFormat,
+): Promise<string> {
+  const selectedSize = getThumbnailSize(size, sizeRounding);
+  const row = await ctx.loaders.thumbnailByMediaIdSizeFormat.load({
+    mediaId: media.id,
+    size: selectedSize,
+    format,
+  });
+  if (row) return getStorage().publicUrl(row.imageKey);
+
+  const formatSegment = thumbnailUrlFormat(format);
+  const path = `/thumbnail/${toGlobalId("ProductMedia", media.id)}/${selectedSize}/`;
+  return `${ctx.publicUrl}${path}${formatSegment === null ? "" : `${formatSegment}/`}`;
+}
 
 // Saleor's ProductMediaType enum (saleor/graphql/product/enums.py). Not every value is producible
 // yet: media are images only until M2.5.2 adds external videos.
@@ -234,6 +309,36 @@ builder.node(ProductType, {
       description: "List of media for the product.",
       resolve: (product, _args, ctx) => ctx.loaders.mediaByProductId.load(product.id),
     }),
+    thumbnail: t.field({
+      type: ImageType,
+      nullable: true,
+      description: "Thumbnail of the product.",
+      args: {
+        size: t.arg.int({ defaultValue: 256, description: THUMBNAIL_SIZE_DESCRIPTION }),
+        sizeRounding: t.arg({
+          type: ThumbnailSizeRoundingEnum,
+          defaultValue: "NEAREST",
+          description: THUMBNAIL_ROUNDING_DESCRIPTION,
+        }),
+        format: t.arg({
+          type: ThumbnailFormatEnum,
+          defaultValue: "ORIGINAL",
+          description: THUMBNAIL_FORMAT_DESCRIPTION,
+        }),
+      },
+      resolve: async (product, { size, sizeRounding, format }, ctx) => {
+        const media = (await ctx.loaders.mediaByProductId.load(product.id))[0];
+        if (!media) return null;
+        const url = await mediaThumbnailUrl(
+          ctx,
+          media,
+          size ?? 256,
+          sizeRounding ?? "NEAREST",
+          format ?? "ORIGINAL",
+        );
+        return { url, alt: media.alt };
+      },
+    }),
   }),
 });
 
@@ -293,7 +398,27 @@ builder.node(ProductMediaType, {
     }),
     url: t.string({
       description: "The URL of the media.",
-      resolve: (media) => getStorage().publicUrl(media.imageKey),
+      args: {
+        size: t.arg.int({ description: MEDIA_URL_SIZE_DESCRIPTION }),
+        sizeRounding: t.arg({
+          type: ThumbnailSizeRoundingEnum,
+          defaultValue: "NEAREST",
+          description: THUMBNAIL_ROUNDING_DESCRIPTION,
+        }),
+        format: t.arg({
+          type: ThumbnailFormatEnum,
+          defaultValue: "ORIGINAL",
+          description: THUMBNAIL_FORMAT_DESCRIPTION,
+        }),
+      },
+      resolve: async (media, { size, sizeRounding, format }, ctx) => {
+        // Unlike Saleor (which defaults to 4096), no size or size 0 is the original image here:
+        // the original is publicly readable anyway (ADR-0014).
+        if (size === undefined || size === null || size === 0) {
+          return getStorage().publicUrl(media.imageKey);
+        }
+        return mediaThumbnailUrl(ctx, media, size, sizeRounding ?? "NEAREST", format ?? "ORIGINAL");
+      },
     }),
     productId: t.id({
       nullable: true,

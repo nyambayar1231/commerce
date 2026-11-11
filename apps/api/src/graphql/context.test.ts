@@ -1,5 +1,5 @@
 import { closeDb, getDb, schema } from "@commerce/db";
-import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createApp } from "../app.ts";
 import { createSession } from "../modules/identity/index.ts";
 import { createContext, sessionTokenOf } from "./context.ts";
@@ -67,6 +67,27 @@ describe("createContext", () => {
     const ctx = await createContext(db, request({ authorization: `Bearer ${"A".repeat(43)}` }));
     expect(ctx.user).toBeNull();
     expect(ctx.sessionToken).toBeNull();
+  });
+});
+
+describe("publicUrl", () => {
+  const previous = process.env.PUBLIC_URL;
+
+  afterEach(() => {
+    if (previous === undefined) delete process.env.PUBLIC_URL;
+    else process.env.PUBLIC_URL = previous;
+  });
+
+  it("is the request's origin when PUBLIC_URL is not set", async () => {
+    delete process.env.PUBLIC_URL;
+    const ctx = await createContext(db, new Request("http://api.example.com/graphql"));
+    expect(ctx.publicUrl).toBe("http://api.example.com");
+  });
+
+  it("is PUBLIC_URL without trailing slashes when it is set", async () => {
+    process.env.PUBLIC_URL = "https://api.example.com//";
+    const ctx = await createContext(db, new Request("http://test/graphql"));
+    expect(ctx.publicUrl).toBe("https://api.example.com");
   });
 });
 

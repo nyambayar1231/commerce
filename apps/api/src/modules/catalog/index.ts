@@ -25,7 +25,7 @@ export type {
 } from "./categoryList.ts";
 export { InvalidCursorError, listCategories } from "./categoryList.ts";
 export { DEMO_CATEGORIES, seedDemoCatalog } from "./demoCatalog.ts";
-export type { CatalogLoaders } from "./loaders.ts";
+export type { CatalogLoaders, ThumbnailLoaderKey } from "./loaders.ts";
 export { createCatalogLoaders } from "./loaders.ts";
 export type {
   ProductMediaCreateInput,
@@ -81,3 +81,14 @@ export {
   updateProductVariant,
 } from "./products.ts";
 export { slugify } from "./slug.ts";
+export type { ThumbnailSizeRounding } from "./thumbnails.ts";
+export {
+  DEFAULT_THUMBNAIL_SIZE,
+  getOrCreateThumbnail,
+  getThumbnailSize,
+  ImageTooLargeError,
+  InvalidImageError,
+  parseThumbnailUrlFormat,
+  THUMBNAIL_SIZES,
+  thumbnailUrlFormat,
+} from "./thumbnails.ts";

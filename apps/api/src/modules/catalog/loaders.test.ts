@@ -164,4 +164,62 @@ describe("createCatalogLoaders", () => {
     expect(none).toEqual([]);
     expect(domainQueries()).toHaveLength(1);
   });
+
+  it("batches thumbnails by media id, size and format into one query", async () => {
+    const firstMedia = ID(101);
+    const secondMedia = ID(102);
+    await db.insert(schema.productMedia).values([
+      {
+        id: firstMedia,
+        productId: ID(1),
+        imageKey: `products/${ID(1)}/${firstMedia}.jpg`,
+        contentType: "image/jpeg",
+      },
+      {
+        id: secondMedia,
+        productId: ID(2),
+        imageKey: `products/${ID(2)}/${secondMedia}.jpg`,
+        contentType: "image/jpeg",
+      },
+    ]);
+    await db.insert(schema.productMediaThumbnail).values([
+      {
+        mediaId: firstMedia,
+        size: 256,
+        format: "ORIGINAL",
+        imageKey: `thumbnails/${firstMedia}/256.jpg`,
+      },
+      {
+        mediaId: secondMedia,
+        size: 256,
+        format: "WEBP",
+        imageKey: `thumbnails/${secondMedia}/256.webp`,
+      },
+    ]);
+
+    const loaders = createCatalogLoaders(countingDb);
+    counted.length = 0;
+    const [first, second, missing] = await Promise.all([
+      loaders.thumbnailByMediaIdSizeFormat.load({
+        mediaId: firstMedia,
+        size: 256,
+        format: "ORIGINAL",
+      }),
+      loaders.thumbnailByMediaIdSizeFormat.load({
+        mediaId: secondMedia,
+        size: 256,
+        format: "WEBP",
+      }),
+      loaders.thumbnailByMediaIdSizeFormat.load({
+        mediaId: firstMedia,
+        size: 512,
+        format: "ORIGINAL",
+      }),
+    ]);
+
+    expect(first?.imageKey).toBe(`thumbnails/${firstMedia}/256.jpg`);
+    expect(second?.imageKey).toBe(`thumbnails/${secondMedia}/256.webp`);
+    expect(missing).toBeNull();
+    expect(domainQueries()).toHaveLength(1);
+  });
 });
