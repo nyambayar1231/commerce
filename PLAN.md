@@ -177,7 +177,8 @@ Open items are listed under "Open items from finished milestones".
 | M2.5.1 | `storage` module (S3 client, ensureBucket, test bucket setup, `pnpm cli create-media-bucket`); `product_media` + `product_media_thumbnail` tables; `ProductMedia` type and `Product.media`; tests against the local S3 | Done |
 | M2.5.2a | `Upload` scalar; `productMediaCreate` (multipart, magic-byte type check, 10 MiB, sharp decode), `productMediaUpdate` (alt), `productMediaDelete` (objects removed after commit), `productMediaReorder`; tests | Done |
 | M2.5.2b | `/thumbnail/…` endpoint (sharp, stored + recorded, 302) + `ProductMedia.url(size, format)` + `Product.thumbnail`; tests | Done |
-| M2.5.3 | Dashboard media card (upload, alt, reorder, delete) and the list grid thumbnail | Proposed |
+| M2.5.3a | Dashboard Media card: upload (button + native file drop, multipart Apollo link), tiles, delete dialog, drag reorder (`@dnd-kit`, owner 2026-11-11); single delete only | Done |
+| M2.5.3b | Image detail page (alt, navigation, delete) + product list thumbnail | Proposed |
 
 ---
 

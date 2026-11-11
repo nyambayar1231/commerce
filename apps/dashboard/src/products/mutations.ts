@@ -2,11 +2,16 @@
 // See THIRD_PARTY_LICENSES.md
 // The product section's mutations. `productCreate` returns just the new product's id: the list
 // navigates to its detail page. `productUpdate` returns the product so the form picks up the
-// saved values (including the server-side publication date).
+// saved values (including the server-side publication date). The media mutations return the
+// product's media in display order, so Apollo's cache is the card's source of truth.
 import { gql } from "@apollo/client";
 
 import { productErrorFragment } from "../fragments/errors";
-import { productDetailsFragment, productVariantDetailsFragment } from "../fragments/products";
+import {
+  productDetailsFragment,
+  productMediaFragment,
+  productVariantDetailsFragment,
+} from "../fragments/products";
 
 export const productCreateMutation = gql`
   mutation ProductCreate($input: ProductCreateInput!) {
@@ -45,6 +50,65 @@ export const productDeleteMutation = gql`
       }
     }
   }
+  ${productErrorFragment}
+`;
+
+// Saleor's ProductMediaCreate without the external-URL input (images only): each file is one
+// multipart upload. `media` gives the new row's id; `product.media` updates the card's cache.
+export const productMediaCreateMutation = gql`
+  mutation ProductMediaCreate($product: ID!, $image: Upload, $alt: String) {
+    productMediaCreate(input: { alt: $alt, image: $image, product: $product }) {
+      errors {
+        ...ProductError
+      }
+      media {
+        id
+      }
+      product {
+        id
+        media {
+          ...ProductMedia
+        }
+      }
+    }
+  }
+  ${productMediaFragment}
+  ${productErrorFragment}
+`;
+
+export const productMediaDeleteMutation = gql`
+  mutation ProductMediaDelete($id: ID!) {
+    productMediaDelete(id: $id) {
+      errors {
+        ...ProductError
+      }
+      product {
+        id
+        media {
+          ...ProductMedia
+        }
+      }
+    }
+  }
+  ${productMediaFragment}
+  ${productErrorFragment}
+`;
+
+export const productMediaReorderMutation = gql`
+  mutation ProductMediaReorder($productId: ID!, $mediaIds: [ID!]!) {
+    productMediaReorder(productId: $productId, mediaIds: $mediaIds) {
+      errors {
+        ...ProductError
+      }
+      product {
+        id
+        media {
+          ...ProductMedia
+        }
+      }
+    }
+  }
+  ${productMediaFragment}
   ${productErrorFragment}
 `;
 

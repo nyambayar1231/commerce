@@ -93,10 +93,12 @@ export const getFiltersUrlParams = (
 
 export const productPath = (id: string): string => `${productSectionUrl}${id}`;
 
-export type ProductUrlDialog = "remove";
+export type ProductUrlDialog = "remove" | "remove-media";
 
 export interface ProductUrlQueryParams {
   action?: ProductUrlDialog;
+  /** The media row a dialog acts on (`remove-media`). */
+  ids?: string;
 }
 
 export const productUrl = (id: string, params?: ProductUrlQueryParams): string =>

@@ -1,11 +1,12 @@
 // Adapted from saleor-dashboard: src/products/components/ProductUpdatePage/ProductUpdatePage.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // Saleor's layout for the product update page: TopNav (all products, the ⋯ menu with Delete
-// product), General Information and the read-only Variants card in the main column, Organize
-// Product and Availability in the right sidebar, and the Savebar (save-composition hint, Back,
-// Save). Not yet: media, attributes, variant editing/creation (the variants grid is read-only),
-// SEO/slug editing, product type, collections, taxes, metadata, translations, GraphiQL, extension
-// widgets and the availability diagnostics.
+// product), General Information, the Media card and the read-only Variants card in the main
+// column, Organize Product and Availability in the right sidebar, and the Savebar (save-composition
+// hint, Back, Save). Not yet: attributes, variant editing/creation (the variants grid is
+// read-only), SEO/slug editing, product type, collections, taxes, metadata, translations, GraphiQL,
+// extension widgets and the availability diagnostics.
+import type { FetchResult } from "@apollo/client";
 import { Box } from "@saleor/macaw-ui";
 import { Tag, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -22,10 +23,13 @@ import { Savebar } from "../../../components/Savebar";
 import type {
   ProductDetailsFragment,
   ProductErrorFragment,
+  ProductMediaCreateMutation,
 } from "../../../graphql/types.generated";
 import { productListPath, productVariantAddUrl, productVariantEditUrl } from "../../urls";
 import { ProductAvailabilityCard } from "../ProductAvailabilityCard/ProductAvailabilityCard";
 import { ProductDetailsForm } from "../ProductDetailsForm/ProductDetailsForm";
+import { type ImagesUploadCompleteResult, ProductMedia } from "../ProductMedia/ProductMedia";
+import type { ReorderEvent } from "../ProductMedia/useProductMediaDrag";
 import { ProductOrganization } from "../ProductOrganization/ProductOrganization";
 import { ProductVariants } from "../ProductVariants/ProductVariants";
 import { type ProductUpdateData, useProductUpdateForm } from "./form";
@@ -39,6 +43,10 @@ interface ProductUpdatePageProps {
   saveButtonBarState: ConfirmButtonTransitionState;
   onSubmit: (data: ProductUpdateData) => Promise<unknown[]>;
   onDelete: () => void;
+  onImageUpload: (file: File) => Promise<FetchResult<ProductMediaCreateMutation>>;
+  onImagesUploadComplete: (result: ImagesUploadCompleteResult) => void;
+  onImageDelete: (id: string) => () => void;
+  onImageReorder: (event: ReorderEvent) => void;
 }
 
 export const ProductUpdatePage = ({
@@ -48,6 +56,10 @@ export const ProductUpdatePage = ({
   saveButtonBarState,
   onSubmit,
   onDelete,
+  onImageUpload,
+  onImagesUploadComplete,
+  onImageDelete,
+  onImageReorder,
 }: ProductUpdatePageProps) => {
   const intl = useIntl();
   const navigate = useNavigate();
@@ -118,6 +130,13 @@ export const ProductUpdatePage = ({
         <DetailPageLayout.Content>
           <DetailPageContent>
             <ProductDetailsForm data={data} disabled={disabled} errors={errors} onChange={change} />
+            <ProductMedia
+              media={product?.media}
+              onImageUpload={onImageUpload}
+              onImagesUploadComplete={onImagesUploadComplete}
+              onImageDelete={onImageDelete}
+              onImageReorder={onImageReorder}
+            />
             {product ? (
               <ProductVariants
                 variants={product.variants}

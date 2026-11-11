@@ -23,9 +23,22 @@ export const productListRowFragment = gql`
   }
 `;
 
+// Saleor's ProductMedia fragment: the tile image at size 1024, its alt text and sort order.
+// Images only (ARCHITECTURE §4), so there is no oEmbed thumbnail to unwrap.
+export const productMediaFragment = gql`
+  fragment ProductMedia on ProductMedia {
+    id
+    alt
+    sortOrder
+    url(size: 1024)
+    type
+    oembedData
+  }
+`;
+
 // The product detail page's fields: Saleor's ProductDetails fragment limited to what the update
-// page shows (no product type, attributes, media, SEO or metadata yet). The variants feed the
-// read-only Variants card; `price` is the single channel's price.
+// page shows (no product type, attributes, SEO or metadata yet). The variants feed the read-only
+// Variants card; `media` feeds the Media card; `price` is the single channel's price.
 export const productDetailsFragment = gql`
   fragment ProductDetails on Product {
     id
@@ -39,6 +52,9 @@ export const productDetailsFragment = gql`
     isPublished
     publishedAt
     updatedAt
+    media {
+      ...ProductMedia
+    }
     variants {
       id
       name

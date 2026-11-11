@@ -1,0 +1,87 @@
+/*
+ * Adapted from saleor-dashboard: src/components/MediaTile/MediaTile.tsx (makeStyles)
+ * (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ */
+.media {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+  user-select: none;
+}
+
+.mediaContainer {
+  background: var(--mu-colors-background-default1);
+  border: 1px solid var(--mu-colors-border-default1);
+  border-radius: 8px;
+  height: 148px;
+  width: 148px;
+  overflow: hidden;
+  padding: var(--mu-spacing-1);
+  position: relative;
+}
+
+.mediaOverlay {
+  background: var(--mu-colors-background-default1);
+  opacity: 0.35;
+  cursor: move;
+  display: none;
+  inset: 0;
+  position: absolute;
+}
+
+.mediaOverlayLoading {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.mediaOverlayToolbar {
+  display: none;
+  gap: var(--mu-spacing-1);
+  margin-left: auto;
+  pointer-events: auto;
+}
+
+.tileControls {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  left: var(--mu-spacing-2);
+  pointer-events: none;
+  position: absolute;
+  right: var(--mu-spacing-2);
+  top: var(--mu-spacing-2);
+  z-index: 2;
+}
+
+.controlButton {
+  color: var(--mu-colors-text-default1);
+  background-color: color-mix(in srgb, var(--mu-colors-background-default1) 72%, transparent);
+  border: none;
+  border-radius: var(--mu-border-radius-2);
+  cursor: pointer;
+  margin: 0;
+  padding: var(--mu-spacing-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.controlButton:hover {
+  color: var(--mu-colors-text-accent1);
+  background-color: var(--mu-colors-background-default1);
+}
+
+.mediaContainer:hover .mediaOverlay {
+  display: block;
+}
+
+.mediaContainer:hover .mediaOverlayToolbar {
+  display: flex;
+}
+
+/* The floating drag tile and the in-list ghost never show the hover controls. */
+.mediaContainer:hover .disableOverlay {
+  display: none;
+}
