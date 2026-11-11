@@ -12,8 +12,10 @@ import { OrderTransaction } from "../OrderTransaction/OrderTransaction";
 
 export const OrderTransactionsSection = ({
   transactions,
+  onRefund,
 }: {
   transactions: TransactionItemFragment[];
+  onRefund?: (transactionId: string) => void;
 }) => (
   <Box paddingBottom={6}>
     <Box
@@ -30,7 +32,12 @@ export const OrderTransactionsSection = ({
     </Box>
 
     {transactions.map((transaction, index) => (
-      <OrderTransaction key={transaction.id} transaction={transaction} index={index} />
+      <OrderTransaction
+        key={transaction.id}
+        transaction={transaction}
+        index={index}
+        onRefund={onRefund}
+      />
     ))}
 
     {transactions.length === 0 && (

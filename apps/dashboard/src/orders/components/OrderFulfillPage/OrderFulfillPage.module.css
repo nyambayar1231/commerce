@@ -1,0 +1,46 @@
+/* Adapted from saleor-dashboard: src/orders/components/OrderFulfillLine/styles.ts and
+   OrderFulfillPage table (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce).
+   See THIRD_PARTY_LICENSES.md */
+.list {
+  border-top: 1px solid var(--mu-colors-border-default1);
+  overflow-x: auto;
+}
+
+.headerRow,
+.row {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) 10rem 10rem 6rem 12rem;
+  align-items: center;
+  gap: var(--mu-spacing-4);
+  padding: var(--mu-spacing-2) var(--mu-spacing-6);
+  min-width: 52rem;
+}
+
+.headerRow {
+  min-height: 2.5rem;
+}
+
+.row {
+  border-top: 1px solid var(--mu-colors-border-default1);
+  min-height: 4rem;
+}
+
+.product {
+  display: flex;
+  align-items: center;
+  gap: var(--mu-spacing-3);
+  min-width: 0;
+}
+
+.thumbnail {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  border: 1px solid var(--mu-colors-border-default1);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.stock {
+  text-align: right;
+}

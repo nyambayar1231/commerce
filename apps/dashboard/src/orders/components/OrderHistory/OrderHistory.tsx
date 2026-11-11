@@ -6,19 +6,42 @@
 // "Order History": the events newest first, grouped by Saleor's date buckets (Today, Yesterday…),
 // each with its icon, message, "by <staff>" and time. Left out: notes (owner decision 4 of M6), the
 // docs link, expandable event details, the raw-event tooltip and Saleor's relative times ("2 hours
-// ago"); the time is printed as a short date and time. Only PLACED exists so far; M6.4 adds the
-// fulfil, cancel, mark-as-paid and refund events.
+// ago"); the time is printed as a short date and time. An event's details (fulfilled items, the
+// payment reference, the refunded amount) are a line under its title instead of Saleor's
+// expandable panel.
 import { Box, Text } from "@saleor/macaw-ui";
-import { CircleIcon, type LucideIcon, ShoppingCartIcon } from "lucide-react";
+import {
+  CheckCircleIcon,
+  CircleIcon,
+  type LucideIcon,
+  PackageIcon,
+  RotateCcwIcon,
+  ShoppingCartIcon,
+  XIcon,
+} from "lucide-react";
 import { FormattedMessage, type IntlShape, useIntl } from "react-intl";
 
 import { DashboardCard } from "../../../components/Card";
 import type { OrderEventFragment, OrderEventsEnum } from "../../../graphql/types.generated";
-import { getUserName } from "../../../misc";
+import { getStatusColor, getUserName, type StatusType } from "../../../misc";
+import { useTheme } from "../../../theme/hook";
 import { groupEventsByDate, type TimelineDateGroupKey } from "./groupEventsByDate";
 
+// Saleor's eventIconMap and eventStatusMap for our event types (Saleor's refund icon is custom;
+// lucide's RotateCcw stands in).
 const eventIconMap: Partial<Record<OrderEventsEnum, LucideIcon>> = {
   PLACED: ShoppingCartIcon,
+  FULFILLMENT_FULFILLED_ITEMS: PackageIcon,
+  CANCELED: XIcon,
+  ORDER_MARKED_AS_PAID: CheckCircleIcon,
+  TRANSACTION_REFUND_REQUESTED: RotateCcwIcon,
+};
+
+const eventStatusMap: Partial<Record<OrderEventsEnum, StatusType>> = {
+  FULFILLMENT_FULFILLED_ITEMS: "success",
+  ORDER_MARKED_AS_PAID: "success",
+  TRANSACTION_REFUND_REQUESTED: "info",
+  CANCELED: "error",
 };
 
 /** Saleor's getEventMessage, for the event types our API has. */
@@ -28,6 +51,30 @@ export const getEventMessage = (event: Pick<OrderEventFragment, "type">, intl: I
       return intl.formatMessage({
         id: "GJAX0z",
         defaultMessage: "Order was placed",
+        description: "order history message",
+      });
+    case "FULFILLMENT_FULFILLED_ITEMS":
+      return intl.formatMessage({
+        id: "x1k81A",
+        defaultMessage: "Items were fulfilled",
+        description: "order history message",
+      });
+    case "CANCELED":
+      return intl.formatMessage({
+        id: "zRrcOG",
+        defaultMessage: "Order was cancelled",
+        description: "order history message",
+      });
+    case "ORDER_MARKED_AS_PAID":
+      return intl.formatMessage({
+        id: "fkplbE",
+        defaultMessage: "Order was marked as paid",
+        description: "order history message",
+      });
+    case "TRANSACTION_REFUND_REQUESTED":
+      return intl.formatMessage({
+        id: "fqJXzO",
+        defaultMessage: "Transaction refund requested",
         description: "order history message",
       });
     default:
@@ -79,8 +126,44 @@ const groupLabel = (key: TimelineDateGroupKey, isSoleGroup: boolean, intl: IntlS
   }
 };
 
+/** The details line under an event's title, or null when it has none. */
+export const getEventDetails = (
+  event: Pick<OrderEventFragment, "fulfilledItems" | "transactionReference" | "amount">,
+  intl: IntlShape,
+  currency: string,
+): string | null => {
+  if (event.fulfilledItems && event.fulfilledItems.length > 0) {
+    return event.fulfilledItems
+      .map((item) => {
+        const line = item.orderLine;
+        const name = line
+          ? line.variantName
+            ? `${line.productName} (${line.variantName})`
+            : line.productName
+          : "";
+        return `${item.quantity} × ${name}`;
+      })
+      .join(", ");
+  }
+  // A refund shows its amount (Saleor's extended refund event); mark as paid its reference.
+  if (event.amount !== null) {
+    return intl.formatNumber(event.amount, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    });
+  }
+  if (event.transactionReference) {
+    return `${intl.formatMessage({ id: "jGvclB", defaultMessage: "Transaction Reference" })}: ${event.transactionReference}`;
+  }
+  return null;
+};
+
 const EventIcon = ({ type }: { type: OrderEventsEnum | null }) => {
+  const { theme } = useTheme();
   const Icon = (type && eventIconMap[type]) || CircleIcon;
+  const status = type ? eventStatusMap[type] : undefined;
+  const colors = status ? getStatusColor({ status, currentTheme: theme }) : null;
 
   return (
     <Box
@@ -93,9 +176,12 @@ const EventIcon = ({ type }: { type: OrderEventsEnum | null }) => {
       __width="32px"
       __height="32px"
       flexShrink="0"
-      backgroundColor="default1"
-      borderColor="default1"
-      color="default2"
+      __backgroundColor={colors?.base}
+      __borderColor={colors?.border}
+      __color={colors?.text}
+      backgroundColor={colors ? undefined : "default1"}
+      borderColor={colors ? undefined : "default1"}
+      color={colors ? undefined : "default2"}
     >
       {Icon === CircleIcon ? (
         <CircleIcon size={8} fill="currentColor" color="currentColor" />
@@ -109,11 +195,14 @@ const EventIcon = ({ type }: { type: OrderEventsEnum | null }) => {
 const TimelineEvent = ({
   event,
   isLastInGroup,
+  currency,
 }: {
   event: OrderEventFragment;
   isLastInGroup: boolean;
+  currency: string;
 }) => {
   const intl = useIntl();
+  const details = getEventDetails(event, intl, currency);
   const actorName = getUserName(event.user, true);
   const date = typeof event.date === "string" ? new Date(event.date) : null;
 
@@ -143,13 +232,20 @@ const TimelineEvent = ({
           justifyContent="space-between"
           __minHeight="32px"
         >
-          <Box display="flex" alignItems="center" flexWrap="wrap">
-            <Text size={3} color="default1">
-              {getEventMessage(event, intl)}
-            </Text>
-            {actorName && (
-              <Text size={3} color="default2" as="span" marginLeft={1}>
-                by {actorName}
+          <Box display="flex" flexDirection="column">
+            <Box display="flex" alignItems="center" flexWrap="wrap">
+              <Text size={3} color="default1">
+                {getEventMessage(event, intl)}
+              </Text>
+              {actorName && (
+                <Text size={3} color="default2" as="span" marginLeft={1}>
+                  by {actorName}
+                </Text>
+              )}
+            </Box>
+            {details && (
+              <Text size={2} color="default2" data-test-id="order-history-event-details">
+                {details}
               </Text>
             )}
           </Box>
@@ -164,7 +260,13 @@ const TimelineEvent = ({
   );
 };
 
-export const OrderHistory = ({ history }: { history: OrderEventFragment[] }) => {
+export const OrderHistory = ({
+  history,
+  currency,
+}: {
+  history: OrderEventFragment[];
+  currency: string;
+}) => {
   const intl = useIntl();
   const groups = groupEventsByDate(history.slice().reverse());
 
@@ -194,6 +296,7 @@ export const OrderHistory = ({ history }: { history: OrderEventFragment[] }) => 
                   key={event.id}
                   event={event}
                   isLastInGroup={index === events.length - 1}
+                  currency={currency}
                 />
               ))}
             </Box>

@@ -79,4 +79,37 @@ export const parseOrderListUrl = (search: URLSearchParams): OrderListUrlQueryPar
 
 export const orderPath = (id: string): string => `${orderSectionUrl}/${id}`;
 
-export const orderUrl = (id: string): string => orderPath(encodeURIComponent(id));
+// Saleor's OrderUrlDialog, limited to our actions: the open dialog lives in the URL (`action`), and
+// a transaction dialog names its transaction (`id`). Saleor refunds through a separate page; our
+// refund is a dialog on the transaction tile (PLAN M6 decision 1).
+export type OrderUrlDialog = "cancel" | "mark-paid" | "refund";
+
+export interface OrderUrlQueryParams {
+  action?: OrderUrlDialog;
+  id?: string;
+}
+
+const ORDER_DIALOGS: OrderUrlDialog[] = ["cancel", "mark-paid", "refund"];
+
+export const orderUrl = (id: string, params?: OrderUrlQueryParams): string => {
+  const query = new URLSearchParams(queryEntries({ ...params })).toString();
+
+  return `${orderPath(encodeURIComponent(id))}${query ? `?${query}` : ""}`;
+};
+
+export const parseOrderUrl = (search: URLSearchParams): OrderUrlQueryParams => {
+  const action = search.get("action");
+
+  return {
+    action:
+      action && (ORDER_DIALOGS as string[]).includes(action)
+        ? (action as OrderUrlDialog)
+        : undefined,
+    id: search.get("id") ?? undefined,
+  };
+};
+
+// Saleor's /orders/:id/fulfill.
+export const orderFulfillPath = (id: string): string => `${orderPath(id)}/fulfill`;
+
+export const orderFulfillUrl = (id: string): string => orderFulfillPath(encodeURIComponent(id));

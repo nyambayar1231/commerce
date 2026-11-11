@@ -23,6 +23,7 @@ const line = (overrides: Partial<OrderLineFragment> = {}): OrderLineFragment => 
   variantName: "42",
   quantity: 3,
   quantityFulfilled: 0,
+  quantityToFulfill: 3,
   unitPrice: money(1000),
   totalPrice: money(3000),
   variant: {

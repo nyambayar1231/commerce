@@ -1,9 +1,10 @@
 // Adapted from saleor-dashboard: src/fragments/orders.ts, src/fragments/address.ts and
 // src/fragments/transactions.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The order detail page's fragments, limited to the fields our API has and the read-only cards
-// show: no channel, discounts, gift cards, invoices, fulfillments (M6.4), payments (legacy API),
-// metadata or actions. A line's thumbnail comes from its variant's product (Saleor: line.thumbnail).
+// The order detail page's fragments, limited to the fields our API has and the cards show: no
+// channel, discounts, gift cards, invoices, payments (legacy API) or metadata. A line's thumbnail
+// comes from its variant's product (Saleor: line.thumbnail). M6.5 adds fulfillments, the order's
+// and transactions' actions and the event details the history shows.
 import { gql } from "@apollo/client";
 
 export const addressFragment = gql`
@@ -33,6 +34,7 @@ export const orderLineFragment = gql`
     variantName
     quantity
     quantityFulfilled
+    quantityToFulfill
     unitPrice {
       gross {
         amount
@@ -75,6 +77,7 @@ export const transactionEventFragment = gql`
 export const transactionItemFragment = gql`
   fragment TransactionItem on TransactionItem {
     id
+    actions
     name
     pspReference
     externalUrl
@@ -122,11 +125,42 @@ export const orderEventFragment = gql`
     id
     date
     type
+    amount
+    transactionReference
+    fulfilledItems {
+      id
+      quantity
+      orderLine {
+        id
+        productName
+        variantName
+      }
+    }
     user {
       id
       email
       firstName
       lastName
+    }
+  }
+`;
+
+export const fulfillmentFragment = gql`
+  fragment Fulfillment on Fulfillment {
+    id
+    fulfillmentOrder
+    status
+    created
+    warehouse {
+      id
+      name
+    }
+    lines {
+      id
+      quantity
+      orderLine {
+        ...OrderLine
+      }
     }
   }
 `;
@@ -137,6 +171,7 @@ export const orderDetailsFragment = gql`
     number
     created
     status
+    actions
     userEmail
     shippingMethodName
     billingAddress {
@@ -147,6 +182,9 @@ export const orderDetailsFragment = gql`
     }
     lines {
       ...OrderLine
+    }
+    fulfillments {
+      ...Fulfillment
     }
     subtotal {
       gross {

@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 import { cleanup, render, screen } from "@testing-library/react";
+import { createIntl } from "react-intl";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LocaleProvider } from "../../../components/Locale/Locale";
 import type { OrderDetailsFragment } from "../../../graphql/types.generated";
 import { ThemeProvider } from "../../../theme/provider";
-import { OrderDetailsPage } from "./OrderDetailsPage";
+import { getEventDetails } from "../OrderHistory/OrderHistory";
+import { canCancelOrder, OrderDetailsPage } from "./OrderDetailsPage";
 
 // The canvas grid needs a real browser; the card around it is what is tested here.
 vi.mock("../OrderDetailsDatagrid/OrderDetailsDatagrid", () => ({
@@ -44,6 +46,7 @@ const order = (overrides: Partial<OrderDetailsFragment> = {}): OrderDetailsFragm
   number: "7",
   created: "2026-11-11T10:00:00Z",
   status: "UNFULFILLED",
+  actions: [],
   userEmail: "bat@example.com",
   shippingMethodName: "Standard",
   billingAddress: address,
@@ -57,11 +60,13 @@ const order = (overrides: Partial<OrderDetailsFragment> = {}): OrderDetailsFragm
       variantName: "42",
       quantity: 2,
       quantityFulfilled: 0,
+      quantityToFulfill: 2,
       unitPrice: taxed(1000),
       totalPrice: taxed(2000),
       variant: null,
     },
   ],
+  fulfillments: [],
   subtotal: taxed(2000),
   shippingPrice: taxed(500),
   total: taxed(2500),
@@ -74,6 +79,7 @@ const order = (overrides: Partial<OrderDetailsFragment> = {}): OrderDetailsFragm
     {
       __typename: "TransactionItem",
       id: "t1",
+      actions: ["REFUND"],
       name: "Dummy payment",
       pspReference: "psp-1",
       externalUrl: "",
@@ -106,22 +112,38 @@ const order = (overrides: Partial<OrderDetailsFragment> = {}): OrderDetailsFragm
       id: "ev1",
       date: "2026-11-11T10:00:00Z",
       type: "PLACED",
+      amount: null,
+      transactionReference: null,
+      fulfilledItems: null,
       user: null,
     },
   ],
   ...overrides,
 });
 
-const renderPage = (value?: OrderDetailsFragment) =>
+const renderPage = (
+  value?: OrderDetailsFragment,
+  handlers: { onRefund?: (id: string) => void } = { onRefund: vi.fn() },
+) => {
+  const props = {
+    onOrderFulfill: vi.fn(),
+    onOrderCancel: vi.fn(),
+    onMarkAsPaid: vi.fn(),
+    ...handlers,
+  };
   render(
     <ThemeProvider>
       <LocaleProvider>
         <MemoryRouter>
-          <OrderDetailsPage order={value} />
+          <OrderDetailsPage order={value} {...props} />
         </MemoryRouter>
       </LocaleProvider>
     </ThemeProvider>,
   );
+  return props;
+};
+
+const byTestId = (id: string) => document.querySelector<HTMLElement>(`[data-test-id="${id}"]`);
 
 const text = () => document.body.textContent ?? "";
 
@@ -164,6 +186,110 @@ describe("OrderDetailsPage", () => {
     renderPage(order({ userEmail: null, shippingAddress: null, billingAddress: null }));
 
     expect(screen.getAllByText("Not set")).toHaveLength(3);
+  });
+
+  it("offers Fulfill, Refund and the cancel menu for an unfulfilled order", () => {
+    const props = renderPage(order());
+
+    byTestId("order-items-fulfill-button")?.click();
+    expect(props.onOrderFulfill).toHaveBeenCalled();
+    byTestId("transaction-action-refund-button")?.click();
+    expect(props.onRefund).toHaveBeenCalledWith("t1");
+    expect(byTestId("show-more-button")).toBeTruthy();
+    // Fully charged: nothing to mark as paid.
+    expect(byTestId("mark-as-paid-button")).toBeNull();
+  });
+
+  it("shows Mark as Paid while the order's actions allow it", () => {
+    const props = renderPage(order({ actions: ["MARK_AS_PAID"] }));
+
+    byTestId("mark-as-paid-button")?.click();
+    expect(props.onMarkAsPaid).toHaveBeenCalled();
+  });
+
+  it("hides Refund from staff without HANDLE_PAYMENTS and for a transaction without REFUND", () => {
+    renderPage(order(), { onRefund: undefined });
+    expect(byTestId("transaction-action-refund-button")).toBeNull();
+    cleanup();
+
+    const placed = order();
+    renderPage(
+      order({
+        transactions: placed.transactions.map((transaction) => ({ ...transaction, actions: [] })),
+      }),
+    );
+    expect(byTestId("transaction-action-refund-button")).toBeNull();
+  });
+
+  it("shows fulfillments and no Fulfill button or cancel menu once everything is fulfilled", () => {
+    const placed = order();
+    const [first] = placed.lines;
+    if (!first) throw new Error("no line");
+    const line = { ...first, quantityFulfilled: 2, quantityToFulfill: 0 };
+    renderPage(
+      order({
+        status: "FULFILLED",
+        lines: [line],
+        fulfillments: [
+          {
+            __typename: "Fulfillment",
+            id: "f1",
+            fulfillmentOrder: 1,
+            status: "FULFILLED",
+            created: "2026-11-11T11:00:00Z",
+            warehouse: { __typename: "Warehouse", id: "w1", name: "Main" },
+            lines: [{ __typename: "FulfillmentLine", id: "fl1", quantity: 2, orderLine: line }],
+          },
+        ],
+      }),
+    );
+
+    expect(text()).toContain("Fulfilled #1");
+    expect(text()).toContain("From Main");
+    expect(byTestId("lines-grid")?.textContent).toBe("1");
+    expect(byTestId("order-items-fulfill-button")).toBeNull();
+    expect(byTestId("show-more-button")).toBeNull();
+  });
+
+  it("can cancel only an order that isn't canceled and has no fulfillment", () => {
+    expect(canCancelOrder({ status: "UNFULFILLED", fulfillments: [] })).toBe(true);
+    expect(canCancelOrder({ status: "CANCELED", fulfillments: [] })).toBe(false);
+    expect(canCancelOrder(order({ fulfillments: [{} as never] }))).toBe(false);
+  });
+
+  it("describes events: fulfilled items, refund amount, mark-as-paid reference", () => {
+    const intl = createIntl({ locale: "en" });
+    const empty = { fulfilledItems: null, transactionReference: null, amount: null };
+
+    expect(
+      getEventDetails(
+        {
+          ...empty,
+          fulfilledItems: [
+            {
+              __typename: "FulfillmentLine",
+              id: "fl1",
+              quantity: 2,
+              orderLine: {
+                __typename: "OrderLine",
+                id: "l1",
+                productName: "Boots",
+                variantName: "42",
+              },
+            },
+          ],
+        },
+        intl,
+        "MNT",
+      ),
+    ).toBe("2 × Boots (42)");
+    expect(
+      getEventDetails({ ...empty, amount: 1000, transactionReference: "psp-1" }, intl, "MNT"),
+    ).toMatch(/^MNT\s1,000$/);
+    expect(getEventDetails({ ...empty, transactionReference: "BANK-42" }, intl, "MNT")).toBe(
+      "Transaction Reference: BANK-42",
+    );
+    expect(getEventDetails(empty, intl, "MNT")).toBeNull();
   });
 
   it("shows skeletons while loading", () => {

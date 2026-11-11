@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { getSortQueryVariables, getSortUrlParams } from "./sort";
-import { orderListUrl, orderUrl, parseOrderListUrl } from "./urls";
+import { orderFulfillUrl, orderListUrl, orderUrl, parseOrderListUrl, parseOrderUrl } from "./urls";
 
 describe("order list URL", () => {
   it("round-trips filters, search, sort and the cursor", () => {
@@ -18,8 +18,15 @@ describe("order list URL", () => {
     expect(parseOrderListUrl(new URLSearchParams("sort=total&asc=maybe"))).toEqual({});
   });
 
-  it("links to the order", () => {
+  it("links to the order, its dialogs and its Fulfill page", () => {
     expect(orderUrl("T3JkZXI6MQ==")).toBe("/orders/T3JkZXI6MQ%3D%3D");
+    expect(orderUrl("o1", { action: "refund", id: "t1" })).toBe("/orders/o1?action=refund&id=t1");
+    expect(orderFulfillUrl("T3JkZXI6MQ==")).toBe("/orders/T3JkZXI6MQ%3D%3D/fulfill");
+    expect(parseOrderUrl(new URLSearchParams("action=mark-paid"))).toEqual({
+      action: "mark-paid",
+      id: undefined,
+    });
+    expect(parseOrderUrl(new URLSearchParams("action=delete")).action).toBeUndefined();
   });
 });
 

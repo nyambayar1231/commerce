@@ -139,5 +139,5 @@ scripts/ai/stop.sh <name>|--all                       # end the implementer (wor
 
 ## Current state
 
-M0 (foundations), M1 (identity), M2 (catalog: categories, products, variants, filtering, media), M3 (inventory: warehouse, stock, stock editing) and M5 (checkout API: cart, shipping, addresses, dummy payments, completion into orders) done; next is M6 (orders in the dashboard, Draft — awaiting the owner's approval).
+M0 (foundations), M1 (identity), M2 (catalog: categories, products, variants, filtering, media), M3 (inventory: warehouse, stock, stock editing), M5 (checkout API: cart, shipping, addresses, dummy payments, completion into orders) and M6 (orders: list, detail page, fulfil, cancel, mark as paid, refund) done; next is M7 (customer accounts, Draft — awaiting the owner's approval).
 The AI team setup (`docs/ai-workflow/`) is in place. See `PLAN.md`.

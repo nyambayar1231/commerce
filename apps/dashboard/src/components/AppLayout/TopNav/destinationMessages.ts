@@ -8,6 +8,11 @@ export const topNavDestinationMessages = defineMessages({
     id: "nG76Ql",
     description: "TopNav destination link tooltip to categories list",
   },
+  order: {
+    defaultMessage: "Order",
+    id: "VOtpY0",
+    description: "TopNav destination link tooltip to parent order",
+  },
   allOrders: {
     defaultMessage: "All orders",
     id: "fGOZfh",

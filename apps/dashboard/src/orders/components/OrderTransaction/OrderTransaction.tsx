@@ -3,15 +3,17 @@
 // Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // A transaction tile, open by default: "Transaction #n on <date>", the provider name, its non-zero
-// amounts, and the events table when expanded. Left out: the transaction actions (refund arrives
-// with M6.5), payment-method details, the external link and fake (optimistic) transactions.
-import { Accordion, Box, Text } from "@saleor/macaw-ui";
+// amounts, a Refund button while the transaction can be refunded (PLAN M6 decision 1; Saleor keeps
+// refunds off the tile and uses its refund pages), and the events table when expanded. Left out:
+// capture/void actions, payment-method details, the external link and fake transactions.
+import { Accordion, Box, Button, Text } from "@saleor/macaw-ui";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
 import { iconSize, iconStrokeWidthBySize } from "../../../components/icons";
 import type { TransactionItemFragment } from "../../../graphql/types.generated";
+import { messages as refundMessages } from "../OrderTransactionRefundDialog/OrderTransactionRefundDialog";
 import styles from "./OrderTransaction.module.css";
 import { EventTime, TransactionEvents } from "./TransactionEvents";
 import { getTransactionAmounts } from "./utils";
@@ -43,9 +45,11 @@ const MoneyDisplay = ({
 interface OrderTransactionProps {
   transaction: TransactionItemFragment;
   index: number;
+  /** Shown only when given (the staff can refund) and the transaction offers REFUND. */
+  onRefund?: (transactionId: string) => void;
 }
 
-export const OrderTransaction = ({ transaction, index }: OrderTransactionProps) => {
+export const OrderTransaction = ({ transaction, index, onRefund }: OrderTransactionProps) => {
   const intl = useIntl();
   const [expanded, setExpanded] = useState(transaction.id);
 
@@ -103,6 +107,18 @@ export const OrderTransaction = ({ transaction, index }: OrderTransactionProps) 
                         money={money}
                       />
                     ))}
+                    {onRefund && transaction.actions.includes("REFUND") && (
+                      <Button
+                        variant="secondary"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onRefund(transaction.id);
+                        }}
+                        data-test-id="transaction-action-refund-button"
+                      >
+                        <FormattedMessage {...refundMessages.refund} />
+                      </Button>
+                    )}
                   </Box>
                 </Box>
               </Box>

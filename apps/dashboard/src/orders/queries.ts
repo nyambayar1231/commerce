@@ -7,6 +7,7 @@ import { gql } from "@apollo/client";
 
 import {
   addressFragment,
+  fulfillmentFragment,
   orderDetailsFragment,
   orderEventFragment,
   orderLineFragment,
@@ -81,7 +82,55 @@ export const orderDetails = gql`
   ${orderDetailsFragment}
   ${addressFragment}
   ${orderLineFragment}
+  ${fulfillmentFragment}
   ${transactionItemFragment}
   ${transactionEventFragment}
   ${orderEventFragment}
+`;
+
+// Saleor's OrderFulfillData: the lines left to fulfil with their variants' stocks, and the
+// warehouses to fulfil from (one in this project, owner decision 2 of M6).
+export const orderFulfillData = gql`
+  query OrderFulfillData($orderId: ID!) {
+    order(id: $orderId) {
+      id
+      number
+      status
+      lines {
+        id
+        productName
+        productSku
+        variantName
+        quantity
+        quantityToFulfill
+        variant {
+          id
+          trackInventory
+          product {
+            id
+            thumbnail {
+              url
+            }
+          }
+          stocks {
+            id
+            quantity
+            quantityAllocated
+            warehouse {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+    warehouses(first: 100) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
 `;
