@@ -7,7 +7,7 @@
 // to the URL. The URL's `action=create-product` opens Saleor's CreateProductDialog (name and
 // category only); on success a toast and a jump to the new product. Selected rows open Saleor's
 // bulk delete dialog on `action=delete`; confirming deletes them, clears the selection, toasts and
-// refetches the list. Not yet: the other bulk actions, export, filter presets, tiles view.
+// refetches the list. Not yet: the other bulk actions, export, filter presets.
 import { useMutation, useQuery } from "@apollo/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIntl } from "react-intl";
@@ -170,6 +170,7 @@ const ProductListContent = () => {
         onAdd={() => openModal("create-product")}
         selectedProductIds={selectedIds}
         onProductsDelete={() => openModal("delete")}
+        clearRowSelection={clearRowSelection}
         onSelectedProductIdsChange={handleSelectedIdsChange}
         rows={products}
         disabled={loading && !data}

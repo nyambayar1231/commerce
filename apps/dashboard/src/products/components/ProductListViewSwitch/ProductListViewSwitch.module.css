@@ -1,0 +1,8 @@
+/*
+ * Adapted from saleor-dashboard: src/products/components/ProductListViewSwitch/ProductListViewSwitch.module.css
+ * (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ */
+.icon {
+  display: block;
+}

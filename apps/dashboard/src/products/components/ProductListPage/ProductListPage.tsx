@@ -5,20 +5,30 @@
 // (FilterPresetsSelect) next to a hidden TopNav title; without presets we show that label as text.
 // Saleor's create-button dropdown becomes a plain "Create Product" button (no product types or
 // extensions). Then Saleor's card: search and, while rows are selected, the bulk delete button
-// from Saleor's list toolbar, then the grid with its pagination. Not yet: export/extension menus,
-// the create-button dropdown, limits, the view switch and filter presets.
+// from Saleor's list toolbar, the List/Grid view switch, then the datagrid or the tile grid with
+// their pagination. Not yet: export/extension menus, the create-button dropdown, limits and filter
+// presets.
 import { Box, Button, Text } from "@saleor/macaw-ui";
 import type { ComponentProps } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
+import { useNavigate } from "react-router";
 
 import { ListFilters } from "../../../components/AppLayout/ListFilters/ListFilters";
 import { TopNav } from "../../../components/AppLayout/TopNav";
 import { BulkDeleteButton } from "../../../components/BulkDeleteButton/BulkDeleteButton";
 import { DashboardCard } from "../../../components/Card";
 import { ListPageLayout } from "../../../components/Layouts/List/Root";
+import useLocalStorage from "../../../hooks/useLocalStorage";
 import { sectionNames } from "../../../intl";
+import { productUrl } from "../../urls";
 import { ProductListDatagrid } from "../ProductListDatagrid/ProductListDatagrid";
+import { ProductListTiles } from "../ProductListTiles/ProductListTiles";
+import { ProductListViewSwitch } from "../ProductListViewSwitch/ProductListViewSwitch";
 import { messages } from "./messages";
+
+export type ProductListViewType = "datagrid" | "tile";
+
+const DEFAULT_PRODUCT_LIST_VIEW_TYPE: ProductListViewType = "datagrid";
 
 interface ProductListPageProps extends ComponentProps<typeof ProductListDatagrid> {
   initialSearch: string;
@@ -26,6 +36,7 @@ interface ProductListPageProps extends ComponentProps<typeof ProductListDatagrid
   onAdd: () => void;
   selectedProductIds: string[];
   onProductsDelete: () => void;
+  clearRowSelection: () => void;
 }
 
 export const ProductListPage = ({
@@ -34,9 +45,17 @@ export const ProductListPage = ({
   onAdd,
   selectedProductIds,
   onProductsDelete,
+  clearRowSelection,
   ...listProps
 }: ProductListPageProps) => {
   const intl = useIntl();
+  const navigate = useNavigate();
+  // Saleor's productListViewType: the chosen view survives a reload in localStorage.
+  const [storedProductListViewType, setProductListViewType] = useLocalStorage<ProductListViewType>(
+    "productListViewType",
+    DEFAULT_PRODUCT_LIST_VIEW_TYPE,
+  );
+  const isDatagridView = storedProductListViewType === "datagrid";
 
   return (
     <ListPageLayout>
@@ -62,14 +81,37 @@ export const ProductListPage = ({
           searchPlaceholder={intl.formatMessage(messages.searchProducts)}
           onSearchChange={onSearchChange}
           actions={
-            selectedProductIds.length > 0 && (
-              <BulkDeleteButton count={selectedProductIds.length} onClick={onProductsDelete}>
-                <FormattedMessage {...messages.deleteProducts} />
-              </BulkDeleteButton>
-            )
+            <Box display="flex" gap={4} alignItems="center">
+              {selectedProductIds.length > 0 && (
+                <BulkDeleteButton count={selectedProductIds.length} onClick={onProductsDelete}>
+                  <FormattedMessage {...messages.deleteProducts} />
+                </BulkDeleteButton>
+              )}
+              <ProductListViewSwitch
+                defaultValue={storedProductListViewType}
+                setProductListViewType={(value) => {
+                  setProductListViewType(value);
+                  clearRowSelection();
+                }}
+              />
+            </Box>
           }
         />
-        <ProductListDatagrid {...listProps} />
+        {isDatagridView ? (
+          <ProductListDatagrid {...listProps} />
+        ) : (
+          <ProductListTiles
+            rows={listProps.rows}
+            disabled={listProps.disabled}
+            settings={listProps.settings}
+            onUpdateListSettings={listProps.onUpdateListSettings}
+            hasNextPage={listProps.hasNextPage}
+            hasPreviousPage={listProps.hasPreviousPage}
+            nextHref={listProps.nextHref}
+            prevHref={listProps.prevHref}
+            onTileClick={(id) => navigate(productUrl(id))}
+          />
+        )}
       </DashboardCard>
     </ListPageLayout>
   );
