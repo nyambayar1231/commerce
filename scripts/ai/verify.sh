@@ -48,11 +48,27 @@ if [[ "$quick" == 0 ]]; then
   lock="$lock/commerce-ai-test.lock"
   echo
   echo "=== waiting for the shared test-database lock ($lock)"
-  until mkdir "$lock" 2>/dev/null; do sleep 2; done
+  # A lock whose owner process is gone (a run killed with its worker) is stale: take it over.
+  # Without an owner file (killed between mkdir and the write) it is stale once a minute old.
+  # Two waiters could both see the same stale lock; rare enough for a local dev tool.
+  until mkdir "$lock" 2>/dev/null; do
+    owner_pid="$(cut -d' ' -f1 "$lock/owner" 2>/dev/null || true)"
+    if [[ -n "$owner_pid" ]] && ! kill -0 "$owner_pid" 2>/dev/null; then
+      echo "=== removing a stale lock (process $owner_pid is gone)"
+      rm -rf "$lock"; continue
+    fi
+    if [[ -z "$owner_pid" && -n "$(find "$lock" -maxdepth 0 -mmin +1 2>/dev/null)" ]]; then
+      echo "=== removing a stale lock without an owner"
+      rm -rf "$lock"; continue
+    fi
+    sleep 2
+  done
   echo "$$ $dir" > "$lock/owner"
   trap 'rm -rf "$lock"' EXIT
+  # Turn a stop signal into a normal exit so the EXIT trap removes the lock.
+  trap 'exit 143' TERM INT HUP
   step test "$PNPM" test
-  rm -rf "$lock"; trap - EXIT
+  rm -rf "$lock"; trap - EXIT TERM INT HUP
 
   # Generated, committed files must match their sources.
   step schema-print "$PNPM" schema:print
