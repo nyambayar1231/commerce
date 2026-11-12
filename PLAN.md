@@ -264,7 +264,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M9.3 | Login throttling: `rate_limit` table + migration, Saleor's delays in `tokenCreate`, client IP with `TRUST_PROXY`, the two error codes; tests | Done |
 | M9.4 | `/thumbnail/` generation limit per IP (429 with `Retry-After`); tests | Done |
 | M9.5 | Date-cursor fix: timestamp sorts encode microseconds (as the order list); a regression test with rows in one millisecond; other date-sorted lists checked | Done |
-| M9.6 | Docker: multi-stage `Dockerfile`s (API/worker, dashboard + nginx), `docker-compose.prod.yml`, migrations as a one-off command, `docs/deploy.md` (incl. ADR-0014's S3 checklist); checked by running the stack | Proposed |
+| M9.6 | Docker: one multi-stage `Dockerfile` (`api` for API/worker/CLI, `web` = dashboard + nginx proxy), `docker-compose.prod.yml`, `cli migrate` as a one-off service, `docs/deploy.md` (incl. ADR-0014's S3 checklist); checked by running the stack | Done |
 | M9.7 | Playwright golden paths in `e2e/` (decision 9) | Proposed |
 | M9.8 | CI workflow on GitHub Actions (decision 10) | Proposed |
 

@@ -1,0 +1,15 @@
+# Keep the build context small and free of secrets (PLAN M9.6).
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+.git
+.ai
+.claude
+.opencode
+.zed
+.env
+.env.*
+docs
+scripts
+**/.DS_Store

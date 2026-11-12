@@ -1,0 +1,97 @@
+# The whole stack from production images (PLAN M9.6): docs/deploy.md.
+#   cp .env.prod.example .env.prod   # and replace every "change-me"
+#   docker compose -f docker-compose.prod.yml up -d --build
+# The dashboard and API are then on http://localhost:8080 (WEB_PORT), Mailpit on :8027.
+# Postgres, SeaweedFS (standing in for S3) and Mailpit (standing in for SMTP) make it run on one
+# machine; in a real deployment they are usually managed services and only api, worker, web and
+# the one-off migrate run here.
+name: commerce-prod
+
+x-app: &app
+  image: commerce-api
+  build: { context: ., target: api }
+  env_file: .env.prod
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    env_file: .env.prod # POSTGRES_PASSWORD
+    environment:
+      POSTGRES_USER: commerce
+      POSTGRES_DB: commerce
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U commerce -d commerce"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    restart: unless-stopped
+
+  # SeaweedFS's S3 gateway; its identities are written from .env.prod at start, so no secret is
+  # committed. Anonymous read, as a public media bucket.
+  s3:
+    image: chrislusf/seaweedfs:4.51
+    env_file: .env.prod
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        printf '{"identities":[{"name":"commerce","credentials":[{"accessKey":"%s","secretKey":"%s"}],"actions":["Admin","Read","Write","List","Tagging"]},{"name":"anonymous","actions":["Read"]}]}'
+        "$$AWS_ACCESS_KEY_ID" "$$AWS_SECRET_ACCESS_KEY" > /tmp/s3.json &&
+        exec weed server -dir=/data -s3 -s3.port=8333 -s3.config=/tmp/s3.json -ip.bind=0.0.0.0
+    volumes:
+      - s3-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8333/healthz || exit 1"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    ports:
+      - "${MAILPIT_PORT:-8027}:8025"
+    restart: unless-stopped
+
+  # One-off: applies migrations and creates the media bucket, then exits; api and worker wait for it.
+  migrate:
+    <<: *app
+    restart: "no"
+    command:
+      [
+        "sh",
+        "-c",
+        "node apps/api/src/cli.ts migrate && node apps/api/src/cli.ts create-media-bucket",
+      ]
+    healthcheck: { disable: true }
+    depends_on:
+      postgres: { condition: service_healthy }
+      s3: { condition: service_healthy }
+
+  api:
+    <<: *app
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  worker:
+    <<: *app
+    command: ["node", "apps/api/src/worker.ts"]
+    healthcheck: { disable: true }
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      mailpit: { condition: service_started }
+
+  web:
+    image: commerce-web
+    build: { context: ., target: web }
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  s3-data:

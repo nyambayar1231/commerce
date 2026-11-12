@@ -25,6 +25,7 @@ import { createInterface, type Interface } from "node:readline/promises";
 import { Writable } from "node:stream";
 import { parseArgs } from "node:util";
 import { closeDb, getDb } from "@commerce/db";
+import { runMigrations } from "@commerce/db/migrate";
 import { seedDemoCatalog } from "./modules/catalog/index.ts";
 import { seedDemoShippingMethods } from "./modules/checkout/index.ts";
 import { type CreateSuperuserInput, createSuperuser } from "./modules/identity/index.ts";
@@ -37,6 +38,7 @@ Commands:
   seed-catalog         Create the demo category tree (local development; safe to run again)
   seed-shipping        Create the demo shipping methods (local development; safe to run again)
   create-media-bucket  Create the media bucket when it does not exist (safe to run again)
+  migrate              Apply pending database migrations (production images; safe to run again)
 
 Options for createsuperuser:
   --no-input                 Take all values from flags and the environment instead of prompting
@@ -118,6 +120,21 @@ async function main(): Promise<void> {
     console.error(`Error: ${errorText(error)}`);
     console.error(USAGE);
     process.exitCode = 2;
+    return;
+  }
+
+  // Production images have no drizzle-kit (a dev tool); this applies the same SQL files with
+  // drizzle-orm's migrator (PLAN M9.6).
+  if (command === "migrate") {
+    try {
+      const url = process.env.DATABASE_URL;
+      if (!url) throw new Error("DATABASE_URL is not set (copy .env.example to .env)");
+      await runMigrations(url);
+      console.log("Migrations applied.");
+    } catch (error) {
+      console.error(`Error: ${errorText(error)}`);
+      process.exitCode = 1;
+    }
     return;
   }
 

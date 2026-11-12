@@ -123,6 +123,7 @@ pnpm --filter @commerce/api dev                         # API on :4000/graphql, 
 pnpm --filter @commerce/api worker                      # background jobs: sends the emails (needs EMAIL_URL, SECRET_KEY)
 pnpm schema:print   # regenerate apps/api/schema.graphql (commit it)
 pnpm codegen        # regenerate dashboard GraphQL types from schema.graphql (commit them)
+docker compose -f docker-compose.prod.yml up -d --build   # production images, whole stack on :8080 (docs/deploy.md)
 ```
 
 AI workflow (details in `docs/ai-workflow/README.md`):
