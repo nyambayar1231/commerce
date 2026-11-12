@@ -236,11 +236,11 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 5. **Pace:** continuous, a report after each step.
 
 **Proposed by the lead (2026-11-12), awaiting the owner's OK:**
-6. **Config is one validated module per process** (`apps/api/src/config.ts`): every env var is read
-   and checked once at startup, all problems are reported together and the process exits; no new
-   dependency (hand-written checks, the existing `read*Config(env)` functions move there).
-   `NODE_ENV=production` makes `SECRET_KEY`, `ALLOWED_CLIENT_HOSTS`, `ALLOWED_GRAPHQL_ORIGINS`,
-   `PUBLIC_URL` and the S3/SMTP settings required and refuses the dev defaults.
+6. **Config is checked once at startup** (`apps/api/src/config.ts`): the API and the worker run every
+   reader they need (the modules' `read*Config(env)` functions stay where they are), report all
+   problems together and exit; no new dependency. `NODE_ENV=production` also requires
+   `ALLOWED_CLIENT_HOSTS`, `ALLOWED_GRAPHQL_ORIGINS` and `PUBLIC_URL` and refuses the dev secrets.
+   The CLI keeps its per-command checks.
 7. **Login throttling is Saleor's `authenticate_with_throttling`** translated: every attempt blocks
    the IP for 1 s; failures raise the delay exponentially (per IP every 10 failures, per IP + user
    every failure, max 1 h; counters expire after 2 h); success clears them; a blocked attempt gets
@@ -262,7 +262,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 
 | Step | What | Status |
 |---|---|---|
-| M9.1 | Config: `config.ts` validates all env vars at startup (API, worker, CLI), production rules, `.env.example` updated; tests for the validation | Proposed |
+| M9.1 | Config: `config.ts` validates all env vars at startup (API, worker), production rules, `.env.example` updated; tests for the validation | Done |
 | M9.2 | Logging + health: pino with a request id (Yoga plugin), unexpected GraphQL errors logged with context, `console.*` replaced; `/health/live`, `/health/ready` (DB check) | Proposed |
 | M9.3 | Login throttling: `rate_limit` table + migration, Saleor's delays in `tokenCreate`, client IP with `TRUST_PROXY`, the two error codes; tests | Proposed |
 | M9.4 | `/thumbnail/` generation limit per IP (429 with `Retry-After`); tests | Proposed |

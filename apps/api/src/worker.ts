@@ -1,5 +1,6 @@
 import { closeDb, getDb } from "@commerce/db";
-import { accountConfirmationHandler, readSecretKey } from "./modules/identity/index.ts";
+import { assertConfig } from "./config.ts";
+import { accountConfirmationHandler } from "./modules/identity/index.ts";
 import {
   createSmtpMailer,
   type JobHandler,
@@ -17,9 +18,9 @@ import { orderConfirmationHandler } from "./modules/orders/index.ts";
 // Every job type the worker runs; each feature adds its handler here (M8.2, M8.3).
 const HANDLERS: JobHandler[] = [orderConfirmationHandler, accountConfirmationHandler];
 
+// Fail at start with every configuration problem listed (PLAN M9.1).
+assertConfig("worker");
 const mailer = createSmtpMailer(readEmailConfig());
-// Confirmation links are signed with SECRET_KEY: fail at start, not on the first email.
-readSecretKey();
 const boss = await startJobQueue({ supervise: true });
 await startWorkers(boss, HANDLERS, { db: getDb(), mailer });
 console.log(`Worker running (${HANDLERS.length} job types)`);

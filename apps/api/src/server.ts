@@ -1,7 +1,11 @@
 import { createServer } from "node:http";
 import { closeDb, getDb } from "@commerce/db";
 import { createApp } from "./app.ts";
+import { assertConfig } from "./config.ts";
 import { stopJobQueue } from "./modules/jobs/index.ts";
+
+// Fail at start with every configuration problem listed (PLAN M9.1).
+assertConfig("api");
 
 const port = Number(process.env.PORT ?? 4000);
 // Browser origins allowed to call the API (comma-separated; Saleor's variable name). Defaults to
