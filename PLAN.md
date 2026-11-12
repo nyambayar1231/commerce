@@ -7,7 +7,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M7 | Customer accounts | Draft |
+| M7 | Customer accounts | In progress |
 | M8 | Background processing: outbox + transactional email | Draft |
 | M9 | Hardening & deployability | Draft |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
@@ -179,9 +179,56 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 ---
 
 ## M7 — Customer accounts
-- Customer accounts API (register/login/logout, order history queries); checkout attaches to
-  user; dashboard customers list/detail.
-- **Status:** Draft.
+- **Objective:** customers register, log in and read their own orders through the API; a logged-in
+  customer's checkout belongs to them and becomes their order; staff manage customers in Saleor's
+  Customers section (ARCHITECTURE §3 "identity", §7, §8).
+- **Concepts:** one `user` table for staff and customers (Saleor's `account.User`); ownership
+  checks in the service layer next to permission checks; linking guest data by email inside the
+  registration transaction.
+
+**Owner decisions (2026-11-12):**
+1. **`accountRegister` creates an active account at once** (Saleor with email confirmation off);
+   the customer can log in right away. Email confirmation comes with M8.
+2. **Guest orders are linked on registration:** Saleor's `match_orders_with_new_user` attaches
+   past orders with the same email (and no user) to the new account.
+3. **Dashboard: list, detail, create, delete** with `MANAGE_USERS`: Saleor's customer list (search,
+   sort, pagination), detail page (name, email, active; recent orders), create page, delete and
+   bulk delete. No notes, metadata or attributes.
+4. **No address book in M7:** no `address` table or account address mutations; the customer page
+   leaves out Saleor's Address Information card. It comes later with the storefront.
+
+**Proposed by the lead (2026-11-12), awaiting the owner's OK:**
+5. **Login stays one `tokenCreate`** for staff and customers; ADR-0006's session `kind` column stays
+   out because `user.is_staff` already says which kind a session is (the dashboard keeps refusing
+   non-staff users).
+6. **Customer reads (Saleor's names):** `me.orders` (connection, newest first), `me.checkouts`;
+   `order(id)` is readable by its owner as well as by `MANAGE_ORDERS` staff (others get `null`).
+7. **Checkout ownership (Saleor's rules):** `checkoutCreate` by a logged-in customer sets the
+   checkout's user and email; `checkoutCustomerAttach`/`checkoutCustomerDetach`; a checkout that
+   belongs to a user can be read or changed only by that user (or `MANAGE_CHECKOUTS` staff), and
+   completion keeps the user on the order.
+8. **Customers are non-staff users:** `customers` lists `is_staff = false` only; `customerCreate`
+   makes a user without a password (they can log in once M8 sends the set-password email, as
+   `staffCreate`); deleting a customer keeps their orders (the order's user becomes `null`) and ends
+   their sessions.
+
+**Steps (each one commit, one report):**
+
+| Step | What | Status |
+|---|---|---|
+| M7.1 | API account: `accountRegister` (decisions 1, 2), `me.orders`, `order(id)` for its owner (decision 6); tests | Proposed |
+| M7.2 | API checkout ↔ user: decision 7, `me.checkouts`; ownership tests | Proposed |
+| M7.3 | API staff customers: `customers` connection (search, Saleor's `sortBy`), `user(id)`, `User.orders`, `customerCreate`/`Update`/`Delete`, `customerBulkDelete` (`MANAGE_USERS`) | Proposed |
+| M7.4 | Dashboard customer list: Customers menu item, Saleor's CustomerListPage + datagrid (name, email, orders), search, pagination, column settings | Proposed |
+| M7.5 | Dashboard customer detail, create page, delete dialogs; "View profile" link from the order's customer card | Proposed |
+
+- **Acceptance:** a customer registers and logs in through the API, places an order with a checkout
+  that belongs to them, and sees it (and their earlier guest orders) in `me.orders`; another customer
+  can't read that checkout or order; staff find the customer in the dashboard, edit, create and
+  delete customers, and open their orders.
+- **Out of scope:** email confirmation, password reset and set-password emails (M8); address book;
+  account deletion by the customer; notes, metadata, customer attributes; storefront screens (M4).
+- **Status:** Started by the owner 2026-11-12 with decisions 1–4; decisions 5–8 await the owner's OK.
 
 ## M8 — Background processing
 - Requirement: order confirmation email. Outbox table written in the order transaction; pg-boss
