@@ -7,12 +7,12 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M9 | Hardening & deployability | In progress |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
-(foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11), M5 (checkout API, 2026-11-11), M6 (orders, 2026-11-11), M7 (customer accounts, 2026-11-12), M8 (background jobs and email, 2026-11-12).
+(foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11), M5 (checkout API, 2026-11-11), M6 (orders, 2026-11-11), M7 (customer accounts, 2026-11-12), M8 (background jobs and email, 2026-11-12), M9 (hardening &
+deployability, 2026-11-12).
 
 ## Open items from finished milestones
 
@@ -209,75 +209,21 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   resend-confirmation mutation yet: a lost email means the account can't be confirmed until one
   is built. The storefront page that receives the confirmation link is M4.
 
+- **M9 (hardening & deployability), lead's decisions awaiting the owner's OK:** config is checked
+  at start by `apps/api/src/config.ts` (API and worker; the CLI keeps per-command checks), with
+  production rules; login throttling is Saleor's, but the client IP behind `TRUST_PROXY=true` is
+  the *last* X-Forwarded-For entry (Saleor: the first, forgeable); the `rate_limit` table belongs to
+  a new `rateLimit` module; thumbnail generation is limited to 60 per IP per minute (Saleor has
+  none); one `Dockerfile` with `api` and `web` targets, the API runs from TypeScript sources (no
+  build step), `web` is nginx with the dashboard and an API proxy on one origin, SeaweedFS and
+  Mailpit stand in for S3/SMTP in `docker-compose.prod.yml`; the golden path has no "mark as paid"
+  and opens the order by URL; CI is one GitHub Actions workflow (checks, e2e, image builds).
+- **M9 notes:** the CI workflow has not run on GitHub yet (nothing was pushed): its first run
+  is its real check. The order and product grids are canvas (Glide), so e2e tests can't read rows;
+  old millisecond product-list cursors are now refused as invalid. ADR-0014 still says thumbnail
+  rate limiting "comes with M9" (left unchanged: accepted ADRs change only with the owner).
+
 ---
-
-## M9 — Hardening & deployability
-- **Objective:** the API, worker and dashboard run from Docker images with validated production
-  config; login can't be brute-forced; every push is checked by CI, including browser golden
-  paths; the running system can be inspected through structured logs and health checks.
-- **Concepts:** fail-fast config; login throttling with exponential delays (Saleor's); structured
-  logs with a request id; liveness vs readiness; multi-stage Docker builds; CI with a real Postgres;
-  end-to-end tests with Playwright.
-
-**Owner decisions (2026-11-12):**
-1. **Deployable = Docker images + a production compose file:** one image for the API and the worker
-   (two commands), one for the dashboard (static files served by nginx), and
-   `docker-compose.prod.yml` that runs the whole stack like production. No cloud vendor yet.
-2. **Rate-limit counters live in Postgres** (no Redis; works with several API instances).
-3. **Observability = logs + health:** JSON logs with a request id, `/health/live` and
-   `/health/ready`. No metrics or tracing. Changed in M9.2 (owner, 2026-11-12): Yoga 6's own
-   logger (`@graphql-hive/logger`) instead of pino, so no second logging library.
-4. **Also in M9:** the date-cursor bug found in M6.1 (fixed in M9.5; only the product list had
-   it, orders and customers already used microseconds), and CI on GitHub Actions.
-5. **Pace:** continuous, a report after each step.
-
-**Proposed by the lead (2026-11-12), awaiting the owner's OK:**
-6. **Config is checked once at startup** (`apps/api/src/config.ts`): the API and the worker run every
-   reader they need (the modules' `read*Config(env)` functions stay where they are), report all
-   problems together and exit; no new dependency. `NODE_ENV=production` also requires
-   `ALLOWED_CLIENT_HOSTS`, `ALLOWED_GRAPHQL_ORIGINS` and `PUBLIC_URL` and refuses the dev secrets.
-   The CLI keeps its per-command checks.
-7. **Login throttling is Saleor's `authenticate_with_throttling`** translated: every attempt blocks
-   the IP for 1 s; failures raise the delay exponentially (per IP every 10 failures, per IP + user
-   every failure, max 1 h; counters expire after 2 h); success clears them; a blocked attempt gets
-   `LOGIN_ATTEMPT_DELAYED`, an unknown IP `UNKNOWN_IP_ADDRESS` (Saleor's codes). Stored in a small
-   `rate_limit` table (key, count, blocked_until, expires_at). The client IP is the socket address,
-   or the last `X-Forwarded-For` entry (the one our proxy adds; earlier ones can be forged)
-   only when `TRUST_PROXY=true` (behind nginx).
-8. **`/thumbnail/` rate limit:** only thumbnail *generation* (the cache miss that runs sharp) is
-   limited per IP (60 per minute, a fixed window in the same table); cached sizes are not limited.
-   Our own design, Saleor has none.
-9. **Playwright golden paths** live in a new `e2e/` workspace package (`@playwright/test`): staff
-   logs in and creates a published product with stock → a customer buys it through the GraphQL API
-   (the storefront is M4) → staff opens the order and fulfils it in the dashboard. They run against
-   the dev servers on their own ports (API 4010, dashboard 5183) and a fresh `commerce_e2e`
-   database. Changed in M9.7: no "mark as paid" (a completed checkout is already paid by the dummy
-   gateway), and the order is opened by its URL (the order grid is a canvas with no row text).
-10. **CI** (GitHub Actions, one workflow): lint, typecheck, unit + API tests with Postgres, S3 and
-    Mailpit service containers, schema/codegen drift check, then the e2e job; the Docker images are
-    built (not pushed) to catch breakage.
-
-**Steps (each one commit, one report):**
-
-| Step | What | Status |
-|---|---|---|
-| M9.1 | Config: `config.ts` validates all env vars at startup (API, worker), production rules, `.env.example` updated; tests for the validation | Done |
-| M9.2 | Logging + health: Yoga's logger shared by the API and worker (JSON in production, request id), job outcomes logged, `console.*` replaced; `/health/live`, `/health/ready` (DB check) | Done |
-| M9.3 | Login throttling: `rate_limit` table + migration, Saleor's delays in `tokenCreate`, client IP with `TRUST_PROXY`, the two error codes; tests | Done |
-| M9.4 | `/thumbnail/` generation limit per IP (429 with `Retry-After`); tests | Done |
-| M9.5 | Date-cursor fix: timestamp sorts encode microseconds (as the order list); a regression test with rows in one millisecond; other date-sorted lists checked | Done |
-| M9.6 | Docker: one multi-stage `Dockerfile` (`api` for API/worker/CLI, `web` = dashboard + nginx proxy), `docker-compose.prod.yml`, `cli migrate` as a one-off service, `docs/deploy.md` (incl. ADR-0014's S3 checklist); checked by running the stack | Done |
-| M9.7 | Playwright golden paths in `e2e/` (decision 9) | Done |
-| M9.8 | CI workflow on GitHub Actions (decision 10) | Proposed |
-
-- **Acceptance:** `docker compose -f docker-compose.prod.yml up` serves a working dashboard and API
-  from built images; a production start with a missing or default secret exits with a clear list;
-  repeated wrong passwords get `LOGIN_ATTEMPT_DELAYED`; logs are JSON lines with a request id;
-  `/health/ready` fails when Postgres is down; the golden paths pass locally and in CI; a product
-  list sorted by date pages without repeats.
-- **Out of scope:** a cloud host, TLS certificates, image registry/publishing, metrics, tracing,
-  alerting, backups, rate limits on other mutations, the customer storefront golden path (M4).
-- **Status:** Started by the owner 2026-11-12 with decisions 1–5; decisions 6–10 await the owner's OK.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
