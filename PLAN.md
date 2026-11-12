@@ -7,7 +7,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M8 | Background processing: outbox + transactional email | Draft |
+| M8 | Background processing: outbox + transactional email | In progress |
 | M9 | Hardening & deployability | Draft |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
@@ -203,9 +203,56 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 ---
 
 ## M8 — Background processing
-- Requirement: order confirmation email. Outbox table written in the order transaction; pg-boss
-  worker; Mailpit in compose; password reset now possible.
-- **Status:** Draft.
+- **Objective:** emails leave the system reliably: a job is written in the same transaction as the
+  change that causes it (so there are no lost or phantom emails), and a worker sends it through
+  SMTP with retries (ADR-0009). Customers confirm their email before they can log in.
+- **Concepts:** transactional outbox (pg-boss's job table, written through our transaction);
+  at-least-once delivery and idempotent jobs; stateless HMAC tokens; SMTP in dev via Mailpit.
+
+**Owner decisions (2026-11-12):**
+1. **Emails in M8:** the order confirmation (on checkoutComplete) and the account confirmation
+   (on accountRegister, Saleor's confirmAccount). Password reset and the set-password invite for
+   staff-created users stay out (they still can't log in).
+2. **pg-boss, as ADR-0009:** the job is inserted inside the business transaction; a worker process
+   runs it with pg-boss's retries.
+
+**Proposed by the lead (2026-11-12), awaiting the owner's OK:**
+3. **Account confirmation = Saleor's flow with confirmation on:** `accountRegister` requires a
+   `redirectUrl`, creates an unconfirmed (active) user and returns `requiresConfirmation: true`;
+   the email links to `redirectUrl?email=…&token=…`; `confirmAccount(email, token)` confirms;
+   `tokenCreate` refuses an unconfirmed user with `ACCOUNT_NOT_CONFIRMED` (after the password check,
+   as Saleor). This replaces M7 decision 1 ("active at once").
+4. **Guest orders link on confirmation**, not registration (Saleor's confirm_account), so an
+   unconfirmed email can't claim anyone's orders. Existing users are marked confirmed by the
+   migration.
+5. **Tokens are Saleor's stateless HMAC:** a hash of the user's id, email and confirmation state
+   with a timestamp, signed with a `SECRET_KEY` env var; valid 3 days (Django's default) and
+   useless once the account is confirmed. No token table.
+6. **`redirectUrl` must be on an allowed host** (`ALLOWED_CLIENT_HOSTS` env, Saleor's
+   validate_storefront_url), so the email can't send people to an attacker's site.
+7. **Emails are our own templates** (plain text + simple HTML, English) rendered in TypeScript;
+   sent with nodemailer over SMTP (`EMAIL_URL`, `DEFAULT_FROM_EMAIL`, Saleor's setting names);
+   Mailpit in docker-compose for dev.
+8. **pg-boss owns its `pgboss` schema** (it creates and upgrades it; not a drizzle migration); the
+   worker is a separate process (`pnpm --filter @commerce/api worker`) in the API package; jobs are
+   idempotent (one confirmation per order via pg-boss's singleton key).
+
+**Steps (each one commit, one report):**
+
+| Step | What | Status |
+|---|---|---|
+| M8.1 | Jobs infrastructure: pg-boss + nodemailer, Mailpit in compose, a `jobs` module (enqueue inside a transaction, worker entry, SMTP transport), config validation; tests that a rolled-back job never runs and a committed one does | Proposed |
+| M8.2 | Order confirmation email: enqueued in checkoutComplete's transaction, rendered from the order (lines, totals, addresses), sent once per order; checked in Mailpit | Proposed |
+| M8.3 | Account confirmation: `user.is_confirmed`, `accountRegister(redirectUrl)`, `confirmAccount`, `ACCOUNT_NOT_CONFIRMED` login, HMAC tokens, guest orders linked on confirmation, `User.isConfirmed` and the dashboard's "Unverified" pill | Proposed |
+
+- **Acceptance:** placing an order puts its confirmation in Mailpit once, even if the worker
+  restarts; an order whose transaction rolls back sends nothing; a new customer gets a
+  confirmation email, can't log in before confirming, and after confirming logs in and sees their
+  earlier guest orders.
+- **Out of scope:** password reset, set-password invites, resend-confirmation, email change,
+  other order emails (fulfilled, cancelled, refunded), staff notifications, webhooks,
+  translations, the storefront page that receives the confirmation link (M4).
+- **Status:** Started by the owner 2026-11-12 with decisions 1–2; decisions 3–8 await the owner's OK.
 
 ## M9 — Hardening & deployability
 - Dockerfiles, production config/env validation, rate limiting on login, CI pipeline, Playwright
