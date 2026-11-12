@@ -55,3 +55,14 @@ export const createGetCellContent =
 
     return readonlyTextCell(cellValueByColumnId[columnId]?.(customer) ?? "");
   };
+
+/** The ids of the selected rows (Saleor's getRowIdsFromSelection). */
+export const getSelectedCustomerIds = (
+  customers: CustomerListRow[],
+  selectedRows: number[],
+): string[] =>
+  selectedRows.flatMap((index) => {
+    const customer = customers[index];
+
+    return customer ? [customer.id] : [];
+  });

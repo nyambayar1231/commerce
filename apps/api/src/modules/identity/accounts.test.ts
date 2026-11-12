@@ -82,6 +82,7 @@ const MY_ORDERS = `query($first: Int, $after: String) {
   } }
 }`;
 const ORDER = `query($id: ID!) { order(id: $id) { id userEmail } }`;
+const ORDER_USER = `query($id: ID!) { order(id: $id) { user { email } } }`;
 const ORDER_EVENTS = `query($id: ID!) { order(id: $id) { id events { type } } }`;
 
 const register = async (input: object) =>
@@ -255,9 +256,39 @@ describe("customer order reads", () => {
       ["MANAGE_ORDERS"],
     );
 
+    // Order.user: the owner and order staff see who placed it.
+    for (const token of [owner, staff.token]) {
+      expect((await client.gql(ORDER_USER, { id: order }, token)).body).toEqual({
+        data: { order: { user: { email: "owner@example.com" } } },
+      });
+    }
+
     expect((await client.gql(ORDER_EVENTS, { id: order }, staff.token)).body).toEqual({
       data: { order: { id: order, events: [{ type: "PLACED" }] } },
     });
+  });
+
+  it("filters `me.orders` by status", async () => {
+    await placeGuestOrder("filter@example.com");
+    const cancelled = await placeGuestOrder("filter@example.com");
+    await db
+      .update(schema.order)
+      .set({ status: "CANCELED" })
+      .where(eq(schema.order.id, (await orderRow(cancelled)).id));
+    await register({ email: "filter@example.com", password: "filter password" });
+    const { token } = await login("filter@example.com", "filter password");
+    const count = async (status: object) => {
+      const { body } = await client.gql(
+        `query($where: CustomerOrderWhereInput) { me { orders(where: $where) { totalCount } } }`,
+        { where: { status } },
+        token ?? "",
+      );
+      const me = body.data?.me as { orders: { totalCount: number } } | undefined;
+      return me?.orders.totalCount;
+    };
+
+    expect(await count({ oneOf: ["UNFULFILLED", "PARTIALLY_FULFILLED", "FULFILLED"] })).toBe(1);
+    expect(await count({ eq: "CANCELED" })).toBe(1);
   });
 
   it("lets MANAGE_ORDERS staff page another user's orders", async () => {

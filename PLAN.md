@@ -7,14 +7,13 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M7 | Customer accounts | In progress |
 | M8 | Background processing: outbox + transactional email | Draft |
 | M9 | Hardening & deployability | Draft |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
-(foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11), M5 (checkout API, 2026-11-11), M6 (orders, 2026-11-11).
+(foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11), M5 (checkout API, 2026-11-11), M6 (orders, 2026-11-11), M7 (customer accounts, 2026-11-12).
 
 ## Open items from finished milestones
 
@@ -176,63 +175,32 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   amount dialog on the transaction tile, shown only with `HANDLE_PAYMENTS` (Saleor: grant/send
   refund pages); history details are a line under the title (no expandable panel).
 
+- **M7 (customer accounts), lead's decisions awaiting the owner's OK:** login stays one
+  `tokenCreate` for staff and customers, without ADR-0006's session `kind` column (`is_staff`
+  says which kind a session is); `order(id)` and `User.orders` are readable by the owner or
+  `MANAGE_ORDERS` staff (Saleor returns any order to anyone holding its id), and `Order.events`
+  became `MANAGE_ORDERS` only, as in Saleor; customers are Saleor's customer set (non-staff users
+  plus staff who placed an order); deleting a customer keeps their orders and ends their sessions.
+- **M7 API, different from Saleor, awaiting the owner's OK:** `accountRegister` returns only
+  `requiresConfirmation` and `errors`; `User.checkouts` needs the user or `MANAGE_CHECKOUTS`
+  (Saleor checks nothing) and lists open checkouts only; `customerUpdate` refuses staff accounts
+  (Saleor edits any user); `customers` searches email and names only (no `where`, no `RANK`);
+  `user(id)` takes the id only; `customerBulkDelete` errors keep their code; `Order.user` drops
+  Saleor's HANDLE_TAXES; `User.orders` filters by status only. A registration racing a guest
+  checkout of the same email can leave that one order unlinked.
+- **M7.4 (customer list) left out or different from Saleor, awaiting the owner's OK:** no
+  conditional filters, customer-type tabs, company name or external reference columns; the
+  menu item and page open for `MANAGE_STAFF` alone (Saleor's), but the API refuses that user the
+  list. The sorted column shows no arrow (same in the order list; not investigated).
+- **M7.5 (customer pages) left out or different from Saleor, awaiting the owner's OK:** no
+  addresses card or page, note, metadata, GraphiQL, customer type, attributes, external
+  reference, gift cards or window titles; no channel picker, so the recent-orders KPI subtitle
+  ("… in {channel}") is left out and amounts are whole MNT; Recent Orders is a plain table (no
+  channel column) and "View all orders" opens the order list searched by the customer's email
+  (Saleor filters by customer); the order card's "View orders" link is left out; a bulk delete
+  with refused rows closes the dialog and names each refusal (Saleor shows "Unknown error").
+
 ---
-
-## M7 — Customer accounts
-- **Objective:** customers register, log in and read their own orders through the API; a logged-in
-  customer's checkout belongs to them and becomes their order; staff manage customers in Saleor's
-  Customers section (ARCHITECTURE §3 "identity", §7, §8).
-- **Concepts:** one `user` table for staff and customers (Saleor's `account.User`); ownership
-  checks in the service layer next to permission checks; linking guest data by email inside the
-  registration transaction.
-
-**Owner decisions (2026-11-12):**
-1. **`accountRegister` creates an active account at once** (Saleor with email confirmation off);
-   the customer can log in right away. Email confirmation comes with M8.
-2. **Guest orders are linked on registration:** Saleor's `match_orders_with_new_user` attaches
-   past orders with the same email (and no user) to the new account.
-3. **Dashboard: list, detail, create, delete** with `MANAGE_USERS`: Saleor's customer list (search,
-   sort, pagination), detail page (name, email, active; recent orders), create page, delete and
-   bulk delete. No notes, metadata or attributes.
-4. **No address book in M7:** no `address` table or account address mutations; the customer page
-   leaves out Saleor's Address Information card. It comes later with the storefront.
-
-**Proposed by the lead (2026-11-12), awaiting the owner's OK:**
-5. **Login stays one `tokenCreate`** for staff and customers; ADR-0006's session `kind` column stays
-   out because `user.is_staff` already says which kind a session is (the dashboard keeps refusing
-   non-staff users).
-6. **Customer reads (Saleor's names):** `me.orders` (connection, newest first), `me.checkouts`;
-   `order(id)` is readable by its owner as well as by `MANAGE_ORDERS` staff (others get Saleor's
-   permission error); `Order.events` stays `MANAGE_ORDERS` only, as in Saleor.
-7. **Checkout ownership = Saleor's rules (owner's choice, 2026-11-12):** `checkoutCreate` by a
-   logged-in user sets the checkout's user and (unless given) email; `checkoutCustomerAttach`
-   (refuses a checkout that already has an owner) and `checkoutCustomerDetach` (owner only); the id
-   stays the secret, so anyone holding it can still use a customer's checkout. Completion gives
-   the order to the owner, or to the active account with the checkout's email.
-8. **Customers = Saleor's customer set:** `customers` lists non-staff users plus staff users who
-   placed an order (Saleor's `User.objects.customers()`); `customerCreate` makes a user without a
-   password (they can log in once M8 sends the set-password email, as `staffCreate`);
-   `customerUpdate` and the deletes refuse staff accounts; deleting a customer keeps their orders
-   (the order's user becomes `null`) and ends their sessions.
-
-**Steps (each one commit, one report):**
-
-| Step | What | Status |
-|---|---|---|
-| M7.1 | API account: `accountRegister` (decisions 1, 2), `me.orders`, `order(id)` for its owner (decision 6); tests | Done |
-| M7.2 | API checkout ↔ user: decision 7, `me.checkouts`; ownership tests | Done |
-| M7.3 | API staff customers: `customers` connection (search, Saleor's `sortBy`), `user(id)`, `User.orders`, `customerCreate`/`Update`/`Delete`, `customerBulkDelete` (`MANAGE_USERS`) | Done |
-| M7.4 | Dashboard customer list: Customers menu item, Saleor's CustomerListPage + datagrid (name, email, orders), search, pagination, column settings | Done |
-| M7.5 | Dashboard customer detail, create page, delete dialogs; "View profile" link from the order's customer card | Proposed |
-
-- **Acceptance:** a customer registers and logs in through the API, places an order with a checkout
-  that belongs to them, and sees it (and their earlier guest orders) in `me.orders`; another customer
-  can't read that checkout or order; staff find the customer in the dashboard, edit, create and
-  delete customers, and open their orders.
-- **Out of scope:** email confirmation, password reset and set-password emails (M8); address book;
-  account deletion by the customer; notes, metadata, customer attributes; storefront screens (M4).
-- **Status:** Started by the owner 2026-11-12 with decisions 1–4 and 7; decisions 5, 6 and 8 await
-  the owner's OK.
 
 ## M8 — Background processing
 - Requirement: order confirmation email. Outbox table written in the order transaction; pg-boss

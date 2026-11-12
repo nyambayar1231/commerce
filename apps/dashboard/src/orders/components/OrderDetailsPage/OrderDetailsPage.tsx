@@ -93,6 +93,7 @@ export const OrderDetailsPage = ({
         {order && (
           <OrderCustomer
             userEmail={order.userEmail}
+            user={order.user}
             shippingAddress={order.shippingAddress}
             billingAddress={order.billingAddress}
           />

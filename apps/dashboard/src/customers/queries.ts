@@ -51,3 +51,76 @@ export const customerList = gql`
     }
   }
 `;
+
+// Saleor's CustomerDetails fragment without the address book, note, isConfirmed, external
+// reference, customer type and attributes (PLAN M7 decisions 3–4).
+export const customerDetailsFragment = gql`
+  ${customerFragment}
+  fragment CustomerDetails on User {
+    ...Customer
+    dateJoined
+    lastLogin
+    isActive
+    isStaff
+  }
+`;
+
+// Saleor's CustomerDetails query: the recent orders, the KPI window (the last 50 orders) and the
+// count of orders that are not cancelled, all only for staff who may read orders. Without
+// channels there is no channel argument; ours keeps the statuses our orders can have.
+export const customerDetails = gql`
+  ${customerDetailsFragment}
+  query CustomerDetails($id: ID!, $PERMISSION_MANAGE_ORDERS: Boolean!) {
+    user(id: $id) {
+      ...CustomerDetails
+      orders(first: 10) @include(if: $PERMISSION_MANAGE_ORDERS) {
+        totalCount
+        edges {
+          node {
+            id
+            created
+            number
+            status
+            total {
+              gross {
+                currency
+                amount
+              }
+            }
+          }
+        }
+      }
+      kpiOrders: orders(first: 50) @include(if: $PERMISSION_MANAGE_ORDERS) {
+        edges {
+          node {
+            id
+            status
+            created
+            subtotal {
+              net {
+                amount
+                currency
+              }
+            }
+            shippingPrice {
+              gross {
+                amount
+                currency
+              }
+            }
+            totalRefunded {
+              amount
+              currency
+            }
+          }
+        }
+      }
+      kpiNonCancelledOrderCount: orders(
+        first: 1
+        where: { status: { oneOf: [UNFULFILLED, PARTIALLY_FULFILLED, FULFILLED] } }
+      ) @include(if: $PERMISSION_MANAGE_ORDERS) {
+        totalCount
+      }
+    }
+  }
+`;

@@ -28,3 +28,11 @@ export const productVariantStocksDeleteErrorFragment = gql`
     code
   }
 `;
+
+export const accountErrorFragment = gql`
+  fragment AccountError on AccountError {
+    code
+    field
+    message
+  }
+`;

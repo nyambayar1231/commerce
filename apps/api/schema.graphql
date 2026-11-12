@@ -862,6 +862,11 @@ input CustomerInput {
   lastName: String
 }
 
+input CustomerOrderWhereInput {
+  """Filter by order status."""
+  status: OrderStatusEnumFilterInput
+}
+
 """
 Updates an existing customer.
 
@@ -1640,6 +1645,11 @@ type Order implements Node {
 
   """Date and time when the order was last modified."""
   updatedAt: DateTime!
+
+  """
+  User who placed the order. Requires one of the following permissions: MANAGE_USERS, MANAGE_ORDERS, HANDLE_PAYMENTS, OWNER.
+  """
+  user: User
 
   """Email address of the customer."""
   userEmail: String
@@ -3164,7 +3174,15 @@ type User implements Node {
   """
   List of user's orders. Requires one of the following permissions: MANAGE_ORDERS, OWNER.
   """
-  orders(after: String, before: String, first: Int, last: Int): OrderCountableConnection
+  orders(
+    after: String
+    before: String
+    first: Int
+    last: Int
+
+    """Where filtering options for orders."""
+    where: CustomerOrderWhereInput
+  ): OrderCountableConnection
 
   """The date when the user was last updated."""
   updatedAt: DateTime!

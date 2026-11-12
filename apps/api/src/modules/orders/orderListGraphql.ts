@@ -182,6 +182,34 @@ async function listOrdersOrThrow(ctx: Context, args: OrderListArgs) {
   }
 }
 
+// Saleor's Order.user (saleor/graphql/order/types.py resolve_user): the account that placed the
+// order, for its owner or staff with MANAGE_USERS, MANAGE_ORDERS or HANDLE_PAYMENTS (Saleor's
+// HANDLE_TAXES doesn't exist here). The dashboard links it as "View profile" (M7.5).
+builder.objectField(OrderType, "user", (t) =>
+  t.field({
+    type: UserType,
+    nullable: true,
+    description:
+      "User who placed the order. Requires one of the following permissions: MANAGE_USERS, " +
+      "MANAGE_ORDERS, HANDLE_PAYMENTS, OWNER.",
+    resolve: async (order, _args, ctx) => {
+      if (order.userId === null) return null;
+      if (ctx.user?.id !== order.userId) {
+        await requirePermission(ctx, "MANAGE_USERS", "MANAGE_ORDERS", "HANDLE_PAYMENTS");
+      }
+      return ctx.orderLoaders.userById.load(order.userId);
+    },
+  }),
+);
+
+// Saleor's CustomerOrderWhereInput, limited to the status filter (the customer page counts the
+// orders that are not cancelled, M7.5).
+const CustomerOrderWhereInput = builder.inputType("CustomerOrderWhereInput", {
+  fields: (t) => ({
+    status: t.field({ type: OrderStatusEnumFilterInput, description: "Filter by order status." }),
+  }),
+});
+
 // Saleor's User.orders (saleor/graphql/account/types.py resolve_orders): the user's own orders for
 // themselves, anyone's for MANAGE_ORDERS staff; newest first (Saleor's Order ordering, -number).
 builder.objectField(UserType, "orders", (t) =>
@@ -191,7 +219,13 @@ builder.objectField(UserType, "orders", (t) =>
       nullable: true,
       description:
         "List of user's orders. Requires one of the following permissions: MANAGE_ORDERS, OWNER.",
-      resolve: async (user, args, ctx, info) => {
+      args: {
+        where: t.arg({
+          type: CustomerOrderWhereInput,
+          description: "Where filtering options for orders.",
+        }),
+      },
+      resolve: async (user, { where, ...args }, ctx, info) => {
         if (ctx.user?.id !== user.id) {
           const granted = ctx.user?.isStaff ? await ctx.permissions() : [];
           if (!granted.includes("MANAGE_ORDERS")) {
@@ -202,7 +236,15 @@ builder.objectField(UserType, "orders", (t) =>
         return listOrdersOrThrow(ctx, {
           ...args,
           ...page,
-          where: { userId: user.id },
+          where: {
+            userId: user.id,
+            status: where?.status
+              ? {
+                  eq: where.status.eq as OrderStatus | null | undefined,
+                  oneOf: where.status.oneOf as OrderStatus[] | null | undefined,
+                }
+              : undefined,
+          },
           sort: { field: "NUMBER", direction: "DESC" },
         });
       },

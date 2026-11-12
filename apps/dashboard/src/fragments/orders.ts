@@ -173,6 +173,9 @@ export const orderDetailsFragment = gql`
     status
     actions
     userEmail
+    user {
+      id
+    }
     shippingMethodName
     billingAddress {
       ...Address

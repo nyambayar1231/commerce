@@ -17,6 +17,10 @@ export const commonMessages = defineMessages({
     id: "KN7zKn",
     defaultMessage: "Error",
   },
+  firstName: {
+    id: "Q6wcZ5",
+    defaultMessage: "First Name",
+  },
   generalInformations: {
     id: "pkUbrL",
     defaultMessage: "General Information",
@@ -24,6 +28,10 @@ export const commonMessages = defineMessages({
   info: {
     id: "we4Lby",
     defaultMessage: "Info",
+  },
+  lastName: {
+    id: "aheQdn",
+    defaultMessage: "Last Name",
   },
   noOfRows: {
     id: "2HfSiT",

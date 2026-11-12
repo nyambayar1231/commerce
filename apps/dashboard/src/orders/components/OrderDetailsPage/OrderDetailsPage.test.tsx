@@ -48,6 +48,7 @@ const order = (overrides: Partial<OrderDetailsFragment> = {}): OrderDetailsFragm
   status: "UNFULFILLED",
   actions: [],
   userEmail: "bat@example.com",
+  user: null,
   shippingMethodName: "Standard",
   billingAddress: address,
   shippingAddress: address,
@@ -186,6 +187,15 @@ describe("OrderDetailsPage", () => {
     renderPage(order({ userEmail: null, shippingAddress: null, billingAddress: null }));
 
     expect(screen.getAllByText("Not set")).toHaveLength(3);
+  });
+
+  it("links a customer account's order to the customer's profile", () => {
+    renderPage(order());
+    expect(byTestId("view-profile")).toBeNull();
+    cleanup();
+
+    renderPage(order({ user: { __typename: "User", id: "VXNlcjox" } }));
+    expect(byTestId("view-profile")?.getAttribute("href")).toBe("/customers/VXNlcjox");
   });
 
   it("offers Fulfill, Refund and the cancel menu for an unfulfilled order", () => {

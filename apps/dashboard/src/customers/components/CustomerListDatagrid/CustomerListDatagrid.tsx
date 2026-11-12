@@ -4,7 +4,7 @@
 // The customer list grid: Saleor's columns with sort arrows (header click sorts the sortable ones),
 // column picker, resizing and reordering, a row link to the customer, the empty text (naming the
 // search) and the pagination footer. The order count column is offered only to staff with
-// MANAGE_ORDERS, as in Saleor. Not yet: row checkboxes for bulk delete (M7.5).
+// MANAGE_ORDERS, as in Saleor. Row checkboxes select customers for the bulk delete (M7.5).
 import type { Item } from "@glideapps/glide-data-grid";
 import { useCallback, useMemo } from "react";
 import { useIntl } from "react-intl";
@@ -26,6 +26,7 @@ import {
   type CustomerListRow,
   createGetCellContent,
   customerListStaticColumnsAdapter,
+  getSelectedCustomerIds,
 } from "./datagrid";
 import { emptySearchMessage, messages } from "./messages";
 
@@ -42,6 +43,8 @@ interface CustomerListDatagridProps {
   hasPreviousPage?: boolean;
   nextHref?: string;
   prevHref?: string;
+  /** Selected customer ids, plus a callback that clears the grid's selection. */
+  onSelectedCustomerIdsChange?: (ids: string[], clearSelection: () => void) => void;
 }
 
 export const CustomerListDatagrid = ({
@@ -57,6 +60,7 @@ export const CustomerListDatagrid = ({
   hasPreviousPage,
   nextHref,
   prevHref,
+  onSelectedCustomerIdsChange,
 }: CustomerListDatagridProps) => {
   const intl = useIntl();
   const navigate = useNavigate();
@@ -117,6 +121,16 @@ export const CustomerListDatagrid = ({
     [visibleColumns, onSort],
   );
 
+  const handleRowSelectionChange = useCallback(
+    (selectedRows: number[], clearSelection: () => void) => {
+      onSelectedCustomerIdsChange?.(
+        getSelectedCustomerIds(customers, selectedRows),
+        clearSelection,
+      );
+    },
+    [customers, onSelectedCustomerIdsChange],
+  );
+
   return (
     <>
       <Datagrid
@@ -124,7 +138,7 @@ export const CustomerListDatagrid = ({
         hasRowHover
         loading={disabled}
         verticalBorder={false}
-        rowMarkers="none"
+        rowMarkers="checkbox-visible"
         availableColumns={visibleColumns}
         rows={customers.length}
         getCellContent={getCellContent}
@@ -147,6 +161,7 @@ export const CustomerListDatagrid = ({
         onClearRecentlyAddedColumn={handlers.onClearRecentlyAddedColumn}
         rowAnchor={handleRowAnchor}
         onRowClick={handleRowClick}
+        onRowSelectionChange={handleRowSelectionChange}
         showTopBorder
       />
       <DatagridPagination

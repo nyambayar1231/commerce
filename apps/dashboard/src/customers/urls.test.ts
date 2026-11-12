@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { canBeSorted, getSortQueryVariables, getSortUrlParams } from "./sort";
-import { customerListUrl, customerUrl, parseCustomerListUrl } from "./urls";
+import {
+  customerAddUrl,
+  customerListUrl,
+  customerUrl,
+  parseCustomerListUrl,
+  parseCustomerUrl,
+} from "./urls";
 
 describe("customer list URL", () => {
   it("round-trips search, sort and the cursor", () => {
@@ -21,9 +27,18 @@ describe("customer list URL", () => {
     expect(customerListUrl()).toBe("/customers");
   });
 
-  it("links to the customer", () => {
+  it("keeps the bulk delete dialog in the URL", () => {
+    expect(parseCustomerListUrl(new URLSearchParams("action=remove")).action).toBe("remove");
+    expect(parseCustomerListUrl(new URLSearchParams("action=export")).action).toBeUndefined();
+  });
+
+  it("links to the customer, its dialogs and the create page", () => {
     expect(customerUrl("VXNlcjox")).toBe("/customers/VXNlcjox");
     expect(customerUrl("VXNlcjox==")).toBe("/customers/VXNlcjox%3D%3D");
+    expect(customerUrl("u1", { action: "deactivate" })).toBe("/customers/u1?action=deactivate");
+    expect(parseCustomerUrl(new URLSearchParams("action=remove"))).toEqual({ action: "remove" });
+    expect(parseCustomerUrl(new URLSearchParams("action=metadata")).action).toBeUndefined();
+    expect(customerAddUrl()).toBe("/customers/add");
   });
 });
 

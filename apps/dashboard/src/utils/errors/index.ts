@@ -132,3 +132,46 @@ export function getOrderErrorMessage(
       return getCommonFormFieldErrorMessage(err, intl);
   }
 }
+
+// Adapted from saleor-dashboard: src/utils/errors/account.ts (BSD-3-Clause, Copyright (c) 2020-2021,
+// Saleor Commerce). Saleor's messages for the AccountErrorCode values the customer pages can get;
+// the rest fall back to the common messages (the API's own message first).
+const accountErrorMessages = defineMessages({
+  tooShort: {
+    id: "LR3HlT",
+    defaultMessage: "This password is too short",
+  },
+  unique: {
+    id: "TDhHMi",
+    defaultMessage: "This needs to be unique",
+  },
+  uniqueEmail: {
+    id: "froISM",
+    defaultMessage: "User with this email already exists",
+  },
+  invalidEmail: {
+    id: "YRe93Y",
+    defaultMessage: "Enter a valid email address",
+  },
+});
+
+export function getAccountErrorMessage(
+  err: (ProductErrorLike & { field: string | null }) | undefined,
+  intl: IntlShape,
+): string | undefined {
+  switch (err?.code) {
+    case "PASSWORD_TOO_SHORT":
+      return intl.formatMessage(accountErrorMessages.tooShort);
+    case "UNIQUE":
+      return intl.formatMessage(
+        err.field === "email" ? accountErrorMessages.uniqueEmail : accountErrorMessages.unique,
+      );
+    case "INVALID":
+      // Saleor's other INVALID case is a password-reset token, which these pages never get.
+      return err.field === "email"
+        ? intl.formatMessage(accountErrorMessages.invalidEmail)
+        : getCommonFormFieldErrorMessage(err, intl);
+    default:
+      return getCommonFormFieldErrorMessage(err, intl);
+  }
+}
