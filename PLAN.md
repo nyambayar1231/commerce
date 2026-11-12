@@ -207,7 +207,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   change that causes it (so there are no lost or phantom emails), and a worker sends it through
   SMTP with retries (ADR-0009). Customers confirm their email before they can log in.
 - **Concepts:** transactional outbox (pg-boss's job table, written through our transaction);
-  at-least-once delivery and idempotent jobs; stateless HMAC tokens; SMTP in dev via Mailpit.
+  at-least-once delivery and at-least-once jobs; stateless HMAC tokens; SMTP in dev via Mailpit.
 
 **Owner decisions (2026-11-12):**
 1. **Emails in M8:** the order confirmation (on checkoutComplete) and the account confirmation
@@ -234,15 +234,16 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
    sent with nodemailer over SMTP (`EMAIL_URL`, `DEFAULT_FROM_EMAIL`, Saleor's setting names);
    Mailpit in docker-compose for dev.
 8. **pg-boss owns its `pgboss` schema** (it creates and upgrades it; not a drizzle migration); the
-   worker is a separate process (`pnpm --filter @commerce/api worker`) in the API package; jobs are
-   idempotent (one confirmation per order via pg-boss's singleton key).
+   worker is a separate process (`pnpm --filter @commerce/api worker`) in the API package. A job is
+   added once because the change that adds it happens once (checkout completion is idempotent);
+   delivery is at least once (a worker dying between sending and recording can send twice).
 
 **Steps (each one commit, one report):**
 
 | Step | What | Status |
 |---|---|---|
-| M8.1 | Jobs infrastructure: pg-boss + nodemailer, Mailpit in compose, a `jobs` module (enqueue inside a transaction, worker entry, SMTP transport), config validation; tests that a rolled-back job never runs and a committed one does | Proposed |
-| M8.2 | Order confirmation email: enqueued in checkoutComplete's transaction, rendered from the order (lines, totals, addresses), sent once per order; checked in Mailpit | Proposed |
+| M8.1 | Jobs infrastructure: pg-boss + nodemailer, Mailpit in compose, a `jobs` module (enqueue inside a transaction, worker entry, SMTP transport), config validation; tests that a rolled-back job never runs and a committed one does | Done |
+| M8.2 | Order confirmation email: enqueued in checkoutComplete's transaction, rendered from the order (lines, totals, addresses); checked in Mailpit | Proposed |
 | M8.3 | Account confirmation: `user.is_confirmed`, `accountRegister(redirectUrl)`, `confirmAccount`, `ACCOUNT_NOT_CONFIRMED` login, HMAC tokens, guest orders linked on confirmation, `User.isConfirmed` and the dashboard's "Unverified" pill | Proposed |
 
 - **Acceptance:** placing an order puts its confirmation in Mailpit once, even if the worker

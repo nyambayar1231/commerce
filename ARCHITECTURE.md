@@ -68,6 +68,7 @@ GraphQL package: each one runs codegen against `apps/api/schema.graphql` itself.
 | `checkout` | `checkout`, `checkout_line`, `shipping_method` | carts, address/shipping selection, price calculation, completion orchestration | `saleor/checkout/` |
 | `payments` | `payment_transaction`, `payment_event` | recording authorize/charge/refund against a checkout or order; provider adapters | `saleor/payment/models.py` (`TransactionItem`, `TransactionEvent`) |
 | `orders` | `order`, `order_line`, `fulfillment`, `fulfillment_line`, `order_event` | immutable order records, lifecycle, fulfillment, cancellation, timeline | `saleor/order/models.py`, `saleor/order/actions.py` |
+| `jobs` | none (pg-boss owns the `pgboss` schema) | background jobs as a transactional outbox, the worker, outgoing email (M8.1, ADR-0009) | `saleor/celeryconf.py`, `saleor/core/tasks`, the user-email plugin |
 
 **Rules:**
 
@@ -364,6 +365,20 @@ COMMIT
 
 ---
 
+### 5.6 Background jobs and email (M8, ADR-0009)
+
+- A module that needs work done later calls `enqueue(tx, queue, data)` **inside its own
+  transaction**. pg-boss inserts the job through that transaction (its Drizzle adapter), so the job
+  table is the outbox: the job exists exactly when the change commits.
+- The worker (`pnpm --filter @commerce/api worker`, a separate process) claims jobs with
+  `SKIP LOCKED`, runs the handler, and retries a failed one with exponential backoff (5 tries from
+  30 s). After the last try the job stays `failed` in `pgboss.job` for inspection.
+- Delivery is at least once: a worker that dies after sending an email but before pg-boss records
+  the job sends it again. A job is added once because the change that adds it happens once.
+- pg-boss creates and upgrades its own `pgboss` schema on start (not a drizzle migration). The API
+  starts it lazily on the first job, without maintenance; the worker runs maintenance.
+- Email goes through nodemailer over SMTP (`EMAIL_URL`, `DEFAULT_FROM_EMAIL`); in dev, Mailpit.
+
 ## 6. Money, inventory, checkout and order consistency (summary)
 
 | Concern | Mechanism |
@@ -526,7 +541,9 @@ state lives in the URL (`before`/`after`).
 ## 11. Testing and local infrastructure
 
 **Infrastructure:**
-- `docker-compose.yml` runs PostgreSQL 18 now. Mailpit is added in M8. There is no Redis.
+- `docker-compose.yml` runs PostgreSQL 18, the S3 server for media, and Mailpit (SMTP `:1026`,
+  web UI `:8026`; not 1025/8025, which the reference saleor-platform stack uses). There is no Redis.
+- The worker runs on the host too: `pnpm --filter @commerce/api worker` (M8).
 - Apps run on the host: `pnpm dev` starts API `:4000`, dashboard `:5173`, storefront `:3000`.
 - Seed script: a superuser, the warehouse, shop settings, and a small demo catalog.
 

@@ -37,6 +37,20 @@ services:
       timeout: 3s
       retries: 30
 
+  # Catches every email the worker sends in dev (PLAN M8): SMTP on 1026, the web UI and its API on
+  # http://localhost:8026. Nothing leaves the machine. Not Mailpit's default 1025/8025, which the
+  # reference saleor-platform stack already uses on this machine.
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    ports:
+      - "1026:1025"
+      - "8026:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
 volumes:
   postgres-data:
   s3-data:

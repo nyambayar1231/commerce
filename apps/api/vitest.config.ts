@@ -19,7 +19,9 @@ export default defineConfig({
   // ESM one through the `module-sync` condition, which Vite doesn't apply by default, so our source
   // got the CommonJS build while Yoga (loaded by Node) got the ESM one: two GraphQLError classes,
   // and Yoga masked every GraphQLError we throw (e.g. PermissionDenied) as "Unexpected error.".
-  ssr: { resolve: { conditions: ["module-sync", "node", "import", "default"] } },
+  // No "import" condition: it also reaches Node's own `require()`, which then hands node-postgres
+  // (pg-boss's driver) pg-pool's ESM wrapper and `class extends` fails (PLAN M8.1).
+  ssr: { resolve: { conditions: ["module-sync", "node", "default"] } },
   test: {
     globalSetup: ["./test/global-setup.ts"],
     // All files share one database, so they run one after another.

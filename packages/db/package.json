@@ -16,7 +16,9 @@
   },
   "devDependencies": {
     "@commerce/tsconfig": "workspace:*",
-    "drizzle-kit": "0.31.11"
+    "@opentelemetry/api": "1.10.0",
+    "drizzle-kit": "0.31.11",
+    "pg": "8.23.1"
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",

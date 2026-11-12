@@ -6,3 +6,8 @@ packages:
 # script to install the native binary for this platform.
 allowBuilds:
   esbuild: true
+
+# packages/db lists `pg` and `@opentelemetry/api` as devDependencies only so that its drizzle-orm
+# resolves the same optional peers as apps/api's (which gets them through pg-boss, PLAN M8.1).
+# Otherwise pnpm installs two drizzle-orm variants whose types don't mix (`eq(column, …)` with a
+# column from @commerce/db stops typechecking). Keep their versions equal to pg-boss's.

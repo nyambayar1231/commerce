@@ -9,7 +9,8 @@
     "start": "node --env-file-if-exists=../../.env src/server.ts",
     "test": "vitest run",
     "schema:print": "node src/print-schema-cli.ts",
-    "cli": "node --env-file-if-exists=../../.env src/cli.ts"
+    "cli": "node --env-file-if-exists=../../.env src/cli.ts",
+    "worker": "node --env-file-if-exists=../../.env src/worker.ts"
   },
   "devDependencies": {
     "@commerce/tsconfig": "workspace:*",
@@ -29,6 +30,8 @@
     "drizzle-orm": "0.45.4",
     "graphql": "17.1.0",
     "graphql-yoga": "6.0.1",
+    "nodemailer": "10.3.1",
+    "pg-boss": "12.38.0",
     "sharp": "0.35.5"
   }
 }

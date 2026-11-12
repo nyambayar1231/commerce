@@ -18,3 +18,8 @@ older than N days is treated as expired). When the first real async requirement 
 - + Fewer moving parts; every request's effects are visible synchronously.
 - − M8 must add an outbox (written inside the same transaction as the business change) to avoid
   lost or phantom emails.
+
+## Implementation (M8.1, 2026-11-12)
+pg-boss 12 inserts jobs through our Drizzle transaction (its `fromDrizzle` adapter), so its job
+table is the outbox; there is no separate outbox table. The worker is a separate process in the API
+package. See ARCHITECTURE.md §5.6.

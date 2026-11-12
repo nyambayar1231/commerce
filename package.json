@@ -12,7 +12,7 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "test": "turbo run test",
-    "db:up": "docker compose up -d --wait postgres s3",
+    "db:up": "docker compose up -d --wait postgres s3 mailpit",
     "db:down": "docker compose down",
     "db:psql": "docker compose exec postgres psql -U commerce commerce",
     "schema:print": "turbo run schema:print",
