@@ -1,4 +1,5 @@
 import { closeDb, getDb, schema } from "@commerce/db";
+import { sql } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createStaff, createTestClient, type GqlResult } from "../../../test/graphql.ts";
 import { toGlobalId } from "../../graphql/globalId.ts";
@@ -351,6 +352,51 @@ describe("products", () => {
         }),
       ),
     ).toBe("Received cursor is invalid.");
+    // The old millisecond ISO cursors (before PLAN M9.5) are refused too.
+    const isoCursor = Buffer.from(JSON.stringify(["2026-01-01T00:00:00.000Z", ID(1)])).toString(
+      "base64",
+    );
+    expect(
+      errorOf(
+        await client.gql(PRODUCTS_QUERY, {
+          first: 5,
+          after: isoCursor,
+          sortBy: { field: "CREATED_AT", direction: "ASC" },
+        }),
+      ),
+    ).toBe("Received cursor is invalid.");
+  });
+
+  // PLAN M9.5 (found in M6.1): rows whose timestamps differ only in microseconds repeated page
+  // after page when the cursor held milliseconds.
+  it("pages by date across rows created within one millisecond", async () => {
+    await db.execute(sql`UPDATE product SET
+      created_at = '2026-01-01T00:00:00.000Z'::timestamptz + make_interval(secs => n / 1000000.0),
+      updated_at = '2026-01-01T00:00:00.000Z'::timestamptz + make_interval(secs => (10 - n) / 1000000.0)
+      FROM (VALUES (${ID(1)}::uuid, 1), (${ID(2)}::uuid, 2), (${ID(3)}::uuid, 3), (${ID(4)}::uuid, 4))
+        AS t(id, n)
+      WHERE product.id = t.id`);
+    for (const sortBy of [
+      { field: "CREATED_AT", direction: "ASC" },
+      { field: "CREATED_AT", direction: "DESC" },
+      { field: "LAST_MODIFIED_AT", direction: "ASC" },
+    ]) {
+      const seen: string[] = [];
+      let after: string | null = null;
+      for (let pages = 0; pages < 20; pages++) {
+        const page: Page = await products({ first: 1, after, sortBy });
+        seen.push(...names(page));
+        if (!page.pageInfo.hasNextPage) break;
+        after = page.pageInfo.endCursor;
+      }
+      expect(seen).toEqual(await sort(sortBy.field, sortBy.direction as "ASC" | "DESC"));
+      expect(new Set(seen).size).toBe(9);
+    }
+    // The four rows keep their microsecond order.
+    const created = await sort("CREATED_AT", "ASC");
+    expect(created.filter((n) => [1, 2, 3, 4].map(name).includes(n))).toEqual(
+      [1, 2, 3, 4].map(name),
+    );
   });
 });
 

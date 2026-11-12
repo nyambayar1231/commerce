@@ -135,12 +135,6 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   - Shipping prices (0013) and payment amounts (0014) were created as `integer` and widened to
     `bigint` in 0015 (variant prices and order totals are `bigint`).
   - No dashboard work: checkout has no Saleor dashboard pages; orders arrive in M6.
-- **Found during M6.1, being fixed in M9.5:** the product list's `CREATED_AT` /
-  `LAST_MODIFIED_AT` cursors carry millisecond ISO strings while the columns hold microseconds, so
-  rows created within one millisecond repeat page after page (reproduced with four products; the
-  orders list sorts timestamps by epoch microseconds instead). Likely the same in other date-sorted
-  lists built on that pattern.
-
 - **M6.2 (order list) left out or different from Saleor, awaiting the owner's OK:** no "Create
   order" button (no draft orders), help link, GraphiQL/settings menu, filter presets or search
   tooltip; no Net, Delivery or Channel columns and no empty spacer column; the menu's Fulfillment
@@ -233,7 +227,8 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 3. **Observability = logs + health:** JSON logs with a request id, `/health/live` and
    `/health/ready`. No metrics or tracing. Changed in M9.2 (owner, 2026-11-12): Yoga 6's own
    logger (`@graphql-hive/logger`) instead of pino, so no second logging library.
-4. **Also in M9:** the date-cursor bug found in M6.1, and CI on GitHub Actions.
+4. **Also in M9:** the date-cursor bug found in M6.1 (fixed in M9.5; only the product list had
+   it, orders and customers already used microseconds), and CI on GitHub Actions.
 5. **Pace:** continuous, a report after each step.
 
 **Proposed by the lead (2026-11-12), awaiting the owner's OK:**
@@ -268,7 +263,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M9.2 | Logging + health: Yoga's logger shared by the API and worker (JSON in production, request id), job outcomes logged, `console.*` replaced; `/health/live`, `/health/ready` (DB check) | Done |
 | M9.3 | Login throttling: `rate_limit` table + migration, Saleor's delays in `tokenCreate`, client IP with `TRUST_PROXY`, the two error codes; tests | Done |
 | M9.4 | `/thumbnail/` generation limit per IP (429 with `Retry-After`); tests | Done |
-| M9.5 | Date-cursor fix: timestamp sorts encode microseconds (as the order list); a regression test with rows in one millisecond; other date-sorted lists checked | Proposed |
+| M9.5 | Date-cursor fix: timestamp sorts encode microseconds (as the order list); a regression test with rows in one millisecond; other date-sorted lists checked | Done |
 | M9.6 | Docker: multi-stage `Dockerfile`s (API/worker, dashboard + nginx), `docker-compose.prod.yml`, migrations as a one-off command, `docs/deploy.md` (incl. ADR-0014's S3 checklist); checked by running the stack | Proposed |
 | M9.7 | Playwright golden paths in `e2e/` (decision 9) | Proposed |
 | M9.8 | CI workflow on GitHub Actions (decision 10) | Proposed |

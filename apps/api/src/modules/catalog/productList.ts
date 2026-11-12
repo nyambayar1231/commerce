@@ -8,7 +8,8 @@ import { type ProductWhere, productWhereToSql } from "./productWhere.ts";
 // Saleor's `products` connection (saleor/graphql/core/connection.py): filtered, sorted,
 // keyset-paginated. The cursor format, the InvalidCursorError and the page-info rules are the
 // same as `categories` (categoryList.ts). Sorting always tie-breaks by id, so pages never overlap
-// or skip rows.
+// or skip rows. Dates sort and page as epoch microseconds, the precision Postgres stores (PLAN
+// M9.5): a millisecond ISO cursor put rows created within one millisecond on page after page.
 
 export type ProductSortField = "NAME" | "PRICE" | "PUBLISHED" | "CREATED_AT" | "LAST_MODIFIED_AT";
 
@@ -29,6 +30,9 @@ export interface ProductListArgs {
 
 export type ProductListRow = ProductRow & { minimalPrice: Money | null };
 
+/** A row with its timestamps as epoch microseconds (digit strings), the date sorts' cursor values. */
+type KeyedRow = { node: ProductListRow; createdAtMicros: string; updatedAtMicros: string };
+
 export interface ProductPage {
   rows: { cursor: string; node: ProductListRow }[];
   hasNextPage: boolean;
@@ -38,24 +42,24 @@ export interface ProductPage {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const sortValue = (row: ProductListRow, field: ProductSortField): string => {
+const sortValue = (row: KeyedRow, field: ProductSortField): string => {
   switch (field) {
     case "NAME":
-      return row.name;
+      return row.node.name;
     case "PRICE":
       // COALESCE(min variant price, -1): products without variants come first ascending.
-      return String(row.minimalPrice?.amountMinor ?? -1);
+      return String(row.node.minimalPrice?.amountMinor ?? -1);
     case "PUBLISHED":
-      return row.isPublished ? "1" : "0";
+      return row.node.isPublished ? "1" : "0";
     case "CREATED_AT":
-      return row.createdAt.toISOString();
+      return row.createdAtMicros;
     case "LAST_MODIFIED_AT":
-      return row.updatedAt.toISOString();
+      return row.updatedAtMicros;
   }
 };
 
-const encodeCursor = (row: ProductListRow, field: ProductSortField): string =>
-  Buffer.from(JSON.stringify([sortValue(row, field), row.id])).toString("base64");
+const encodeCursor = (row: KeyedRow, field: ProductSortField): string =>
+  Buffer.from(JSON.stringify([sortValue(row, field), row.node.id])).toString("base64");
 
 function decodeCursor(cursor: string, field: ProductSortField): [string | number, string] {
   let parsed: unknown;
@@ -83,7 +87,9 @@ function decodeCursor(cursor: string, field: ProductSortField): [string | number
     return [Number(parsed[0]), parsed[1]];
   }
   if (field === "CREATED_AT" || field === "LAST_MODIFIED_AT") {
-    if (Number.isNaN(Date.parse(parsed[0]))) throw new InvalidCursorError();
+    // Epoch microseconds; kept as a string (they exceed 2^53 only in the year 2255, but the SQL
+    // compares them as bigint anyway).
+    if (!/^-?\d{1,19}$/.test(parsed[0])) throw new InvalidCursorError();
   }
   return [parsed[0], parsed[1]];
 }
@@ -100,6 +106,8 @@ type RawProductRow = {
   publishedAt: Date | string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+  createdAtMicros: string;
+  updatedAtMicros: string;
   minPriceAmount: string | number | null;
   minPriceCurrency: string | null;
 };
@@ -131,15 +139,19 @@ export async function listProducts(db: Executor, args: ProductListArgs): Promise
     NAME: sql`name`,
     PRICE: sql`COALESCE("minPriceAmount", -1)`,
     PUBLISHED: sql`"isPublished"::int`,
-    CREATED_AT: sql`"createdAt"`,
-    LAST_MODIFIED_AT: sql`"updatedAt"`,
+    CREATED_AT: sql`"createdAtMicros"`,
+    LAST_MODIFIED_AT: sql`"updatedAtMicros"`,
   }[field];
   // Walking backwards reads the rows in reverse order, then flips them back.
   const ascending = (direction === "ASC") !== backwards;
   const order = ascending ? sql`ASC` : sql`DESC`;
   let keyset = sql``;
   if (cursor) {
-    const [value, id] = decodeCursor(cursor, field);
+    const [decoded, id] = decodeCursor(cursor, field);
+    const value =
+      field === "CREATED_AT" || field === "LAST_MODIFIED_AT"
+        ? sql`${decoded}::bigint`
+        : sql`${decoded}`;
     keyset = ascending
       ? sql`WHERE (${sortColumn}, id) > (${value}, ${id}::uuid)`
       : sql`WHERE (${sortColumn}, id) < (${value}, ${id}::uuid)`;
@@ -152,6 +164,8 @@ export async function listProducts(db: Executor, args: ProductListArgs): Promise
         p.category_id AS "categoryId", p.is_published AS "isPublished",
         p.published_at AS "publishedAt", p.created_at AS "createdAt",
         p.updated_at AS "updatedAt",
+        (extract(epoch FROM p.created_at) * 1000000)::bigint AS "createdAtMicros",
+        (extract(epoch FROM p.updated_at) * 1000000)::bigint AS "updatedAtMicros",
         (SELECT min(v.price_amount) FROM product_variant AS v WHERE v.product_id = p.id)
           AS "minPriceAmount",
         (SELECT v.currency FROM product_variant AS v WHERE v.product_id = p.id
@@ -182,21 +196,25 @@ export async function listProducts(db: Executor, args: ProductListArgs): Promise
   ]);
 
   const rows = [...pageRows].map(
-    (row): ProductListRow => ({
-      id: row.id,
-      name: row.name,
-      slug: row.slug,
-      description: row.description,
-      descriptionPlaintext: row.descriptionPlaintext,
-      categoryId: row.categoryId,
-      isPublished: row.isPublished,
-      publishedAt: row.publishedAt === null ? null : new Date(row.publishedAt),
-      createdAt: new Date(row.createdAt),
-      updatedAt: new Date(row.updatedAt),
-      minimalPrice:
-        row.minPriceAmount === null
-          ? null
-          : toMoney(Number(row.minPriceAmount), row.minPriceCurrency ?? ""),
+    (row): KeyedRow => ({
+      createdAtMicros: String(row.createdAtMicros),
+      updatedAtMicros: String(row.updatedAtMicros),
+      node: {
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        description: row.description,
+        descriptionPlaintext: row.descriptionPlaintext,
+        categoryId: row.categoryId,
+        isPublished: row.isPublished,
+        publishedAt: row.publishedAt === null ? null : new Date(row.publishedAt),
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt),
+        minimalPrice:
+          row.minPriceAmount === null
+            ? null
+            : toMoney(Number(row.minPriceAmount), row.minPriceCurrency ?? ""),
+      },
     }),
   );
   const hasMore = rows.length > limit;
@@ -204,7 +222,7 @@ export async function listProducts(db: Executor, args: ProductListArgs): Promise
   if (backwards) page.reverse();
 
   return {
-    rows: page.map((node) => ({ cursor: encodeCursor(node, field), node })),
+    rows: page.map((row) => ({ cursor: encodeCursor(row, field), node: row.node })),
     // Like Saleor (and Relay's spec): the other direction is only known from the cursor's presence.
     hasNextPage: backwards ? Boolean(cursor) : hasMore,
     hasPreviousPage: backwards ? hasMore : Boolean(cursor),
