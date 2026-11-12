@@ -6,4 +6,5 @@ export * from "./identity.ts";
 export * from "./inventory.ts";
 export * from "./orders.ts";
 export * from "./payments.ts";
+export * from "./rateLimit.ts";
 export * from "./shop.ts";

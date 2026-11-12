@@ -31,6 +31,8 @@ export interface Context {
   // Absolute base URL of the API for links we build (thumbnail proxy URLs). `PUBLIC_URL` when
   // set (trailing slashes stripped), else the request's origin.
   publicUrl: string;
+  // The client's IP address for login throttling (app.ts `clientIpOf`), or null when unknown.
+  clientIp: string | null;
   // Adds a `Set-Cookie` header to this request's response (app.ts).
   setCookie: (header: string) => void;
 }
@@ -59,7 +61,10 @@ export function clearedSessionCookie(): string {
   return `${SESSION_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
 }
 
-export async function createContext(db: Db, request: Request): Promise<Omit<Context, "setCookie">> {
+export async function createContext(
+  db: Db,
+  request: Request,
+): Promise<Omit<Context, "setCookie" | "clientIp">> {
   const sessionToken = sessionTokenOf(request);
   const user = sessionToken === null ? null : await getSessionUser(db, sessionToken);
   let permissions: Promise<readonly Permission[]> | undefined;

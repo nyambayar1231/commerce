@@ -15,7 +15,10 @@ const allowedOrigins = (process.env.ALLOWED_GRAPHQL_ORIGINS ?? "http://localhost
   .split(",")
   .map((origin) => origin.trim())
   .filter((origin) => origin !== "");
-const server = createServer(createApp(getDb(), { allowedOrigins }));
+// Behind our own reverse proxy (docker-compose.prod.yml's nginx), the client IP is the last
+// X-Forwarded-For entry; directly exposed, it is the socket's (PLAN M9.3).
+const trustProxy = process.env.TRUST_PROXY === "true";
+const server = createServer(createApp(getDb(), { allowedOrigins, trustProxy }));
 
 server.listen(port, () => {
   logger.info({ port }, `GraphQL API on http://localhost:${port}/graphql`);

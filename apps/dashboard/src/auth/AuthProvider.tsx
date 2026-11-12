@@ -19,6 +19,7 @@ export type User = NonNullable<UserDetailsQuery["me"]>;
 export type UserContextError =
   | "loginError"
   | "invalidCredentials"
+  | "loginAttemptDelay"
   | "noPermissionsError"
   | "serverError"
   | "unknownLoginError";
@@ -67,11 +68,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       if (payload.errors.length > 0 || !payload.user) {
-        // As Saleor: INVALID_CREDENTIALS gets its own case, anything else (INACTIVE) is a
-        // generic login error; both read "Your username and/or password are incorrect".
+        // As Saleor: INVALID_CREDENTIALS and LOGIN_ATTEMPT_DELAYED (throttling, PLAN M9.3) get
+        // their own cases, anything else (INACTIVE) is a generic login error; INVALID_CREDENTIALS
+        // and the generic one both read "Your username and/or password are incorrect".
         setErrors(
           payload.errors.map((e) =>
-            e.code === "INVALID_CREDENTIALS" ? "invalidCredentials" : "loginError",
+            e.code === "INVALID_CREDENTIALS"
+              ? "invalidCredentials"
+              : e.code === "LOGIN_ATTEMPT_DELAYED"
+                ? "loginAttemptDelay"
+                : "loginError",
           ),
         );
         return;

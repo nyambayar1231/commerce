@@ -59,6 +59,9 @@ export function validateConfig(role: ProcessRole, env: Env = process.env): strin
     const port = env.PORT;
     if (port !== undefined && !/^\d+$/.test(port)) problems.push("PORT must be a number");
     check(problems, () => readStorageConfig(env));
+    if (env.TRUST_PROXY !== undefined && !["true", "false"].includes(env.TRUST_PROXY)) {
+      problems.push('TRUST_PROXY must be "true" or "false"');
+    }
     requireHttpUrl(problems, env, "MEDIA_PUBLIC_URL");
     requireHttpUrl(problems, env, "PUBLIC_URL");
     for (const origin of (env.ALLOWED_GRAPHQL_ORIGINS ?? "").split(",")) {

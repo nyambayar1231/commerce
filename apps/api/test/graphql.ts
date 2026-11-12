@@ -1,6 +1,6 @@
 import { type Db, schema } from "@commerce/db";
 import { expect } from "vitest";
-import { createApp } from "../src/app.ts";
+import { createApp, type ServerContext } from "../src/app.ts";
 import type { AuthorizationFilter } from "../src/graphql/permissions.ts";
 import { createSession, type Permission } from "../src/modules/identity/index.ts";
 
@@ -21,19 +21,34 @@ type GqlBody = {
   errors?: { message: string; path?: (string | number)[]; extensions?: Record<string, unknown> }[];
 };
 
+/**
+ * What node:http would pass Yoga for a client at `ip`. Every request gets its own random address
+ * unless a test names one, so login throttling (PLAN M9.3) never links unrelated test requests.
+ */
+export function clientAt(ip: string = randomIp()): ServerContext {
+  return { req: { socket: { remoteAddress: ip } } };
+}
+
+const randomIp = () =>
+  `10.${Array.from({ length: 3 }, () => Math.floor(Math.random() * 256)).join(".")}`;
+
 export function createTestClient(db: Db) {
   const app = createApp(db, { allowedOrigins: ["http://localhost:5173"] });
 
   /** POST a GraphQL document, authenticated with `token` as a Bearer token when given. */
   async function gql(query: string, variables: object = {}, token?: string): Promise<GqlResult> {
-    const response = await app.fetch("http://test/graphql", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        ...(token ? { authorization: `Bearer ${token}` } : {}),
+    const response = await app.fetch(
+      "http://test/graphql",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          ...(token ? { authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ query, variables }),
       },
-      body: JSON.stringify({ query, variables }),
-    });
+      clientAt(),
+    );
     return { response, body: (await response.json()) as GqlBody };
   }
 

@@ -134,6 +134,13 @@
       "when": 1794463594335,
       "tag": "0018_user_is_confirmed",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794465983153,
+      "tag": "0019_rate_limit",
+      "breakpoints": true
     }
   ]
 }

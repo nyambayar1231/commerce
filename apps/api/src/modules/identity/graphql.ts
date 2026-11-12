@@ -90,10 +90,12 @@ const AccountErrorCode = builder.enumType("AccountErrorCode", {
     "INACTIVE",
     "INVALID",
     "INVALID_CREDENTIALS",
+    "LOGIN_ATTEMPT_DELAYED",
     "OUT_OF_SCOPE_GROUP",
     "PASSWORD_TOO_SHORT",
     "REQUIRED",
     "UNIQUE",
+    "UNKNOWN_IP_ADDRESS",
   ] as const,
 });
 
@@ -104,6 +106,8 @@ export type AccountError = {
     | "ACCOUNT_NOT_CONFIRMED"
     | "INACTIVE"
     | "INVALID_CREDENTIALS"
+    | "LOGIN_ATTEMPT_DELAYED"
+    | "UNKNOWN_IP_ADDRESS"
     | AccountRegisterErrorCode
     | CustomerErrorCode;
 };
@@ -146,7 +150,16 @@ builder.mutationField("tokenCreate", (t) =>
       password: t.arg.string({ required: true, description: "Password of a user." }),
     },
     resolve: async (_parent, { email, password }, context) => {
-      const result = await authenticate(context.db, email, password);
+      const result = await authenticate(context.db, email, password, context.clientIp);
+      // Throttling errors have no field, as Saleor's (../saleor-core/saleor/account/throttling.py).
+      if (!result.ok && result.code === "UNKNOWN_IP_ADDRESS") {
+        const message = "Can't identify requester IP address.";
+        return { user: null, errors: [{ field: null, code: result.code, message }] };
+      }
+      if (!result.ok && result.code === "LOGIN_ATTEMPT_DELAYED") {
+        const message = `Logging has been suspended till ${result.nextAttemptAt.toISOString()} due to too many logging attempts originating from the same IP address.`;
+        return { user: null, errors: [{ field: null, code: result.code, message }] };
+      }
       if (!result.ok) {
         return {
           user: null,
@@ -374,6 +387,7 @@ const PermissionGroupErrorCode = builder.enumType("PermissionGroupErrorCode", {
     "OUT_OF_SCOPE_USER",
     "REQUIRED",
     "UNIQUE",
+    "UNKNOWN_IP_ADDRESS",
   ] as const,
 });
 

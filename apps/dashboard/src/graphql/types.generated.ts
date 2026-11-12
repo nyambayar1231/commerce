@@ -11,10 +11,12 @@ export type AccountErrorCode =
   | 'INACTIVE'
   | 'INVALID'
   | 'INVALID_CREDENTIALS'
+  | 'LOGIN_ATTEMPT_DELAYED'
   | 'OUT_OF_SCOPE_GROUP'
   | 'PASSWORD_TOO_SHORT'
   | 'REQUIRED'
-  | 'UNIQUE';
+  | 'UNIQUE'
+  | 'UNKNOWN_IP_ADDRESS';
 
 export type CategoryFilterInput = {
   ids?: Array<string | number> | null | undefined;

@@ -1,8 +1,10 @@
 import { closeDb, getDb, schema } from "@commerce/db";
 import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
-import { createApp } from "../../app.ts";
+import { clientAt } from "../../../test/graphql.ts";
+import { clientIpOf, createApp } from "../../app.ts";
 import { createSuperuser } from "./index.ts";
+import { delaySeconds } from "./login.ts";
 
 // GraphQL contract for tokenCreate / logout / me, through the real app and the real (test) DB.
 const db = getDb();
@@ -11,7 +13,7 @@ const EMAIL = "admin@example.com";
 const PASSWORD = "correct horse battery staple";
 
 beforeEach(async () => {
-  await db.$client.unsafe('TRUNCATE "user" CASCADE');
+  await db.$client.unsafe('TRUNCATE "user", rate_limit CASCADE');
   await createSuperuser(db, { email: EMAIL, password: PASSWORD, firstName: "Ada" });
 });
 
@@ -19,12 +21,21 @@ afterAll(async () => {
   await closeDb();
 });
 
-async function gql(query: string, variables: object = {}, headers: Record<string, string> = {}) {
-  const response = await app.fetch("http://test/graphql", {
-    method: "POST",
-    headers: { "content-type": "application/json", ...headers },
-    body: JSON.stringify({ query, variables }),
-  });
+async function gql(
+  query: string,
+  variables: object = {},
+  headers: Record<string, string> = {},
+  ip?: string,
+) {
+  const response = await app.fetch(
+    "http://test/graphql",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json", ...headers },
+      body: JSON.stringify({ query, variables }),
+    },
+    clientAt(ip),
+  );
   const text = await response.text();
   return { response, text, body: JSON.parse(text) };
 }
@@ -151,5 +162,120 @@ describe("logout", () => {
 
   it("succeeds without a session", async () => {
     expect((await gql(LOGOUT)).body).toEqual({ data: { logout: { errors: [] } } });
+  });
+});
+
+// Saleor's login throttling (PLAN M9.3, ../saleor-core/saleor/account/throttling.py).
+describe("login throttling", () => {
+  const IP = "203.0.113.7";
+  const loginFrom = (ip: string, password = PASSWORD, email = EMAIL) =>
+    gql(LOGIN, { email, password }, {}, ip);
+  const codesOf = (body: { data: { tokenCreate: { errors: { code: string }[] } } }) =>
+    body.data.tokenCreate.errors.map((e) => e.code);
+  // Ends the IP's current block, as waiting for it would.
+  const liftBlock = () =>
+    db.execute(sql`update rate_limit set expires_at = now() - interval '1 second'
+      where key like 'login:block:%'`);
+  const blockSeconds = async (ip: string) => {
+    const [row] = await db.execute<{ seconds: number }>(sql`select
+      round(extract(epoch from expires_at - now()))::int as seconds
+      from rate_limit where key = ${`login:block:ip:${ip}`} and expires_at > now()`);
+    return row?.seconds ?? 0;
+  };
+
+  it("computes Saleor's delays", () => {
+    expect(delaySeconds(0, 0)).toBe(1);
+    // Per IP, any emails: doubles every 10 failures, 1 h from the 100th.
+    expect([1, 10, 11, 20, 21, 99, 100].map((n) => delaySeconds(n, 0))).toEqual([
+      1, 1, 2, 2, 4, 512, 3600,
+    ]);
+    // Per IP and account: doubles every failure, 1 h from the 10th.
+    expect([1, 2, 3, 9, 10].map((n) => delaySeconds(0, n))).toEqual([1, 2, 4, 256, 3600]);
+    expect(delaySeconds(21, 2)).toBe(4);
+  });
+
+  it("refuses a login without a known client IP", async () => {
+    const response = await app.fetch("http://test/graphql", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: LOGIN, variables: { email: EMAIL, password: PASSWORD } }),
+    });
+    const body = await response.json();
+    expect(body.data.tokenCreate).toEqual({
+      user: null,
+      errors: [
+        {
+          field: null,
+          code: "UNKNOWN_IP_ADDRESS",
+          message: "Can't identify requester IP address.",
+        },
+      ],
+    });
+  });
+
+  it("delays the next attempt from the IP after a failure, not other IPs", async () => {
+    expect(codesOf((await loginFrom(IP, "wrong")).body)).toEqual(["INVALID_CREDENTIALS"]);
+
+    const delayed = (await loginFrom(IP)).body.data.tokenCreate;
+    expect(delayed.user).toBeNull();
+    expect(delayed.errors).toEqual([
+      {
+        field: null,
+        code: "LOGIN_ATTEMPT_DELAYED",
+        message: expect.stringMatching(
+          /^Logging has been suspended till \d{4}-\d\d-\d\dT[\d:.]+Z due to too many logging attempts originating from the same IP address\.$/,
+        ),
+      },
+    ]);
+    expect(codesOf((await loginFrom("203.0.113.8")).body)).toEqual([]);
+  });
+
+  it("doubles the block with each failure for an account, and a success clears it", async () => {
+    for (const expected of [1, 2, 4]) {
+      await liftBlock();
+      expect(codesOf((await loginFrom(IP, "wrong")).body)).toEqual(["INVALID_CREDENTIALS"]);
+      expect(await blockSeconds(IP)).toBe(expected);
+    }
+    await liftBlock();
+    expect(codesOf((await loginFrom(IP)).body)).toEqual([]);
+    const keys = await db.execute<{ key: string }>(sql`select key from rate_limit`);
+    expect(keys.map((row) => row.key)).toEqual([]);
+  });
+
+  it("counts unknown emails per IP only", async () => {
+    for (let i = 0; i < 3; i++) {
+      await liftBlock();
+      await loginFrom(IP, "wrong", `nobody${i}@example.com`);
+    }
+    const rows = await db.execute<{ key: string; count: number }>(
+      sql`select key, count from rate_limit where key like 'login:fail:%'`,
+    );
+    expect(rows.map((row) => ({ ...row }))).toEqual([{ key: `login:fail:ip:${IP}`, count: 3 }]);
+    expect(await blockSeconds(IP)).toBe(1);
+  });
+
+  it("lets only one of two simultaneous attempts from an IP through", async () => {
+    const results = await Promise.all([loginFrom(IP), loginFrom(IP)]);
+    expect(results.map((r) => codesOf(r.body)).sort()).toEqual([[], ["LOGIN_ATTEMPT_DELAYED"]]);
+  });
+});
+
+describe("clientIpOf", () => {
+  const request = (forwarded?: string) =>
+    new Request("http://test/graphql", {
+      headers: forwarded === undefined ? {} : { "x-forwarded-for": forwarded },
+    });
+  const socket = clientAt("192.0.2.1").req;
+
+  it("uses the socket address unless the proxy is trusted", () => {
+    expect(clientIpOf(request("198.51.100.1"), socket, false)).toBe("192.0.2.1");
+    expect(clientIpOf(request(), undefined, false)).toBeNull();
+  });
+
+  it("behind a trusted proxy uses the last X-Forwarded-For entry, never a forged first one", () => {
+    expect(clientIpOf(request("6.6.6.6, 198.51.100.1"), socket, true)).toBe("198.51.100.1");
+    expect(clientIpOf(request("2001:db8::1"), socket, true)).toBe("2001:db8::1");
+    expect(clientIpOf(request("not-an-ip"), socket, true)).toBe("192.0.2.1");
+    expect(clientIpOf(request(), socket, true)).toBe("192.0.2.1");
   });
 });

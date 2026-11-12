@@ -247,7 +247,8 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
    every failure, max 1 h; counters expire after 2 h); success clears them; a blocked attempt gets
    `LOGIN_ATTEMPT_DELAYED`, an unknown IP `UNKNOWN_IP_ADDRESS` (Saleor's codes). Stored in a small
    `rate_limit` table (key, count, blocked_until, expires_at). The client IP is the socket address,
-   or the first `X-Forwarded-For` hop only when `TRUST_PROXY=true` (behind nginx).
+   or the last `X-Forwarded-For` entry (the one our proxy adds; earlier ones can be forged)
+   only when `TRUST_PROXY=true` (behind nginx).
 8. **`/thumbnail/` rate limit:** only thumbnail *generation* (the cache miss that runs sharp) is
    limited per IP (60 per minute, a fixed window in the same table); cached sizes are not limited.
    Our own design, Saleor has none.
@@ -265,7 +266,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 |---|---|---|
 | M9.1 | Config: `config.ts` validates all env vars at startup (API, worker), production rules, `.env.example` updated; tests for the validation | Done |
 | M9.2 | Logging + health: Yoga's logger shared by the API and worker (JSON in production, request id), job outcomes logged, `console.*` replaced; `/health/live`, `/health/ready` (DB check) | Done |
-| M9.3 | Login throttling: `rate_limit` table + migration, Saleor's delays in `tokenCreate`, client IP with `TRUST_PROXY`, the two error codes; tests | Proposed |
+| M9.3 | Login throttling: `rate_limit` table + migration, Saleor's delays in `tokenCreate`, client IP with `TRUST_PROXY`, the two error codes; tests | Done |
 | M9.4 | `/thumbnail/` generation limit per IP (429 with `Retry-After`); tests | Proposed |
 | M9.5 | Date-cursor fix: timestamp sorts encode microseconds (as the order list); a regression test with rows in one millisecond; other date-sorted lists checked | Proposed |
 | M9.6 | Docker: multi-stage `Dockerfile`s (API/worker, dashboard + nginx), `docker-compose.prod.yml`, migrations as a one-off command, `docs/deploy.md` (incl. ADR-0014's S3 checklist); checked by running the stack | Proposed |

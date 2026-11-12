@@ -62,6 +62,7 @@ GraphQL package: each one runs codegen against `apps/api/schema.graphql` itself.
 | Module | Owns tables | Responsibility | Saleor reference |
 |---|---|---|---|
 | `shop` | `shop_settings` | name, currency, default country, single-row config | `saleor/site/models.py` |
+| `rateLimit` | `rate_limit` | rate-limit counters and blocks (login throttling, thumbnail generation) | `saleor/account/throttling.py` |
 | `identity` | `user`, `address`, `session`, `permission_group`, `permission_group_permission`, `user_permission_group` | staff & customer accounts, login, sessions, permissions | `saleor/account/models.py`, `saleor/permission/` |
 | `catalog` | `category`, `product`, `product_variant`, `product_media` | catalog structure, pricing (single channel), publication | `saleor/product/models.py` |
 | `inventory` | `warehouse`, `stock`, `allocation` | stock levels, availability, allocation/deallocation | `saleor/warehouse/models.py`, `saleor/warehouse/management.py` |
@@ -264,6 +265,7 @@ Saleor stays obvious:
 | `orderFulfill`: no `notifyCustomer`, `trackingNumber` or `allowStockToBeExceeded`; a canceled order is `INVALID`; a negative quantity is `INVALID_QUANTITY`; a line of another order is `NOT_FOUND`; an unknown warehouse is `NOT_FOUND`; untracked variants (or deleted ones) need no stock row | those inputs exist; Saleor fulfills canceled orders, sums negative entries, accepts any order's lines, reports a missing stock as `INSUFFICIENT_STOCK` | No emails yet (M8), no tracking or approval (PLAN M6 decision 2); the extra checks close holes that would otherwise reach a DB CHECK as a 500. |
 | `orderMarkAsPaid` charges what the transactions leave uncovered (a manual transaction) and is `TRANSACTION_ERROR` when nothing is | refuses any order that has transactions; charges the whole total | Our orders always have a transaction (completion requires payment), so Saleor's rule would make the action useless (PLAN M6 decision 5). |
 | `transactionRequestAction` supports `REFUND` only (`CHARGE`/`CANCEL` are `INVALID`), answered at once with `REFUND_REQUEST` + `REFUND_SUCCESS`; only an order's transactions; no refund reasons; `amount` is a `Decimal` | an app handles every action asynchronously; checkout transactions too; refund reasons and `PositiveDecimal` | One built-in dummy gateway (PLAN M6 decision 1); refunding a checkout's transaction would need the checkout's lock. |
+| `tokenCreate` throttling takes the client IP from the socket, or (with `TRUST_PROXY=true`) the last `X-Forwarded-For` entry; `LOGIN_ATTEMPT_DELAYED`'s time is ISO 8601 | the first valid `X-Forwarded-For` entry, always; Python's datetime text | A client sets the first entry, so trusting it lets anyone pick a fresh IP per guess (PLAN M9.3). |
 
 **The database** handles:
 - Invariants that must hold under concurrency: unique, foreign-key and `CHECK` constraints.
@@ -420,8 +422,10 @@ PostgreSQL (M5.4).
 - Sessions expire after a sliding 14 days of inactivity (`last_seen_at`), and `expires_at` puts a
   hard cap on total lifetime.
 - **CSRF:** `SameSite=Lax` cookie plus a required custom header (Yoga's `useCSRFPrevention`).
-- **Brute force:** constant-time comparison and a uniform error message. Rate limiting is deferred
-  to M9.
+- **Brute force:** constant-time comparison, a uniform error message, and Saleor's login throttling
+  (PLAN M9.3): each attempt blocks the client IP for 1 s, failures raise the block exponentially
+  (per IP every 10 failures, per IP + account every failure, at most 1 h), a correct password clears
+  it; counters live in the `rate_limit` table (`rateLimit` module).
 - Password reset and the set-password invite are not built yet (PLAN M8 decision 1).
 
 ## 8. Staff permissions

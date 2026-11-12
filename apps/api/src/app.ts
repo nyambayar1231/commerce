@@ -1,3 +1,4 @@
+import { isIP } from "node:net";
 import type { Db } from "@commerce/db";
 import { useCSRFPrevention } from "@graphql-yoga/plugin-csrf-prevention";
 import { sql } from "drizzle-orm";
@@ -24,9 +25,16 @@ import { thumbnailRoute } from "./thumbnailRoute.ts";
 //
 // CORS: only `allowedOrigins` may call the API from a browser, with credentials (the session
 // cookie). Yoga's default would reflect any origin with credentials allowed.
-export type AppOptions = { allowedOrigins: string[] };
+//
+// Client IP (login throttling, PLAN M9.3): the socket's address; with `trustProxy` (behind our own
+// reverse proxy, `TRUST_PROXY=true`) the last `X-Forwarded-For` entry, the one that proxy added.
+// Earlier entries come from the client and can be forged, so they are never used.
+export type AppOptions = { allowedOrigins: string[]; trustProxy?: boolean };
 
-export function createApp(db: Db, { allowedOrigins }: AppOptions) {
+/** What node:http gives Yoga per request (`req`); in-process `app.fetch` calls may pass it too. */
+export type ServerContext = { req?: { socket?: { remoteAddress?: string } } };
+
+export function createApp(db: Db, { allowedOrigins, trustProxy = false }: AppOptions) {
   // Explicit origins only. (whatwg-node's own list handling treats [] as "allow all" and echoes a
   // single listed origin to every caller, so the check below is done here instead.)
   if (allowedOrigins.length === 0 || allowedOrigins.includes("*")) {
@@ -35,7 +43,7 @@ export function createApp(db: Db, { allowedOrigins }: AppOptions) {
   // Cookies resolvers set during a request, written onto its response by the plugin below.
   const cookiesByRequest = new WeakMap<Request, string[]>();
 
-  return createYoga<Record<string, unknown>, Context>({
+  return createYoga<ServerContext, Context>({
     schema,
     logging: logger,
     healthCheckEndpoint: "/health/live",
@@ -43,10 +51,14 @@ export function createApp(db: Db, { allowedOrigins }: AppOptions) {
     // 10 MiB check runs (modules/catalog/mediaFile.ts); cap the body just above it so a huge
     // request is rejected with 413 instead of being read. Yoga's default is 25 MB.
     maxRequestBodySize: 11 * 1024 * 1024,
-    context: async ({ request }) => {
+    context: async ({ request, req }) => {
       const cookies: string[] = [];
       cookiesByRequest.set(request, cookies);
-      return { ...(await createContext(db, request)), setCookie: (c) => cookies.push(c) };
+      return {
+        ...(await createContext(db, request)),
+        clientIp: clientIpOf(request, req, trustProxy),
+        setCookie: (c) => cookies.push(c),
+      };
     },
     cors: (request) => {
       const origin = request.headers.get("origin");
@@ -95,6 +107,21 @@ export function createApp(db: Db, { allowedOrigins }: AppOptions) {
       },
     ],
   });
+}
+
+/** The request's client IP (see `AppOptions`), or null when it can't be known. */
+export function clientIpOf(
+  request: Request,
+  req: ServerContext["req"],
+  trustProxy: boolean,
+): string | null {
+  if (trustProxy) {
+    const forwarded = (request.headers.get("x-forwarded-for") ?? "").split(",");
+    const last = forwarded[forwarded.length - 1]?.trim() ?? "";
+    if (isIP(last) !== 0) return last;
+  }
+  const address = req?.socket?.remoteAddress;
+  return address !== undefined && isIP(address) !== 0 ? address : null;
 }
 
 // Messages of the errors underneath `error`: GraphQL's `originalError`, then each `cause`.
