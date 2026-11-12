@@ -1,0 +1,4 @@
+{
+  "extends": "@commerce/tsconfig/node.json",
+  "include": ["*.ts", "tests"]
+}

@@ -567,7 +567,7 @@ state lives in the URL (`before`/`after`).
 | GraphQL contract | Vitest + Yoga `fetch` | permissions, error shapes, pagination |
 | Concurrency | Vitest + parallel transactions | overselling and double-complete scenarios (M5.4) |
 | Dashboard | Vitest + Testing Library | variables builder, URL state, forms. The Glide canvas is not unit-tested |
-| End-to-end | Playwright | a few golden paths: staff creates a product → customer buys it → staff fulfills (M9) |
+| End-to-end | Playwright (`e2e/`, `pnpm e2e`) | the golden path: staff creates a product in the dashboard → a customer buys it through the API → staff fulfils it (M9.7; fresh `commerce_e2e` database) |
 
 **Checks:** `typecheck`, `lint`, `test`, a schema-print diff, and a `drizzle-kit check` of the migrations, all orchestrated
 by Turborepo.

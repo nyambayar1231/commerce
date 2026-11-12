@@ -249,8 +249,10 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
    Our own design, Saleor has none.
 9. **Playwright golden paths** live in a new `e2e/` workspace package (`@playwright/test`): staff
    logs in and creates a published product with stock → a customer buys it through the GraphQL API
-   (the storefront is M4) → staff sees the order, marks it paid and fulfils it in the dashboard.
-   They run against the dev servers and a fresh `commerce_e2e` database.
+   (the storefront is M4) → staff opens the order and fulfils it in the dashboard. They run against
+   the dev servers on their own ports (API 4010, dashboard 5183) and a fresh `commerce_e2e`
+   database. Changed in M9.7: no "mark as paid" (a completed checkout is already paid by the dummy
+   gateway), and the order is opened by its URL (the order grid is a canvas with no row text).
 10. **CI** (GitHub Actions, one workflow): lint, typecheck, unit + API tests with Postgres, S3 and
     Mailpit service containers, schema/codegen drift check, then the e2e job; the Docker images are
     built (not pushed) to catch breakage.
@@ -265,7 +267,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M9.4 | `/thumbnail/` generation limit per IP (429 with `Retry-After`); tests | Done |
 | M9.5 | Date-cursor fix: timestamp sorts encode microseconds (as the order list); a regression test with rows in one millisecond; other date-sorted lists checked | Done |
 | M9.6 | Docker: one multi-stage `Dockerfile` (`api` for API/worker/CLI, `web` = dashboard + nginx proxy), `docker-compose.prod.yml`, `cli migrate` as a one-off service, `docs/deploy.md` (incl. ADR-0014's S3 checklist); checked by running the stack | Done |
-| M9.7 | Playwright golden paths in `e2e/` (decision 9) | Proposed |
+| M9.7 | Playwright golden paths in `e2e/` (decision 9) | Done |
 | M9.8 | CI workflow on GitHub Actions (decision 10) | Proposed |
 
 - **Acceptance:** `docker compose -f docker-compose.prod.yml up` serves a working dashboard and API

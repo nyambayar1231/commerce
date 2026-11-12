@@ -1,6 +1,8 @@
 packages:
   - "apps/*"
   - "packages/*"
+  # Playwright golden paths (PLAN M9.7): drive the dashboard and the API end to end.
+  - "e2e"
 
 # pnpm blocks dependency install scripts by default. esbuild (used by drizzle-kit) needs its
 # script to install the native binary for this platform.

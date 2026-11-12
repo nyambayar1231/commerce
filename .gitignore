@@ -18,3 +18,7 @@ coverage/
 .opencode/cli.json
 # Claude Code per-user permission approvals
 .claude/settings.local.json
+
+# Playwright output (e2e/, PLAN M9.7)
+test-results/
+playwright-report/

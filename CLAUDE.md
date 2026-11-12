@@ -123,6 +123,7 @@ pnpm --filter @commerce/api dev                         # API on :4000/graphql, 
 pnpm --filter @commerce/api worker                      # background jobs: sends the emails (needs EMAIL_URL, SECRET_KEY)
 pnpm schema:print   # regenerate apps/api/schema.graphql (commit it)
 pnpm codegen        # regenerate dashboard GraphQL types from schema.graphql (commit them)
+pnpm e2e            # Playwright golden paths on a fresh commerce_e2e DB (needs db:up; once: pnpm --filter @commerce/e2e e2e:install)
 docker compose -f docker-compose.prod.yml up -d --build   # production images, whole stack on :8080 (docs/deploy.md)
 ```
 
