@@ -1,5 +1,12 @@
 // Public surface of the `orders` module (ARCHITECTURE.md §2).
 
+export {
+  enqueueOrderConfirmation,
+  orderConfirmationHandler,
+  orderConfirmationQueue,
+  renderOrderConfirmation,
+} from "./confirmationEmail.ts";
+
 export type {
   FulfillLineInput,
   FulfillmentLineRow,

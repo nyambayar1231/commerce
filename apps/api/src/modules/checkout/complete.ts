@@ -8,7 +8,12 @@ import {
   findInsufficientStock,
   lockStocksForVariants,
 } from "../inventory/index.ts";
-import { createOrderFromCheckout, getOrder, type OrderRow } from "../orders/index.ts";
+import {
+  createOrderFromCheckout,
+  enqueueOrderConfirmation,
+  getOrder,
+  type OrderRow,
+} from "../orders/index.ts";
 import {
   getTransactionsByCheckoutIds,
   moveCheckoutTransactionsToOrder,
@@ -204,6 +209,10 @@ export async function completeCheckout(
       .update(schema.checkout)
       .set({ completedOrderId: order.id, updatedAt: sql`now()` })
       .where(eq(schema.checkout.id, checkoutId));
+
+    // 10. The confirmation email, as a job in this transaction (ARCHITECTURE.md §5.6): it exists
+    // only if the order commits, and a retried completion (step 1) never adds a second one.
+    await enqueueOrderConfirmation(tx, order.id);
 
     return { ok: true, order, created: true };
   });

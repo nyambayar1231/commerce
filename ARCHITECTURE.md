@@ -328,6 +328,7 @@ BEGIN  (READ COMMITTED)
  7. inventory.allocate(tx, orderLines)              -- insert allocations, bump quantity_allocated
  8. payments.moveToOrder(tx, checkoutId, orderId)
  9. UPDATE checkout SET completed_order_id = order.id
+10. jobs.enqueue(tx, order-confirmation-email)     -- the email job commits with the order (M8.2)
 COMMIT
 ```
 

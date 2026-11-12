@@ -6,6 +6,7 @@ import {
   startJobQueue,
   startWorkers,
 } from "./modules/jobs/index.ts";
+import { orderConfirmationHandler } from "./modules/orders/index.ts";
 
 // The background worker (ADR-0009, PLAN M8): `pnpm --filter @commerce/api worker`. It runs the
 // jobs the API adds to pg-boss inside its transactions, sending email through `EMAIL_URL`. It is
@@ -13,7 +14,7 @@ import {
 // workers may run at once (pg-boss claims each job once with SKIP LOCKED).
 
 // Every job type the worker runs; each feature adds its handler here (M8.2, M8.3).
-const HANDLERS: JobHandler[] = [];
+const HANDLERS: JobHandler[] = [orderConfirmationHandler];
 
 const mailer = createSmtpMailer(readEmailConfig());
 const boss = await startJobQueue({ supervise: true });

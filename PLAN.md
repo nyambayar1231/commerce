@@ -243,7 +243,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | Step | What | Status |
 |---|---|---|
 | M8.1 | Jobs infrastructure: pg-boss + nodemailer, Mailpit in compose, a `jobs` module (enqueue inside a transaction, worker entry, SMTP transport), config validation; tests that a rolled-back job never runs and a committed one does | Done |
-| M8.2 | Order confirmation email: enqueued in checkoutComplete's transaction, rendered from the order (lines, totals, addresses); checked in Mailpit | Proposed |
+| M8.2 | Order confirmation email: enqueued in checkoutComplete's transaction, rendered from the order (lines, totals, addresses); checked in Mailpit | Done |
 | M8.3 | Account confirmation: `user.is_confirmed`, `accountRegister(redirectUrl)`, `confirmAccount`, `ACCOUNT_NOT_CONFIRMED` login, HMAC tokens, guest orders linked on confirmation, `User.isConfirmed` and the dashboard's "Unverified" pill | Proposed |
 
 - **Acceptance:** placing an order puts its confirmation in Mailpit once, even if the worker
