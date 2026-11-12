@@ -10,7 +10,8 @@ import { getOrder, type OrderEventRow, type OrderLineRow, type OrderRow } from "
 
 // Saleor's Order, OrderLine and OrderEvent (saleor/graphql/order/types.py), read-only and reduced
 // to what M5.4 creates. The buyer receives the order in checkoutComplete's payload; looking one up
-// by id is staff-only (MANAGE_ORDERS). Addresses are added by the checkout module, which owns the
+// by id needs MANAGE_ORDERS or owning it (PLAN M7 decision 6), and its history (`events`) needs
+// MANAGE_ORDERS as in Saleor. Addresses are added by the checkout module, which owns the
 // Address type (ARCHITECTURE §2 rule 2). The staff list and payment fields are in
 // orderListGraphql.ts (M6.1); fulfillments, actions and the lifecycle mutations in
 // lifecycleGraphql.ts (M6.4).
@@ -161,8 +162,12 @@ builder.node(OrderType, {
     }),
     events: t.field({
       type: [OrderEventType],
-      description: "List of events associated with the order.",
-      resolve: (order, _args, ctx) => ctx.orderLoaders.eventsByOrderId.load(order.id),
+      nullable: { list: true, items: false },
+      description: `List of events associated with the order.\n\n${MANAGE_ORDERS}`,
+      resolve: async (order, _args, ctx) => {
+        await requirePermission(ctx, "MANAGE_ORDERS");
+        return ctx.orderLoaders.eventsByOrderId.load(order.id);
+      },
     }),
     transactions: t.field({
       type: [TransactionItemType],
@@ -186,11 +191,16 @@ builder.queryField("order", (t) =>
   t.field({
     type: OrderType,
     nullable: true,
-    description: `Look up an order by ID.\n\n${MANAGE_ORDERS}`,
+    description:
+      "Look up an order by ID.\n\nRequires one of the following permissions: MANAGE_ORDERS, OWNER.",
     args: { id: t.arg.id({ required: true, description: "ID of an order." }) },
     resolve: async (_parent, { id }, ctx) => {
+      const order = await getOrder(ctx.db, fromGlobalId("Order", String(id)));
+      // The customer the order belongs to reads it without a permission; anyone else needs
+      // MANAGE_ORDERS, and is refused alike whether or not the id exists.
+      if (order && ctx.user && order.userId === ctx.user.id) return order;
       await requirePermission(ctx, "MANAGE_ORDERS");
-      return getOrder(ctx.db, fromGlobalId("Order", String(id)));
+      return order;
     },
   }),
 );

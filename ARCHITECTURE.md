@@ -238,6 +238,7 @@ Saleor stays obvious:
 |---|---|---|
 | `tokenCreate` returns `user` and `errors` only, no `token`/`refreshToken`/`csrfToken` | `CreateToken.token`, `refreshToken`, `csrfToken` | The session token travels in an HttpOnly cookie (ADR-0006); returning it would expose it to JavaScript. Scripts read it from `Set-Cookie` and send it as `Authorization: Bearer`. |
 | `logout` mutation | *(none: JWTs expire; `tokensDeactivateAll` revokes all)* | DB sessions can be ended individually; `logout` deletes the current one and clears the cookie. |
+| `accountRegister` returns `requiresConfirmation` and `errors` only, and the account is active at once | deprecated `user` (built from the input, no id), `accountErrors`; `redirectUrl`, `channel`, `languageCode`, `metadata` inputs; confirmation by email when enabled | No email until M8 (PLAN M7 decision 1). As Saleor, an existing email gets the same success and nothing changes, so accounts can't be enumerated. |
 | `Product.isPublished`, `Product.publishedAt` | `Product.channelListings[].isPublished` / `publishedAt` | Single channel (ADR-0005): publication lives on the product, as in Saleor before channels. |
 | `ProductVariant.price: Money!`, `Product.minimalVariantPrice: Money` | `ProductVariant.channelListings[].price`, `Product.pricing.priceRange` | Single channel and no taxes/discounts yet: one stored price per variant; the product's lowest variant price (Saleor 2.x's `minimalVariantPrice`) for lists and sorting. |
 | `ProductCreateInput`/`ProductInput.isPublished`, `ProductVariantCreateInput`/`ProductVariantInput.price`; no `productType` | `productChannelListingUpdate`, `productVariantChannelListingUpdate`; `ProductCreateInput.productType!` | Single channel and no product types: publication and price are plain fields of the product and variant inputs. |
@@ -253,6 +254,7 @@ Saleor stays obvious:
 | `Checkout.authorizeStatus`/`chargeStatus`/`totalBalance` computed on read; `TransactionItem` without `order` (M5.4), `createdBy`, `paymentMethodDetails`, `reason`; pending/canceled amounts always 0, `actions` is `REFUND` while something charged is left (M6.4) | statuses stored on the checkout and refreshed by events | Like the totals, nothing derived is stored (§5.2); the dummy gateway has no pending states or follow-up actions yet. |
 | `checkoutComplete` on a completed checkout returns its order; untracked variants are not allocated; `Order` reduced to number, status, email, addresses, shipping, totals, lines, `PLACED` events, transactions, `checkoutId`; `order(id)` needs `MANAGE_ORDERS` | the checkout is deleted and a retry finds the order by token; many more order fields and states | We keep the checkout (§5.4); M5.4 creates orders only — fulfillment, payment status and order actions are M6. |
 | `orders(where:)` filters `ids` and `status` only; `search` matches the order number and customer email; `RANK`/`CREATION_DATE` sort as `NUMBER`/`CREATED_AT`; `OrderEvent.user` needs `MANAGE_ORDERS` | many more `OrderWhereInput` fields; full-text search; `OrderEvent.user` needs `MANAGE_STAFF` | The dashboard filters by status only (PLAN M6 decision 3); order staff see who acted in the history. |
+| `order(id)` needs `MANAGE_ORDERS` or owning the order; `User.orders` needs `MANAGE_ORDERS` or being that user | `order(id)` returns any order to anyone holding its id; `User.orders` is documented as `MANAGE_STAFF`/`OWNER` (its code checks `MANAGE_ORDERS`) | Ids are not secrets here, so an order is shown only to its customer and order staff (PLAN M7 decision 6). |
 | The `payment_transaction` row keeps the gross charge and refunds in a separate column (`refunded ≤ charged`); the API shows Saleor's numbers (`TransactionItem.chargedAmount` and `Order.totalCharged` are charged − refunded) | a refund lowers the transaction's charged value | Keeps the DB invariant simple while the API matches Saleor (M6.4 aligned `TransactionItem.chargedAmount`). |
 | `orderFulfill`: no `notifyCustomer`, `trackingNumber` or `allowStockToBeExceeded`; a canceled order is `INVALID`; a negative quantity is `INVALID_QUANTITY`; a line of another order is `NOT_FOUND`; an unknown warehouse is `NOT_FOUND`; untracked variants (or deleted ones) need no stock row | those inputs exist; Saleor fulfills canceled orders, sums negative entries, accepts any order's lines, reports a missing stock as `INSUFFICIENT_STOCK` | No emails yet (M8), no tracking or approval (PLAN M6 decision 2); the extra checks close holes that would otherwise reach a DB CHECK as a 500. |
 | `orderMarkAsPaid` charges what the transactions leave uncovered (a manual transaction) and is `TRANSACTION_ERROR` when nothing is | refuses any order that has transactions; charges the whole total | Our orders always have a transaction (completion requires payment), so Saleor's rule would make the action useless (PLAN M6 decision 5). |
@@ -381,6 +383,12 @@ PostgreSQL (M5.4).
   wrong password give the same `INVALID_CREDENTIALS` after the same argon2id work; `INACTIVE` is
   reported only with the right password, as in Saleor.
 - `logout` deletes the session row. `me` returns the current user and permissions.
+- **Customers** register with `accountRegister` (M7.1): an active, non-staff user with an argon2id
+  password, created with `ON CONFLICT DO NOTHING` so a taken email answers like a free one. In the
+  same transaction the orders module links the guest orders placed with that email (Saleor's
+  `match_orders_with_new_user`). Customers log in with the same `tokenCreate`; `user.is_staff`
+  tells the two kinds apart (no session `kind` column, PLAN M7 decision 5), and the dashboard
+  refuses non-staff users.
 - Sessions expire after a sliding 14 days of inactivity (`last_seen_at`), and `expires_at` puts a
   hard cap on total lifetime.
 - **CSRF:** `SameSite=Lax` cookie plus a required custom header (Yoga's `useCSRFPrevention`).
@@ -403,8 +411,9 @@ as refunds, added in M6.4).
 - Every mutation and staff-only field declares its required permission next to its resolver, using
   a plain `requirePermission(ctx, 'MANAGE_PRODUCTS')` call. This is deliberately not a Pothos auth
   plugin, so the check stays visible in each resolver.
-- Customer-owned resources (their checkout or orders) are checked by ownership in the service
-  layer.
+- Customer-owned resources (their checkout or orders) are checked by ownership next to the
+  permission check: `order(id)` and `User.orders` accept the owner or `MANAGE_ORDERS` (M7.1);
+  `Order.events` stays `MANAGE_ORDERS` only, as in Saleor.
 - The dashboard mirrors these permissions only for UX: it hides sidebar items and shows a
   permission-denied page. The server is the single authority.
 

@@ -16,8 +16,32 @@ enum AccountErrorCode {
   INVALID
   INVALID_CREDENTIALS
   OUT_OF_SCOPE_GROUP
+  PASSWORD_TOO_SHORT
   REQUIRED
   UNIQUE
+}
+
+"""Register a new user."""
+type AccountRegister {
+  errors: [AccountError!]!
+
+  """Informs whether users need to confirm their email address."""
+  requiresConfirmation: Boolean!
+}
+
+"""Fields required to create a user."""
+input AccountRegisterInput {
+  """The email address of the user."""
+  email: String!
+
+  """Given name."""
+  firstName: String
+
+  """Family name."""
+  lastName: String
+
+  """Password."""
+  password: String!
 }
 
 """Represents user address data."""
@@ -925,6 +949,14 @@ type Money {
 
 type Mutation {
   """
+  Register a new user. The answer is the same whether or not the email is already registered; log in with tokenCreate afterwards.
+  """
+  accountRegister(
+    """Fields required to create a user."""
+    input: AccountRegisterInput!
+  ): AccountRegister!
+
+  """
   Deletes categories.
   
   Requires one of the following permissions: MANAGE_PRODUCTS.
@@ -1403,8 +1435,12 @@ type Order implements Node {
   """Date and time when the order was created."""
   created: DateTime!
 
-  """List of events associated with the order."""
-  events: [OrderEvent!]!
+  """
+  List of events associated with the order.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  events: [OrderEvent!]
 
   """List of shipments for the order."""
   fulfillments: [Fulfillment!]!
@@ -2373,7 +2409,7 @@ type Query {
   """
   Look up an order by ID.
   
-  Requires one of the following permissions: MANAGE_ORDERS.
+  Requires one of the following permissions: MANAGE_ORDERS, OWNER.
   """
   order(
     """ID of an order."""
@@ -2940,6 +2976,11 @@ type User implements Node {
   """Determine if the user is a staff admin."""
   isStaff: Boolean!
   lastName: String!
+
+  """
+  List of user's orders. Requires one of the following permissions: MANAGE_ORDERS, OWNER.
+  """
+  orders(after: String, before: String, first: Int, last: Int): OrderCountableConnection
 
   """List of user's permissions."""
   userPermissions: [UserPermission!]

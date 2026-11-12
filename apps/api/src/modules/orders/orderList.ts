@@ -25,6 +25,8 @@ export type OrderStatus = (typeof schema.ORDER_STATUSES)[number];
 
 export interface OrderWhere {
   ids?: readonly string[] | null;
+  /** The orders of one user (`User.orders`); not part of the GraphQL `where` input. */
+  userId?: string | null;
   status?: { eq?: OrderStatus | null; oneOf?: readonly OrderStatus[] | null } | null;
 }
 
@@ -134,6 +136,7 @@ function whereToSql(args: OrderListArgs): SQL {
           )})`,
     );
   }
+  if (where?.userId != null) filters.push(sql`o.user_id = ${where.userId}::uuid`);
   if (where?.status != null) {
     const values = where.status.eq != null ? [where.status.eq] : (where.status.oneOf ?? []);
     filters.push(

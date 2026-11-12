@@ -85,7 +85,7 @@ export const OrderDetailsPage = ({
             <OrderDetailsItemsSection order={order} onOrderFulfill={onOrderFulfill} />
             <OrderSummary order={order} onMarkAsPaid={onMarkAsPaid} />
             <OrderTransactionsSection transactions={order.transactions} onRefund={onRefund} />
-            <OrderHistory history={order.events} currency={order.total.gross.currency} />
+            <OrderHistory history={order.events ?? []} currency={order.total.gross.currency} />
           </Box>
         )}
       </DetailPageLayout.Content>

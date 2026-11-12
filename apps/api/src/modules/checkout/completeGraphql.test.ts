@@ -29,7 +29,6 @@ const ORDER_FIELDS = `
   shippingAddress { city country { code } }
   subtotal { gross { amount } } shippingPrice { gross { amount } } total { gross { amount currency } }
   lines { productName variantName productSku quantity unitPrice { gross { amount } } totalPrice { gross { amount } } variant { id } }
-  events { type }
   transactions { chargedAmount { amount } order { id } }
 `;
 
@@ -128,7 +127,6 @@ describe("checkoutComplete", () => {
             variant: { id: variantId },
           },
         ],
-        events: [{ type: "PLACED" }],
         transactions: [
           { chargedAmount: { amount: 2500 }, order: { id: placed.checkoutComplete.order.id } },
         ],
@@ -141,12 +139,16 @@ describe("checkoutComplete", () => {
     expect(retry.checkoutComplete.order.id).toBe(placed.checkoutComplete.order.id);
 
     const orderId = placed.checkoutComplete.order.id;
-    const staffView = await gql<{ order: { number: string } }>(
-      `query($id: ID!) { order(id: $id) { number } }`,
+    // The history is staff-only (Saleor's Order.events needs MANAGE_ORDERS).
+    const staffView = await gql<{ order: { number: string; events: unknown } }>(
+      `query($id: ID!) { order(id: $id) { number events { type } } }`,
       { id: orderId },
       staff.token,
     );
-    expect(staffView.order.number).toBe(placed.checkoutComplete.order.number);
+    expect(staffView.order).toEqual({
+      number: placed.checkoutComplete.order.number,
+      events: [{ type: "PLACED" }],
+    });
     expectPermissionDenied(
       await client.gql(`query($id: ID!) { order(id: $id) { number } }`, { id: orderId }),
       ["MANAGE_ORDERS"],

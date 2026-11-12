@@ -1,6 +1,6 @@
 import { type CurrencyCode, multiplyMoney } from "@commerce/contracts";
 import { type Executor, schema } from "@commerce/db";
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, sql } from "drizzle-orm";
 
 // Orders (ARCHITECTURE.md §3 "Orders"): Saleor's Order, OrderLine and OrderEvent as immutable
 // snapshots. M5.4 only creates them, from a completed checkout; lifecycle actions (fulfill, cancel,
@@ -87,6 +87,25 @@ export async function createOrderFromCheckout(
 
   await db.insert(schema.orderEvent).values({ orderId: order.id, type: "PLACED" });
   return { order, lines };
+}
+
+/**
+ * Saleor's match_orders_with_new_user (saleor/order/utils.py): a new account takes over the guest
+ * orders placed with its email (PLAN M7 decision 2). Orders that already belong to a user keep it.
+ * The email is compared case-insensitively; `email` comes lower-cased from registration.
+ * Returns how many orders were linked.
+ */
+export async function matchOrdersWithNewUser(
+  db: Executor,
+  userId: string,
+  email: string,
+): Promise<number> {
+  const linked = await db
+    .update(schema.order)
+    .set({ userId })
+    .where(and(isNull(schema.order.userId), eq(sql`lower(${schema.order.userEmail})`, email)))
+    .returning({ id: schema.order.id });
+  return linked.length;
 }
 
 export async function getOrder(db: Executor, id: string): Promise<OrderRow | null> {

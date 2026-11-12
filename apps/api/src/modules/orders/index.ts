@@ -46,6 +46,7 @@ export {
   getOrder,
   getOrderEventsByOrderIds,
   getOrderLinesByOrderIds,
+  matchOrdersWithNewUser,
 } from "./orders.ts";
 export type {
   OrderAuthorizeStatus,

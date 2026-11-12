@@ -71,7 +71,7 @@ export async function createStaff(
 }
 
 /** The request was refused by `requirePermission` with Saleor's error, naming `permissions`. */
-export function expectPermissionDenied({ body }: GqlResult, permissions: Permission[]) {
+export function expectPermissionDenied({ body }: GqlResult, permissions: (Permission | "OWNER")[]) {
   expect(body.errors).toEqual([
     expect.objectContaining({
       message: `To access this path, you need one of the following permissions: ${permissions.join(", ")}`,

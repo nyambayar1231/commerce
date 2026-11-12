@@ -5,7 +5,7 @@ import type { Context } from "../../graphql/context.ts";
 import { fromGlobalId } from "../../graphql/globalId.ts";
 import { MoneyType } from "../../graphql/money.ts";
 import { isEdgesRequested, validatePagination } from "../../graphql/pagination.ts";
-import { requirePermission } from "../../graphql/permissions.ts";
+import { permissionDenied, requirePermission } from "../../graphql/permissions.ts";
 import { OrderDirection } from "../catalog/graphql.ts";
 import { UserType } from "../identity/graphql.ts";
 import { money, OrderEventType, OrderStatusEnum, OrderType } from "./graphql.ts";
@@ -21,7 +21,8 @@ import {
 } from "./index.ts";
 
 // Staff order reads for the dashboard (M6.1): Saleor's `orders` connection and the order's payment
-// fields (PLAN M6 decision 6), plus who performed each history event.
+// fields (PLAN M6 decision 6), plus who performed each history event. `User.orders` (M7.1) pages a
+// user's own orders through the same list query.
 
 const MANAGE_ORDERS = "Requires one of the following permissions: MANAGE_ORDERS.";
 
@@ -159,6 +160,57 @@ const OrderConnection = builder.connectionObject(
   { name: "OrderCountableEdge" },
 );
 
+/** The connection shape Pothos expects, from a page of the order list. */
+const toConnection = (result: OrderPage) => ({
+  ...result,
+  edges: result.rows,
+  pageInfo: {
+    hasNextPage: result.hasNextPage,
+    hasPreviousPage: result.hasPreviousPage,
+    startCursor: result.rows[0]?.cursor ?? null,
+    endCursor: result.rows.at(-1)?.cursor ?? null,
+  },
+});
+
+/** Lists orders, reporting a foreign cursor as Saleor does. */
+async function listOrdersOrThrow(ctx: Context, args: OrderListArgs) {
+  try {
+    return toConnection(await listOrders(ctx.db, args));
+  } catch (error) {
+    if (error instanceof InvalidOrderCursorError) throw new GraphQLError(error.message);
+    throw error;
+  }
+}
+
+// Saleor's User.orders (saleor/graphql/account/types.py resolve_orders): the user's own orders for
+// themselves, anyone's for MANAGE_ORDERS staff; newest first (Saleor's Order ordering, -number).
+builder.objectField(UserType, "orders", (t) =>
+  t.connection(
+    {
+      type: OrderType,
+      nullable: true,
+      description:
+        "List of user's orders. Requires one of the following permissions: MANAGE_ORDERS, OWNER.",
+      resolve: async (user, args, ctx, info) => {
+        if (ctx.user?.id !== user.id) {
+          const granted = ctx.user?.isStaff ? await ctx.permissions() : [];
+          if (!granted.includes("MANAGE_ORDERS")) {
+            throw permissionDenied(["OWNER", "MANAGE_ORDERS"]);
+          }
+        }
+        const page = validatePagination("orders", args, isEdgesRequested(info));
+        return listOrdersOrThrow(ctx, {
+          ...args,
+          ...page,
+          where: { userId: user.id },
+          sort: { field: "NUMBER", direction: "DESC" },
+        });
+      },
+    },
+    OrderConnection,
+  ),
+);
+
 builder.queryField("orders", (t) =>
   t.connection(
     {
@@ -192,22 +244,7 @@ builder.queryField("orders", (t) =>
               }
             : null,
         };
-        try {
-          const result = await listOrders(ctx.db, listArgs);
-          return {
-            ...result,
-            edges: result.rows,
-            pageInfo: {
-              hasNextPage: result.hasNextPage,
-              hasPreviousPage: result.hasPreviousPage,
-              startCursor: result.rows[0]?.cursor ?? null,
-              endCursor: result.rows.at(-1)?.cursor ?? null,
-            },
-          };
-        } catch (error) {
-          if (error instanceof InvalidOrderCursorError) throw new GraphQLError(error.message);
-          throw error;
-        }
+        return listOrdersOrThrow(ctx, listArgs);
       },
     },
     OrderConnection,

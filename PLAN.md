@@ -202,7 +202,8 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
    out because `user.is_staff` already says which kind a session is (the dashboard keeps refusing
    non-staff users).
 6. **Customer reads (Saleor's names):** `me.orders` (connection, newest first), `me.checkouts`;
-   `order(id)` is readable by its owner as well as by `MANAGE_ORDERS` staff (others get `null`).
+   `order(id)` is readable by its owner as well as by `MANAGE_ORDERS` staff (others get Saleor's
+   permission error); `Order.events` stays `MANAGE_ORDERS` only, as in Saleor.
 7. **Checkout ownership (Saleor's rules):** `checkoutCreate` by a logged-in customer sets the
    checkout's user and email; `checkoutCustomerAttach`/`checkoutCustomerDetach`; a checkout that
    belongs to a user can be read or changed only by that user (or `MANAGE_CHECKOUTS` staff), and
@@ -216,7 +217,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 
 | Step | What | Status |
 |---|---|---|
-| M7.1 | API account: `accountRegister` (decisions 1, 2), `me.orders`, `order(id)` for its owner (decision 6); tests | Proposed |
+| M7.1 | API account: `accountRegister` (decisions 1, 2), `me.orders`, `order(id)` for its owner (decision 6); tests | Done |
 | M7.2 | API checkout ↔ user: decision 7, `me.checkouts`; ownership tests | Proposed |
 | M7.3 | API staff customers: `customers` connection (search, Saleor's `sortBy`), `user(id)`, `User.orders`, `customerCreate`/`Update`/`Delete`, `customerBulkDelete` (`MANAGE_USERS`) | Proposed |
 | M7.4 | Dashboard customer list: Customers menu item, Saleor's CustomerListPage + datagrid (name, email, orders), search, pagination, column settings | Proposed |

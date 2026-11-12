@@ -4,17 +4,22 @@ import { builder } from "../../graphql/builder.ts";
 import { type Context, clearedSessionCookie, sessionCookie } from "../../graphql/context.ts";
 import { fromGlobalId, nodesNotFound, toGlobalId } from "../../graphql/globalId.ts";
 import { requirePermission } from "../../graphql/permissions.ts";
+import { matchOrdersWithNewUser } from "../orders/index.ts";
 import {
+  type AccountRegisterErrorCode,
   authenticate,
+  cleanAccountRegisterInput,
   createPermissionGroup,
   createSession,
   createStaffUser,
   getEffectivePermissions,
+  hashRegistrationPassword,
   NotFoundError,
   PERMISSION_NAMES,
   PERMISSIONS,
   type Permission,
   type Requestor,
+  registerCustomer,
   revokeSession,
   type SessionUser,
   type StaffError,
@@ -75,6 +80,7 @@ const AccountErrorCode = builder.enumType("AccountErrorCode", {
     "INVALID",
     "INVALID_CREDENTIALS",
     "OUT_OF_SCOPE_GROUP",
+    "PASSWORD_TOO_SHORT",
     "REQUIRED",
     "UNIQUE",
   ] as const,
@@ -83,7 +89,7 @@ const AccountErrorCode = builder.enumType("AccountErrorCode", {
 type AccountError = {
   field: string | null;
   message: string;
-  code: "INACTIVE" | "INVALID_CREDENTIALS";
+  code: "INACTIVE" | "INVALID_CREDENTIALS" | AccountRegisterErrorCode;
 };
 
 const AccountErrorType = builder.objectRef<AccountError>("AccountError").implement({
@@ -166,6 +172,62 @@ builder.queryField("me", (t) =>
     nullable: true,
     description: "Return the currently authenticated user.",
     resolve: (_parent, _args, context) => context.user,
+  }),
+);
+
+// --- Customer registration (PLAN M7.1): Saleor's accountRegister with email confirmation off.
+// The account module creates the user; the orders module links the email's guest orders, both in
+// one transaction so a new account never misses them. Left out: Saleor's deprecated `user` payload
+// field (always an object built from the input, without an id), `accountErrors`, `redirectUrl`,
+// `languageCode`, `metadata` and `channel` (no confirmation email until M8).
+
+type AccountRegisterPayload = { requiresConfirmation: boolean; errors: AccountError[] };
+
+const AccountRegisterType = builder.objectRef<AccountRegisterPayload>("AccountRegister").implement({
+  description: "Register a new user.",
+  fields: (t) => ({
+    requiresConfirmation: t.exposeBoolean("requiresConfirmation", {
+      description: "Informs whether users need to confirm their email address.",
+    }),
+    errors: t.field({ type: [AccountErrorType], resolve: (p) => p.errors }),
+  }),
+});
+
+const AccountRegisterInput = builder.inputType("AccountRegisterInput", {
+  description: "Fields required to create a user.",
+  fields: (t) => ({
+    firstName: t.string({ description: "Given name." }),
+    lastName: t.string({ description: "Family name." }),
+    email: t.string({ required: true, description: "The email address of the user." }),
+    password: t.string({ required: true, description: "Password." }),
+  }),
+});
+
+builder.mutationField("accountRegister", (t) =>
+  t.field({
+    type: AccountRegisterType,
+    description:
+      "Register a new user. The answer is the same whether or not the email is already " +
+      "registered; log in with tokenCreate afterwards.",
+    args: {
+      input: t.arg({
+        type: AccountRegisterInput,
+        required: true,
+        description: "Fields required to create a user.",
+      }),
+    },
+    resolve: async (_parent, { input }, ctx) => {
+      const cleaned = cleanAccountRegisterInput(input);
+      if (!cleaned.ok) return { requiresConfirmation: false, errors: cleaned.errors };
+      const passwordHash = await hashRegistrationPassword(input.password);
+      await ctx.db.transaction(async (tx) => {
+        const result = await registerCustomer(tx, input, passwordHash);
+        if (result.ok && result.userId !== null) {
+          await matchOrdersWithNewUser(tx, result.userId, result.email);
+        }
+      });
+      return { requiresConfirmation: false, errors: [] };
+    },
   }),
 );
 
