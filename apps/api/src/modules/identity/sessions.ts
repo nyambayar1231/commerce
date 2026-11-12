@@ -27,6 +27,7 @@ export type SessionUser = {
   isStaff: boolean;
   isSuperuser: boolean;
   isActive: boolean;
+  isConfirmed: boolean;
   createdAt: Date;
   updatedAt: Date;
   lastLogin: Date | null;
@@ -41,6 +42,7 @@ export const SESSION_USER_COLUMNS = {
   isStaff: schema.user.isStaff,
   isSuperuser: schema.user.isSuperuser,
   isActive: schema.user.isActive,
+  isConfirmed: schema.user.isConfirmed,
   createdAt: schema.user.createdAt,
   updatedAt: schema.user.updatedAt,
   lastLogin: schema.user.lastLogin,

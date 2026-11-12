@@ -10,16 +10,21 @@ import {
   authenticate,
   type CustomerErrorCode,
   cleanAccountRegisterInput,
+  confirmAccount,
   createPermissionGroup,
   createSession,
   createStaffUser,
+  enqueueAccountConfirmation,
   getEffectivePermissions,
+  getUsersByIds,
   hashRegistrationPassword,
   NotFoundError,
   PERMISSION_NAMES,
   PERMISSIONS,
   type Permission,
   type Requestor,
+  readAllowedClientHosts,
+  readSecretKey,
   registerCustomer,
   revokeSession,
   SESSION_USER_COLUMNS,
@@ -78,6 +83,7 @@ export const UserType = builder.node(builder.objectRef<SessionUser>("User"), {
 // Saleor's AccountErrorCode, limited to the codes we can return.
 const AccountErrorCode = builder.enumType("AccountErrorCode", {
   values: [
+    "ACCOUNT_NOT_CONFIRMED",
     "DELETE_OWN_ACCOUNT",
     "DELETE_STAFF_ACCOUNT",
     "DELETE_SUPERUSER_ACCOUNT",
@@ -94,7 +100,12 @@ const AccountErrorCode = builder.enumType("AccountErrorCode", {
 export type AccountError = {
   field: string | null;
   message: string;
-  code: "INACTIVE" | "INVALID_CREDENTIALS" | AccountRegisterErrorCode | CustomerErrorCode;
+  code:
+    | "ACCOUNT_NOT_CONFIRMED"
+    | "INACTIVE"
+    | "INVALID_CREDENTIALS"
+    | AccountRegisterErrorCode
+    | CustomerErrorCode;
 };
 
 export const AccountErrorType = builder.objectRef<AccountError>("AccountError").implement({
@@ -112,6 +123,7 @@ export const AccountErrorType = builder.objectRef<AccountError>("AccountError").
 // Saleor's messages for these codes.
 const MESSAGES = {
   INVALID_CREDENTIALS: "Please, enter valid credentials",
+  ACCOUNT_NOT_CONFIRMED: "Account needs to be confirmed via email.",
   INACTIVE: "Account inactive.",
 } as const;
 
@@ -180,11 +192,12 @@ builder.queryField("me", (t) =>
   }),
 );
 
-// --- Customer registration (PLAN M7.1): Saleor's accountRegister with email confirmation off.
-// The account module creates the user; the orders module links the email's guest orders, both in
-// one transaction so a new account never misses them. Left out: Saleor's deprecated `user` payload
-// field (always an object built from the input, without an id), `accountErrors`, `redirectUrl`,
-// `languageCode`, `metadata` and `channel` (no confirmation email until M8).
+// --- Customer registration (PLAN M7.1, M8.3): Saleor's accountRegister with email confirmation
+// on. The user is created unconfirmed and, in the same transaction, the confirmation email job is
+// added (ARCHITECTURE.md §5.6); confirmAccount then confirms the account and links the email's
+// guest orders (the orders module's change, in one transaction). Left out: Saleor's deprecated
+// `user` payload field (always an object built from the input, without an id), `accountErrors`,
+// `languageCode`, `metadata` and `channel` (one channel).
 
 type AccountRegisterPayload = { requiresConfirmation: boolean; errors: AccountError[] };
 
@@ -205,6 +218,11 @@ const AccountRegisterInput = builder.inputType("AccountRegisterInput", {
     lastName: t.string({ description: "Family name." }),
     email: t.string({ required: true, description: "The email address of the user." }),
     password: t.string({ required: true, description: "Password." }),
+    redirectUrl: t.string({
+      description:
+        "Base of frontend URL that will be needed to create confirmation URL. Required when " +
+        "account confirmation is enabled.",
+    }),
   }),
 });
 
@@ -213,7 +231,7 @@ builder.mutationField("accountRegister", (t) =>
     type: AccountRegisterType,
     description:
       "Register a new user. The answer is the same whether or not the email is already " +
-      "registered; log in with tokenCreate afterwards.",
+      "registered; a new account receives a confirmation email and can log in once confirmed.",
     args: {
       input: t.arg({
         type: AccountRegisterInput,
@@ -222,16 +240,69 @@ builder.mutationField("accountRegister", (t) =>
       }),
     },
     resolve: async (_parent, { input }, ctx) => {
-      const cleaned = cleanAccountRegisterInput(input);
-      if (!cleaned.ok) return { requiresConfirmation: false, errors: cleaned.errors };
+      const cleaned = cleanAccountRegisterInput(input, readAllowedClientHosts());
+      if (!cleaned.ok) return { requiresConfirmation: true, errors: cleaned.errors };
       const passwordHash = await hashRegistrationPassword(input.password);
       await ctx.db.transaction(async (tx) => {
-        const result = await registerCustomer(tx, input, passwordHash);
-        if (result.ok && result.userId !== null) {
-          await matchOrdersWithNewUser(tx, result.userId, result.email);
-        }
+        const userId = await registerCustomer(
+          tx,
+          { email: cleaned.email, firstName: input.firstName, lastName: input.lastName },
+          passwordHash,
+        );
+        if (userId !== null) await enqueueAccountConfirmation(tx, userId, cleaned.redirectUrl);
       });
-      return { requiresConfirmation: false, errors: [] };
+      return { requiresConfirmation: true, errors: [] };
+    },
+  }),
+);
+
+type ConfirmAccountPayload = { user: SessionUser | null; errors: AccountError[] };
+
+const ConfirmAccountType = builder.objectRef<ConfirmAccountPayload>("ConfirmAccount").implement({
+  description: "Confirm user account with token sent by email during registration.",
+  fields: (t) => ({
+    user: t.field({
+      type: UserType,
+      nullable: true,
+      description: "An activated user account.",
+      resolve: (p) => p.user,
+    }),
+    errors: t.field({ type: [AccountErrorType], resolve: (p) => p.errors }),
+  }),
+});
+
+builder.mutationField("confirmAccount", (t) =>
+  t.field({
+    type: ConfirmAccountType,
+    description: "Confirm user account with token sent by email during registration.",
+    args: {
+      email: t.arg.string({
+        required: true,
+        description: "E-mail of the user performing account confirmation.",
+      }),
+      token: t.arg.string({
+        required: true,
+        description: "A one-time token required to confirm the account.",
+      }),
+    },
+    resolve: async (_parent, { email, token }, ctx) => {
+      const secret = readSecretKey();
+      const confirmed = await ctx.db.transaction(async (tx) => {
+        const user = await confirmAccount(tx, email, token, secret);
+        // Saleor's confirm_account links the email's guest orders now (PLAN M8 decision 4).
+        if (user) await matchOrdersWithNewUser(tx, user.id, user.email);
+        return user;
+      });
+      if (!confirmed) {
+        return {
+          user: null,
+          errors: [
+            { field: "token", code: "INVALID" as const, message: "Invalid or expired token." },
+          ],
+        };
+      }
+      const [user] = await getUsersByIds(ctx.db, [confirmed.id]);
+      return { user: user ?? null, errors: [] };
     },
   }),
 );

@@ -1,5 +1,5 @@
 import { closeDb, getDb, schema } from "@commerce/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createStaff, createTestClient, expectPermissionDenied } from "../../../test/graphql.ts";
 import { toGlobalId } from "../../graphql/globalId.ts";
@@ -11,7 +11,15 @@ import {
   updateCheckoutAddress,
   updateCheckoutDeliveryMethod,
 } from "../checkout/index.ts";
+import { type EmailMessage, stopJobQueue } from "../jobs/index.ts";
 import { DUMMY_GATEWAY_ID } from "../payments/index.ts";
+import {
+  ACCOUNT_CONFIRM_SALT,
+  accountConfirmationHandler,
+  accountConfirmationQueue,
+  makeToken,
+  readSecretKey,
+} from "./index.ts";
 
 // Customer accounts through the API (PLAN M7.1): accountRegister (active at once, no account
 // enumeration, guest orders linked), login as a customer, `me.orders`, and who may read an order.
@@ -46,6 +54,7 @@ beforeEach(async () => {
 });
 
 afterAll(async () => {
+  await stopJobQueue();
   await closeDb();
 });
 
@@ -85,8 +94,54 @@ const ORDER = `query($id: ID!) { order(id: $id) { id userEmail } }`;
 const ORDER_USER = `query($id: ID!) { order(id: $id) { user { email } } }`;
 const ORDER_EVENTS = `query($id: ID!) { order(id: $id) { id events { type } } }`;
 
+const REDIRECT_URL = "http://localhost:3000/account-confirm";
+const CONFIRM = `mutation($email: String!, $token: String!) {
+  confirmAccount(email: $email, token: $token) { user { email isConfirmed } errors { field code message } }
+}`;
+
+type RegisterPayload = {
+  requiresConfirmation: boolean;
+  errors: { field: string; code: string; message: string }[];
+};
+
 const register = async (input: object) =>
-  (await client.gql(REGISTER, { input })).body.data?.accountRegister;
+  (await client.gql(REGISTER, { input: { redirectUrl: REDIRECT_URL, ...input } })).body.data
+    ?.accountRegister as RegisterPayload | undefined;
+
+/** A valid confirmation token for the stored user (what the worker puts in the email). */
+async function tokenFor(email: string) {
+  const [user] = await db.select().from(schema.user).where(eq(schema.user.email, email));
+  if (!user) throw new Error(`no user ${email}`);
+  return makeToken(user, ACCOUNT_CONFIRM_SALT, readSecretKey());
+}
+
+const confirm = async (email: string, token: string) =>
+  (await client.gql(CONFIRM, { email, token })).body.data?.confirmAccount;
+
+/** Registers and confirms, as a customer does through the email. */
+async function signUp(email: string, password: string) {
+  await register({ email, password });
+  await confirm(email, await tokenFor(email));
+}
+
+/** Runs the worker's handler for the user's queued confirmation job and returns the email. */
+async function confirmationEmailFor(email: string): Promise<EmailMessage> {
+  const [user] = await db.select().from(schema.user).where(eq(schema.user.email, email));
+  const rows = await db.execute<{ data: { userId: string; redirectUrl: string } }>(
+    sql`SELECT data FROM pgboss.job WHERE name = ${accountConfirmationQueue.name} AND data->>'userId' = ${user?.id ?? ""}`,
+  );
+  expect(rows).toHaveLength(1);
+  const sent: EmailMessage[] = [];
+  const data = rows[0]?.data;
+  if (!data) throw new Error("no job");
+  await accountConfirmationHandler.handle(data, {
+    db,
+    mailer: { send: async (message) => void sent.push(message) },
+  });
+  const [message] = sent;
+  if (!message) throw new Error("no email");
+  return message;
+}
 
 /** Logs in and returns the session token from the cookie (as auth.test.ts). */
 async function login(email: string, password: string) {
@@ -96,7 +151,7 @@ async function login(email: string, password: string) {
 }
 
 describe("accountRegister", () => {
-  it("creates an active customer who can log in at once", async () => {
+  it("creates an unconfirmed customer who logs in after confirming by email", async () => {
     expect(
       await register({
         email: " Bat@Example.com ",
@@ -104,7 +159,7 @@ describe("accountRegister", () => {
         firstName: " Bat ",
         lastName: "Dorj",
       }),
-    ).toEqual({ requiresConfirmation: false, errors: [] });
+    ).toEqual({ requiresConfirmation: true, errors: [] });
 
     const [user] = await db.select().from(schema.user);
     expect(user).toMatchObject({
@@ -114,25 +169,83 @@ describe("accountRegister", () => {
       isStaff: false,
       isSuperuser: false,
       isActive: true,
+      isConfirmed: false,
     });
     expect(user?.passwordHash).toMatch(/^\$argon2id\$/);
+    expect((await login("bat@example.com", "correct horse")).payload).toEqual({
+      user: null,
+      errors: [{ code: "ACCOUNT_NOT_CONFIRMED" }],
+    });
 
+    // The worker's email carries Saleor's link: redirectUrl?email=…&token=…
+    const message = await confirmationEmailFor("bat@example.com");
+    expect(message).toMatchObject({
+      to: "bat@example.com",
+      subject: "Account confirmation e-mail",
+    });
+    const link = new URL(/http:\/\/localhost:3000\/\S+/.exec(message.text)?.[0] ?? "");
+    expect(link.pathname).toBe("/account-confirm");
+    expect(link.searchParams.get("email")).toBe("bat@example.com");
+
+    expect(
+      await confirm(link.searchParams.get("email") ?? "", link.searchParams.get("token") ?? ""),
+    ).toEqual({ user: { email: "bat@example.com", isConfirmed: true }, errors: [] });
     const { token, payload } = await login("bat@example.com", "correct horse");
     expect(payload).toEqual({
       user: { email: "bat@example.com", isStaff: false, firstName: "Bat" },
       errors: [],
     });
     expect(token).not.toBeNull();
+
+    // The link works once: the token hashed the unconfirmed state.
+    expect(await confirm("bat@example.com", link.searchParams.get("token") ?? "")).toEqual({
+      user: null,
+      errors: [{ field: "token", code: "INVALID", message: "Invalid or expired token." }],
+    });
+  });
+
+  it("refuses a wrong, foreign or expired token the same way", async () => {
+    await register({ email: "bat@example.com", password: "correct horse" });
+    await register({ email: "other@example.com", password: "correct horse" });
+    const invalid = {
+      user: null,
+      errors: [{ field: "token", code: "INVALID", message: "Invalid or expired token." }],
+    };
+    const [user] = await db
+      .select()
+      .from(schema.user)
+      .where(eq(schema.user.email, "bat@example.com"));
+    if (!user) throw new Error("no user");
+    const fourDaysAgo = new Date(Date.now() - 4 * 24 * 3600 * 1000);
+
+    expect(await confirm("bat@example.com", "not-a-token")).toEqual(invalid);
+    expect(await confirm("bat@example.com", await tokenFor("other@example.com"))).toEqual(invalid);
+    expect(await confirm("nobody@example.com", await tokenFor("bat@example.com"))).toEqual(invalid);
+    expect(
+      await confirm(
+        "bat@example.com",
+        makeToken(user, ACCOUNT_CONFIRM_SALT, readSecretKey(), fourDaysAgo),
+      ),
+    ).toEqual(invalid);
+    expect(
+      await confirm("bat@example.com", makeToken(user, "another purpose", readSecretKey())),
+    ).toEqual(invalid);
+    expect((await db.select().from(schema.user)).every((row) => !row.isConfirmed)).toBe(true);
   });
 
   it("answers an existing email like a new one and changes nothing", async () => {
-    await register({ email: "bat@example.com", password: "first password" });
+    await signUp("bat@example.com", "first password");
     expect(await register({ email: "BAT@example.com", password: "second password" })).toEqual({
-      requiresConfirmation: false,
+      requiresConfirmation: true,
       errors: [],
     });
 
     expect(await db.select().from(schema.user)).toHaveLength(1);
+    // Nothing is sent for the taken email: only the first registration's job exists.
+    const jobs = await db.execute(
+      sql`SELECT 1 FROM pgboss.job WHERE name = ${accountConfirmationQueue.name} AND data->>'userId' IN (SELECT id::text FROM "user")`,
+    );
+    expect(jobs).toHaveLength(1);
     expect((await login("bat@example.com", "second password")).token).toBeNull();
     expect((await login("bat@example.com", "first password")).token).not.toBeNull();
   });
@@ -143,15 +256,15 @@ describe("accountRegister", () => {
       register({ email: "race@example.com", password: "password two" }),
     ]);
     expect(results).toEqual([
-      { requiresConfirmation: false, errors: [] },
-      { requiresConfirmation: false, errors: [] },
+      { requiresConfirmation: true, errors: [] },
+      { requiresConfirmation: true, errors: [] },
     ]);
     expect(await db.select().from(schema.user)).toHaveLength(1);
   });
 
   it("reports Saleor's validation errors", async () => {
     expect(await register({ email: " ", password: "short" })).toEqual({
-      requiresConfirmation: false,
+      requiresConfirmation: true,
       errors: [
         { field: "email", code: "REQUIRED", message: "This field is required." },
         {
@@ -162,7 +275,7 @@ describe("accountRegister", () => {
       ],
     });
     expect(await register({ email: "not-an-email", password: "x".repeat(129) })).toEqual({
-      requiresConfirmation: false,
+      requiresConfirmation: true,
       errors: [
         { field: "email", code: "INVALID", message: "Enter a valid email address." },
         {
@@ -172,10 +285,31 @@ describe("accountRegister", () => {
         },
       ],
     });
+    // The confirmation link must point to an allowed host (Saleor's ALLOWED_CLIENT_HOSTS).
+    const valid = { email: "a@example.com", password: "long enough" };
+    expect((await register({ ...valid, redirectUrl: null }))?.errors).toEqual([
+      { field: "redirectUrl", code: "REQUIRED", message: "This field is required." },
+    ]);
+    expect(
+      (await register({ ...valid, redirectUrl: "https://evil.example/confirm" }))?.errors,
+    ).toEqual([
+      {
+        field: "redirectUrl",
+        code: "INVALID",
+        message: "evil.example is not allowed. Please check `ALLOWED_CLIENT_HOSTS` configuration.",
+      },
+    ]);
+    expect((await register({ ...valid, redirectUrl: "javascript:alert(1)" }))?.errors).toEqual([
+      {
+        field: "redirectUrl",
+        code: "INVALID",
+        message: "Invalid URL. Please check if URL is in RFC 1808 format.",
+      },
+    ]);
     expect(await db.select().from(schema.user)).toHaveLength(0);
   });
 
-  it("links the email's guest orders, not other people's", async () => {
+  it("links the email's guest orders on confirmation, not other people's", async () => {
     const mine = await placeGuestOrder("Buyer@Example.com");
     const someoneElses = await placeGuestOrder("other@example.com");
     // An order with the email that already belongs to an account stays with it.
@@ -190,6 +324,9 @@ describe("accountRegister", () => {
       .where(eq(schema.order.id, (await orderRow(owned)).id));
 
     await register({ email: "buyer@example.com", password: "buyer password" });
+    // Not before the email is confirmed (PLAN M8 decision 4).
+    expect((await orderRow(mine)).userId).toBeNull();
+    await confirm("buyer@example.com", await tokenFor("buyer@example.com"));
     const { token } = await login("buyer@example.com", "buyer password");
     const { body } = await client.gql(MY_ORDERS, { first: 10 }, token ?? "");
     expect(body.errors).toBeUndefined();
@@ -218,7 +355,7 @@ describe("customer order reads", () => {
     const first = await placeGuestOrder("pager@example.com");
     const second = await placeGuestOrder("pager@example.com");
     const third = await placeGuestOrder("pager@example.com");
-    await register({ email: "pager@example.com", password: "pager password" });
+    await signUp("pager@example.com", "pager password");
     const { token } = await login("pager@example.com", "pager password");
 
     const page1 = (await client.gql(MY_ORDERS, { first: 2 }, token ?? "")).body.data?.me as {
@@ -234,8 +371,8 @@ describe("customer order reads", () => {
   it("lets the owner read their order but not its history; others need MANAGE_ORDERS", async () => {
     const order = await placeGuestOrder("owner@example.com");
     const guestOrder = await placeGuestOrder("guest@example.com");
-    await register({ email: "owner@example.com", password: "owner password" });
-    await register({ email: "nosy@example.com", password: "nosy password" });
+    await signUp("owner@example.com", "owner password");
+    await signUp("nosy@example.com", "nosy password");
     const owner = (await login("owner@example.com", "owner password")).token ?? "";
     const nosy = (await login("nosy@example.com", "nosy password")).token ?? "";
     const staff = await createStaff(db, ["MANAGE_ORDERS"]);
@@ -275,7 +412,7 @@ describe("customer order reads", () => {
       .update(schema.order)
       .set({ status: "CANCELED" })
       .where(eq(schema.order.id, (await orderRow(cancelled)).id));
-    await register({ email: "filter@example.com", password: "filter password" });
+    await signUp("filter@example.com", "filter password");
     const { token } = await login("filter@example.com", "filter password");
     const count = async (status: object) => {
       const { body } = await client.gql(

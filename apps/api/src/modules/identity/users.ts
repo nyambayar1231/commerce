@@ -108,13 +108,21 @@ export async function getUsersByIds(db: Executor, ids: readonly string[]): Promi
 }
 
 /**
- * The id of the active account with this email (case-insensitive: `user.email` is citext), or
- * null. Checkout completion gives a guest checkout to that account (Saleor's assign_checkout_user).
+ * The id of the active, confirmed account with this email (case-insensitive: `user.email` is
+ * citext), or null. Checkout completion gives a guest checkout to that account (Saleor's
+ * assign_checkout_user). Unlike Saleor, an unconfirmed account doesn't get it (PLAN M8 decision 4):
+ * whoever registers someone else's email must not collect their orders.
  */
 export async function getActiveUserIdByEmail(db: Executor, email: string): Promise<string | null> {
   const [row] = await db
     .select({ id: schema.user.id })
     .from(schema.user)
-    .where(and(eq(schema.user.email, email.trim()), eq(schema.user.isActive, true)));
+    .where(
+      and(
+        eq(schema.user.email, email.trim()),
+        eq(schema.user.isActive, true),
+        eq(schema.user.isConfirmed, true),
+      ),
+    );
   return row?.id ?? null;
 }

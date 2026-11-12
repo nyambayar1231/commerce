@@ -5,15 +5,15 @@ import { SESSION_USER_COLUMNS, type SessionUser } from "./sessions.ts";
 
 // Password login, as Saleor's `tokenCreate` decides it
 // (../saleor-core/saleor/graphql/account/mutations/authentication/create_token.py): unknown email,
-// missing password and wrong password all fail the same way; `INACTIVE` is only reported once the
-// password is right. Rate limiting is deferred to M9 (ARCHITECTURE.md §7).
+// missing password and wrong password all fail the same way; `ACCOUNT_NOT_CONFIRMED` and `INACTIVE`
+// are only reported once the password is right. Rate limiting is deferred to M9 (ARCHITECTURE.md §7).
 
 // Same cap as account creation (users.ts): longer input can't match and is never hashed.
 const MAX_PASSWORD_LENGTH = 128;
 
 export type LoginResult =
   | { ok: true; user: SessionUser }
-  | { ok: false; code: "INVALID_CREDENTIALS" | "INACTIVE" };
+  | { ok: false; code: "INVALID_CREDENTIALS" | "ACCOUNT_NOT_CONFIRMED" | "INACTIVE" };
 
 // Verified against when the email is unknown or has no password, so those answers take as long
 // as a wrong password and don't reveal which emails exist. Made once, on first use.
@@ -39,6 +39,8 @@ export async function authenticate(
   if (!(await verifyPassword(row.passwordHash, password))) {
     return { ok: false, code: "INVALID_CREDENTIALS" };
   }
+  // Saleor's order: an unconfirmed account (PLAN M8.3) before an inactive one.
+  if (!row.isConfirmed) return { ok: false, code: "ACCOUNT_NOT_CONFIRMED" };
   if (!row.isActive) return { ok: false, code: "INACTIVE" };
 
   // Saleor's update_user_last_login_if_required, on every successful login.

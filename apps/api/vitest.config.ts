@@ -32,6 +32,8 @@ export default defineConfig({
       DATABASE_URL: testUrl,
       AWS_MEDIA_BUCKET_NAME: testBucket,
       MEDIA_PUBLIC_URL: `${s3Endpoint}/${testBucket}`,
+      // Signs confirmation tokens in tests (PLAN M8.3); never a real key.
+      SECRET_KEY: "test-secret-key-0123456789abcdefghijklmnop",
     },
   },
 });

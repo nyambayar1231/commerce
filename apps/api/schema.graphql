@@ -12,6 +12,7 @@ type AccountError {
 }
 
 enum AccountErrorCode {
+  ACCOUNT_NOT_CONFIRMED
   DELETE_OWN_ACCOUNT
   DELETE_STAFF_ACCOUNT
   DELETE_SUPERUSER_ACCOUNT
@@ -45,6 +46,11 @@ input AccountRegisterInput {
 
   """Password."""
   password: String!
+
+  """
+  Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled.
+  """
+  redirectUrl: String
 }
 
 """Represents user address data."""
@@ -545,6 +551,14 @@ type CheckoutShippingAddressUpdate {
   errors: [CheckoutError!]!
 }
 
+"""Confirm user account with token sent by email during registration."""
+type ConfirmAccount {
+  errors: [AccountError!]!
+
+  """An activated user account."""
+  user: User
+}
+
 enum CountryCode {
   AD
   AE
@@ -1038,7 +1052,7 @@ type Money {
 
 type Mutation {
   """
-  Register a new user. The answer is the same whether or not the email is already registered; log in with tokenCreate afterwards.
+  Register a new user. The answer is the same whether or not the email is already registered; a new account receives a confirmation email and can log in once confirmed.
   """
   accountRegister(
     """Fields required to create a user."""
@@ -1191,6 +1205,15 @@ type Mutation {
     """The mailing address to where the checkout will be shipped."""
     shippingAddress: AddressInput!
   ): CheckoutShippingAddressUpdate
+
+  """Confirm user account with token sent by email during registration."""
+  confirmAccount(
+    """E-mail of the user performing account confirmation."""
+    email: String!
+
+    """A one-time token required to confirm the account."""
+    token: String!
+  ): ConfirmAccount!
 
   """
   Deletes customers.
@@ -3163,6 +3186,9 @@ type User implements Node {
 
   """Determine if the user is active."""
   isActive: Boolean!
+
+  """Determines if user has confirmed email."""
+  isConfirmed: Boolean!
 
   """Determine if the user is a staff admin."""
   isStaff: Boolean!

@@ -34,6 +34,9 @@ export const user = pgTable(
     isStaff: boolean("is_staff").notNull().default(false),
     isSuperuser: boolean("is_superuser").notNull().default(false),
     isActive: boolean("is_active").notNull().default(true),
+    // Saleor's is_confirmed (default true): false from accountRegister until confirmAccount, and
+    // for customers created by staff; an unconfirmed user can't log in (PLAN M8.3).
+    isConfirmed: boolean("is_confirmed").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     // Saleor's User.updated_at and last_login (M7.3): set by profile updates and by tokenCreate.
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

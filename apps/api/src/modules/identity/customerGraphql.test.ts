@@ -266,8 +266,13 @@ describe("user(id)", () => {
   it("returns the customer's details and orders, with the last login", async () => {
     const orders = await createStaff(db, ["MANAGE_ORDERS"]);
     await client.gql(
-      `mutation { accountRegister(input: { email: "c@example.com", password: "password 1", firstName: "Cee" }) { errors { code } } }`,
+      `mutation { accountRegister(input: { email: "c@example.com", password: "password 1", firstName: "Cee", redirectUrl: "http://localhost:3000/confirm" }) { errors { code } } }`,
     );
+    // The confirmation flow is tested in accounts.test.ts; here the account only needs to log in.
+    await db
+      .update(schema.user)
+      .set({ isConfirmed: true })
+      .where(eq(schema.user.email, "c@example.com"));
     await client.gql(
       `mutation { tokenCreate(email: "c@example.com", password: "password 1") { errors { code } } }`,
     );
@@ -315,6 +320,8 @@ describe("customer mutations", () => {
       .from(schema.user)
       .where(eq(schema.user.email, "new@example.com"));
     expect(row?.passwordHash).toBeNull();
+    // Saleor: unconfirmed until the customer sets a password (not built yet).
+    expect(row?.isConfirmed).toBe(false);
 
     const error = async (email: string) =>
       (

@@ -320,6 +320,8 @@ export async function createCustomer(db: Executor, input: CustomerInput): Promis
         firstName: input.firstName?.trim() ?? "",
         lastName: input.lastName?.trim() ?? "",
         isActive: input.isActive ?? true,
+        // Saleor: a customer created by staff is unconfirmed until they set a password (later).
+        isConfirmed: false,
         isStaff: false,
       })
       .returning({ id: schema.user.id });

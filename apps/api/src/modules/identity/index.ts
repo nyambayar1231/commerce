@@ -5,13 +5,22 @@ export type {
   AccountRegisterError,
   AccountRegisterErrorCode,
   AccountRegisterInput,
-  AccountRegisterResult,
 } from "./accounts.ts";
 export {
   cleanAccountRegisterInput,
   hashRegistrationPassword,
   registerCustomer,
 } from "./accounts.ts";
+export {
+  accountConfirmationHandler,
+  accountConfirmationQueue,
+  confirmAccount,
+  confirmationUrl,
+  enqueueAccountConfirmation,
+  readAllowedClientHosts,
+  renderAccountConfirmation,
+  validateRedirectUrl,
+} from "./confirmation.ts";
 export type {
   CustomerError,
   CustomerErrorCode,
@@ -55,6 +64,8 @@ export {
   NotFoundError,
   updatePermissionGroup,
 } from "./staff.ts";
+export type { TokenUser } from "./tokens.ts";
+export { ACCOUNT_CONFIRM_SALT, checkToken, makeToken, readSecretKey } from "./tokens.ts";
 export type { CreateSuperuserInput } from "./users.ts";
 export {
   CreateSuperuserError,

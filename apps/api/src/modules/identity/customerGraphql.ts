@@ -34,6 +34,9 @@ const MANAGE_USERS = "Requires one of the following permissions: MANAGE_USERS.";
 // Saleor's User fields for the customer pages.
 builder.objectFields(UserType, (t) => ({
   isActive: t.exposeBoolean("isActive", { description: "Determine if the user is active." }),
+  isConfirmed: t.exposeBoolean("isConfirmed", {
+    description: "Determines if user has confirmed email.",
+  }),
   dateJoined: t.field({
     type: DateTime,
     description: "The date when the user joined.",

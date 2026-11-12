@@ -112,7 +112,7 @@ pnpm typecheck      # turbo: tsc --noEmit per app (cached)
 pnpm lint           # biome check . (lint + format check + import order)
 pnpm format         # biome format --write .
 pnpm test           # turbo: unit tests + API tests on commerce_test (needs `pnpm db:up`)
-pnpm db:up          # start Postgres 18 (localhost:5433) and the S3 server (localhost:8333), wait until healthy
+pnpm db:up          # start Postgres 18 (localhost:5433), the S3 server (localhost:8333) and Mailpit (SMTP localhost:1026, UI localhost:8026), wait until healthy
 pnpm db:down        # stop it (data kept in the `postgres-data` volume)
 pnpm db:psql        # psql shell inside the container
 pnpm --filter @commerce/db db:ping                     # check the app can reach Postgres
@@ -120,6 +120,7 @@ pnpm --filter @commerce/db db:generate --name <name>    # migration from schema 
 pnpm --filter @commerce/db db:generate --custom --name <name>   # empty SQL migration (data)
 pnpm --filter @commerce/db db:migrate                   # apply migrations (needs db:up)
 pnpm --filter @commerce/api dev                         # API on :4000/graphql, watch mode
+pnpm --filter @commerce/api worker                      # background jobs: sends the emails (needs EMAIL_URL, SECRET_KEY)
 pnpm schema:print   # regenerate apps/api/schema.graphql (commit it)
 pnpm codegen        # regenerate dashboard GraphQL types from schema.graphql (commit them)
 ```
@@ -139,5 +140,5 @@ scripts/ai/stop.sh <name>|--all                       # end the implementer (wor
 
 ## Current state
 
-M0 (foundations), M1 (identity), M2 (catalog: categories, products, variants, filtering, media), M3 (inventory: warehouse, stock, stock editing), M5 (checkout API: cart, shipping, addresses, dummy payments, completion into orders) and M6 (orders: list, detail page, fulfil, cancel, mark as paid, refund) and M7 (customer accounts: register, customer orders and checkouts, staff customer API and pages) done; next is M8 (background processing, Draft — awaiting the owner's approval).
+M0 (foundations), M1 (identity), M2 (catalog: categories, products, variants, filtering, media), M3 (inventory: warehouse, stock, stock editing), M5 (checkout API: cart, shipping, addresses, dummy payments, completion into orders) and M6 (orders: list, detail page, fulfil, cancel, mark as paid, refund), M7 (customer accounts: register, customer orders and checkouts, staff customer API and pages) and M8 (background jobs: pg-boss outbox, worker, order and account confirmation emails) done; next is M9 (hardening & deployability, Draft — awaiting the owner's approval).
 The AI team setup (`docs/ai-workflow/`) is in place. See `PLAN.md`.

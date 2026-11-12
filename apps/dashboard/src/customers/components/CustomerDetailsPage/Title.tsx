@@ -2,8 +2,8 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The page title: the customer's name (or email), the Active/Inactive pill, the Staff pill for a
-// staff user who placed orders, and "Member since {date}". Left out: the Unverified pill (no email
-// confirmation until M8) and the customer type.
+// staff user who placed orders, the Unverified pill for an unconfirmed email (M8.3), and "Member
+// since {date}". Left out: the customer type.
 import { Box, Text } from "@saleor/macaw-ui";
 import { FormattedDate, FormattedMessage, useIntl } from "react-intl";
 
@@ -16,6 +16,7 @@ interface CustomerDetailsTitleProps {
     firstName: string;
     lastName: string;
     isActive?: boolean;
+    isConfirmed?: boolean;
     isStaff?: boolean;
     dateJoined?: unknown;
   };
@@ -58,6 +59,17 @@ export const CustomerDetailsTitle = ({ customer }: CustomerDetailsTitleProps) =>
             data-test-id="account-status-inactive"
           />
         ))}
+      {customer.isConfirmed === false && (
+        <Pill
+          color="warning"
+          label={intl.formatMessage({
+            defaultMessage: "Unverified",
+            description: "customer email verification status",
+            id: "D+Nw8P",
+          })}
+          data-test-id="account-status-email-unverified"
+        />
+      )}
       {customer.isStaff && customerName && (
         <Pill
           color="info"

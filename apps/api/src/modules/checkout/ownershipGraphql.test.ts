@@ -187,6 +187,18 @@ describe("completion without an owner", () => {
     const matched = await create({ lines: [{ variantId, quantity: 1 }], email: "BAT@example.com" });
     expect((await complete(matched.id)).userId).toBe(customer.id);
 
+    // An unconfirmed account doesn't collect guest orders (PLAN M8 decision 4).
+    const unconfirmedUser = await createCustomer("unconfirmed@example.com");
+    await db
+      .update(schema.user)
+      .set({ isConfirmed: false })
+      .where(eq(schema.user.id, unconfirmedUser.id));
+    const unconfirmed = await create({
+      lines: [{ variantId, quantity: 1 }],
+      email: "unconfirmed@example.com",
+    });
+    expect((await complete(unconfirmed.id)).userId).toBeNull();
+
     const inactive = await create({
       lines: [{ variantId, quantity: 1 }],
       email: "inactive@example.com",

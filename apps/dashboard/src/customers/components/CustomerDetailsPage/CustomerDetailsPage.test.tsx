@@ -24,6 +24,7 @@ const customer = (overrides: Partial<Customer> = {}): Customer => ({
   dateJoined: "2026-11-01T10:00:00Z",
   lastLogin: "2026-11-12T08:30:00Z",
   isActive: true,
+  isConfirmed: true,
   isStaff: false,
   orders: {
     __typename: "OrderCountableConnection",
@@ -127,6 +128,13 @@ describe("CustomerDetailsPage", () => {
 
     expect(byTestId("account-status-inactive")).toBeTruthy();
     expect(byTestId("customer-staff-badge")).toBeTruthy();
+    expect(byTestId("account-status-email-unverified")).toBeNull();
+  });
+
+  it("marks a customer who hasn't confirmed their email", () => {
+    renderPage({ customer: customer({ isConfirmed: false }) });
+
+    expect(byTestId("account-status-email-unverified")?.textContent).toBe("Unverified");
   });
 
   it("hides the order figures without MANAGE_ORDERS", () => {

@@ -52,8 +52,8 @@ export const customerList = gql`
   }
 `;
 
-// Saleor's CustomerDetails fragment without the address book, note, isConfirmed, external
-// reference, customer type and attributes (PLAN M7 decisions 3–4).
+// Saleor's CustomerDetails fragment without the address book, note, external reference,
+// customer type and attributes (PLAN M7 decisions 3–4).
 export const customerDetailsFragment = gql`
   ${customerFragment}
   fragment CustomerDetails on User {
@@ -61,6 +61,7 @@ export const customerDetailsFragment = gql`
     dateJoined
     lastLogin
     isActive
+    isConfirmed
     isStaff
   }
 `;
