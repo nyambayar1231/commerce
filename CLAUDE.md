@@ -140,5 +140,5 @@ scripts/ai/stop.sh <name>|--all                       # end the implementer (wor
 
 ## Current state
 
-M0 (foundations), M1 (identity), M2 (catalog: categories, products, variants, filtering, media), M3 (inventory: warehouse, stock, stock editing), M5 (checkout API: cart, shipping, addresses, dummy payments, completion into orders) and M6 (orders: list, detail page, fulfil, cancel, mark as paid, refund), M7 (customer accounts: register, customer orders and checkouts, staff customer API and pages) and M8 (background jobs: pg-boss outbox, worker, order and account confirmation emails) done; next is M9 (hardening & deployability, Draft — awaiting the owner's approval).
+M0 (foundations), M1 (identity), M2 (catalog: categories, products, variants, filtering, media), M3 (inventory: warehouse, stock, stock editing), M5 (checkout API: cart, shipping, addresses, dummy payments, completion into orders) and M6 (orders: list, detail page, fulfil, cancel, mark as paid, refund), M7 (customer accounts: register, customer orders and checkouts, staff customer API and pages) and M8 (background jobs: pg-boss outbox, worker, order and account confirmation emails) done; M9 (hardening & deployability) in progress.
 The AI team setup (`docs/ai-workflow/`) is in place. See `PLAN.md`.

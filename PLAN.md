@@ -7,7 +7,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M9 | Hardening & deployability | Draft |
+| M9 | Hardening & deployability | In progress |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
@@ -135,7 +135,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   - Shipping prices (0013) and payment amounts (0014) were created as `integer` and widened to
     `bigint` in 0015 (variant prices and order totals are `bigint`).
   - No dashboard work: checkout has no Saleor dashboard pages; orders arrive in M6.
-- **Found during M6.1, not fixed (needs the owner's go):** the product list's `CREATED_AT` /
+- **Found during M6.1, being fixed in M9.5:** the product list's `CREATED_AT` /
   `LAST_MODIFIED_AT` cursors carry millisecond ISO strings while the columns hold microseconds, so
   rows created within one millisecond repeat page after page (reproduced with four products; the
   orders list sorts timestamps by epoch microseconds instead). Likely the same in other date-sorted
@@ -218,9 +218,67 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 ---
 
 ## M9 — Hardening & deployability
-- Dockerfiles, production config/env validation, rate limiting on login, CI pipeline, Playwright
-  golden paths for the dashboard and API, basic observability.
-- **Status:** Draft.
+- **Objective:** the API, worker and dashboard run from Docker images with validated production
+  config; login can't be brute-forced; every push is checked by CI, including browser golden
+  paths; the running system can be inspected through structured logs and health checks.
+- **Concepts:** fail-fast config; login throttling with exponential delays (Saleor's); structured
+  logs with a request id; liveness vs readiness; multi-stage Docker builds; CI with a real Postgres;
+  end-to-end tests with Playwright.
+
+**Owner decisions (2026-11-12):**
+1. **Deployable = Docker images + a production compose file:** one image for the API and the worker
+   (two commands), one for the dashboard (static files served by nginx), and
+   `docker-compose.prod.yml` that runs the whole stack like production. No cloud vendor yet.
+2. **Rate-limit counters live in Postgres** (no Redis; works with several API instances).
+3. **Observability = logs + health:** pino JSON logs with a request id, `/health/live` and
+   `/health/ready`. No metrics or tracing.
+4. **Also in M9:** the date-cursor bug found in M6.1, and CI on GitHub Actions.
+5. **Pace:** continuous, a report after each step.
+
+**Proposed by the lead (2026-11-12), awaiting the owner's OK:**
+6. **Config is one validated module per process** (`apps/api/src/config.ts`): every env var is read
+   and checked once at startup, all problems are reported together and the process exits; no new
+   dependency (hand-written checks, the existing `read*Config(env)` functions move there).
+   `NODE_ENV=production` makes `SECRET_KEY`, `ALLOWED_CLIENT_HOSTS`, `ALLOWED_GRAPHQL_ORIGINS`,
+   `PUBLIC_URL` and the S3/SMTP settings required and refuses the dev defaults.
+7. **Login throttling is Saleor's `authenticate_with_throttling`** translated: every attempt blocks
+   the IP for 1 s; failures raise the delay exponentially (per IP every 10 failures, per IP + user
+   every failure, max 1 h; counters expire after 2 h); success clears them; a blocked attempt gets
+   `LOGIN_ATTEMPT_DELAYED`, an unknown IP `UNKNOWN_IP_ADDRESS` (Saleor's codes). Stored in a small
+   `rate_limit` table (key, count, blocked_until, expires_at). The client IP is the socket address,
+   or the first `X-Forwarded-For` hop only when `TRUST_PROXY=true` (behind nginx).
+8. **`/thumbnail/` rate limit:** only thumbnail *generation* (the cache miss that runs sharp) is
+   limited per IP (60 per minute, a fixed window in the same table); cached sizes are not limited.
+   Our own design, Saleor has none.
+9. **Playwright golden paths** live in a new `e2e/` workspace package (`@playwright/test`): staff
+   logs in and creates a published product with stock → a customer buys it through the GraphQL API
+   (the storefront is M4) → staff sees the order, marks it paid and fulfils it in the dashboard.
+   They run against the dev servers and a fresh `commerce_e2e` database.
+10. **CI** (GitHub Actions, one workflow): lint, typecheck, unit + API tests with Postgres, S3 and
+    Mailpit service containers, schema/codegen drift check, then the e2e job; the Docker images are
+    built (not pushed) to catch breakage.
+
+**Steps (each one commit, one report):**
+
+| Step | What | Status |
+|---|---|---|
+| M9.1 | Config: `config.ts` validates all env vars at startup (API, worker, CLI), production rules, `.env.example` updated; tests for the validation | Proposed |
+| M9.2 | Logging + health: pino with a request id (Yoga plugin), unexpected GraphQL errors logged with context, `console.*` replaced; `/health/live`, `/health/ready` (DB check) | Proposed |
+| M9.3 | Login throttling: `rate_limit` table + migration, Saleor's delays in `tokenCreate`, client IP with `TRUST_PROXY`, the two error codes; tests | Proposed |
+| M9.4 | `/thumbnail/` generation limit per IP (429 with `Retry-After`); tests | Proposed |
+| M9.5 | Date-cursor fix: timestamp sorts encode microseconds (as the order list); a regression test with rows in one millisecond; other date-sorted lists checked | Proposed |
+| M9.6 | Docker: multi-stage `Dockerfile`s (API/worker, dashboard + nginx), `docker-compose.prod.yml`, migrations as a one-off command, `docs/deploy.md` (incl. ADR-0014's S3 checklist); checked by running the stack | Proposed |
+| M9.7 | Playwright golden paths in `e2e/` (decision 9) | Proposed |
+| M9.8 | CI workflow on GitHub Actions (decision 10) | Proposed |
+
+- **Acceptance:** `docker compose -f docker-compose.prod.yml up` serves a working dashboard and API
+  from built images; a production start with a missing or default secret exits with a clear list;
+  repeated wrong passwords get `LOGIN_ATTEMPT_DELAYED`; logs are JSON lines with a request id;
+  `/health/ready` fails when Postgres is down; the golden paths pass locally and in CI; a product
+  list sorted by date pages without repeats.
+- **Out of scope:** a cloud host, TLS certificates, image registry/publishing, metrics, tracing,
+  alerting, backups, rate limits on other mutations, the customer storefront golden path (M4).
+- **Status:** Started by the owner 2026-11-12 with decisions 1–5; decisions 6–10 await the owner's OK.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
