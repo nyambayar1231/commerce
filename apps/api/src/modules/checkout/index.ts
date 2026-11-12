@@ -14,12 +14,16 @@ export type {
 } from "./checkouts.ts";
 export {
   addCheckoutLines,
+  attachCheckoutCustomer,
   CheckoutNotFoundError,
+  CheckoutPermissionError,
   createCheckout,
   deleteCheckoutLines,
+  detachCheckoutCustomer,
   getCheckout,
   getCheckoutLines,
   getCheckoutShippingMethod,
+  getOpenCheckoutsByUserId,
   MAX_CHECKOUT_LINE_QUANTITY,
   updateCheckoutAddress,
   updateCheckoutDeliveryMethod,

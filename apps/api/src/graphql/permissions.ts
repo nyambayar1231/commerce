@@ -15,8 +15,13 @@ import type { Context } from "./context.ts";
 // and `extensions.exception.code` (../saleor-core/saleor/core/exceptions.py PermissionDenied,
 // saleor/graphql/utils/__init__.py format_error). Yoga doesn't mask a GraphQLError.
 
-// Saleor also lists its authorization filters, e.g. OWNER for a resource the user owns.
-export function permissionDenied(permissions: readonly (Permission | "OWNER")[]): GraphQLError {
+// Saleor also lists its authorization filters: OWNER for a resource the user owns,
+// AUTHENTICATED_USER for anything a logged-in user may do.
+export type AuthorizationFilter = "OWNER" | "AUTHENTICATED_USER";
+
+export function permissionDenied(
+  permissions: readonly (Permission | AuthorizationFilter)[],
+): GraphQLError {
   return new GraphQLError(
     `To access this path, you need one of the following permissions: ${permissions.join(", ")}`,
     { extensions: { exception: { code: "PermissionDenied" } } },

@@ -2,6 +2,7 @@ import type { CurrencyCode } from "@commerce/contracts";
 import { type Executor, schema } from "@commerce/db";
 import { eq, sql } from "drizzle-orm";
 import { lockVariantsForKeyShare } from "../catalog/index.ts";
+import { getActiveUserIdByEmail } from "../identity/index.ts";
 import {
   allocateStocks,
   findInsufficientStock,
@@ -150,11 +151,16 @@ export async function completeCheckout(
       };
     }
 
-    // 6. The order: a snapshot of names, prices and addresses.
+    // 6. The order: a snapshot of names, prices and addresses. It belongs to the checkout's owner;
+    // a guest checkout goes to the active account with its email, if any (Saleor's
+    // assign_checkout_user), so a registered customer finds it in their orders.
+    const userId =
+      checkout.userId ??
+      (checkout.email === null ? null : await getActiveUserIdByEmail(tx, checkout.email));
     const priced = new Map(totals.lines.map((line) => [line.line.id, line]));
     const { order, lines: orderLines } = await createOrderFromCheckout(tx, {
       checkoutToken: checkout.id,
-      userId: checkout.userId,
+      userId,
       userEmail: checkout.email,
       billingAddress: checkout.billingAddress,
       shippingAddress: checkout.shippingAddress,

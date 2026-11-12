@@ -1,6 +1,6 @@
 import type { CurrencyCode } from "@commerce/contracts";
 import { type Executor, schema } from "@commerce/db";
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   getProduct,
   getProductVariantsByIds,
@@ -84,6 +84,20 @@ export class CheckoutNotFoundError extends Error {
     super(`Checkout not found: ${ids.join(", ")}`);
     this.name = "CheckoutNotFoundError";
     this.ids = ids;
+  }
+}
+
+/**
+ * Saleor's PermissionDenied for checkout ownership (checkoutCustomerAttach/Detach). The GraphQL
+ * layer turns it into a top-level error; `permissions` names what would have allowed it.
+ */
+export class CheckoutPermissionError extends Error {
+  readonly permissions: readonly string[];
+
+  constructor(message: string, permissions: readonly string[] = []) {
+    super(message);
+    this.name = "CheckoutPermissionError";
+    this.permissions = permissions;
   }
 }
 
@@ -326,13 +340,19 @@ function currencyError(
 
 export async function createCheckout(
   db: Executor,
-  input: { email?: string | null; lines: readonly CheckoutLineInput[] },
+  input: {
+    email?: string | null;
+    lines: readonly CheckoutLineInput[];
+    /** The logged-in user creating it (Saleor: any authenticated user owns the new checkout). */
+    user?: { id: string; email: string } | null;
+  },
 ): Promise<CheckoutResult> {
   const lines = mergeLineInputs(input.lines);
 
   return db.transaction(async (tx) => {
     const errors: CheckoutError[] = [];
-    let email: string | null = null;
+    // Saleor: the given email, or the logged-in user's.
+    let email: string | null = input.user?.email ?? null;
     if (input.email !== undefined && input.email !== null) {
       const cleaned = cleanEmail(input.email);
       errors.push(...cleaned.errors);
@@ -350,7 +370,10 @@ export async function createCheckout(
     }
     if (errors.length > 0) return { ok: false, errors };
 
-    const [checkout] = await tx.insert(schema.checkout).values({ email, currency }).returning();
+    const [checkout] = await tx
+      .insert(schema.checkout)
+      .values({ email, currency, userId: input.user?.id ?? null })
+      .returning();
     if (!checkout) throw new Error("checkout insert returned no row");
 
     if (lines.length > 0) {
@@ -541,6 +564,63 @@ async function writeCheckout(
     if (!updated) throw new CheckoutNotFoundError([checkoutId]);
     return { ok: true, checkout: updated };
   });
+}
+
+/**
+ * Saleor's checkoutCustomerAttach for the logged-in user: they become the checkout's owner and its
+ * email becomes theirs. A checkout that already has an owner (even this user) is refused, as in
+ * Saleor ("You cannot reassign…").
+ */
+export async function attachCheckoutCustomer(
+  db: Executor,
+  checkoutId: string,
+  user: { id: string; email: string },
+): Promise<CheckoutResult> {
+  return writeCheckout(db, checkoutId, async (tx, checkout) => {
+    if (checkout.userId !== null) {
+      throw new CheckoutPermissionError(
+        "You cannot reassign a checkout that is already attached to a user.",
+      );
+    }
+    await tx
+      .update(schema.checkout)
+      .set({ userId: user.id, email: user.email, updatedAt: sql`now()` })
+      .where(eq(schema.checkout.id, checkoutId));
+    return [];
+  });
+}
+
+/**
+ * Saleor's checkoutCustomerDetach: removes the owner. Only the owner may do it (Saleor also lets
+ * IMPERSONATE_USER staff, a permission we don't have); an unowned checkout stays as it is.
+ */
+export async function detachCheckoutCustomer(
+  db: Executor,
+  checkoutId: string,
+  requesterId: string,
+): Promise<CheckoutResult> {
+  return writeCheckout(db, checkoutId, async (tx, checkout) => {
+    if (checkout.userId !== null && checkout.userId !== requesterId) {
+      throw new CheckoutPermissionError("You can't detach another user's checkout.", ["OWNER"]);
+    }
+    await tx
+      .update(schema.checkout)
+      .set({ userId: null, updatedAt: sql`now()` })
+      .where(eq(schema.checkout.id, checkoutId));
+    return [];
+  });
+}
+
+/** The checkouts a user owns that are not completed yet, newest first (`User.checkouts`). */
+export async function getOpenCheckoutsByUserId(
+  db: Executor,
+  userId: string,
+): Promise<CheckoutRow[]> {
+  return db
+    .select()
+    .from(schema.checkout)
+    .where(and(eq(schema.checkout.userId, userId), isNull(schema.checkout.completedOrderId)))
+    .orderBy(desc(schema.checkout.createdAt), desc(schema.checkout.id));
 }
 
 /**

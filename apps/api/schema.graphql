@@ -378,6 +378,19 @@ type CheckoutComplete {
   order: Order
 }
 
+type CheckoutCountableConnection {
+  edges: [CheckoutCountableEdge!]!
+  pageInfo: PageInfo!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type CheckoutCountableEdge {
+  cursor: String!
+  node: Checkout!
+}
+
 type CheckoutCreate {
   """The created checkout."""
   checkout: Checkout
@@ -397,6 +410,18 @@ input CheckoutCreateInput {
   A list of checkout lines, each containing information about an item in the checkout.
   """
   lines: [CheckoutLineInput!]!
+}
+
+type CheckoutCustomerAttach {
+  """An updated checkout."""
+  checkout: Checkout
+  errors: [CheckoutError!]!
+}
+
+type CheckoutCustomerDetach {
+  """An updated checkout."""
+  checkout: Checkout
+  errors: [CheckoutError!]!
 }
 
 type CheckoutDeliveryMethodUpdate {
@@ -1026,6 +1051,22 @@ type Mutation {
     """Fields required to create checkout."""
     input: CheckoutCreateInput!
   ): CheckoutCreate
+
+  """
+  Sets the customer as the owner of the checkout. Requires one of the following permissions: AUTHENTICATED_USER.
+  """
+  checkoutCustomerAttach(
+    """The checkout's ID."""
+    id: ID!
+  ): CheckoutCustomerAttach
+
+  """
+  Removes the user assigned as the owner of the checkout. Requires one of the following permissions: AUTHENTICATED_USER.
+  """
+  checkoutCustomerDetach(
+    """The checkout's ID."""
+    id: ID!
+  ): CheckoutCustomerDetach
 
   """Updates the delivery method (shipping method) of the checkout."""
   checkoutDeliveryMethodUpdate(
@@ -2967,6 +3008,10 @@ scalar Upload
 
 """Represents user data."""
 type User implements Node {
+  """
+  Returns checkouts assigned to this user. Requires one of the following permissions: MANAGE_CHECKOUTS, OWNER.
+  """
+  checkouts(after: String, before: String, first: Int, last: Int): CheckoutCountableConnection
   email: String!
   firstName: String!
 

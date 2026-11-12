@@ -1,5 +1,5 @@
 import { type Executor, schema } from "@commerce/db";
-import { inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { hashPassword } from "./password.ts";
 import type { SessionUser } from "./sessions.ts";
 
@@ -112,4 +112,16 @@ export async function getUsersByIds(db: Executor, ids: readonly string[]): Promi
     })
     .from(schema.user)
     .where(inArray(schema.user.id, [...ids]));
+}
+
+/**
+ * The id of the active account with this email (case-insensitive: `user.email` is citext), or
+ * null. Checkout completion gives a guest checkout to that account (Saleor's assign_checkout_user).
+ */
+export async function getActiveUserIdByEmail(db: Executor, email: string): Promise<string | null> {
+  const [row] = await db
+    .select({ id: schema.user.id })
+    .from(schema.user)
+    .where(and(eq(schema.user.email, email.trim()), eq(schema.user.isActive, true)));
+  return row?.id ?? null;
 }

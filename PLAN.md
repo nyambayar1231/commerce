@@ -204,10 +204,11 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 6. **Customer reads (Saleor's names):** `me.orders` (connection, newest first), `me.checkouts`;
    `order(id)` is readable by its owner as well as by `MANAGE_ORDERS` staff (others get Saleor's
    permission error); `Order.events` stays `MANAGE_ORDERS` only, as in Saleor.
-7. **Checkout ownership (Saleor's rules):** `checkoutCreate` by a logged-in customer sets the
-   checkout's user and email; `checkoutCustomerAttach`/`checkoutCustomerDetach`; a checkout that
-   belongs to a user can be read or changed only by that user (or `MANAGE_CHECKOUTS` staff), and
-   completion keeps the user on the order.
+7. **Checkout ownership = Saleor's rules (owner's choice, 2026-11-12):** `checkoutCreate` by a
+   logged-in user sets the checkout's user and (unless given) email; `checkoutCustomerAttach`
+   (refuses a checkout that already has an owner) and `checkoutCustomerDetach` (owner only); the id
+   stays the secret, so anyone holding it can still use a customer's checkout. Completion gives
+   the order to the owner, or to the active account with the checkout's email.
 8. **Customers are non-staff users:** `customers` lists `is_staff = false` only; `customerCreate`
    makes a user without a password (they can log in once M8 sends the set-password email, as
    `staffCreate`); deleting a customer keeps their orders (the order's user becomes `null`) and ends
@@ -218,7 +219,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | Step | What | Status |
 |---|---|---|
 | M7.1 | API account: `accountRegister` (decisions 1, 2), `me.orders`, `order(id)` for its owner (decision 6); tests | Done |
-| M7.2 | API checkout ↔ user: decision 7, `me.checkouts`; ownership tests | Proposed |
+| M7.2 | API checkout ↔ user: decision 7, `me.checkouts`; ownership tests | Done |
 | M7.3 | API staff customers: `customers` connection (search, Saleor's `sortBy`), `user(id)`, `User.orders`, `customerCreate`/`Update`/`Delete`, `customerBulkDelete` (`MANAGE_USERS`) | Proposed |
 | M7.4 | Dashboard customer list: Customers menu item, Saleor's CustomerListPage + datagrid (name, email, orders), search, pagination, column settings | Proposed |
 | M7.5 | Dashboard customer detail, create page, delete dialogs; "View profile" link from the order's customer card | Proposed |
@@ -229,7 +230,8 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   delete customers, and open their orders.
 - **Out of scope:** email confirmation, password reset and set-password emails (M8); address book;
   account deletion by the customer; notes, metadata, customer attributes; storefront screens (M4).
-- **Status:** Started by the owner 2026-11-12 with decisions 1–4; decisions 5–8 await the owner's OK.
+- **Status:** Started by the owner 2026-11-12 with decisions 1–4 and 7; decisions 5, 6 and 8 await
+  the owner's OK.
 
 ## M8 — Background processing
 - Requirement: order confirmation email. Outbox table written in the order transaction; pg-boss

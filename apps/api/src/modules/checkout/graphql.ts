@@ -1,31 +1,41 @@
 import { multiplyMoney } from "@commerce/contracts";
+import { resolveArrayConnection } from "@pothos/plugin-relay";
 import { GraphQLError } from "graphql";
 import { builder } from "../../graphql/builder.ts";
 import type { Context } from "../../graphql/context.ts";
 import { fromGlobalId, nodesNotFound, toGlobalId } from "../../graphql/globalId.ts";
 import { MoneyType, TaxedMoneyType } from "../../graphql/money.ts";
+import { isEdgesRequested, validatePagination } from "../../graphql/pagination.ts";
+import { permissionDenied } from "../../graphql/permissions.ts";
 import { DateTime, UUID } from "../../graphql/scalars.ts";
 import { toMoney } from "../catalog/index.ts";
 import { ProductVariantType } from "../catalog/productGraphql.ts";
+import { UserType } from "../identity/graphql.ts";
 import {
   addCheckoutLines,
+  attachCheckoutCustomer,
   type CheckoutError,
   type CheckoutLineInput as CheckoutLineInputData,
   type CheckoutLineQuantityInput,
   type CheckoutLineRow,
   CheckoutNotFoundError,
+  CheckoutPermissionError,
   type CheckoutResult,
   type CheckoutRow,
   createCheckout,
   deleteCheckoutLines,
+  detachCheckoutCustomer,
   getCheckout,
+  getOpenCheckoutsByUserId,
   taxedMoney,
   updateCheckoutEmail,
   updateCheckoutLines,
 } from "./index.ts";
 
 // GraphQL layer for Saleor's checkout cart mutations (saleor/graphql/checkout/). All public: a
-// buyer uses a checkout by holding its id (PLAN M5 decision 5). Resolvers only decode global IDs,
+// buyer uses a checkout by holding its id (PLAN M5 decision 5), also one that belongs to a
+// customer, as in Saleor (PLAN M7 decision 7). A logged-in user owns the checkouts they create;
+// checkoutCustomerAttach/Detach change the owner (M7.2). Resolvers only decode global IDs,
 // call the module's functions and map their results.
 
 export const CheckoutType = builder.objectRef<CheckoutRow>("Checkout");
@@ -260,6 +270,8 @@ const CheckoutLinesAdd = checkoutLinesPayload("CheckoutLinesAdd");
 const CheckoutLinesUpdate = checkoutLinesPayload("CheckoutLinesUpdate");
 const CheckoutLinesDelete = checkoutLinesPayload("CheckoutLinesDelete");
 const CheckoutEmailUpdate = checkoutLinesPayload("CheckoutEmailUpdate");
+const CheckoutCustomerAttach = checkoutLinesPayload("CheckoutCustomerAttach");
+const CheckoutCustomerDetach = checkoutLinesPayload("CheckoutCustomerDetach");
 
 const CheckoutLineInput = builder.inputType("CheckoutLineInput", {
   fields: (t) => ({
@@ -327,6 +339,13 @@ export async function runCheckoutWrite(
   try {
     return checkoutPayload(ctx, checkoutId, await call());
   } catch (error) {
+    if (error instanceof CheckoutPermissionError) {
+      throw error.permissions.length > 0
+        ? permissionDenied(["OWNER"])
+        : new GraphQLError(error.message, {
+            extensions: { exception: { code: "PermissionDenied" } },
+          });
+    }
     if (!(error instanceof CheckoutNotFoundError)) throw error;
     throw nodesNotFound(error.ids.map((id) => toGlobalId("Checkout", id)));
   }
@@ -364,6 +383,7 @@ builder.mutationField("checkoutCreate", (t) =>
       const result = await createCheckout(ctx.db, {
         email: input.email,
         lines: decodeLineInputs(input.lines),
+        user: ctx.user ? { id: ctx.user.id, email: ctx.user.email } : null,
       });
       return {
         created: true,
@@ -459,4 +479,92 @@ builder.mutationField("checkoutEmailUpdate", (t) =>
       );
     },
   }),
+);
+
+// --- Ownership (M7.2): Saleor's checkoutCustomerAttach / checkoutCustomerDetach for the
+// logged-in user (AUTHENTICATED_USER). Saleor's `customerId` argument (attach someone else, with
+// IMPERSONATE_USER) and the deprecated `token`/`checkoutId` arguments are left out.
+
+builder.mutationField("checkoutCustomerAttach", (t) =>
+  t.field({
+    type: CheckoutCustomerAttach,
+    nullable: true,
+    description:
+      "Sets the customer as the owner of the checkout. Requires one of the following " +
+      "permissions: AUTHENTICATED_USER.",
+    args: { id: t.arg.id({ required: true, description: "The checkout's ID." }) },
+    resolve: async (_parent, { id }, ctx) => {
+      const user = ctx.user;
+      if (!user) throw permissionDenied(["AUTHENTICATED_USER"]);
+      const checkoutId = fromGlobalId("Checkout", String(id));
+      return runCheckoutWrite(ctx, checkoutId, () =>
+        attachCheckoutCustomer(ctx.db, checkoutId, { id: user.id, email: user.email }),
+      );
+    },
+  }),
+);
+
+builder.mutationField("checkoutCustomerDetach", (t) =>
+  t.field({
+    type: CheckoutCustomerDetach,
+    nullable: true,
+    description:
+      "Removes the user assigned as the owner of the checkout. Requires one of the following " +
+      "permissions: AUTHENTICATED_USER.",
+    args: { id: t.arg.id({ required: true, description: "The checkout's ID." }) },
+    resolve: async (_parent, { id }, ctx) => {
+      const user = ctx.user;
+      if (!user) throw permissionDenied(["AUTHENTICATED_USER"]);
+      const checkoutId = fromGlobalId("Checkout", String(id));
+      return runCheckoutWrite(ctx, checkoutId, () =>
+        detachCheckoutCustomer(ctx.db, checkoutId, user.id),
+      );
+    },
+  }),
+);
+
+const CheckoutConnection = builder.connectionObject(
+  {
+    type: CheckoutType,
+    name: "CheckoutCountableConnection",
+    fields: (t) => ({
+      totalCount: t.int({
+        nullable: true,
+        description: "A total count of items in the collection.",
+        resolve: (connection) => (connection as unknown as { totalCount: number }).totalCount,
+      }),
+    }),
+  },
+  { name: "CheckoutCountableEdge" },
+);
+
+// Saleor's User.checkouts (saleor/graphql/account/types.py): the user's checkouts, newest first.
+// Saleor deletes a checkout when it completes; ours stays as the order's record, so completed ones
+// are left out. Saleor checks nothing here (reaching a User is already guarded); we also require
+// the user themselves or MANAGE_CHECKOUTS, so staff who can see a user elsewhere don't see carts.
+builder.objectField(UserType, "checkouts", (t) =>
+  t.connection(
+    {
+      type: CheckoutType,
+      nullable: true,
+      description:
+        "Returns checkouts assigned to this user. Requires one of the following permissions: " +
+        "MANAGE_CHECKOUTS, OWNER.",
+      resolve: async (user, args, ctx, info) => {
+        if (ctx.user?.id !== user.id) {
+          const granted = ctx.user?.isStaff ? await ctx.permissions() : [];
+          if (!granted.includes("MANAGE_CHECKOUTS")) {
+            throw permissionDenied(["OWNER", "MANAGE_CHECKOUTS"]);
+          }
+        }
+        const page = validatePagination("checkouts", args, isEdgesRequested(info));
+        const checkouts = await getOpenCheckoutsByUserId(ctx.db, user.id);
+        return {
+          ...resolveArrayConnection({ args: { ...args, ...page } }, checkouts),
+          totalCount: checkouts.length,
+        };
+      },
+    },
+    CheckoutConnection,
+  ),
 );

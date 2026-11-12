@@ -1,6 +1,7 @@
 import { type Db, schema } from "@commerce/db";
 import { expect } from "vitest";
 import { createApp } from "../src/app.ts";
+import type { AuthorizationFilter } from "../src/graphql/permissions.ts";
 import { createSession, type Permission } from "../src/modules/identity/index.ts";
 
 // Shared helpers for GraphQL contract tests: requests go through the real app (Yoga, context,
@@ -71,7 +72,10 @@ export async function createStaff(
 }
 
 /** The request was refused by `requirePermission` with Saleor's error, naming `permissions`. */
-export function expectPermissionDenied({ body }: GqlResult, permissions: (Permission | "OWNER")[]) {
+export function expectPermissionDenied(
+  { body }: GqlResult,
+  permissions: (Permission | AuthorizationFilter)[],
+) {
   expect(body.errors).toEqual([
     expect.objectContaining({
       message: `To access this path, you need one of the following permissions: ${permissions.join(", ")}`,
