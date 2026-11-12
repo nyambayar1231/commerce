@@ -1,9 +1,9 @@
-import { isIP } from "node:net";
 import type { Db } from "@commerce/db";
 import { useCSRFPrevention } from "@graphql-yoga/plugin-csrf-prevention";
 import { sql } from "drizzle-orm";
 import { GraphQLError } from "graphql";
 import { createYoga, maskError, useReadinessCheck } from "graphql-yoga";
+import { clientIpOf, type ServerContext } from "./clientIp.ts";
 import { type Context, createContext } from "./graphql/context.ts";
 import { schema } from "./graphql/schema.ts";
 import { logger } from "./logger.ts";
@@ -26,13 +26,9 @@ import { thumbnailRoute } from "./thumbnailRoute.ts";
 // CORS: only `allowedOrigins` may call the API from a browser, with credentials (the session
 // cookie). Yoga's default would reflect any origin with credentials allowed.
 //
-// Client IP (login throttling, PLAN M9.3): the socket's address; with `trustProxy` (behind our own
-// reverse proxy, `TRUST_PROXY=true`) the last `X-Forwarded-For` entry, the one that proxy added.
-// Earlier entries come from the client and can be forged, so they are never used.
+// `trustProxy`: behind our own reverse proxy, the client IP comes from X-Forwarded-For
+// (clientIp.ts).
 export type AppOptions = { allowedOrigins: string[]; trustProxy?: boolean };
-
-/** What node:http gives Yoga per request (`req`); in-process `app.fetch` calls may pass it too. */
-export type ServerContext = { req?: { socket?: { remoteAddress?: string } } };
 
 export function createApp(db: Db, { allowedOrigins, trustProxy = false }: AppOptions) {
   // Explicit origins only. (whatwg-node's own list handling treats [] as "allow all" and echoes a
@@ -94,7 +90,7 @@ export function createApp(db: Db, { allowedOrigins, trustProxy = false }: AppOpt
       }),
       // The image endpoint (ADR-0014) is anonymous and answers before every GraphQL concern;
       // placing it before CSRF is what lets an image URL be used without the CSRF header.
-      thumbnailRoute(db),
+      thumbnailRoute(db, trustProxy),
       // CSRF: rejects requests a browser could send cross-site without a CORS preflight
       // (GET, or POST with a form/text content type) unless they carry this header.
       useCSRFPrevention({ requestHeaders: ["x-graphql-yoga-csrf"] }),
@@ -107,21 +103,6 @@ export function createApp(db: Db, { allowedOrigins, trustProxy = false }: AppOpt
       },
     ],
   });
-}
-
-/** The request's client IP (see `AppOptions`), or null when it can't be known. */
-export function clientIpOf(
-  request: Request,
-  req: ServerContext["req"],
-  trustProxy: boolean,
-): string | null {
-  if (trustProxy) {
-    const forwarded = (request.headers.get("x-forwarded-for") ?? "").split(",");
-    const last = forwarded[forwarded.length - 1]?.trim() ?? "";
-    if (isIP(last) !== 0) return last;
-  }
-  const address = req?.socket?.remoteAddress;
-  return address !== undefined && isIP(address) !== 0 ? address : null;
 }
 
 // Messages of the errors underneath `error`: GraphQL's `originalError`, then each `cause`.

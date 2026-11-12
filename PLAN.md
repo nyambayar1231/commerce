@@ -100,7 +100,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   - API: images only (no `mediaUrl`/oEmbed/video); `ProductMedia.url` without `size` is the
     original (Saleor: 4096 thumbnail); thumbnails are auto-oriented from EXIF (Saleor doesn't);
     reorder maps an unknown id to `NOT_PRODUCTS_IMAGE` (Saleor: `NOT_FOUND`); no original-image
-    proxy (`/thumbnail/<id>/`), no `productMediaBulkDelete`, no rate limiting on `/thumbnail/` (M9).
+    proxy (`/thumbnail/<id>/`), no `productMediaBulkDelete`; thumbnail generation is limited per IP since M9.4.
   - Dashboard: no "Upload URL", no tile selection / Select all / Delete (n), no metadata dialog or
     translations button on the image page; an unknown image id shows NotFound (Saleor: endless
     skeleton); the alt field shows the API's error message (Saleor shows none); Save is disabled
@@ -267,7 +267,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M9.1 | Config: `config.ts` validates all env vars at startup (API, worker), production rules, `.env.example` updated; tests for the validation | Done |
 | M9.2 | Logging + health: Yoga's logger shared by the API and worker (JSON in production, request id), job outcomes logged, `console.*` replaced; `/health/live`, `/health/ready` (DB check) | Done |
 | M9.3 | Login throttling: `rate_limit` table + migration, Saleor's delays in `tokenCreate`, client IP with `TRUST_PROXY`, the two error codes; tests | Done |
-| M9.4 | `/thumbnail/` generation limit per IP (429 with `Retry-After`); tests | Proposed |
+| M9.4 | `/thumbnail/` generation limit per IP (429 with `Retry-After`); tests | Done |
 | M9.5 | Date-cursor fix: timestamp sorts encode microseconds (as the order list); a regression test with rows in one millisecond; other date-sorted lists checked | Proposed |
 | M9.6 | Docker: multi-stage `Dockerfile`s (API/worker, dashboard + nginx), `docker-compose.prod.yml`, migrations as a one-off command, `docs/deploy.md` (incl. ADR-0014's S3 checklist); checked by running the stack | Proposed |
 | M9.7 | Playwright golden paths in `e2e/` (decision 9) | Proposed |

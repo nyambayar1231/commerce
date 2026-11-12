@@ -2,10 +2,12 @@ import { closeDb, getDb, schema } from "@commerce/db";
 import { eq } from "drizzle-orm";
 import sharp from "sharp";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { clientAt } from "../test/graphql.ts";
 import { createApp } from "./app.ts";
 import { toGlobalId } from "./graphql/globalId.ts";
 import { createProductMedia, type ProductMediaRow } from "./modules/catalog/index.ts";
 import { getStorage } from "./storage/index.ts";
+import { GENERATIONS_PER_MINUTE } from "./thumbnailRoute.ts";
 
 // Saleor's on-demand thumbnail endpoint through the real Yoga app, the commerce_test database and
 // the test media bucket: anonymous GET/HEAD, redirects, generation, reuse and every error answer.
@@ -36,7 +38,9 @@ async function clearObjects(): Promise<void> {
 
 beforeEach(async () => {
   await clearObjects();
-  await db.$client.unsafe('TRUNCATE "user", permission_group, category, product CASCADE');
+  await db.$client.unsafe(
+    'TRUNCATE "user", permission_group, category, product, rate_limit CASCADE',
+  );
   await db.insert(schema.product).values({ id: PRODUCT, name: "Hoodie", slug: "hoodie" });
 });
 
@@ -50,7 +54,8 @@ afterAll(async () => {
   await closeDb();
 });
 
-const get = (path: string, method = "GET") => app.fetch(`http://test${path}`, { method });
+const get = (path: string, method = "GET", ip?: string) =>
+  app.fetch(`http://test${path}`, { method }, clientAt(ip));
 
 /** A JPEG of `width`x`height`, uploaded through the domain function (the real media path). */
 async function uploadJpeg(width: number, height: number): Promise<ProductMediaRow> {
@@ -278,3 +283,47 @@ function crc32(bytes: Uint8Array): number {
   }
   return (crc ^ 0xffffffff) >>> 0;
 }
+
+// PLAN M9.4: only generation is limited, per client IP, in a one-minute window.
+describe("thumbnail generation limit", () => {
+  const IP = "198.51.100.20";
+  // The IP's window as if it had already generated the maximum, ending in 30 seconds.
+  const exhaustWindow = (ip: string) =>
+    db.insert(schema.rateLimit).values({
+      key: `thumbnail:ip:${ip}`,
+      count: GENERATIONS_PER_MINUTE,
+      expiresAt: new Date(Date.now() + 30_000),
+    });
+
+  it("counts each generation for the client IP", async () => {
+    const media = await uploadJpeg(400, 300);
+    expect((await get(`/thumbnail/${productMediaId(media.id)}/64/`, "GET", IP)).status).toBe(302);
+    // Served from the stored row: not counted.
+    expect((await get(`/thumbnail/${productMediaId(media.id)}/64/`, "GET", IP)).status).toBe(302);
+    const [row] = await db
+      .select()
+      .from(schema.rateLimit)
+      .where(eq(schema.rateLimit.key, `thumbnail:ip:${IP}`));
+    expect(row?.count).toBe(1);
+  });
+
+  it("answers 429 with Retry-After over the limit, but still redirects to existing ones", async () => {
+    const media = await uploadJpeg(400, 300);
+    expect((await get(`/thumbnail/${productMediaId(media.id)}/64/`)).status).toBe(302);
+    await exhaustWindow(IP);
+    const putObject = vi.spyOn(storage, "putObject");
+
+    const limited = await get(`/thumbnail/${productMediaId(media.id)}/128/`, "GET", IP);
+    expect(limited.status).toBe(429);
+    expect(await bodyText(limited)).toBe("Too many thumbnail requests.");
+    const retryAfter = Number(limited.headers.get("retry-after"));
+    expect(retryAfter).toBeGreaterThanOrEqual(29);
+    expect(retryAfter).toBeLessThanOrEqual(31);
+    expect(putObject).not.toHaveBeenCalled();
+
+    expect((await get(`/thumbnail/${productMediaId(media.id)}/64/`, "GET", IP)).status).toBe(302);
+    // Another client is not affected.
+    const other = await get(`/thumbnail/${productMediaId(media.id)}/128/`, "GET", "198.51.100.21");
+    expect(other.status).toBe(302);
+  });
+});

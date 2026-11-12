@@ -82,9 +82,9 @@ export async function authenticate(
   if (!row || !correct) {
     // Saleor counts a failure per IP+account only for an existing account.
     const ipUserAttempts = row
-      ? await increment(db, failedIpUserKey(ip, row.id), ATTEMPT_COUNTER_EXPIRE_TIME)
+      ? (await increment(db, failedIpUserKey(ip, row.id), ATTEMPT_COUNTER_EXPIRE_TIME)).count
       : 0;
-    const ipAttempts = await increment(db, failedIpKey(ip), ATTEMPT_COUNTER_EXPIRE_TIME);
+    const ipAttempts = (await increment(db, failedIpKey(ip), ATTEMPT_COUNTER_EXPIRE_TIME)).count;
     await setBlock(db, blockedIpKey(ip), delaySeconds(ipAttempts, ipUserAttempts));
     return { ok: false, code: "INVALID_CREDENTIALS" };
   }

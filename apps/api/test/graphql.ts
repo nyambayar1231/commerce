@@ -1,6 +1,7 @@
 import { type Db, schema } from "@commerce/db";
 import { expect } from "vitest";
-import { createApp, type ServerContext } from "../src/app.ts";
+import { createApp } from "../src/app.ts";
+import type { ServerContext } from "../src/clientIp.ts";
 import type { AuthorizationFilter } from "../src/graphql/permissions.ts";
 import { createSession, type Permission } from "../src/modules/identity/index.ts";
 

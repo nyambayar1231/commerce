@@ -186,6 +186,9 @@ export async function getOrCreateThumbnail(
   mediaId: string,
   size: number,
   format: ThumbnailFormat,
+  // Runs only when a thumbnail is about to be generated (the costly part); a throw stops it. The
+  // route's rate limit (PLAN M9.4).
+  beforeGenerate?: () => Promise<void>,
 ): Promise<ProductMediaThumbnailRow> {
   const existing = await thumbnailRow(db, mediaId, size, format);
   if (existing) return existing;
@@ -195,6 +198,7 @@ export async function getOrCreateThumbnail(
     .from(schema.productMedia)
     .where(eq(schema.productMedia.id, mediaId));
   if (!media) throw new ProductMediaNotFoundError([mediaId]);
+  await beforeGenerate?.();
 
   const original = await storage.getObject(media.imageKey);
   const generated = await renderThumbnail(mediaId, original, size, format);

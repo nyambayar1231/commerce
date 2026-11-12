@@ -2,7 +2,8 @@ import { closeDb, getDb, schema } from "@commerce/db";
 import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { clientAt } from "../../../test/graphql.ts";
-import { clientIpOf, createApp } from "../../app.ts";
+import { createApp } from "../../app.ts";
+import { clientIpOf } from "../../clientIp.ts";
 import { createSuperuser } from "./index.ts";
 import { delaySeconds } from "./login.ts";
 

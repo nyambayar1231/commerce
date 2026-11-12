@@ -44,10 +44,15 @@ export async function setBlock(db: Executor, key: string, seconds: number): Prom
 }
 
 /**
- * Saleor's `increment_attempt`: adds one to the counter `key` and returns the new count. A new (or
- * expired) counter starts at 1 and lives `ttlSeconds`; incrementing keeps its expiry, as cache.incr.
+ * Saleor's `increment_attempt`: adds one to the counter `key` and returns the new count and when
+ * the counter expires. A new (or expired) counter starts at 1 and lives `ttlSeconds`; incrementing
+ * keeps its expiry, as cache.incr. With a fixed `ttlSeconds` this is a fixed-window rate limit.
  */
-export async function increment(db: Executor, key: string, ttlSeconds: number): Promise<number> {
+export async function increment(
+  db: Executor,
+  key: string,
+  ttlSeconds: number,
+): Promise<{ count: number; expiresAt: Date }> {
   const [row] = await db
     .insert(rateLimit)
     .values({ key, count: 1, expiresAt: sql`now() + make_interval(secs => ${ttlSeconds})` })
@@ -58,9 +63,9 @@ export async function increment(db: Executor, key: string, ttlSeconds: number): 
         expiresAt: sql`case when ${rateLimit.expiresAt} <= now() then excluded.expires_at else ${rateLimit.expiresAt} end`,
       },
     })
-    .returning({ count: rateLimit.count });
+    .returning({ count: rateLimit.count, expiresAt: rateLimit.expiresAt });
   if (!row) throw new Error("rate_limit upsert returned no row");
-  return row.count;
+  return row;
 }
 
 /** Saleor's `clear_cache`: removes `keys`, and every expired row while at it. */
