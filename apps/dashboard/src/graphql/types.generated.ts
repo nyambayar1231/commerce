@@ -4,6 +4,9 @@ type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type AccountErrorCode =
+  | 'DELETE_OWN_ACCOUNT'
+  | 'DELETE_STAFF_ACCOUNT'
+  | 'DELETE_SUPERUSER_ACCOUNT'
   | 'INACTIVE'
   | 'INVALID'
   | 'INVALID_CREDENTIALS'

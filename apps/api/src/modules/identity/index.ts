@@ -12,12 +12,34 @@ export {
   hashRegistrationPassword,
   registerCustomer,
 } from "./accounts.ts";
+export type {
+  CustomerError,
+  CustomerErrorCode,
+  CustomerInput,
+  CustomerListArgs,
+  CustomerPage,
+  CustomerResult,
+  UserSortField,
+} from "./customers.ts";
+export {
+  createCustomer,
+  deleteCustomers,
+  getUserForStaff,
+  InvalidCustomerCursorError,
+  listCustomers,
+  updateCustomer,
+} from "./customers.ts";
 export type { LoginResult } from "./login.ts";
 export { authenticate } from "./login.ts";
 export type { Permission } from "./permissions.ts";
 export { getEffectivePermissions, PERMISSION_NAMES, PERMISSIONS } from "./permissions.ts";
 export type { CreatedSession, SessionUser } from "./sessions.ts";
-export { createSession, getSessionUser, revokeSession } from "./sessions.ts";
+export {
+  createSession,
+  getSessionUser,
+  revokeSession,
+  SESSION_USER_COLUMNS,
+} from "./sessions.ts";
 export type {
   PermissionGroupCreateInput,
   PermissionGroupUpdateInput,

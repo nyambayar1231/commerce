@@ -1,7 +1,7 @@
 import { type Executor, schema } from "@commerce/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { hashPassword, verifyPassword } from "./password.ts";
-import type { SessionUser } from "./sessions.ts";
+import { SESSION_USER_COLUMNS, type SessionUser } from "./sessions.ts";
 
 // Password login, as Saleor's `tokenCreate` decides it
 // (../saleor-core/saleor/graphql/account/mutations/authentication/create_token.py): unknown email,
@@ -27,16 +27,7 @@ export async function authenticate(
   if (password.length > MAX_PASSWORD_LENGTH) return { ok: false, code: "INVALID_CREDENTIALS" };
 
   const [row] = await db
-    .select({
-      id: schema.user.id,
-      email: schema.user.email,
-      firstName: schema.user.firstName,
-      lastName: schema.user.lastName,
-      isStaff: schema.user.isStaff,
-      isSuperuser: schema.user.isSuperuser,
-      isActive: schema.user.isActive,
-      passwordHash: schema.user.passwordHash,
-    })
+    .select({ ...SESSION_USER_COLUMNS, passwordHash: schema.user.passwordHash })
     .from(schema.user)
     .where(eq(schema.user.email, email.trim()));
 
@@ -50,6 +41,12 @@ export async function authenticate(
   }
   if (!row.isActive) return { ok: false, code: "INACTIVE" };
 
-  const { isActive: _a, passwordHash: _p, ...user } = row;
-  return { ok: true, user };
+  // Saleor's update_user_last_login_if_required, on every successful login.
+  const { passwordHash: _p, ...user } = row;
+  const [updated] = await db
+    .update(schema.user)
+    .set({ lastLogin: sql`now()` })
+    .where(eq(schema.user.id, row.id))
+    .returning({ lastLogin: schema.user.lastLogin });
+  return { ok: true, user: { ...user, lastLogin: updated?.lastLogin ?? user.lastLogin } };
 }

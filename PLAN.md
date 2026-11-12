@@ -209,10 +209,11 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
    (refuses a checkout that already has an owner) and `checkoutCustomerDetach` (owner only); the id
    stays the secret, so anyone holding it can still use a customer's checkout. Completion gives
    the order to the owner, or to the active account with the checkout's email.
-8. **Customers are non-staff users:** `customers` lists `is_staff = false` only; `customerCreate`
-   makes a user without a password (they can log in once M8 sends the set-password email, as
-   `staffCreate`); deleting a customer keeps their orders (the order's user becomes `null`) and ends
-   their sessions.
+8. **Customers = Saleor's customer set:** `customers` lists non-staff users plus staff users who
+   placed an order (Saleor's `User.objects.customers()`); `customerCreate` makes a user without a
+   password (they can log in once M8 sends the set-password email, as `staffCreate`);
+   `customerUpdate` and the deletes refuse staff accounts; deleting a customer keeps their orders
+   (the order's user becomes `null`) and ends their sessions.
 
 **Steps (each one commit, one report):**
 
@@ -220,7 +221,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 |---|---|---|
 | M7.1 | API account: `accountRegister` (decisions 1, 2), `me.orders`, `order(id)` for its owner (decision 6); tests | Done |
 | M7.2 | API checkout ↔ user: decision 7, `me.checkouts`; ownership tests | Done |
-| M7.3 | API staff customers: `customers` connection (search, Saleor's `sortBy`), `user(id)`, `User.orders`, `customerCreate`/`Update`/`Delete`, `customerBulkDelete` (`MANAGE_USERS`) | Proposed |
+| M7.3 | API staff customers: `customers` connection (search, Saleor's `sortBy`), `user(id)`, `User.orders`, `customerCreate`/`Update`/`Delete`, `customerBulkDelete` (`MANAGE_USERS`) | Done |
 | M7.4 | Dashboard customer list: Customers menu item, Saleor's CustomerListPage + datagrid (name, email, orders), search, pagination, column settings | Proposed |
 | M7.5 | Dashboard customer detail, create page, delete dialogs; "View profile" link from the order's customer card | Proposed |
 

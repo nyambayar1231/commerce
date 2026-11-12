@@ -26,6 +26,24 @@ export type SessionUser = {
   lastName: string;
   isStaff: boolean;
   isSuperuser: boolean;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  lastLogin: Date | null;
+};
+
+/** The `user` columns every read of a SessionUser selects (sessions, login, loaders, GraphQL). */
+export const SESSION_USER_COLUMNS = {
+  id: schema.user.id,
+  email: schema.user.email,
+  firstName: schema.user.firstName,
+  lastName: schema.user.lastName,
+  isStaff: schema.user.isStaff,
+  isSuperuser: schema.user.isSuperuser,
+  isActive: schema.user.isActive,
+  createdAt: schema.user.createdAt,
+  updatedAt: schema.user.updatedAt,
+  lastLogin: schema.user.lastLogin,
 };
 
 export type CreatedSession = { token: string; expiresAt: Date };
@@ -66,14 +84,7 @@ export async function getSessionUser(
       expiresAt: schema.session.expiresAt,
       lastSeenAt: schema.session.lastSeenAt,
       isActive: schema.user.isActive,
-      user: {
-        id: schema.user.id,
-        email: schema.user.email,
-        firstName: schema.user.firstName,
-        lastName: schema.user.lastName,
-        isStaff: schema.user.isStaff,
-        isSuperuser: schema.user.isSuperuser,
-      },
+      user: SESSION_USER_COLUMNS,
     })
     .from(schema.session)
     .innerJoin(schema.user, eq(schema.user.id, schema.session.userId))

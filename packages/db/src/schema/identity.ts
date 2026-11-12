@@ -35,6 +35,9 @@ export const user = pgTable(
     isSuperuser: boolean("is_superuser").notNull().default(false),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    // Saleor's User.updated_at and last_login (M7.3): set by profile updates and by tokenCreate.
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    lastLogin: timestamp("last_login", { withTimezone: true }),
   },
   (table) => [
     unique("user_email_unique").on(table.email),

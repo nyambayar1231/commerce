@@ -12,6 +12,9 @@ type AccountError {
 }
 
 enum AccountErrorCode {
+  DELETE_OWN_ACCOUNT
+  DELETE_STAFF_ACCOUNT
+  DELETE_SUPERUSER_ACCOUNT
   INACTIVE
   INVALID
   INVALID_CREDENTIALS
@@ -814,6 +817,62 @@ type CreateToken {
 }
 
 """
+Deletes customers.
+
+Requires one of the following permissions: MANAGE_USERS.
+"""
+type CustomerBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  errors: [AccountError!]!
+}
+
+"""
+Creates a new customer.
+
+Requires one of the following permissions: MANAGE_USERS.
+"""
+type CustomerCreate {
+  errors: [AccountError!]!
+  user: User
+}
+
+"""
+Deletes a customer.
+
+Requires one of the following permissions: MANAGE_USERS.
+"""
+type CustomerDelete {
+  errors: [AccountError!]!
+  user: User
+}
+
+"""Fields required to update a user."""
+input CustomerInput {
+  """The unique email address of the user."""
+  email: String
+
+  """Given name."""
+  firstName: String
+
+  """User account is active."""
+  isActive: Boolean
+
+  """Family name."""
+  lastName: String
+}
+
+"""
+Updates an existing customer.
+
+Requires one of the following permissions: MANAGE_USERS.
+"""
+type CustomerUpdate {
+  errors: [AccountError!]!
+  user: User
+}
+
+"""
 The `DateTime` scalar type represents a DateTime
 value as specified by
 [iso8601](https://en.wikipedia.org/wiki/ISO_8601).
@@ -1127,6 +1186,49 @@ type Mutation {
     """The mailing address to where the checkout will be shipped."""
     shippingAddress: AddressInput!
   ): CheckoutShippingAddressUpdate
+
+  """
+  Deletes customers.
+  
+  Requires one of the following permissions: MANAGE_USERS.
+  """
+  customerBulkDelete(
+    """List of user IDs to delete."""
+    ids: [ID!]!
+  ): CustomerBulkDelete
+
+  """
+  Creates a new customer.
+  
+  Requires one of the following permissions: MANAGE_USERS.
+  """
+  customerCreate(
+    """Fields required to create a customer."""
+    input: UserCreateInput!
+  ): CustomerCreate
+
+  """
+  Deletes a customer.
+  
+  Requires one of the following permissions: MANAGE_USERS.
+  """
+  customerDelete(
+    """ID of a customer to delete."""
+    id: ID!
+  ): CustomerDelete
+
+  """
+  Updates an existing customer.
+  
+  Requires one of the following permissions: MANAGE_USERS.
+  """
+  customerUpdate(
+    """ID of a customer to update."""
+    id: ID!
+
+    """Fields required to update a customer."""
+    input: CustomerInput!
+  ): CustomerUpdate
 
   """End the current session. Succeeds when there is none."""
   logout: Logout!
@@ -2444,6 +2546,24 @@ type Query {
     id: ID
   ): Checkout
 
+  """
+  List of the shop's customers. This list includes all users who registered through the accountRegister mutation. Additionally, staff users who have placed an order using their account will also appear in this list.
+  
+  Requires one of the following permissions: MANAGE_ORDERS, MANAGE_USERS.
+  """
+  customers(
+    after: String
+    before: String
+    first: Int
+    last: Int
+
+    """Search customers."""
+    search: String
+
+    """Sort customers."""
+    sortBy: UserSortingInput
+  ): UserCountableConnection
+
   """Return the currently authenticated user."""
   me: User
 
@@ -2528,6 +2648,16 @@ type Query {
 
   """Return information about the shop."""
   shop: Shop!
+
+  """
+  Look up a user by ID.
+  
+  Requires one of the following permissions: MANAGE_STAFF, MANAGE_USERS, MANAGE_ORDERS.
+  """
+  user(
+    """ID of the user."""
+    id: ID!
+  ): User
 
   """
   Look up a warehouse by ID.
@@ -3012,14 +3142,23 @@ type User implements Node {
   Returns checkouts assigned to this user. Requires one of the following permissions: MANAGE_CHECKOUTS, OWNER.
   """
   checkouts(after: String, before: String, first: Int, last: Int): CheckoutCountableConnection
+
+  """The date when the user joined."""
+  dateJoined: DateTime!
   email: String!
   firstName: String!
 
   """The ID of the object."""
   id: ID!
 
+  """Determine if the user is active."""
+  isActive: Boolean!
+
   """Determine if the user is a staff admin."""
   isStaff: Boolean!
+
+  """The date when the user last logged in."""
+  lastLogin: DateTime
   lastName: String!
 
   """
@@ -3027,8 +3166,39 @@ type User implements Node {
   """
   orders(after: String, before: String, first: Int, last: Int): OrderCountableConnection
 
+  """The date when the user was last updated."""
+  updatedAt: DateTime!
+
   """List of user's permissions."""
   userPermissions: [UserPermission!]
+}
+
+type UserCountableConnection {
+  edges: [UserCountableEdge!]!
+  pageInfo: PageInfo!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type UserCountableEdge {
+  cursor: String!
+  node: User!
+}
+
+"""Fields required to create a user."""
+input UserCreateInput {
+  """The unique email address of the user."""
+  email: String
+
+  """Given name."""
+  firstName: String
+
+  """User account is active."""
+  isActive: Boolean
+
+  """Family name."""
+  lastName: String
 }
 
 """Represents user's permissions."""
@@ -3038,6 +3208,34 @@ type UserPermission {
 
   """Describe action(s) allowed to do by permission."""
   name: String!
+}
+
+enum UserSortField {
+  """Sort users by created at."""
+  CREATED_AT
+
+  """Sort users by email."""
+  EMAIL
+
+  """Sort users by first name."""
+  FIRST_NAME
+
+  """Sort users by last modified at."""
+  LAST_MODIFIED_AT
+
+  """Sort users by last name."""
+  LAST_NAME
+
+  """Sort users by order count."""
+  ORDER_COUNT
+}
+
+input UserSortingInput {
+  """Specifies the direction in which to sort users."""
+  direction: OrderDirection!
+
+  """Sort users by the selected field."""
+  field: UserSortField!
 }
 
 """Represents warehouse."""

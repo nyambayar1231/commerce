@@ -8,6 +8,7 @@ import { matchOrdersWithNewUser } from "../orders/index.ts";
 import {
   type AccountRegisterErrorCode,
   authenticate,
+  type CustomerErrorCode,
   cleanAccountRegisterInput,
   createPermissionGroup,
   createSession,
@@ -21,6 +22,7 @@ import {
   type Requestor,
   registerCustomer,
   revokeSession,
+  SESSION_USER_COLUMNS,
   type SessionUser,
   type StaffError,
   type StaffResult,
@@ -76,6 +78,9 @@ export const UserType = builder.node(builder.objectRef<SessionUser>("User"), {
 // Saleor's AccountErrorCode, limited to the codes we can return.
 const AccountErrorCode = builder.enumType("AccountErrorCode", {
   values: [
+    "DELETE_OWN_ACCOUNT",
+    "DELETE_STAFF_ACCOUNT",
+    "DELETE_SUPERUSER_ACCOUNT",
     "INACTIVE",
     "INVALID",
     "INVALID_CREDENTIALS",
@@ -86,13 +91,13 @@ const AccountErrorCode = builder.enumType("AccountErrorCode", {
   ] as const,
 });
 
-type AccountError = {
+export type AccountError = {
   field: string | null;
   message: string;
-  code: "INACTIVE" | "INVALID_CREDENTIALS" | AccountRegisterErrorCode;
+  code: "INACTIVE" | "INVALID_CREDENTIALS" | AccountRegisterErrorCode | CustomerErrorCode;
 };
 
-const AccountErrorType = builder.objectRef<AccountError>("AccountError").implement({
+export const AccountErrorType = builder.objectRef<AccountError>("AccountError").implement({
   description: "Represents errors in account mutations.",
   fields: (t) => ({
     field: t.exposeString("field", {
@@ -251,14 +256,7 @@ const PermissionType = builder.objectRef<Permission>("Permission").implement({
   }),
 });
 
-const USER_COLUMNS = {
-  id: schema.user.id,
-  email: schema.user.email,
-  firstName: schema.user.firstName,
-  lastName: schema.user.lastName,
-  isStaff: schema.user.isStaff,
-  isSuperuser: schema.user.isSuperuser,
-};
+const USER_COLUMNS = SESSION_USER_COLUMNS;
 
 type GroupModel = { id: string; name: string };
 
