@@ -1,5 +1,6 @@
 import { closeDb, getDb } from "@commerce/db";
 import { assertConfig } from "./config.ts";
+import { logger } from "./logger.ts";
 import { accountConfirmationHandler } from "./modules/identity/index.ts";
 import {
   createSmtpMailer,
@@ -23,7 +24,7 @@ assertConfig("worker");
 const mailer = createSmtpMailer(readEmailConfig());
 const boss = await startJobQueue({ supervise: true });
 await startWorkers(boss, HANDLERS, { db: getDb(), mailer });
-console.log(`Worker running (${HANDLERS.length} job types)`);
+logger.info({ jobTypes: HANDLERS.length }, "Worker running");
 
 // Finish the running jobs, then close the pools so the process can exit.
 async function shutdown() {

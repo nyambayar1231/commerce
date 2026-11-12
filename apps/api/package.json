@@ -22,6 +22,7 @@
     "@aws-sdk/client-s3": "3.1157.0",
     "@commerce/contracts": "workspace:*",
     "@commerce/db": "workspace:*",
+    "@graphql-hive/logger": "1.1.1",
     "@graphql-yoga/plugin-csrf-prevention": "4.0.1",
     "@node-rs/argon2": "2.2.2",
     "@pothos/core": "4.16.0",

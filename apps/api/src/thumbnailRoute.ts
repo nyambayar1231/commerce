@@ -1,6 +1,7 @@
 import type { Db } from "@commerce/db";
 import type { Plugin } from "graphql-yoga";
 import { decodeGlobalId } from "./graphql/globalId.ts";
+import { logger } from "./logger.ts";
 import {
   getOrCreateThumbnail,
   getThumbnailSize,
@@ -79,7 +80,7 @@ async function handleThumbnail(
     if (error instanceof ImageTooLargeError) return textResponse("Image is too large.", 400);
     if (error instanceof InvalidImageError) return textResponse("Invalid image.", 400);
 
-    console.error(`Failed to create a thumbnail for ${globalId} (${size}, ${format})`, error);
+    logger.error({ err: error, id: globalId, size, format }, "Failed to create a thumbnail");
     return textResponse("Internal server error.", 500);
   }
 }

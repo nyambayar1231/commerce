@@ -1,6 +1,7 @@
 import { type Executor, schema } from "@commerce/db";
 import { and, eq } from "drizzle-orm";
 import sharp, { type Sharp } from "sharp";
+import { logger } from "../../logger.ts";
 import { type Storage, type ThumbnailFormat, thumbnailKey } from "../../storage/index.ts";
 import { ProductMediaNotFoundError, type ProductMediaThumbnailRow } from "./media.ts";
 
@@ -203,7 +204,10 @@ export async function getOrCreateThumbnail(
     try {
       await storage.deleteObject(generated.key);
     } catch (error) {
-      console.error(`Failed to delete an orphan thumbnail object: ${generated.key}`, error);
+      logger.error(
+        { err: error, key: generated.key },
+        "Failed to delete an orphan thumbnail object",
+      );
     }
   };
 

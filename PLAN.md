@@ -230,8 +230,9 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
    (two commands), one for the dashboard (static files served by nginx), and
    `docker-compose.prod.yml` that runs the whole stack like production. No cloud vendor yet.
 2. **Rate-limit counters live in Postgres** (no Redis; works with several API instances).
-3. **Observability = logs + health:** pino JSON logs with a request id, `/health/live` and
-   `/health/ready`. No metrics or tracing.
+3. **Observability = logs + health:** JSON logs with a request id, `/health/live` and
+   `/health/ready`. No metrics or tracing. Changed in M9.2 (owner, 2026-11-12): Yoga 6's own
+   logger (`@graphql-hive/logger`) instead of pino, so no second logging library.
 4. **Also in M9:** the date-cursor bug found in M6.1, and CI on GitHub Actions.
 5. **Pace:** continuous, a report after each step.
 
@@ -263,7 +264,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | Step | What | Status |
 |---|---|---|
 | M9.1 | Config: `config.ts` validates all env vars at startup (API, worker), production rules, `.env.example` updated; tests for the validation | Done |
-| M9.2 | Logging + health: pino with a request id (Yoga plugin), unexpected GraphQL errors logged with context, `console.*` replaced; `/health/live`, `/health/ready` (DB check) | Proposed |
+| M9.2 | Logging + health: Yoga's logger shared by the API and worker (JSON in production, request id), job outcomes logged, `console.*` replaced; `/health/live`, `/health/ready` (DB check) | Done |
 | M9.3 | Login throttling: `rate_limit` table + migration, Saleor's delays in `tokenCreate`, client IP with `TRUST_PROXY`, the two error codes; tests | Proposed |
 | M9.4 | `/thumbnail/` generation limit per IP (429 with `Retry-After`); tests | Proposed |
 | M9.5 | Date-cursor fix: timestamp sorts encode microseconds (as the order list); a regression test with rows in one millisecond; other date-sorted lists checked | Proposed |

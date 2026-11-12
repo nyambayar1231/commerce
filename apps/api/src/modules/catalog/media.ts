@@ -1,6 +1,7 @@
 import { type Executor, schema } from "@commerce/db";
 import { asc, eq, inArray, sql } from "drizzle-orm";
 import { toGlobalId } from "../../graphql/globalId.ts";
+import { logger } from "../../logger.ts";
 import { productMediaKey, type Storage } from "../../storage/index.ts";
 import { type UploadedFile, validateImageFile } from "./mediaFile.ts";
 import {
@@ -148,7 +149,7 @@ export async function deleteObjectsQuietly(storage: Storage, keys: string[]): Pr
     try {
       await storage.deleteObject(key);
     } catch (error) {
-      console.error(`Failed to delete a product media object: ${key}`, error);
+      logger.error({ err: error, key }, "Failed to delete a product media object");
     }
   }
 }
@@ -228,7 +229,10 @@ export async function createProductMedia(
     try {
       await storage.deleteObject(key);
     } catch (deleteError) {
-      console.error(`Failed to delete the object of a failed media create: ${key}`, deleteError);
+      logger.error(
+        { err: deleteError, key },
+        "Failed to delete the object of a failed media create",
+      );
     }
     throw error;
   }

@@ -1,9 +1,11 @@
 import type { Db } from "@commerce/db";
 import { useCSRFPrevention } from "@graphql-yoga/plugin-csrf-prevention";
+import { sql } from "drizzle-orm";
 import { GraphQLError } from "graphql";
-import { createYoga, maskError } from "graphql-yoga";
+import { createYoga, maskError, useReadinessCheck } from "graphql-yoga";
 import { type Context, createContext } from "./graphql/context.ts";
 import { schema } from "./graphql/schema.ts";
+import { logger } from "./logger.ts";
 import { thumbnailRoute } from "./thumbnailRoute.ts";
 
 // The GraphQL app as a request handler, with no HTTP server attached. server.ts serves it over
@@ -14,6 +16,11 @@ import { thumbnailRoute } from "./thumbnailRoute.ts";
 //   original error is logged on the server (we add its causes, see `maskedErrors` below).
 // - request ids: each request gets one (or keeps a safe incoming `x-request-id`); it is added
 //   to every log line and returned in the `x-request-id` response header.
+//
+// Logging and health (PLAN M9.2): Yoga writes through our logger (src/logger.ts, JSON lines in
+// production). `/health/live` answers 200 while the process serves requests (Yoga's health check);
+// `/health/ready` answers 200 only when the database answers too, 503 otherwise, so a load
+// balancer stops sending traffic to an instance that can't serve it.
 //
 // CORS: only `allowedOrigins` may call the API from a browser, with credentials (the session
 // cookie). Yoga's default would reflect any origin with credentials allowed.
@@ -30,6 +37,8 @@ export function createApp(db: Db, { allowedOrigins }: AppOptions) {
 
   return createYoga<Record<string, unknown>, Context>({
     schema,
+    logging: logger,
+    healthCheckEndpoint: "/health/live",
     // The multipart body of a product image upload is buffered by the request parser before our
     // 10 MiB check runs (modules/catalog/mediaFile.ts); cap the body just above it so a huge
     // request is rejected with 413 instead of being read. Yoga's default is 25 MB.
@@ -58,6 +67,19 @@ export function createApp(db: Db, { allowedOrigins }: AppOptions) {
       },
     },
     plugins: [
+      useReadinessCheck({
+        endpoint: "/health/ready",
+        check: async () => {
+          try {
+            await db.execute(sql`select 1`);
+            return true;
+          } catch (error) {
+            // A 503 without the reason: the error stays in the log, not in a public response.
+            logger.warn({ err: error }, "Readiness check failed");
+            return false;
+          }
+        },
+      }),
       // The image endpoint (ADR-0014) is anonymous and answers before every GraphQL concern;
       // placing it before CSRF is what lets an image URL be used without the CSRF header.
       thumbnailRoute(db),

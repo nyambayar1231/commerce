@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { closeDb, getDb } from "@commerce/db";
 import { createApp } from "./app.ts";
 import { assertConfig } from "./config.ts";
+import { logger } from "./logger.ts";
 import { stopJobQueue } from "./modules/jobs/index.ts";
 
 // Fail at start with every configuration problem listed (PLAN M9.1).
@@ -17,7 +18,7 @@ const allowedOrigins = (process.env.ALLOWED_GRAPHQL_ORIGINS ?? "http://localhost
 const server = createServer(createApp(getDb(), { allowedOrigins }));
 
 server.listen(port, () => {
-  console.log(`GraphQL API on http://localhost:${port}/graphql`);
+  logger.info({ port }, `GraphQL API on http://localhost:${port}/graphql`);
 });
 
 // Stop accepting requests, then close pg-boss's and the database's pools so the process can exit.

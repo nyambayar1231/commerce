@@ -1,4 +1,5 @@
 import { PgBoss } from "pg-boss";
+import { logger } from "../../logger.ts";
 
 // The process's pg-boss instance (ADR-0009). pg-boss owns the `pgboss` schema: `start()` creates
 // and upgrades it (PLAN M8 decision 8), so it isn't a drizzle migration. The API process only
@@ -33,7 +34,7 @@ export async function startJobQueue({ supervise }: { supervise: boolean }): Prom
     schedule: false,
     application_name: supervise ? "commerce-worker" : "commerce-api-jobs",
   });
-  boss.on("error", (error) => console.error("[jobs]", error));
+  boss.on("error", (error) => logger.error({ err: error }, "pg-boss error"));
   await boss.start();
   return boss;
 }

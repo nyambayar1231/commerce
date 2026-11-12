@@ -1,5 +1,6 @@
 import type { Db } from "@commerce/db";
 import type { PgBoss } from "pg-boss";
+import { logger } from "../../logger.ts";
 import type { Mailer } from "./mailer.ts";
 import { ensureQueue, type JobQueue } from "./queues.ts";
 
@@ -39,7 +40,16 @@ export async function startWorkers(
         handler.queue.name,
         { pollingIntervalSeconds: options.pollingIntervalSeconds ?? 2 },
         async ([job]) => {
-          if (job) await handler.handle(job.data, context);
+          if (!job) return;
+          // One line per outcome (PLAN M9.2); the data is left out, it holds email addresses.
+          const attrs = { queue: handler.queue.name, jobId: job.id };
+          try {
+            await handler.handle(job.data, context);
+          } catch (error) {
+            logger.error({ ...attrs, err: error }, "Job failed (pg-boss retries it)");
+            throw error;
+          }
+          logger.info(attrs, "Job done");
         },
       ),
     );
