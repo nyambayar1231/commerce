@@ -3,7 +3,8 @@
 // See THIRD_PARTY_LICENSES.md
 // The toolbar above a list: Filters button, our ListSearchInput, then the filter panel. Saleor's
 // legacy-presets alert and search tooltip are dropped; the trailing `actions` slot holds list
-// actions such as the product list's bulk delete button.
+// actions such as the product list's bulk delete button. `withFilters={false}` leaves out the
+// Filters button and panel for a list without conditional filters (the customer list, M7.4).
 import { Box } from "@saleor/macaw-ui";
 import type { ReactNode } from "react";
 
@@ -15,6 +16,7 @@ interface ListFiltersProps {
   searchPlaceholder: string;
   onSearchChange: (value: string) => void;
   actions?: ReactNode;
+  withFilters?: boolean;
 }
 
 export const ListFilters = ({
@@ -22,11 +24,12 @@ export const ListFilters = ({
   searchPlaceholder,
   onSearchChange,
   actions,
+  withFilters = true,
 }: ListFiltersProps): ReactNode => (
   <Box display="flex" flexDirection="column" gap={3} paddingBottom={2} paddingX={6}>
     <Box display="grid" __gridTemplateColumns="auto 1fr" gap={4}>
       <Box display="flex" alignItems="center" gap={4}>
-        <ExpressionFilters />
+        {withFilters && <ExpressionFilters />}
         <Box __width="360px">
           <ListSearchInput
             initialSearch={initialSearch}
@@ -39,6 +42,6 @@ export const ListFilters = ({
         {actions}
       </Box>
     </Box>
-    <ExpressionFilterPanel />
+    {withFilters && <ExpressionFilterPanel />}
   </Box>
 );

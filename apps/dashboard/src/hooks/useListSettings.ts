@@ -32,9 +32,13 @@ export const ORDER_LIST_DEFAULT_COLUMNS = [
   "total",
 ];
 
+// Saleor's CUSTOMER_LIST default columns.
+export const CUSTOMER_LIST_DEFAULT_COLUMNS = ["name", "email", "orders"];
+
 export type ListViews =
   | "CATEGORY_LIST"
   | "COLLECTION_PRODUCTS_LIST"
+  | "CUSTOMER_LIST"
   | "ORDER_LIST"
   | "PRODUCT_LIST";
 
@@ -54,6 +58,10 @@ const defaultListSettings: AppListViewSettings = {
   CATEGORY_LIST: { rowNumber: PAGINATE_BY },
   // Saleor's CategoryProducts uses ListViews.COLLECTION_PRODUCTS_LIST for the card's row count.
   COLLECTION_PRODUCTS_LIST: { rowNumber: PAGINATE_BY },
+  CUSTOMER_LIST: {
+    rowNumber: PAGINATE_BY,
+    columns: CUSTOMER_LIST_DEFAULT_COLUMNS,
+  },
   ORDER_LIST: {
     rowNumber: PAGINATE_BY,
     columns: ORDER_LIST_DEFAULT_COLUMNS,

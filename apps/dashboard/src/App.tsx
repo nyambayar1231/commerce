@@ -9,6 +9,7 @@ import { AppLayout } from "./components/AppLayout/AppLayout";
 import ExitFormDialogProvider from "./components/Form/ExitFormDialogProvider";
 import { PlaceholderPage } from "./components/PlaceholderPage/PlaceholderPage";
 import { CONFIGURATION_PERMISSIONS } from "./components/Sidebar/menu/hooks/useMenuStructure";
+import { CustomerSection } from "./customers";
 import { sectionNames } from "./intl";
 import { NotFound } from "./NotFound";
 import { OrderSection } from "./orders";
@@ -72,7 +73,7 @@ function Dashboard() {
                 permissions={["MANAGE_USERS", "MANAGE_ORDERS", "MANAGE_STAFF"]}
                 matchPermission="any"
               >
-                <PlaceholderPage title={sectionNames.customers} />
+                <CustomerSection />
               </SectionRoute>
             }
           />

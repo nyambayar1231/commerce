@@ -222,7 +222,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M7.1 | API account: `accountRegister` (decisions 1, 2), `me.orders`, `order(id)` for its owner (decision 6); tests | Done |
 | M7.2 | API checkout ↔ user: decision 7, `me.checkouts`; ownership tests | Done |
 | M7.3 | API staff customers: `customers` connection (search, Saleor's `sortBy`), `user(id)`, `User.orders`, `customerCreate`/`Update`/`Delete`, `customerBulkDelete` (`MANAGE_USERS`) | Done |
-| M7.4 | Dashboard customer list: Customers menu item, Saleor's CustomerListPage + datagrid (name, email, orders), search, pagination, column settings | Proposed |
+| M7.4 | Dashboard customer list: Customers menu item, Saleor's CustomerListPage + datagrid (name, email, orders), search, pagination, column settings | Done |
 | M7.5 | Dashboard customer detail, create page, delete dialogs; "View profile" link from the order's customer card | Proposed |
 
 - **Acceptance:** a customer registers and logs in through the API, places an order with a checkout
