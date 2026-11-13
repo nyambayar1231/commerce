@@ -9,10 +9,12 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "codegen": "graphql-codegen --config codegen.ts"
+    "codegen": "graphql-codegen --config codegen.ts",
+    "extract-messages": "formatjs extract 'src/**/*.{ts,tsx}' --ignore '**/*.d.ts' --ignore '**/*.test.*' --out-file locale/defaultMessages.json --format scripts/formatter.cjs"
   },
   "devDependencies": {
     "@commerce/tsconfig": "workspace:*",
+    "@formatjs/cli": "6.18.2",
     "@graphql-codegen/cli": "8.0.0",
     "@graphql-codegen/typed-document-node": "8.0.0",
     "@graphql-codegen/typescript": "7.0.0",

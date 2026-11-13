@@ -2,7 +2,7 @@
 # Runs the project's checks in a working tree and prints a summary with exit codes.
 # Workers and the orchestrator use the same script, so results are comparable.
 #
-#   scripts/ai/verify.sh                 # lint, typecheck, tests, schema/codegen drift (cwd)
+#   scripts/ai/verify.sh                 # lint, typecheck, tests, schema/codegen/messages drift (cwd)
 #   scripts/ai/verify.sh --quick         # lint + typecheck only
 #   scripts/ai/verify.sh --build         # also build every app that has a build task
 #   scripts/ai/verify.sh --dir <path>    # check another working tree (e.g. a worktree)
@@ -73,7 +73,8 @@ if [[ "$quick" == 0 ]]; then
   # Generated, committed files must match their sources.
   step schema-print "$PNPM" schema:print
   step codegen "$PNPM" codegen
-  step generated-files-in-sync git -C "$dir" diff --exit-code --stat -- apps/api/schema.graphql 'apps/dashboard/src/graphql/*.generated.ts'
+  step extract-messages "$PNPM" extract-messages
+  step generated-files-in-sync git -C "$dir" diff --exit-code --stat -- apps/api/schema.graphql 'apps/dashboard/src/graphql/*.generated.ts' apps/dashboard/locale/defaultMessages.json
 fi
 
 if [[ "$build" == 1 ]]; then

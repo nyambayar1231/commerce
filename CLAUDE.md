@@ -94,6 +94,7 @@ In short:
 - Dependencies are pinned to exact versions (`pnpm add --save-exact`).
 - Generated, committed files — never edit by hand: `apps/api/schema.graphql` (`pnpm schema:print`),
   `apps/dashboard/src/graphql/*.generated.ts` (`pnpm codegen`),
+  `apps/dashboard/locale/defaultMessages.json` (`pnpm extract-messages`),
   `packages/db/drizzle/**` (drizzle-kit; custom migrations are written inside the generated file).
 - GraphQL naming: Saleor's names by default; any deviation goes in ARCHITECTURE §4's
   deviations table with its reason.
@@ -123,6 +124,7 @@ pnpm --filter @commerce/api dev                         # API on :4000/graphql, 
 pnpm --filter @commerce/api worker                      # background jobs: sends the emails (needs EMAIL_URL, SECRET_KEY)
 pnpm schema:print   # regenerate apps/api/schema.graphql (commit it)
 pnpm codegen        # regenerate dashboard GraphQL types from schema.graphql (commit them)
+pnpm extract-messages   # dashboard messages → apps/dashboard/locale/defaultMessages.json (commit it)
 pnpm e2e            # Playwright golden paths on a fresh commerce_e2e DB (needs db:up; once: pnpm --filter @commerce/e2e e2e:install)
 docker compose -f docker-compose.prod.yml --profile local-services up -d --build   # production images, whole stack on :8080 (docs/deploy.md)
 pnpm --filter @commerce/infra-aws cdk diff --profile commerce    # AWS stack (infra/aws, ap-northeast-2): diff | deploy

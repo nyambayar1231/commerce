@@ -17,6 +17,8 @@ let orderNumber = "";
 
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage();
+  // The dashboard defaults to Mongolian (PLAN M11); these selectors are the English texts.
+  await page.addInitScript(() => localStorage.setItem("locale", "en"));
 });
 
 test.afterAll(async () => {

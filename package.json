@@ -17,6 +17,7 @@
     "db:psql": "docker compose exec postgres psql -U commerce commerce",
     "schema:print": "turbo run schema:print",
     "codegen": "turbo run codegen",
+    "extract-messages": "pnpm --filter @commerce/dashboard extract-messages",
     "cli": "pnpm --filter @commerce/api cli",
     "e2e": "pnpm --filter @commerce/e2e e2e"
   },

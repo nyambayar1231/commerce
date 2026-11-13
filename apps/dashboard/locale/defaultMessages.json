@@ -1,0 +1,1474 @@
+{
+  "++8ZWj": {
+    "context": "Transaction event status - requested",
+    "string": "Requested"
+  },
+  "+43JV5": {
+    "context": "header",
+    "string": "Products in {categoryName}"
+  },
+  "+B25o/": {
+    "context": "dialog header",
+    "string": "Mark Order as Paid"
+  },
+  "+BkNuT": {
+    "context": "aria label for grid view button",
+    "string": "Grid view"
+  },
+  "+LyCI8": {
+    "context": "detail page top bar, settings menu button tooltip",
+    "string": "More actions"
+  },
+  "+VEhV8": {
+    "context": "product channels",
+    "string": "Availability"
+  },
+  "+ahkGr": {
+    "context": "section header",
+    "string": "Customer details"
+  },
+  "/C//FB": {
+    "context": "header, allocated product quantity",
+    "string": "Allocated"
+  },
+  "/Mcvt4": {
+    "context": "section header",
+    "string": "Media"
+  },
+  "/jEC3m": {
+    "context": "product media gallery dropzone hint",
+    "string": "Drag and drop or click to upload"
+  },
+  "/jJLYy": {
+    "string": "Transactions"
+  },
+  "/kh7MF": {
+    "context": "expand truncated toast description",
+    "string": "Show more"
+  },
+  "/suM59": {
+    "context": "pagination previous page button aria label",
+    "string": "Previous page"
+  },
+  "0/Y0nG": {
+    "context": "date group header",
+    "string": "Last 7 days"
+  },
+  "0OfZJA": {
+    "context": "button",
+    "string": "Back"
+  },
+  "0QG3GQ": {
+    "context": "empty search results on the customer list",
+    "string": "No customers found for {query}"
+  },
+  "0ix6PR": {
+    "string": "Order cancelled"
+  },
+  "0lAlsM": {
+    "context": "refund amount input helper",
+    "string": "Up to {amount} can be refunded."
+  },
+  "0mhR+F": {
+    "context": "Header row quantity label",
+    "string": "Quantity"
+  },
+  "16iwCI": {
+    "context": "section header",
+    "string": "Fulfilled"
+  },
+  "1LiVhv": {
+    "context": "section header",
+    "string": "Recent Orders"
+  },
+  "1WbTJ5": {
+    "context": "product variants, title",
+    "string": "Variants"
+  },
+  "1X6HtI": {
+    "string": "All Categories"
+  },
+  "2HfSiT": {
+    "context": "pagination",
+    "string": "No. of rows"
+  },
+  "2gLFEQ": {
+    "context": "Save composition segment for category name, slug, description, SEO",
+    "string": "general"
+  },
+  "2p0tZx": {
+    "context": "delete customer, dialog content",
+    "string": "Are you sure you want to delete {email}?"
+  },
+  "2pw5dQ": {
+    "context": "payment status",
+    "string": "Fully paid"
+  },
+  "2z3+WY": {
+    "context": "error notification when all product image uploads in a batch failed",
+    "string": "{count, plural, one {Failed to upload image} other {Failed to upload # images}}"
+  },
+  "3+990c": {
+    "context": "button",
+    "string": "View all orders"
+  },
+  "3C3Nj5": {
+    "context": "button",
+    "string": "Add variant"
+  },
+  "3DDUnc": {
+    "context": "customer account is inactive (deactivated)",
+    "string": "Inactive"
+  },
+  "3DGvA/": {
+    "string": "Remember this will also unpin all products assigned to this category, making them unavailable in storefront."
+  },
+  "3Eyq0y": {
+    "string": "Mark as paid manually if the payment is confirmed"
+  },
+  "3SVI5p": {
+    "string": "Warning"
+  },
+  "3zdm8A": {
+    "context": "Dialog title",
+    "string": "Transaction {actionType}"
+  },
+  "4IVdnm": {
+    "context": "Empty state when the filter panel has no conditions",
+    "string": "No filters"
+  },
+  "4JW9iJ": {
+    "context": "home section name",
+    "string": "Home"
+  },
+  "4VLj3S": {
+    "context": "overcharged order status",
+    "string": "Overcharged"
+  },
+  "4fJ17F": {
+    "context": "Charge in progress transaction amount, data display header",
+    "string": "Pending charge"
+  },
+  "4hl9rS": {
+    "context": "variant price in channel",
+    "string": "Price"
+  },
+  "4kcpaI": {
+    "context": "date group header",
+    "string": "Last 30 days"
+  },
+  "4piZ1P": {
+    "context": "empty state when this category has no subcategories",
+    "string": "No categories found"
+  },
+  "4qe6hO": {
+    "context": "product stock, section header",
+    "string": "Inventory"
+  },
+  "577R2r": {
+    "string": "Invalid value"
+  },
+  "5Nv7ig": {
+    "context": "customer overview stat label: sum of recent orders net product sales",
+    "string": "Recent total"
+  },
+  "5ObBlW": {
+    "string": "Dark Mode"
+  },
+  "5ZYUn5": {
+    "context": "Filter and element text",
+    "string": "And"
+  },
+  "5o84YO": {
+    "context": "Filter where element text",
+    "string": "Where"
+  },
+  "5sg7KC": {
+    "string": "Password"
+  },
+  "62Rs/K": {
+    "context": "customer detail cogs menu, activates a deactivated customer account",
+    "string": "Activate user"
+  },
+  "65MiSm": {
+    "context": "Save composition segment for customer name, email, and note",
+    "string": "details"
+  },
+  "6AMFki": {
+    "context": "product name",
+    "string": "Name"
+  },
+  "6Jgwpc": {
+    "string": "No payment received"
+  },
+  "6a075o": {
+    "context": "activate customer dialog, content",
+    "string": "Are you sure you want to activate {email}? They will be able to sign in and place new orders."
+  },
+  "6fIHWa": {
+    "context": "order header date, less than a minute ago",
+    "string": "Placed just now"
+  },
+  "6jt3RB": {
+    "context": "success toast after activating a customer",
+    "string": "Customer activated"
+  },
+  "6orx1c": {
+    "string": "Billing address"
+  },
+  "73SSOz": {
+    "string": "All lines as ordered by the client."
+  },
+  "7A+FJl": {
+    "context": "link",
+    "string": "View profile"
+  },
+  "7Jg9ec": {
+    "context": "error message",
+    "string": "You don't have permission to login."
+  },
+  "7QPLu0": {
+    "context": "empty state message",
+    "string": "No transactions made for this order."
+  },
+  "7ejEbB": {
+    "context": "Authorized (amount locked on card, not transfered to store owner) transaction amount, data display header",
+    "string": "Authorized"
+  },
+  "7sJ04i": {
+    "context": "customer recent orders table column: fulfillment status",
+    "string": "Order status"
+  },
+  "8Cjxdt": {
+    "string": "Overcharged"
+  },
+  "8FgYfb": {
+    "context": "customer detail page header, when this customer's account was created",
+    "string": "Member since {date}"
+  },
+  "8GC/ah": {
+    "context": "variants section name",
+    "string": "Variants"
+  },
+  "8HRy+U": {
+    "string": "Category Description"
+  },
+  "8HmEqK": {
+    "context": "Transaction refund button - return captured amount to client",
+    "string": "Refund"
+  },
+  "8J81ri": {
+    "context": "ordered product sku",
+    "string": "SKU"
+  },
+  "8RDDZP": {
+    "context": "date group header when it is the only group on the timeline",
+    "string": "Older than 30 days"
+  },
+  "8maISA": {
+    "context": "deactivate customer dialog, header",
+    "string": "Deactivate customer"
+  },
+  "8p8zxN": {
+    "context": "customer account is active",
+    "string": "Active"
+  },
+  "945a4a": {
+    "context": "column header",
+    "string": "Customer e-mail"
+  },
+  "95oJ5d": {
+    "context": "button",
+    "string": "Go back to dashboard"
+  },
+  "99q9UB": {
+    "context": "create product dialog description",
+    "string": "Add a product. You can set a price, inventory, and availability after creating it."
+  },
+  "9KzuFr": {
+    "context": "Product availability status when not visible in a channel",
+    "string": "Hidden"
+  },
+  "9RvXNg": {
+    "context": "section header",
+    "string": "Media Information"
+  },
+  "9TENcY": {
+    "string": "All payments from registered transactions."
+  },
+  "9WhNiN": {
+    "context": "Pending authorization transaction amount, data display header",
+    "string": "Pending auth"
+  },
+  "9XYfOt": {
+    "context": "fulfillment section name",
+    "string": "Fulfillment"
+  },
+  "9ZtJhn": {
+    "context": "cancel button",
+    "string": "Cancel order"
+  },
+  "9exKzi": {
+    "context": "Close the list filter panel without clearing applied filters",
+    "string": "Close"
+  },
+  "9qKFTA": {
+    "context": "Product category",
+    "string": "Category"
+  },
+  "9wjl6Q": {
+    "context": "bulk action button label with selected count",
+    "string": "{action} ({count})"
+  },
+  "AHOQr2": {
+    "string": "Search products..."
+  },
+  "AiurXc": {
+    "string": "Outstanding authorized"
+  },
+  "AqXzM2": {
+    "string": "Order #{orderNumber}"
+  },
+  "AubJ/S": {
+    "context": "button",
+    "string": "Sign in"
+  },
+  "BC/h4y": {
+    "context": "category detail sidebar children card intro",
+    "string": "Open a child to edit it, or create a new subcategory under this one."
+  },
+  "BLX9dz": {
+    "context": "fulfill order, button",
+    "string": "Fulfill"
+  },
+  "BM1JiJ": {
+    "context": "error message",
+    "string": "This order cannot be cancelled"
+  },
+  "BUKMzM": {
+    "string": "Variant removed"
+  },
+  "BdS6CQ": {
+    "context": "category detail sidebar card title",
+    "string": "Subcategories"
+  },
+  "Bfh6NP": {
+    "context": "sidebar header meta for number of child categories",
+    "string": "{count, plural, one {# subcategory} other {# subcategories}}"
+  },
+  "CJpx4E": {
+    "context": "page header",
+    "string": "Order no. {orderNumber} - Add Fulfillment"
+  },
+  "CWDuMj": {
+    "context": "remaining quantity",
+    "string": "/ {max}"
+  },
+  "CYEnGq": {
+    "context": "order fulfilled success message",
+    "string": "Fulfilled Items"
+  },
+  "Cf7i/g": {
+    "context": "Info box title when product is not published",
+    "string": "Hidden from public API."
+  },
+  "ClUKur": {
+    "string": "Sum of all line items"
+  },
+  "D+Nw8P": {
+    "context": "customer email verification status",
+    "string": "Unverified"
+  },
+  "D0Rbqc": {
+    "context": "collapse truncated toast description",
+    "string": "Show less"
+  },
+  "DGWVA9": {
+    "context": "variant created error message",
+    "string": "Variant creation failed"
+  },
+  "DI2hRC": {
+    "context": "error message",
+    "string": "The API is unavailable, please check your network connection and try again."
+  },
+  "DO8+uV": {
+    "string": "Product created"
+  },
+  "DVgMit": {
+    "context": "transaction event type, transaction was chargeback by payment provider",
+    "string": "Chargeback"
+  },
+  "E1C9pp": {
+    "context": "transaction event type, authorization amount was changed",
+    "string": "Authorization amount adjusted"
+  },
+  "EHRXv4": {
+    "context": "product media detail page header",
+    "string": "Edit Image"
+  },
+  "EbVf0Z": {
+    "context": "transaction reference",
+    "string": "Transaction reference"
+  },
+  "ErvPaM": {
+    "context": "header",
+    "string": "Warehouse Name"
+  },
+  "F2xa5K": {
+    "context": "success notification when product media items are deleted",
+    "string": "{counter,plural,one{Media deleted} other{# media items deleted}}"
+  },
+  "F4WdSO": {
+    "context": "dialog header",
+    "string": "Delete Products"
+  },
+  "F7DxHw": {
+    "string": "Subcategories"
+  },
+  "FBtqtl": {
+    "context": "payment status",
+    "string": "Unpaid"
+  },
+  "FK088X": {
+    "context": "Apply filters from the list filter panel",
+    "string": "Apply"
+  },
+  "FNpv6K": {
+    "context": "button",
+    "string": "Filters"
+  },
+  "FiO/W/": {
+    "string": "Delete categories"
+  },
+  "FopBSj": {
+    "context": "error message",
+    "string": "Your username and/or password are incorrect. Please try again."
+  },
+  "FpIcp9": {
+    "string": "No customers found"
+  },
+  "G2WJ1J": {
+    "context": "order header date, less than an hour ago",
+    "string": "Placed {minutes, plural, one {# minute} other {# minutes}} ago"
+  },
+  "G5ETO0": {
+    "string": "Categories deleted"
+  },
+  "GFJabu": {
+    "context": "dialog header",
+    "string": "Delete Variant"
+  },
+  "GJAX0z": {
+    "context": "order history message",
+    "string": "Order was placed"
+  },
+  "H4Lcuk": {
+    "string": "Category updated"
+  },
+  "H5NKfr": {
+    "context": "button",
+    "string": "Create"
+  },
+  "HAlOn1": {
+    "string": "Name"
+  },
+  "HRy5qF": {
+    "context": "customer overview stat label",
+    "string": "Total orders"
+  },
+  "HTiAMm": {
+    "string": "Taxes"
+  },
+  "HvJPcU": {
+    "string": "Category deleted"
+  },
+  "IH47ID": {
+    "string": "Use button above to add new product variants"
+  },
+  "IIlJDr": {
+    "context": "payment status",
+    "string": "Partially authorised"
+  },
+  "INKsSL": {
+    "context": "Transaction event status - success",
+    "string": "Success"
+  },
+  "INNPVX": {
+    "context": "payment status",
+    "string": "Partially paid"
+  },
+  "IeoGgH": {
+    "context": "variant created success message",
+    "string": "Variant created"
+  },
+  "IqRBql": {
+    "context": "variant name",
+    "string": "New variant"
+  },
+  "IradBW": {
+    "context": "date group header",
+    "string": "Yesterday"
+  },
+  "Irflxf": {
+    "context": "window title",
+    "string": "Create category"
+  },
+  "J0lNnk": {
+    "context": "column label",
+    "string": "Warehouse"
+  },
+  "J4E+jp": {
+    "string": "Variant name"
+  },
+  "JFmOfi": {
+    "context": "button",
+    "string": "Create Product"
+  },
+  "JHTwdB": {
+    "string": "Show password"
+  },
+  "JIQ7KX": {
+    "string": "Total captured"
+  },
+  "JV3DcT": {
+    "context": "success notification when product media gallery order is saved",
+    "string": "Media order updated"
+  },
+  "JjeZEG": {
+    "context": "section header",
+    "string": "Organize Product"
+  },
+  "Jk8bsM": {
+    "context": "badge next to customer name marking this user as staff",
+    "string": "Staff"
+  },
+  "K8xNLe": {
+    "context": "products section name",
+    "string": "Products"
+  },
+  "KN7zKn": {
+    "string": "Error"
+  },
+  "KXX8oX": {
+    "context": "product media gallery dropzone hint when click-to-upload is disabled",
+    "string": "Drag and drop to upload"
+  },
+  "L8seEc": {
+    "string": "Subtotal"
+  },
+  "LQg8/p": {
+    "context": "customer detail cogs menu, opens the delete-confirmation dialog",
+    "string": "Delete user"
+  },
+  "LR3HlT": {
+    "string": "This password is too short"
+  },
+  "LU8dtl": {
+    "context": "date group header",
+    "string": "Older"
+  },
+  "LY5dS9": {
+    "context": "Charged transaction amount, data display header",
+    "string": "Charged"
+  },
+  "Le6/M7": {
+    "context": "activate customer dialog, header",
+    "string": "Activate customer"
+  },
+  "MHY5da": {
+    "string": "Shipping cost"
+  },
+  "MJ2jZQ": {
+    "string": "Total"
+  },
+  "MTGT8E": {
+    "context": "column header",
+    "string": "No. of orders"
+  },
+  "McN+wq": {
+    "context": "customers section name",
+    "string": "Customers"
+  },
+  "N2IrpM": {
+    "string": "Confirm"
+  },
+  "N2SbNc": {
+    "string": "{counter,plural,one{Are you sure you want to delete this customer?} other{Are you sure you want to delete {displayQuantity} customers?}}"
+  },
+  "N5UuEK": {
+    "context": "header",
+    "string": "Items ready to ship"
+  },
+  "N76zUg": {
+    "context": "page header",
+    "string": "Create Customer"
+  },
+  "NCp87D": {
+    "context": "no warehouses info",
+    "string": "There are no warehouses set up for this variant. To add stock quantity to the variant configure a warehouse or use existing one by clicking button below."
+  },
+  "NWA+MK": {
+    "context": "dialog content",
+    "string": "<b>Important:</b> Refunds need to be issued <b>manually</b> after order cancelation."
+  },
+  "NWxomz": {
+    "string": "Fulfillment status"
+  },
+  "NmK6zy": {
+    "string": "Payment"
+  },
+  "OGemtu": {
+    "context": "payment status",
+    "string": "Partially refunded"
+  },
+  "OK5+Fh": {
+    "string": "Variant"
+  },
+  "Oe62bR": {
+    "context": "product availability",
+    "string": "Availability"
+  },
+  "OkLJNT": {
+    "context": "aria-label for collapsed main nav drawer trigger",
+    "string": "Open navigation"
+  },
+  "Oy1LhB": {
+    "context": "button error state label",
+    "string": "Try again"
+  },
+  "P5HhQl": {
+    "context": "catalog section name",
+    "string": "Catalog"
+  },
+  "P7PLVj": {
+    "string": "Date"
+  },
+  "PXatmC": {
+    "string": "Customer Removed"
+  },
+  "PbqNhi": {
+    "context": "order status",
+    "string": "Partially fulfilled"
+  },
+  "PeEood": {
+    "string": "Customer updated"
+  },
+  "PesQ3H": {
+    "context": "Savebar hint listing which dirty areas will persist on Save",
+    "string": "Unsaved changes: {segments}"
+  },
+  "Pp/7T7": {
+    "string": "{counter,plural,one{Are you sure you want to delete this category?} other{Are you sure you want to delete {displayQuantity} categories?}}"
+  },
+  "PyxGqS": {
+    "context": "customer overview, subtitle on total orders showing the most recent order date",
+    "string": "Last order: {date}"
+  },
+  "Q1Uzbb": {
+    "string": "No products found"
+  },
+  "Q6wcZ5": {
+    "string": "First Name"
+  },
+  "Q8Qw5B": {
+    "string": "Description"
+  },
+  "QDxJib": {
+    "string": "Fulfill"
+  },
+  "QLVddq": {
+    "context": "button",
+    "string": "Create customer"
+  },
+  "QlSHOW": {
+    "context": "customer detail sidebar, name email and note",
+    "string": "Contact"
+  },
+  "RaycYK": {
+    "context": "button",
+    "string": "Save"
+  },
+  "RlfqSV": {
+    "string": "No orders found"
+  },
+  "RrCui3": {
+    "string": "Summary"
+  },
+  "Ruw3iJ": {
+    "context": "activate customer dialog, confirm button label",
+    "string": "Activate"
+  },
+  "RyZd9J": {
+    "context": "error message",
+    "string": "Please wait a moment before trying again."
+  },
+  "SDgGcU": {
+    "context": "Button to manually mark order as paid without actual payment",
+    "string": "Mark as Paid"
+  },
+  "SHF+gG": {
+    "context": "Clear filters button text",
+    "string": "Clear filters"
+  },
+  "SJhFLU": {
+    "context": "payment status",
+    "string": "Authorised"
+  },
+  "SM+yG0": {
+    "context": "input label",
+    "string": "SKU (Stock Keeping Unit)"
+  },
+  "SPzIC5": {
+    "context": "success toast after deactivating a customer",
+    "string": "Customer deactivated"
+  },
+  "SwtcgX": {
+    "context": "product media alt text field label",
+    "string": "Alt text"
+  },
+  "T1f2Yl": {
+    "string": "Variant Name"
+  },
+  "T83iU7": {
+    "string": "Search categories..."
+  },
+  "TDhHMi": {
+    "string": "This needs to be unique"
+  },
+  "TKmub+": {
+    "string": "This field is required"
+  },
+  "TLDkvR": {
+    "context": "transaction event type, transaction was cancelled / voided",
+    "string": "Cancel"
+  },
+  "TWVx7O": {
+    "context": "delete product dialog title",
+    "string": "Delete Product"
+  },
+  "Ta9j04": {
+    "context": "orders section name",
+    "string": "Orders"
+  },
+  "TjGYna": {
+    "context": "product inventory, checkbox",
+    "string": "Track Inventory"
+  },
+  "U2PF0d": {
+    "context": "create category dialog description for root create",
+    "string": "Add a top-level category. You can edit SEO, media, and metadata after creating it."
+  },
+  "U4By91": {
+    "context": "bulk delete selected subcategories, button tooltip",
+    "string": "Delete categories"
+  },
+  "U5dMfQ": {
+    "context": "Label for published toggle",
+    "string": "Published"
+  },
+  "ULBvyx": {
+    "context": "order header date, yesterday",
+    "string": "Placed yesterday at {time}"
+  },
+  "UycVMp": {
+    "context": "button",
+    "string": "Create subcategory"
+  },
+  "V21v8h": {
+    "string": "{currency} {totalAmount}"
+  },
+  "VEext+": {
+    "string": "Are you sure you want to delete this image?"
+  },
+  "VOtpY0": {
+    "context": "TopNav destination link tooltip to parent order",
+    "string": "Order"
+  },
+  "VyKl39": {
+    "context": "Dialog warning text",
+    "string": "Are you sure you want to {actionType} this transaction?"
+  },
+  "W2glWk": {
+    "context": "fulfilled fulfillment, warehouse info",
+    "string": "From {warehouseName}"
+  },
+  "WE8IFE": {
+    "context": "product name",
+    "string": "Product"
+  },
+  "Wr5UOV": {
+    "context": "error message",
+    "string": "Login went wrong. Please try again."
+  },
+  "WwNtFn": {
+    "context": "delete product variant",
+    "string": "Are you sure you want to delete {name}?"
+  },
+  "Wyl25+": {
+    "context": "product inventory, checkbox description",
+    "string": "Active inventory tracking will automatically calculate changes of stock"
+  },
+  "X9tptP": {
+    "string": "Not fully charged"
+  },
+  "XBfvKN": {
+    "string": "Order History"
+  },
+  "XJSRDK": {
+    "context": "payment status",
+    "string": "Fully refunded"
+  },
+  "XQfBeC": {
+    "context": "Availability card title",
+    "string": "Availability"
+  },
+  "XUU9sU": {
+    "context": "section header",
+    "string": "All Media"
+  },
+  "Xm9qOu": {
+    "context": "product pricing, section header",
+    "string": "Pricing"
+  },
+  "YI6Fhj": {
+    "context": "no address is set in draft order",
+    "string": "Not set"
+  },
+  "YRe93Y": {
+    "string": "Enter a valid email address"
+  },
+  "YUaalK": {
+    "context": "Cancel in progress transaction amount, data display header",
+    "string": "Pending cancel"
+  },
+  "YmHxaH": {
+    "context": "button and tooltip, restores the full main nav from the icon rail",
+    "string": "Expand navigation"
+  },
+  "Ynjq+C": {
+    "string": "Fully charged"
+  },
+  "Yo2kC+": {
+    "string": "Couldn't process image"
+  },
+  "Yxoq3Y": {
+    "context": "success notification when one or more product images finish uploading",
+    "string": "{count, plural, one {# image added} other {# images added}}"
+  },
+  "YzLUXA": {
+    "string": "Ensure this value is greater than 0."
+  },
+  "Z7YrIb": {
+    "context": "no customer assigned to order",
+    "string": "Not set"
+  },
+  "ZHF4Z9": {
+    "context": "delete product dialog subtitle",
+    "string": "Are you sure you want to delete {name}?"
+  },
+  "ZpVtCa": {
+    "string": "Shipping address"
+  },
+  "a4iag6": {
+    "context": "order header date, earlier today",
+    "string": "Placed today at {time}"
+  },
+  "a5eZlA": {
+    "context": "short product count column header in category sidebar",
+    "string": "Prods"
+  },
+  "aHIrs/": {
+    "string": "Failed to load filter data. Please refresh page to try again."
+  },
+  "aRvO6i": {
+    "context": "button",
+    "string": "Assign Warehouses"
+  },
+  "aTe9zV": {
+    "context": "customer overview stat label: average order value of recent orders",
+    "string": "Avg order value"
+  },
+  "aYnI0N": {
+    "context": "customer overview stat label",
+    "string": "Last login"
+  },
+  "aaj/MI": {
+    "string": "Order total"
+  },
+  "acgbDa": {
+    "context": "product created at",
+    "string": "Created at"
+  },
+  "aheQdn": {
+    "string": "Last Name"
+  },
+  "b810WJ": {
+    "context": "product price",
+    "string": "Price"
+  },
+  "bIttOt": {
+    "context": "customer overview, AOV tooltip",
+    "string": "Average product revenue per order in this channel, from the last {windowSize} orders. Excludes shipping and tax."
+  },
+  "bKTEnb": {
+    "context": "button to cancel order",
+    "string": "Cancel order"
+  },
+  "bVjFta": {
+    "string": "Search customers"
+  },
+  "bj6pTd": {
+    "string": "Something's missing"
+  },
+  "blZJmA": {
+    "context": "ExitFormPrompt ignore changes button",
+    "string": "Ignore changes"
+  },
+  "bp/i0x": {
+    "context": "header",
+    "string": "Quantity"
+  },
+  "bzcuDv": {
+    "context": "accessible label for toast dismiss button",
+    "string": "Close notification"
+  },
+  "c5fFin": {
+    "context": "ExitFormPrompt title",
+    "string": "Leave without saving changes?"
+  },
+  "c5pMZ8": {
+    "string": "API error"
+  },
+  "cDq5Lx": {
+    "context": "create category dialog description for child create",
+    "string": "Add a subcategory under this category. You can edit SEO, media, and metadata after creating it."
+  },
+  "cLcy6F": {
+    "string": "Number of products"
+  },
+  "cW1RIo": {
+    "context": "section header",
+    "string": "Media View"
+  },
+  "ccXLVi": {
+    "string": "Category"
+  },
+  "cn2ZOU": {
+    "context": "refund amount input label",
+    "string": "Amount to refund"
+  },
+  "d3IQVN": {
+    "context": "warning when client-side validation rejects product media files before upload",
+    "string": "{count, plural, one {# file was skipped} other {# files were skipped}} (not an image)"
+  },
+  "d9UqaJ": {
+    "context": "error message",
+    "string": "Cannot change the quantity because of insufficient stock"
+  },
+  "dM86a2": {
+    "string": "No categories found"
+  },
+  "dOQB9o": {
+    "context": "payment status",
+    "string": "Cancelled"
+  },
+  "dnbJKr": {
+    "string": "This transaction doesn't have any events"
+  },
+  "e+L+q3": {
+    "string": "Remember this will also delete all products assigned to this category."
+  },
+  "e3NyeN": {
+    "context": "fulfill card title for a single line",
+    "string": "Item ready to ship"
+  },
+  "e4UtKH": {
+    "context": "Transaction event status - failure",
+    "string": "Failure"
+  },
+  "e7yOai": {
+    "context": "shipping address is not set in draft order",
+    "string": "Not set"
+  },
+  "ey0lZj": {
+    "context": "dialog header",
+    "string": "Delete Customer"
+  },
+  "f2WJW7": {
+    "context": "transaction event type, amount was captured from client",
+    "string": "Capture"
+  },
+  "fGOZfh": {
+    "context": "TopNav destination link tooltip to orders list",
+    "string": "All orders"
+  },
+  "fL08MU": {
+    "string": "Order value"
+  },
+  "fS2rip": {
+    "context": "tooltip for taxes amount",
+    "string": "Tax amount"
+  },
+  "fjPWOA": {
+    "context": "header",
+    "string": "Customer Overview"
+  },
+  "fkplbE": {
+    "context": "order history message",
+    "string": "Order was marked as paid"
+  },
+  "fqJXzO": {
+    "context": "order history message",
+    "string": "Transaction refund requested"
+  },
+  "froISM": {
+    "string": "User with this email already exists"
+  },
+  "ftcHpD": {
+    "string": "Customer created"
+  },
+  "fw+VAN": {
+    "context": "product's sku",
+    "string": "SKU"
+  },
+  "fxbjge": {
+    "context": "Status when product is currently visible on storefront",
+    "string": "Visible now"
+  },
+  "gNm1li": {
+    "context": "Refunded transaction amount, data display header",
+    "string": "Refunded"
+  },
+  "genRi+": {
+    "context": "deactivate customer dialog, content",
+    "string": "Are you sure you want to deactivate {email}? They will no longer be able to sign in or place new orders."
+  },
+  "glR0om": {
+    "string": "Shipping"
+  },
+  "hJZwTS": {
+    "string": "Email address"
+  },
+  "hLUYBt": {
+    "context": "payment status",
+    "string": "Pending"
+  },
+  "hVPucN": {
+    "string": "Light Mode"
+  },
+  "hkENym": {
+    "string": "Customer"
+  },
+  "hlj1XE": {
+    "context": "category detail cogs menu, navigates to create a child category",
+    "string": "Create subcategory"
+  },
+  "hlsvPO": {
+    "context": "aria-label, avatar button opening the account menu in the collapsed main nav",
+    "string": "Account menu"
+  },
+  "hzSNj4": {
+    "string": "Dashboard"
+  },
+  "i8FLQQ": {
+    "context": "load more subcategories in category tree",
+    "string": "Load {count, plural, one {# more subcategory} other {# more subcategories}}"
+  },
+  "if9gAZ": {
+    "context": "Transaction event status - unknown status, info without event data",
+    "string": "Info"
+  },
+  "j6dFO1": {
+    "context": "product detail cogs menu, opens the delete-confirmation dialog",
+    "string": "Delete product"
+  },
+  "jGvclB": {
+    "string": "Transaction Reference"
+  },
+  "jvlQkk": {
+    "context": "aria-label, button expanding or collapsing a sidebar menu group",
+    "string": "{section} submenu"
+  },
+  "k4brJy": {
+    "string": "SKU"
+  },
+  "kFkPWB": {
+    "string": "Number"
+  },
+  "kFsTMN": {
+    "string": "Delete customers"
+  },
+  "kVKMLf": {
+    "context": "notifier after transfer funds mutation succeeds",
+    "string": "Refund request sent to payment provider"
+  },
+  "kVTWtR": {
+    "context": "product updated at",
+    "string": "Last updated"
+  },
+  "kgVqk1": {
+    "string": "Category name"
+  },
+  "l1pZJx": {
+    "string": "Not fully authorised"
+  },
+  "l3iOju": {
+    "context": "transaction event type, transaction was refunded to client",
+    "string": "Refund"
+  },
+  "lDPwGU": {
+    "context": "short subcategory count column header in category sidebar",
+    "string": "Subs"
+  },
+  "lL1HTg": {
+    "string": "Order marked as paid"
+  },
+  "lNZuWl": {
+    "string": "All orders"
+  },
+  "lxP7Rb": {
+    "context": "warning notification when some product image uploads in a batch failed",
+    "string": "{success, plural, one {# image} other {# images}} added, {failed, plural, one {# failed} other {# failed}}"
+  },
+  "mFC5Rq": {
+    "string": "Assign Warehouses"
+  },
+  "mGiA6q": {
+    "context": "modal button upload",
+    "string": "Upload"
+  },
+  "mKu838": {
+    "context": "customer overview, value tooltip heading for shipping and refund breakdown",
+    "string": "From these orders"
+  },
+  "mMEpFC": {
+    "context": "customer overview, refunded row label in value tooltip",
+    "string": "Refunded"
+  },
+  "n8tEIV": {
+    "context": "customer overview, last login tooltip",
+    "string": "Most recent time this customer signed in to their account."
+  },
+  "nG76Ql": {
+    "context": "TopNav destination link tooltip to categories list",
+    "string": "All categories"
+  },
+  "nOo0oL": {
+    "context": "error message",
+    "string": "Not enough items to fulfill"
+  },
+  "nRiOg+": {
+    "string": "Sorry, the page was not found"
+  },
+  "nSMe3f": {
+    "context": "Refund in progress transaction amount, data display header",
+    "string": "Pending refund"
+  },
+  "nYD7NT": {
+    "string": "Transaction #{index} on {date}"
+  },
+  "nZDQbr": {
+    "context": "column header",
+    "string": "Customer name"
+  },
+  "ng7bVJ": {
+    "context": "button and tooltip, shrinks the main nav to an icon rail",
+    "string": "Collapse navigation"
+  },
+  "o5GUx9": {
+    "string": "Outstanding balance"
+  },
+  "oB0y5Y": {
+    "context": "order status",
+    "string": "Unfulfilled"
+  },
+  "of/+iV": {
+    "context": "transaction event type, refund was reversed, funds are back to store account",
+    "string": "Refund reversed"
+  },
+  "ofT0HH": {
+    "context": "Info box description for unpublished products",
+    "string": "Customers cannot find or view this product."
+  },
+  "p6ugX0": {
+    "context": "button to keep order",
+    "string": "Keep order"
+  },
+  "phIGQ1": {
+    "context": "Canceled transaction amount, data display header",
+    "string": "Canceled"
+  },
+  "pkUbrL": {
+    "string": "General Information"
+  },
+  "pkjXPD": {
+    "context": "order status",
+    "string": "Fulfilled"
+  },
+  "pmXN+Q": {
+    "context": "TopNav destination link tooltip to products list",
+    "string": "All products"
+  },
+  "q7bXR4": {
+    "string": "Payments summary"
+  },
+  "q8ep2I": {
+    "context": "dialog header",
+    "string": "Delete Customers"
+  },
+  "qDwvZ4": {
+    "string": "Unknown error"
+  },
+  "qKiqXs": {
+    "context": "Date suffix for toggle controls",
+    "string": "since {date}"
+  },
+  "qLbse5": {
+    "context": "button",
+    "string": "Log out"
+  },
+  "qT6YYk": {
+    "context": "order line total price",
+    "string": "Total"
+  },
+  "qXjR1X": {
+    "context": "customer overview, shipping row label in value tooltip",
+    "string": "Shipping"
+  },
+  "qcTYIh": {
+    "context": "Save composition segment for product name, SEO, organization, and description",
+    "string": "details"
+  },
+  "qiBefD": {
+    "context": "customer recent orders table column: order total including shipping and tax",
+    "string": "Total"
+  },
+  "qjT9IB": {
+    "context": "savebar label shown on detail pages where the current user lacks permission to edit",
+    "string": "Read-only"
+  },
+  "qtF0Ft": {
+    "context": "transaction event type, amount was authorized, but not captured",
+    "string": "Authorization"
+  },
+  "rGj6RR": {
+    "context": "order header date, older than yesterday",
+    "string": "Placed {date}"
+  },
+  "rU/Mqz": {
+    "context": "aria-label, button closing the main nav drawer",
+    "string": "Close navigation"
+  },
+  "rbkmfG": {
+    "context": "button",
+    "string": "Delete variant"
+  },
+  "rbrahO": {
+    "string": "Close"
+  },
+  "rgDdIY": {
+    "context": "category detail cogs menu, opens the delete-confirmation dialog",
+    "string": "Delete category"
+  },
+  "ri3kK9": {
+    "context": "order placement date",
+    "string": "Date"
+  },
+  "rqiCWU": {
+    "string": "Saved changes"
+  },
+  "rwOx2s": {
+    "string": "Please provide a transaction reference using the input below:"
+  },
+  "s81JoX": {
+    "context": "TopNav destination link tooltip to customers list",
+    "string": "All customers"
+  },
+  "sG0w22": {
+    "context": "dialog title",
+    "string": "Delete categories"
+  },
+  "sK1FPw": {
+    "context": "categories section name",
+    "string": "Categories"
+  },
+  "sdA14A": {
+    "context": "Status label when object is published in a channel",
+    "string": "Published"
+  },
+  "sfEbeB": {
+    "string": "You're going to mark this order as paid."
+  },
+  "suAexp": {
+    "context": "aria label for list view button",
+    "string": "List view"
+  },
+  "tCLTCb": {
+    "context": "tab name",
+    "string": "All products"
+  },
+  "tQA//+": {
+    "context": "customer overview, recent net sales tooltip",
+    "string": "Sum of product revenue from this customer's last {windowSize} orders in this channel. Excludes shipping and tax. Discounts are already applied."
+  },
+  "tZnV8L": {
+    "context": "Header row stock label",
+    "string": "Stock"
+  },
+  "tvpAXl": {
+    "context": "ordered product quantity",
+    "string": "Quantity"
+  },
+  "u2QjRn": {
+    "context": "create product dialog title",
+    "string": "Create product"
+  },
+  "uCn/rd": {
+    "context": "dialog header",
+    "string": "Delete Image"
+  },
+  "uOC/uQ": {
+    "string": "Image updated"
+  },
+  "ufmuTp": {
+    "context": "button",
+    "string": "Delete"
+  },
+  "uqxjSR": {
+    "context": "column picker section header",
+    "string": "Columns"
+  },
+  "uwk5e9": {
+    "context": "bulk delete button",
+    "string": "Delete products"
+  },
+  "v0fBOU": {
+    "string": "Collapse all"
+  },
+  "vEYtiq": {
+    "string": "Category Name"
+  },
+  "vW3tb6": {
+    "context": "name",
+    "string": "Product name"
+  },
+  "vaFjs6": {
+    "string": "No warehouses available to add"
+  },
+  "vcMnX2": {
+    "context": "unfulfilled fulfillment, section header",
+    "string": "Unfulfilled order lines"
+  },
+  "vlVTmY": {
+    "string": "Product removed"
+  },
+  "vof5TR": {
+    "context": "button",
+    "string": "Create category"
+  },
+  "vuKrlW": {
+    "string": "Stock"
+  },
+  "vzgZ3U": {
+    "context": "card header",
+    "string": "Sign In"
+  },
+  "wTHjt3": {
+    "string": "Search Orders..."
+  },
+  "wUWSv2": {
+    "context": "product bulk delete success notification",
+    "string": "Products deleted"
+  },
+  "wVjyOX": {
+    "string": "Fully authorised"
+  },
+  "we4Lby": {
+    "string": "Info"
+  },
+  "weguIe": {
+    "context": "deactivate customer dialog, confirm button label",
+    "string": "Deactivate"
+  },
+  "wmeRVH": {
+    "context": "dialog header",
+    "string": "Cancel order #{orderNumber}"
+  },
+  "x/ZVlU": {
+    "string": "Product"
+  },
+  "x1k81A": {
+    "context": "order history message",
+    "string": "Items were fulfilled"
+  },
+  "xEyXOV": {
+    "context": "pagination next page button aria label",
+    "string": "Next page"
+  },
+  "xRkj2h": {
+    "string": "Are you sure you want to delete {categoryName}?"
+  },
+  "xfGZsi": {
+    "context": "configuration section name",
+    "string": "Configuration"
+  },
+  "xgPXGD": {
+    "string": "Customers deleted"
+  },
+  "xl7Fag": {
+    "string": "Category created"
+  },
+  "xmv4OJ": {
+    "context": "customer recent orders table column: order number",
+    "string": "Order"
+  },
+  "xo5UIb": {
+    "context": "dialog title",
+    "string": "Delete category"
+  },
+  "xrKHS6": {
+    "string": "Success"
+  },
+  "xwXFUB": {
+    "context": "customer overview, total orders tooltip",
+    "string": "Number of orders placed by this customer in the selected channel. Draft and cancelled orders are not counted."
+  },
+  "xzqW+K": {
+    "context": "Add condition button on the list filter panel",
+    "string": "Add condition"
+  },
+  "yDkmX7": {
+    "context": "dialog content",
+    "string": "{counter,plural,one{Are you sure you want to delete this product?} other{Are you sure you want to delete {displayQuantity} products?}}"
+  },
+  "yH56V+": {
+    "string": "Ooops!..."
+  },
+  "ySqncG": {
+    "context": "ExitFormPrompt keep editing button",
+    "string": "Keep editing"
+  },
+  "yn7Stx": {
+    "context": "date group header",
+    "string": "Unknown"
+  },
+  "zP3Rb6": {
+    "context": "customer detail cogs menu, deactivates the customer account",
+    "string": "Deactivate user"
+  },
+  "zRrcOG": {
+    "context": "order history message",
+    "string": "Order was cancelled"
+  },
+  "zWgbGg": {
+    "string": "Today"
+  },
+  "zhDXGJ": {
+    "context": "TopNav destination link tooltip to parent product",
+    "string": "Product"
+  },
+  "zmKgYS": {
+    "context": "order header date, same year and older than yesterday",
+    "string": "Placed {date} at {time}"
+  }
+}

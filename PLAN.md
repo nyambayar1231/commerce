@@ -281,7 +281,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 
 | Step | What | Status |
 |---|---|---|
-| M11.1 | Locale infrastructure: Saleor's LocaleProvider (en, mn; default mn; localStorage; lazy mn.json; `<html lang>`), `extract-messages`, defaultMessages.json, an empty mn.json; e2e forced to English; tests | Proposed |
+| M11.1 | Locale infrastructure: Saleor's LocaleProvider (en, mn; default mn; localStorage; lazy mn.json; `<html lang>`), `extract-messages`, defaultMessages.json, an empty mn.json; e2e forced to English; tests | Done |
 | M11.2 | Account settings page (decision 4) and the user menu's "Account Settings"; checked against Saleor's page | Proposed |
 | M11.3 | Every visible string through react-intl (audit of hard-coded text, labels in TS objects, Macaw props); Saleor's ids where Saleor has the same text | Proposed |
 | M11.4 | Mongolian: Saleor's entries copied, the rest drafted by the lead; the coverage test (decision 6) | Proposed |
@@ -295,6 +295,15 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   feature), API error messages (the dashboard shows its own per error code), other languages,
   editing the profile or password on Account settings, the storefront.
 - **Status:** In progress since 2026-11-13; all decisions approved.
+- **M11.1 result:** `components/Locale/Locale.tsx` is Saleor's provider for `en`/`mn` (default
+  `mn`, localStorage `locale`, unknown values → `mn`, lazy `locale/mn.json`, `<html lang>`); unlike
+  Saleor it renders nothing until the file is loaded (no English flash), and an untranslated
+  message shows its English text. `@formatjs/cli` 6.18.2 + Saleor's formatter: `pnpm
+  extract-messages` → `apps/dashboard/locale/defaultMessages.json` (398 messages), checked for
+  drift by verify.sh and CI. Component tests start in English (`src/test/setup.ts`); the golden
+  path sets `locale=en`. ProductBulkDeleteDialog keeps Saleor's `id={messages.x.id}` JSX, so the
+  extractor warns about it (its messages come from messages.ts). 5 provider tests; 436 dashboard
+  tests and the golden path pass.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
