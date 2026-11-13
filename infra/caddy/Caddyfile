@@ -1,0 +1,34 @@
+# The HTTPS edge of the AWS deployment (PLAN M10.3): docker-compose.prod.yml's `https` profile.
+# Caddy gets and renews a Let's Encrypt certificate for SITE_DOMAIN (e.g. admin.dino-craft.lol),
+# redirects HTTP to HTTPS and proxies to the stack.
+#
+# The API routes go straight to `api`, not through the `web` nginx: Caddy ignores the
+# X-Forwarded-For a client sends and sets it to the client's address, which the API reads as the
+# last entry (TRUST_PROXY=true). Through nginx, $proxy_add_x_forwarded_for would append Caddy's own
+# address and every visitor would share one IP for login throttling and the thumbnail limit.
+# Everything else (the dashboard) is served by `web`. Keep the API paths in sync with
+# infra/nginx/default.conf.
+
+{$SITE_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	@api path /graphql /thumbnail/*
+	handle @api {
+		# Product image uploads are capped at 10 MiB by the API (nginx allows 11m, as here).
+		request_body {
+			max_size 11MB
+		}
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web:80
+	}
+}

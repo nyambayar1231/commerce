@@ -261,7 +261,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 |---|---|---|
 | M10.1 | CI green: find why the simultaneous-login throttling test lets both attempts through on GitHub (race in the code or in the test) and fix it | Done |
 | M10.2 | Compose profile for `s3`/`mailpit`, optional `depends_on`, lazy nginx `/media/`; checked by running the stack with and without the profile | Done |
-| M10.3 | Caddy service + `Caddyfile` (domain from env, automatic TLS, proxies to `web`); `PUBLIC_URL` etc. documented for HTTPS | Proposed |
+| M10.3 | Caddy service + `Caddyfile` (domain from env, automatic TLS, proxies to `web`); `PUBLIC_URL` etc. documented for HTTPS | Done |
 | M10.4 | Backups: `pg_dump` script + cron line, upload to the backup bucket, restore procedure; restore tested locally | Proposed |
 | M10.5 | CDK app in `infra/aws` (decision 4): the stack, a Vitest test asserting the synthesized template (buckets, policies, ports), `cdk synth` and `cdk diff` against the account; covered by `pnpm lint`/`typecheck`/`test` | Proposed |
 | M10.6 | `docs/deploy.md` AWS section: Resend domain setup, first deploy, upgrade, backups, costs after the credits | Proposed |
@@ -285,6 +285,11 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   bucket is created on an external S3 and a registration email goes out through an external SMTP
   (`/media/` answers 502, nginx stays up). The S3 region default (code and examples) is now
   `ap-northeast-2`.
+- **M10.3 result:** Caddy 2.10.2 in the `https` profile, site `admin.dino-craft.lol` (owner,
+  2026-11-13); `/graphql` and `/thumbnail/` go straight to `api` so the client IP survives (checked:
+  a forged `X-Forwarded-For` is ignored, throttling keys on the real address); HSTS, nosniff,
+  HTTP→HTTPS redirect; `web` published on loopback only. Tested locally with `SITE_DOMAIN=localhost`
+  (Caddy's local CA); the real certificate is first requested in M10.7.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.

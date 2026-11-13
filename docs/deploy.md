@@ -52,6 +52,32 @@ in for SMTP) so the stack runs anywhere. Without the profile only Postgres, the 
 `api`, `worker` and `web` run, and `.env.prod` must point at a real S3 bucket and SMTP server
 (the AWS deployment, PLAN M10). Pass the same `--profile` to every command of a stack that uses it.
 
+## HTTPS with Caddy (the `https` profile)
+
+The `https` Compose profile adds Caddy (`infra/caddy/Caddyfile`) on ports 80 and 443. It gets and
+renews a Let's Encrypt certificate for `SITE_DOMAIN`, redirects HTTP to HTTPS, sends `/graphql` and
+`/thumbnail/` straight to `api` and everything else to `web`. Certificates live in the
+`caddy-data` volume; keep it, or Let's Encrypt's rate limits can bite after a few re-creations.
+
+1. Point the domain's DNS A record (e.g. `admin.dino-craft.lol`) at the server, and open ports 80
+   and 443. The certificate is requested on the first start, so DNS must already resolve.
+2. In `.env.prod`: `SITE_DOMAIN=admin.dino-craft.lol`, `PUBLIC_URL` and
+   `ALLOWED_GRAPHQL_ORIGINS` = `https://admin.dino-craft.lol`, `TRUST_PROXY=true`, and
+   `WEB_PORT=127.0.0.1:8080` so the plain-HTTP `web` port is reachable only from the server.
+3. Start with `--env-file .env.prod` (Compose reads `WEB_PORT` from it) and the profile:
+
+```sh
+docker compose --env-file .env.prod -f docker-compose.prod.yml --profile https up -d
+```
+
+Why the API routes skip nginx: Caddy drops any `X-Forwarded-For` a client sends and sets it to the
+client's address, which the API reads as the last entry. Through nginx, Caddy's own address would
+be appended last and every visitor would share one IP for login throttling. The session cookie is
+always `Secure`, so logging in needs HTTPS (or `localhost`).
+
+To try it locally, `SITE_DOMAIN=localhost` makes Caddy use its own local CA (`curl -k`), and
+`HTTP_PORT`/`HTTPS_PORT` move the published ports.
+
 ## Upgrading
 
 Build the new images, then run the migrations before starting the new API and worker:

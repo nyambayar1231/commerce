@@ -5,7 +5,8 @@
 # The `local-services` profile adds SeaweedFS (standing in for S3) and Mailpit (standing in for
 # SMTP) so the stack runs on one machine. Without it (PLAN M10.2, the AWS deployment), media go to
 # AWS S3 and email to a real SMTP server, and only postgres, api, worker, web and the one-off
-# migrate run here.
+# migrate run here. The `https` profile adds Caddy, the HTTPS edge on ports 80/443 for SITE_DOMAIN
+# (PLAN M10.3); then publish `web` on loopback only (WEB_PORT=127.0.0.1:8080), see docs/deploy.md.
 name: commerce-prod
 
 x-app: &app
@@ -96,6 +97,26 @@ services:
       api: { condition: service_healthy }
     restart: unless-stopped
 
+  # The HTTPS edge (PLAN M10.3): a Let's Encrypt certificate for SITE_DOMAIN, kept in caddy-data.
+  caddy:
+    image: caddy:2.10.2-alpine
+    profiles: [https]
+    env_file: .env.prod # SITE_DOMAIN
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api: { condition: service_healthy }
+      web: { condition: service_started }
+    restart: unless-stopped
+
 volumes:
   postgres-data:
   s3-data:
+  caddy-data:
+  caddy-config:
