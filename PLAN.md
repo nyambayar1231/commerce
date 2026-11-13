@@ -285,8 +285,8 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M11.2 | Account settings page (decision 4) and the user menu's "Account Settings"; checked against Saleor's page | Done |
 | M11.3 | Every visible string through react-intl (audit of hard-coded text, labels in TS objects, Macaw props); Saleor's ids where Saleor has the same text | Done |
 | M11.4 | Mongolian: Saleor's entries copied, the rest drafted by the lead; the coverage test (decision 6) | Done |
-| M11.5 | Owner review of the Mongolian (a side-by-side list English / Mongolian), corrections applied | Proposed |
-| M11.6 | Dates, numbers and money formatted in the chosen locale (no hard-coded `en`); released to production (docs/deploy.md) | Proposed |
+| M11.5 | Owner review of the Mongolian (a side-by-side list English / Mongolian), corrections applied | Waiting on the owner: https://claude.ai/artifact/1T6fwP7u3WDM5tvAi278J5 |
+| M11.6 | Dates, numbers and money formatted in the chosen locale (no hard-coded `en`); released to production (docs/deploy.md) | In progress: code checked, Chrome polyfill and release await the owner |
 
 - **Acceptance:** a first visit shows Mongolian; switching to English in Account settings sticks
   across reloads and logins; no screen shows an untranslated message in Mongolian; dates follow
@@ -321,7 +321,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   own search box (⌘F: "Type to search"…) is English inside the library, as in Saleor. Dates and
   money are M11.6.
 - **M11.4 result:** `locale/mn.json` translates all 425 messages: Saleor's Mongolian for 130 of them
-  (12 corrected: typos, a Latin "e" inside a Cyrillic word, "Fulfillment status" as just "Status",
+  (17 corrected, e.g. typos, a Latin "e" inside a Cyrillic word, "Fulfillment status" as just "Status",
   "Customer Overview" as "rating", bulk-delete questions putting the count in the singular), the
   rest drafted by the lead. Terms: бүтээгдэхүүн, ангилал, харилцагч (customer; Saleor said
   хэрэглэгч), захиалга, биелүүлэх, хувилбар, агуулах, нөөц, төлбөр, буцаан олголт, гүйлгээ.
