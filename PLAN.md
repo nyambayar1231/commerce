@@ -7,7 +7,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M11 | Dashboard in Mongolian and English | Approved |
+| M11 | Dashboard in Mongolian and English | In progress |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
@@ -263,7 +263,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 3. **Translations:** Saleor's mn.json where it covers our messages; the lead drafts the rest, the
    owner reviews them.
 
-**Proposed by the lead (2026-11-13), awaiting the owner's OK:**
+**Proposed by the lead, approved by the owner (2026-11-13):**
 4. **Minimal Account settings** = Saleor's URL `/staff/<id>` for the signed-in user only (another
    id → not found until staff pages exist); the title is the user's name; a read-only card with
    first name, last name and email (no editing, avatar or password change yet); the right sidebar
@@ -294,7 +294,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 - **Out of scope:** translating catalog content (product/category names, Saleor's Translations
   feature), API error messages (the dashboard shows its own per error code), other languages,
   editing the profile or password on Account settings, the storefront.
-- **Status:** Approved by the owner 2026-11-13 (decisions 1–3); decisions 4–6 await the owner's OK.
+- **Status:** In progress since 2026-11-13; all decisions approved.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
