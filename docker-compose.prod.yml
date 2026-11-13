@@ -1,10 +1,11 @@
 # The whole stack from production images (PLAN M9.6): docs/deploy.md.
 #   cp .env.prod.example .env.prod   # and replace every "change-me"
-#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml --profile local-services up -d --build
 # The dashboard and API are then on http://localhost:8080 (WEB_PORT), Mailpit on :8027.
-# Postgres, SeaweedFS (standing in for S3) and Mailpit (standing in for SMTP) make it run on one
-# machine; in a real deployment they are usually managed services and only api, worker, web and
-# the one-off migrate run here.
+# The `local-services` profile adds SeaweedFS (standing in for S3) and Mailpit (standing in for
+# SMTP) so the stack runs on one machine. Without it (PLAN M10.2, the AWS deployment), media go to
+# AWS S3 and email to a real SMTP server, and only postgres, api, worker, web and the one-off
+# migrate run here.
 name: commerce-prod
 
 x-app: &app
@@ -33,6 +34,7 @@ services:
   # committed. Anonymous read, as a public media bucket.
   s3:
     image: chrislusf/seaweedfs:4.51
+    profiles: [local-services]
     env_file: .env.prod
     entrypoint: ["/bin/sh", "-c"]
     command:
@@ -51,6 +53,7 @@ services:
 
   mailpit:
     image: axllent/mailpit:v1.32.0
+    profiles: [local-services]
     ports:
       - "${MAILPIT_PORT:-8027}:8025"
     restart: unless-stopped
@@ -68,7 +71,8 @@ services:
     healthcheck: { disable: true }
     depends_on:
       postgres: { condition: service_healthy }
-      s3: { condition: service_healthy }
+      # Only with the local-services profile; on AWS the bucket exists and is only checked.
+      s3: { condition: service_healthy, required: false }
 
   api:
     <<: *app
@@ -81,7 +85,7 @@ services:
     healthcheck: { disable: true }
     depends_on:
       migrate: { condition: service_completed_successfully }
-      mailpit: { condition: service_started }
+      mailpit: { condition: service_started, required: false }
 
   web:
     image: commerce-web

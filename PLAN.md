@@ -260,14 +260,15 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | Step | What | Status |
 |---|---|---|
 | M10.1 | CI green: find why the simultaneous-login throttling test lets both attempts through on GitHub (race in the code or in the test) and fix it | Done |
-| M10.2 | Compose profile for `s3`/`mailpit`, optional `depends_on`, lazy nginx `/media/`; checked by running the stack with and without the profile | Proposed |
+| M10.2 | Compose profile for `s3`/`mailpit`, optional `depends_on`, lazy nginx `/media/`; checked by running the stack with and without the profile | Done |
 | M10.3 | Caddy service + `Caddyfile` (domain from env, automatic TLS, proxies to `web`); `PUBLIC_URL` etc. documented for HTTPS | Proposed |
 | M10.4 | Backups: `pg_dump` script + cron line, upload to the backup bucket, restore procedure; restore tested locally | Proposed |
 | M10.5 | CDK app in `infra/aws` (decision 4): the stack, a Vitest test asserting the synthesized template (buckets, policies, ports), `cdk synth` and `cdk diff` against the account; covered by `pnpm lint`/`typecheck`/`test` | Proposed |
 | M10.6 | `docs/deploy.md` AWS section: Resend domain setup, first deploy, upgrade, backups, costs after the credits | Proposed |
 | M10.7 | First deploy with the owner: stack created, DNS, Resend verified, images loaded, superuser; acceptance checks run on the live site | Proposed |
 
-- **Needs from the owner:** a domain name (for HTTPS and Resend) before M10.3/M10.7; DNS access.
+- **Domain (owner, 2026-11-13):** `dino-craft.lol`, registered and DNS-hosted at Porkbun (auto-renew
+  off, expires 2027-09-10). Owner rule: every AWS resource and default is in `ap-northeast-2`.
 - **Acceptance:** `https://<domain>` serves the dashboard with a valid certificate; a product image
   upload lands in S3 and displays; a registration email arrives through Resend; last night's backup
   restores into a scratch database; CI is green on `main`.
@@ -277,7 +278,13 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 - **M10.1 result:** the code was right, the test wasn't: two in-process logins don't always overlap,
   and a successful login clears the IP block (as Saleor), so the second one sometimes got through
   (1 in 30 locally). Replaced by a test that holds the block as an in-flight attempt, plus
-  `rateLimit.test.ts` (10 simultaneous `tryBlock` claims, exactly one wins).
+  `rateLimit.test.ts` (10 simultaneous `tryBlock` claims, exactly one wins). CI green on GitHub.
+- **M10.2 result:** `s3`/`mailpit` in the `local-services` profile (`required: false` links);
+  nginx resolves the media upstream per request. Ran both ways: with the profile a file uploaded to
+  the stack's S3 is served at `/media/`; without it only postgres/migrate/api/worker/web run, the
+  bucket is created on an external S3 and a registration email goes out through an external SMTP
+  (`/media/` answers 502, nginx stays up). The S3 region default (code and examples) is now
+  `ap-northeast-2`.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.

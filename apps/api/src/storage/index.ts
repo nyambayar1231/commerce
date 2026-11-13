@@ -70,7 +70,7 @@ export function readStorageConfig(
   return {
     bucket,
     endpoint: env.AWS_S3_ENDPOINT_URL || undefined,
-    region: env.AWS_S3_REGION_NAME || "us-east-1",
+    region: env.AWS_S3_REGION_NAME || "ap-northeast-2", // the deployment region (PLAN M10)
     accessKeyId,
     secretAccessKey,
     publicUrl,

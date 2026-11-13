@@ -39,7 +39,7 @@ and refuse the development `SECRET_KEY` and S3 secret.
 
 ```sh
 cp .env.prod.example .env.prod          # replace every "change-me"
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml --profile local-services up -d --build
 docker compose -f docker-compose.prod.yml run --rm -e SUPERUSER_PASSWORD='…' api \
   node apps/api/src/cli.ts createsuperuser --no-input --email you@example.com
 ```
@@ -47,8 +47,10 @@ docker compose -f docker-compose.prod.yml run --rm -e SUPERUSER_PASSWORD='…' a
 The dashboard and API are on http://localhost:8080 (`WEB_PORT`), caught emails on
 http://localhost:8027 (`MAILPIT_PORT`). The one-off `migrate` service applies the migrations and
 creates the media bucket before `api` and `worker` start; it runs again on every `up` and is safe
-to repeat. Postgres, SeaweedFS (standing in for S3) and Mailpit (standing in for SMTP) are there so
-the stack runs anywhere; in a real deployment they are usually managed services.
+to repeat. The `local-services` profile adds SeaweedFS (standing in for S3) and Mailpit (standing
+in for SMTP) so the stack runs anywhere. Without the profile only Postgres, the one-off `migrate`,
+`api`, `worker` and `web` run, and `.env.prod` must point at a real S3 bucket and SMTP server
+(the AWS deployment, PLAN M10). Pass the same `--profile` to every command of a stack that uses it.
 
 ## Upgrading
 

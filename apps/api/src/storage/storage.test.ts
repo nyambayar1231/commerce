@@ -94,7 +94,7 @@ describe("readStorageConfig", () => {
     });
 
     expect(config.endpoint).toBeUndefined();
-    expect(config.region).toBe("us-east-1");
+    expect(config.region).toBe("ap-northeast-2");
     expect(config.accessKeyId).toBeUndefined();
     expect(config.secretAccessKey).toBeUndefined();
   });
@@ -134,7 +134,7 @@ describe("storage keys", () => {
   it("URL-encodes each key segment in publicUrl", () => {
     const local = createS3Storage({
       bucket: "commerce-media",
-      region: "us-east-1",
+      region: "ap-northeast-2",
       publicUrl: "http://localhost:8333/commerce-media",
     });
 
