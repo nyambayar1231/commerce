@@ -7,13 +7,12 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M10 | Deploy to AWS | In progress |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
 (foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11), M5 (checkout API, 2026-11-11), M6 (orders, 2026-11-11), M7 (customer accounts, 2026-11-12), M8 (background jobs and email, 2026-11-12), M9 (hardening &
-deployability, 2026-11-12).
+deployability, 2026-11-12), M10 (deploy to AWS, 2026-11-13).
 
 ## Open items from finished milestones
 
@@ -224,95 +223,24 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   (images and e2e jobs passed). A flaky test, fixed in M10.1. The order and product grids are canvas (Glide), so e2e tests can't read rows;
   old millisecond product-list cursors are now refused as invalid. ADR-0014 still says thumbnail
   rate limiting "comes with M9" (left unchanged: accepted ADRs change only with the owner).
+- **M10 (deploy to AWS), as documented in docs/deploy.md "AWS (production)":** live at
+  https://admin.dino-craft.lol since 2026-11-13 (CDK stack `Commerce` in ap-northeast-2, one
+  t4g.small, S3 media, Resend email, Caddy HTTPS, nightly backups); acceptance checked with the
+  owner (certificate, image upload to S3, Resend email, backup restore, CI green). Open:
+  - **AWS free plan ends** when the credits run out or after six months (around 2027-05); the
+    account must be upgraded to the Paid plan before then or AWS closes it.
+  - **Domain** `dino-craft.lol` (Porkbun) has auto-renew off; it expires 2027-09-10.
+  - **Releases are manual** (images built on the Mac, through the artifacts bucket, loaded via
+    Session Manager); no CI-driven deploys.
+  - The deployment decisions (AWS, one instance, Postgres in a container, Caddy, CDK) live in PLAN
+    history and docs/deploy.md; no ADR was written. Proposed: ADR-0015 for them.
+  - `infra/aws/cdk.context.json` (committed, as CDK recommends) holds the AWS account id in this
+    public repository. The 85 unset CDK feature flags keep their defaults.
+  - A test customer `nyambayarlucky+m10test@gmail.com` (unconfirmed) is in the production database.
+  - Browsers that opened admin.dino-craft.lol while it was Porkbun's parking page cached its 301 to
+    dino-craft.lol for `/` (cleared by emptying the browser cache).
 
 ---
-
-## M10 — Deploy to AWS
-- **Objective:** the stack from M9 runs on AWS behind HTTPS on the owner's domain, with media in
-  S3, email through Resend, nightly database backups, and a written runbook to deploy and upgrade.
-- **Concepts:** EC2 + Elastic IP, IAM instance roles (no keys on the server), S3 public-read
-  buckets, automatic TLS (ACME), email domain authentication (SPF/DKIM/DMARC), backup and restore.
-
-**Owner decisions (2026-11-13):**
-1. **AWS on the free plan** (credits, about 6 months), region `ap-northeast-2` (Seoul), CLI
-   profile `commerce`.
-2. **Media in AWS S3, email through Resend's SMTP** (`smtps://resend:<key>@smtp.resend.com:465`).
-3. **One EC2 instance runs `docker-compose.prod.yml`**; Caddy is added for HTTPS.
-4. **The AWS resources are a small AWS CDK app in TypeScript** (one stack): media bucket +
-   public-read policy, backup bucket, instance role and profile, security group (80, 443; no SSH,
-   the owner chose Session Manager on 2026-11-13), instance, Elastic IP. New dependencies `aws-cdk-lib`, `constructs` and the
-   `aws-cdk` CLI (exact versions), in a new workspace package `infra/aws` (`@commerce/infra-aws`).
-   The account needs a one-time `cdk bootstrap` in `ap-northeast-2` (creates the `CDKToolkit`
-   stack and its small assets bucket).
-
-**Proposed by the lead, approved by the owner (2026-11-13):**
-5. **Postgres stays a container on the instance** (same version as dev/CI, no RDS cost after the
-   credits); nightly `pg_dump` to a private S3 bucket, restore tested once.
-6. **t4g (Arm) instance; images built on the owner's Mac** (`linux/arm64`) and copied through a
-   private artifacts bucket (`docker save` → S3 → `docker load` by a Session Manager command; no
-   SSH, owner 2026-11-13); no image registry. Building on a 1–2 GB instance would run out
-   of memory.
-7. **The stack's S3 server and Mailpit move behind a Compose profile** (`local-services`), so the
-   AWS deployment leaves them out; nginx's `/media/` proxy resolves lazily so nginx starts without
-   them.
-
-**Steps (each one commit, one report):**
-
-| Step | What | Status |
-|---|---|---|
-| M10.1 | CI green: find why the simultaneous-login throttling test lets both attempts through on GitHub (race in the code or in the test) and fix it | Done |
-| M10.2 | Compose profile for `s3`/`mailpit`, optional `depends_on`, lazy nginx `/media/`; checked by running the stack with and without the profile | Done |
-| M10.3 | Caddy service + `Caddyfile` (domain from env, automatic TLS, proxies to `web`); `PUBLIC_URL` etc. documented for HTTPS | Done |
-| M10.4 | Backups: `pg_dump` script + cron line, upload to the backup bucket, restore procedure; restore tested locally | Done |
-| M10.5 | CDK app in `infra/aws` (decision 4): the stack, a Vitest test asserting the synthesized template (buckets, policies, ports), `cdk synth` and `cdk diff` against the account; covered by `pnpm lint`/`typecheck`/`test` | Done |
-| M10.6 | `docs/deploy.md` AWS section: Resend domain setup, first deploy, upgrade, backups, costs after the credits | Done |
-| M10.7 | First deploy with the owner: stack created, DNS, Resend verified, images loaded, superuser; acceptance checks run on the live site | In progress |
-
-- **Domain (owner, 2026-11-13):** `dino-craft.lol`, registered and DNS-hosted at Porkbun (auto-renew
-  off, expires 2027-09-10). Owner rule: every AWS resource and default is in `ap-northeast-2`.
-- **Acceptance:** `https://<domain>` serves the dashboard with a valid certificate; a product image
-  upload lands in S3 and displays; a registration email arrives through Resend; last night's backup
-  restores into a scratch database; CI is green on `main`.
-- **Out of scope:** the storefront (M4), multiple instances / load balancer, RDS, CloudFront,
-  monitoring and alerting beyond the AWS budget alert, CI-driven deploys.
-- **Status:** In progress since 2026-11-13; all decisions approved.
-- **M10.1 result:** the code was right, the test wasn't: two in-process logins don't always overlap,
-  and a successful login clears the IP block (as Saleor), so the second one sometimes got through
-  (1 in 30 locally). Replaced by a test that holds the block as an in-flight attempt, plus
-  `rateLimit.test.ts` (10 simultaneous `tryBlock` claims, exactly one wins). CI green on GitHub.
-- **M10.2 result:** `s3`/`mailpit` in the `local-services` profile (`required: false` links);
-  nginx resolves the media upstream per request. Ran both ways: with the profile a file uploaded to
-  the stack's S3 is served at `/media/`; without it only postgres/migrate/api/worker/web run, the
-  bucket is created on an external S3 and a registration email goes out through an external SMTP
-  (`/media/` answers 502, nginx stays up). The S3 region default (code and examples) is now
-  `ap-northeast-2`.
-- **M10.3 result:** Caddy 2.10.2 in the `https` profile, site `admin.dino-craft.lol` (owner,
-  2026-11-13); `/graphql` and `/thumbnail/` go straight to `api` so the client IP survives (checked:
-  a forged `X-Forwarded-For` is ignored, throttling keys on the real address); HSTS, nosniff,
-  HTTP→HTTPS redirect; `web` published on loopback only. Tested locally with `SITE_DOMAIN=localhost`
-  (Caddy's local CA); the real certificate is first requested in M10.7.
-- **M10.4 result:** `infra/backup/backup.sh` (pg_dump custom format piped to `aws s3 cp`, host AWS
-  CLI + instance role) and `restore.sh` (into `commerce_restore` by default, prints counts); cron
-  line and drill in docs/deploy.md. Tested locally against a SeaweedFS bucket: the restored
-  database has the same 20 migrations, 25 tables and the user; the live one is untouched. The
-  30-day expiry is the backup bucket's lifecycle rule (M10.5).
-- **M10.5 result:** `infra/aws` (`@commerce/infra-aws`, aws-cdk-lib 2.276.0, constructs 10.8.1,
-  aws-cdk 2.1148.1): stack `Commerce` in ap-northeast-2 with media (public objects by policy),
-  backups (30 days) and artifacts (7 days) buckets, a one-subnet VPC without NAT, a security group
-  with 80/443 only, a t4g.small on a pinned Ubuntu 24.04 arm64 AMI (30 GB gp3, IMDSv2 with hop
-  limit 2 so containers get the role), Session Manager in the role, an Elastic IP; user data
-  installs Docker, Compose v2, the AWS CLI, swap and clones the repo. `cdk bootstrap` done
-  (`CDKToolkit` stack); `cdk diff` shows only the intended resources; 6 template tests. The
-  account id comes from the profile, not the code. Not deployed yet (M10.7). The 85 unset CDK
-  feature flags are left at their defaults.
-- **M10.7 so far (2026-11-13):** `cdk deploy` done (instance `i-03eef8d111139f3a3`, Elastic IP
-  54.180.205.134); DNS and Resend verified by the owner; secrets in Parameter Store; images built on
-  the Mac and loaded through the artifacts bucket; stack up with the `https` profile; superuser
-  created. Checked: Let's Encrypt certificate for admin.dino-craft.lol, HTTP→HTTPS, GraphQL; a
-  container gets the instance role (IMDS hop limit 2); backup from cron's environment to S3 and a
-  restore drill; a registration email accepted by Resend (worker "Job done"). Found and fixed:
-  `aws` is in /snap/bin on the server. Waiting on the owner: the email in the inbox, and a product
-  image upload landing in S3 from the dashboard.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
