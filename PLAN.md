@@ -284,7 +284,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M11.1 | Locale infrastructure: Saleor's LocaleProvider (en, mn; default mn; localStorage; lazy mn.json; `<html lang>`), `extract-messages`, defaultMessages.json, an empty mn.json; e2e forced to English; tests | Done |
 | M11.2 | Account settings page (decision 4) and the user menu's "Account Settings"; checked against Saleor's page | Done |
 | M11.3 | Every visible string through react-intl (audit of hard-coded text, labels in TS objects, Macaw props); Saleor's ids where Saleor has the same text | Done |
-| M11.4 | Mongolian: Saleor's entries copied, the rest drafted by the lead; the coverage test (decision 6) | Proposed |
+| M11.4 | Mongolian: Saleor's entries copied, the rest drafted by the lead; the coverage test (decision 6) | Done |
 | M11.5 | Owner review of the Mongolian (a side-by-side list English / Mongolian), corrections applied | Proposed |
 | M11.6 | Dates, numbers and money formatted in the chosen locale (no hard-coded `en`); released to production (docs/deploy.md) | Proposed |
 
@@ -320,6 +320,15 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   formatjs's content hash (checked against Saleor's). 424 messages. Known gap: the Glide grid's
   own search box (⌘F: "Type to search"…) is English inside the library, as in Saleor. Dates and
   money are M11.6.
+- **M11.4 result:** `locale/mn.json` translates all 425 messages: Saleor's Mongolian for 130 of them
+  (12 corrected: typos, a Latin "e" inside a Cyrillic word, "Fulfillment status" as just "Status",
+  "Customer Overview" as "rating", bulk-delete questions putting the count in the singular), the
+  rest drafted by the lead. Terms: бүтээгдэхүүн, ангилал, харилцагч (customer; Saleor said
+  хэрэглэгч), захиалга, биелүүлэх, хувилбар, агуулах, нөөц, төлбөр, буцаан олголт, гүйлгээ.
+  Checked: every placeholder/plural/tag matches the English (ICU parse), no mixed-script words.
+  `translations.test.ts` fails CI on a missing or unknown Mongolian entry (option (a), the lead's recommendation; the owner
+  may switch to a report-only check); a removed entry was caught. At runtime an untranslated
+  message still shows its English text.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.

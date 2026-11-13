@@ -1,1 +1,1571 @@
-{}
+{
+  "++8ZWj": {
+    "context": "Transaction event status - requested",
+    "string": "Хүсэлт илгээсэн"
+  },
+  "+43JV5": {
+    "context": "header",
+    "string": "{categoryName} ангиллын бүтээгдэхүүнүүд"
+  },
+  "+B25o/": {
+    "context": "dialog header",
+    "string": "Захиалгыг төлөгдсөнөөр тэмдэглэх"
+  },
+  "+BkNuT": {
+    "context": "aria label for grid view button",
+    "string": "Хавтан харагдац"
+  },
+  "+LyCI8": {
+    "context": "detail page top bar, settings menu button tooltip",
+    "string": "Бусад үйлдэл"
+  },
+  "+VEhV8": {
+    "context": "product channels",
+    "string": "Боломжтой эсэх"
+  },
+  "+ahkGr": {
+    "context": "section header",
+    "string": "Харилцагчийн мэдээлэл"
+  },
+  "/C//FB": {
+    "context": "header, allocated product quantity",
+    "string": "Хуваарилсан"
+  },
+  "/Mcvt4": {
+    "context": "section header",
+    "string": "Медиа"
+  },
+  "/jEC3m": {
+    "context": "product media gallery dropzone hint",
+    "string": "Чирж оруулах эсвэл дарж байршуулах"
+  },
+  "/jJLYy": {
+    "string": "Гүйлгээнүүд"
+  },
+  "/kh7MF": {
+    "context": "expand truncated toast description",
+    "string": "Дэлгэрэнгүй"
+  },
+  "/suM59": {
+    "context": "pagination previous page button aria label",
+    "string": "Өмнөх хуудас"
+  },
+  "/wMahJ": {
+    "context": "filter condition",
+    "string": "дотор"
+  },
+  "0/Y0nG": {
+    "context": "date group header",
+    "string": "Сүүлийн 7 хоног"
+  },
+  "0OfZJA": {
+    "context": "button",
+    "string": "Буцах"
+  },
+  "0QG3GQ": {
+    "context": "empty search results on the customer list",
+    "string": "\"{query}\" хайлтаар харилцагч олдсонгүй"
+  },
+  "0ix6PR": {
+    "string": "Захиалга цуцлагдлаа"
+  },
+  "0lAlsM": {
+    "context": "refund amount input helper",
+    "string": "{amount} хүртэл буцаан олгох боломжтой."
+  },
+  "0mhR+F": {
+    "context": "Header row quantity label",
+    "string": "Тоо хэмжээ"
+  },
+  "16iwCI": {
+    "context": "section header",
+    "string": "Биелүүлсэн"
+  },
+  "1LiVhv": {
+    "context": "section header",
+    "string": "Сүүлийн захиалгууд"
+  },
+  "1WbTJ5": {
+    "context": "product variants, title",
+    "string": "Хувилбарууд"
+  },
+  "1X6HtI": {
+    "string": "Бүх ангилал"
+  },
+  "2HfSiT": {
+    "context": "pagination",
+    "string": "Мөрийн тоо"
+  },
+  "2gLFEQ": {
+    "context": "Save composition segment for category name, slug, description, SEO",
+    "string": "ерөнхий"
+  },
+  "2p0tZx": {
+    "context": "delete customer, dialog content",
+    "string": "Та {email}-г устгахдаа итгэлтэй байна уу?"
+  },
+  "2pw5dQ": {
+    "context": "payment status",
+    "string": "Бүрэн төлөгдсөн"
+  },
+  "2z3+WY": {
+    "context": "error notification when all product image uploads in a batch failed",
+    "string": "{count, plural, one {Зургийг байршуулж чадсангүй} other {# зургийг байршуулж чадсангүй}}"
+  },
+  "3+990c": {
+    "context": "button",
+    "string": "Бүх захиалгыг харах"
+  },
+  "3C3Nj5": {
+    "context": "button",
+    "string": "Хувилбар нэмэх"
+  },
+  "3DDUnc": {
+    "context": "customer account is inactive (deactivated)",
+    "string": "Идэвхгүй"
+  },
+  "3DGvA/": {
+    "string": "Энэ ангилалд хамаарах бүх бүтээгдэхүүн ангиллаасаа салж, дэлгүүрт харагдахгүй болно гэдгийг санаарай."
+  },
+  "3Eyq0y": {
+    "string": "Төлбөр баталгаажсан бол гараар төлөгдсөнөөр тэмдэглэнэ үү"
+  },
+  "3SVI5p": {
+    "string": "Анхааруулга"
+  },
+  "3zdm8A": {
+    "context": "Dialog title",
+    "string": "Гүйлгээ: {actionType}"
+  },
+  "4IVdnm": {
+    "context": "Empty state when the filter panel has no conditions",
+    "string": "Шүүлтүүр алга"
+  },
+  "4JW9iJ": {
+    "context": "home section name",
+    "string": "Нүүр"
+  },
+  "4VLj3S": {
+    "context": "overcharged order status",
+    "string": "Илүү төлөгдсөн"
+  },
+  "4WCH+l": {
+    "context": "notifications region label for screen readers",
+    "string": "Мэдэгдлүүд"
+  },
+  "4fJ17F": {
+    "context": "Charge in progress transaction amount, data display header",
+    "string": "Татан авалт хүлээгдэж буй"
+  },
+  "4hl9rS": {
+    "context": "variant price in channel",
+    "string": "Үнэ"
+  },
+  "4kcpaI": {
+    "context": "date group header",
+    "string": "Сүүлийн 30 хоног"
+  },
+  "4piZ1P": {
+    "context": "empty state when this category has no subcategories",
+    "string": "Ангилал олдсонгүй"
+  },
+  "4qe6hO": {
+    "context": "product stock, section header",
+    "string": "Нөөц"
+  },
+  "577R2r": {
+    "string": "Буруу утга"
+  },
+  "5Nv7ig": {
+    "context": "customer overview stat label: sum of recent orders net product sales",
+    "string": "Сүүлийн нийт дүн"
+  },
+  "5ObBlW": {
+    "string": "Бараан горим"
+  },
+  "5ZYUn5": {
+    "context": "Filter and element text",
+    "string": "ба"
+  },
+  "5o84YO": {
+    "context": "Filter where element text",
+    "string": "Нөхцөл:"
+  },
+  "5sg7KC": {
+    "string": "Нууц үг"
+  },
+  "62Rs/K": {
+    "context": "customer detail cogs menu, activates a deactivated customer account",
+    "string": "Хэрэглэгчийг идэвхжүүлэх"
+  },
+  "65MiSm": {
+    "context": "Save composition segment for customer name, email, and note",
+    "string": "мэдээлэл"
+  },
+  "6AMFki": {
+    "context": "product name",
+    "string": "Нэр"
+  },
+  "6Jgwpc": {
+    "string": "Төлбөр хүлээн аваагүй"
+  },
+  "6a075o": {
+    "context": "activate customer dialog, content",
+    "string": "{email}-г идэвхжүүлэх үү? Тэр нэвтэрч, шинэ захиалга хийх боломжтой болно."
+  },
+  "6fIHWa": {
+    "context": "order header date, less than a minute ago",
+    "string": "Дөнгөж сая захиалсан"
+  },
+  "6jt3RB": {
+    "context": "success toast after activating a customer",
+    "string": "Харилцагч идэвхжлээ"
+  },
+  "6orx1c": {
+    "string": "Төлбөрийн хаяг"
+  },
+  "73SSOz": {
+    "string": "Харилцагчийн захиалсан бүх мөр."
+  },
+  "7A+FJl": {
+    "context": "link",
+    "string": "Профайл харах"
+  },
+  "7Jg9ec": {
+    "context": "error message",
+    "string": "Танд нэвтрэх эрх байхгүй байна."
+  },
+  "7QPLu0": {
+    "context": "empty state message",
+    "string": "Энэ захиалгад гүйлгээ хийгдээгүй байна."
+  },
+  "7ejEbB": {
+    "context": "Authorized (amount locked on card, not transfered to store owner) transaction amount, data display header",
+    "string": "Зөвшөөрөгдсөн"
+  },
+  "7sJ04i": {
+    "context": "customer recent orders table column: fulfillment status",
+    "string": "Захиалгын төлөв"
+  },
+  "8Cjxdt": {
+    "string": "Илүү төлөгдсөн"
+  },
+  "8FgYfb": {
+    "context": "customer detail page header, when this customer's account was created",
+    "string": "{date}-аас хойш гишүүн"
+  },
+  "8GC/ah": {
+    "context": "variants section name",
+    "string": "Хувилбарууд"
+  },
+  "8HRy+U": {
+    "string": "Ангиллын тайлбар"
+  },
+  "8HmEqK": {
+    "context": "Transaction refund button - return captured amount to client",
+    "string": "Буцаан олгох"
+  },
+  "8J81ri": {
+    "context": "ordered product sku",
+    "string": "SKU"
+  },
+  "8RDDZP": {
+    "context": "date group header when it is the only group on the timeline",
+    "string": "30 хоногоос өмнөх"
+  },
+  "8maISA": {
+    "context": "deactivate customer dialog, header",
+    "string": "Харилцагчийг идэвхгүй болгох"
+  },
+  "8p8zxN": {
+    "context": "customer account is active",
+    "string": "Идэвхтэй"
+  },
+  "945a4a": {
+    "context": "column header",
+    "string": "Харилцагчийн и-мэйл"
+  },
+  "95oJ5d": {
+    "context": "button",
+    "string": "Удирдах самбар руу буцах"
+  },
+  "99q9UB": {
+    "context": "create product dialog description",
+    "string": "Бүтээгдэхүүн нэмнэ. Үүсгэсний дараа үнэ, нөөц, нийтлэх эсэхийг тохируулж болно."
+  },
+  "9KzuFr": {
+    "context": "Product availability status when not visible in a channel",
+    "string": "Нуугдсан"
+  },
+  "9RvXNg": {
+    "context": "section header",
+    "string": "Медиагийн мэдээлэл"
+  },
+  "9TENcY": {
+    "string": "Бүртгэгдсэн гүйлгээнүүдийн бүх төлбөр."
+  },
+  "9WhNiN": {
+    "context": "Pending authorization transaction amount, data display header",
+    "string": "Зөвшөөрөл хүлээгдэж буй"
+  },
+  "9XYfOt": {
+    "context": "fulfillment section name",
+    "string": "Биелүүлэлт"
+  },
+  "9ZtJhn": {
+    "context": "cancel button",
+    "string": "Захиалга цуцлах"
+  },
+  "9exKzi": {
+    "context": "Close the list filter panel without clearing applied filters",
+    "string": "Хаах"
+  },
+  "9qKFTA": {
+    "context": "Product category",
+    "string": "Ангилал"
+  },
+  "9wjl6Q": {
+    "context": "bulk action button label with selected count",
+    "string": "{action} ({count})"
+  },
+  "AA0eYf": {
+    "context": "staff details sidebar card title for dashboard locale",
+    "string": "Удирдах самбарын хэл"
+  },
+  "AHOQr2": {
+    "string": "Бүтээгдэхүүн хайх..."
+  },
+  "AiurXc": {
+    "string": "Үлдэгдэл зөвшөөрөл"
+  },
+  "AqXzM2": {
+    "string": "Захиалга #{orderNumber}"
+  },
+  "AubJ/S": {
+    "context": "button",
+    "string": "Нэвтрэх"
+  },
+  "BC/h4y": {
+    "context": "category detail sidebar children card intro",
+    "string": "Дэд ангиллыг засахын тулд нээх, эсвэл энэ ангилалд шинэ дэд ангилал үүсгэнэ үү."
+  },
+  "BLX9dz": {
+    "context": "fulfill order, button",
+    "string": "Биелүүлэх"
+  },
+  "BM1JiJ": {
+    "context": "error message",
+    "string": "Энэ захиалгыг цуцлах боломжгүй"
+  },
+  "BUKMzM": {
+    "string": "Хувилбар устгагдлаа"
+  },
+  "BdS6CQ": {
+    "context": "category detail sidebar card title",
+    "string": "Дэд ангиллууд"
+  },
+  "Bfh6NP": {
+    "context": "sidebar header meta for number of child categories",
+    "string": "{count, plural, one {# дэд ангилал} other {# дэд ангилал}}"
+  },
+  "BvGp1I": {
+    "string": "хооронд"
+  },
+  "CJpx4E": {
+    "context": "page header",
+    "string": "{orderNumber} дугаартай захиалга - Биелүүлэлт нэмэх"
+  },
+  "CLy6Vn": {
+    "context": "filter value validation error",
+    "string": "Утга илүү их байх ёстой"
+  },
+  "CWDuMj": {
+    "context": "remaining quantity",
+    "string": "/ {max}"
+  },
+  "CYEnGq": {
+    "context": "order fulfilled success message",
+    "string": "Бараа биелүүлэгдлээ"
+  },
+  "Cf7i/g": {
+    "context": "Info box title when product is not published",
+    "string": "Нийтийн API-д харагдахгүй."
+  },
+  "ClUKur": {
+    "string": "Бүх мөрийн нийлбэр"
+  },
+  "D+Nw8P": {
+    "context": "customer email verification status",
+    "string": "Баталгаажаагүй"
+  },
+  "D0Rbqc": {
+    "context": "collapse truncated toast description",
+    "string": "Хураах"
+  },
+  "DGWVA9": {
+    "context": "variant created error message",
+    "string": "Хувилбар үүсгэж чадсангүй"
+  },
+  "DI2hRC": {
+    "context": "error message",
+    "string": "API холбогдохгүй байна. Сүлжээний холболтоо шалгаад дахин оролдоно уу."
+  },
+  "DO8+uV": {
+    "string": "Бүтээгдэхүүн үүсгэгдлээ"
+  },
+  "DVgMit": {
+    "context": "transaction event type, transaction was chargeback by payment provider",
+    "string": "Төлбөрийн маргаан"
+  },
+  "E1C9pp": {
+    "context": "transaction event type, authorization amount was changed",
+    "string": "Зөвшөөрлийн дүн өөрчлөгдсөн"
+  },
+  "EHRXv4": {
+    "context": "product media detail page header",
+    "string": "Зураг засах"
+  },
+  "EZQEUW": {
+    "context": "media tile edit button label",
+    "string": "Зураг засах"
+  },
+  "EbVf0Z": {
+    "context": "transaction reference",
+    "string": "Гүйлгээний лавлагаа"
+  },
+  "ErvPaM": {
+    "context": "header",
+    "string": "Агуулахын нэр"
+  },
+  "F2xa5K": {
+    "context": "success notification when product media items are deleted",
+    "string": "{counter,plural,one{Медиа устгагдлаа} other{# медиа устгагдлаа}}"
+  },
+  "F4WdSO": {
+    "context": "dialog header",
+    "string": "Бүтээгдэхүүнүүдийг устгах"
+  },
+  "F7DxHw": {
+    "string": "Дэд ангиллууд"
+  },
+  "FBtqtl": {
+    "context": "payment status",
+    "string": "Төлөгдөөгүй"
+  },
+  "FK088X": {
+    "context": "Apply filters from the list filter panel",
+    "string": "Хэрэглэх"
+  },
+  "FNpv6K": {
+    "context": "button",
+    "string": "Шүүлтүүр"
+  },
+  "FiO/W/": {
+    "string": "Ангиллуудыг устгах"
+  },
+  "FopBSj": {
+    "context": "error message",
+    "string": "Нэвтрэх нэр эсвэл нууц үг буруу байна. Дахин оролдоно уу."
+  },
+  "FpIcp9": {
+    "string": "Харилцагч олдсонгүй"
+  },
+  "G2WJ1J": {
+    "context": "order header date, less than an hour ago",
+    "string": "{minutes, plural, one {# минутын өмнө захиалсан} other {# минутын өмнө захиалсан}}"
+  },
+  "G5ETO0": {
+    "string": "Ангиллууд устгагдлаа"
+  },
+  "GFJabu": {
+    "context": "dialog header",
+    "string": "Хувилбарыг устгах"
+  },
+  "GJAX0z": {
+    "context": "order history message",
+    "string": "Захиалга хийгдсэн"
+  },
+  "H4Lcuk": {
+    "string": "Ангилал шинэчлэгдлээ"
+  },
+  "H5NKfr": {
+    "context": "button",
+    "string": "Үүсгэх"
+  },
+  "HAlOn1": {
+    "string": "Нэр"
+  },
+  "HRy5qF": {
+    "context": "customer overview stat label",
+    "string": "Нийт захиалга"
+  },
+  "HTiAMm": {
+    "string": "Татвар "
+  },
+  "HY1ZL6": {
+    "context": "order summary, taxes are included in the prices",
+    "string": "(багтсан)"
+  },
+  "HvJPcU": {
+    "string": "Ангилал устгагдлаа"
+  },
+  "I06jIl": {
+    "string": "Анхаар: зарим хэлний орчуулга бүрэн биш байж болох бөгөөд орчуулаагүй хэсэг англиар харагдана."
+  },
+  "IH47ID": {
+    "string": "Шинэ хувилбар нэмэхийн тулд дээрх товчийг ашиглана уу"
+  },
+  "IIlJDr": {
+    "context": "payment status",
+    "string": "Хэсэгчлэн зөвшөөрөгдсөн"
+  },
+  "INKsSL": {
+    "context": "Transaction event status - success",
+    "string": "Амжилттай"
+  },
+  "INNPVX": {
+    "context": "payment status",
+    "string": "Хэсэгчлэн төлөгдсөн"
+  },
+  "IeoGgH": {
+    "context": "variant created success message",
+    "string": "Хувилбар үүсгэгдлээ"
+  },
+  "IqRBql": {
+    "context": "variant name",
+    "string": "Шинэ хувилбар"
+  },
+  "IradBW": {
+    "context": "date group header",
+    "string": "Өчигдөр"
+  },
+  "Irflxf": {
+    "context": "window title",
+    "string": "Ангилал үүсгэх"
+  },
+  "IzkXXK": {
+    "context": "filter row remove button label",
+    "string": "Нөхцөлийг хасах"
+  },
+  "J0lNnk": {
+    "context": "column label",
+    "string": "Агуулах"
+  },
+  "J4E+jp": {
+    "string": "Хувилбарын нэр"
+  },
+  "JFmOfi": {
+    "context": "button",
+    "string": "Бүтээгдэхүүн үүсгэх"
+  },
+  "JHTwdB": {
+    "string": "Нууц үгийг харуулах"
+  },
+  "JIQ7KX": {
+    "string": "Нийт татсан дүн"
+  },
+  "JV3DcT": {
+    "context": "success notification when product media gallery order is saved",
+    "string": "Медиагийн дараалал шинэчлэгдлээ"
+  },
+  "JjeZEG": {
+    "context": "section header",
+    "string": "Бүтээгдэхүүнийг ангилах"
+  },
+  "Jk8bsM": {
+    "context": "badge next to customer name marking this user as staff",
+    "string": "Ажилтан"
+  },
+  "K8xNLe": {
+    "context": "products section name",
+    "string": "Бүтээгдэхүүн"
+  },
+  "KN7zKn": {
+    "string": "Алдаа"
+  },
+  "KXX8oX": {
+    "context": "product media gallery dropzone hint when click-to-upload is disabled",
+    "string": "Чирж оруулж байршуулах"
+  },
+  "KzcNvP": {
+    "context": "column picker button label",
+    "string": "Багана сонгох"
+  },
+  "L5IuDw": {
+    "string": "бага"
+  },
+  "L8seEc": {
+    "string": "Дүн"
+  },
+  "LQg8/p": {
+    "context": "customer detail cogs menu, opens the delete-confirmation dialog",
+    "string": "Хэрэглэгчийг устгах"
+  },
+  "LR3HlT": {
+    "string": "Нууц үг хэтэрхий богино байна"
+  },
+  "LU8dtl": {
+    "context": "date group header",
+    "string": "Өмнөх"
+  },
+  "LY5dS9": {
+    "context": "Charged transaction amount, data display header",
+    "string": "Татсан"
+  },
+  "Le6/M7": {
+    "context": "activate customer dialog, header",
+    "string": "Харилцагчийг идэвхжүүлэх"
+  },
+  "MHY5da": {
+    "string": "Хүргэлтийн төлбөр"
+  },
+  "MJ2jZQ": {
+    "string": "Нийт"
+  },
+  "MTGT8E": {
+    "context": "column header",
+    "string": "Захиалгын тоо"
+  },
+  "McN+wq": {
+    "context": "customers section name",
+    "string": "Харилцагчид"
+  },
+  "MkPAWX": {
+    "context": "pill on staff details when viewing your own profile",
+    "string": "Би"
+  },
+  "N2IrpM": {
+    "string": "Батлах"
+  },
+  "N2SbNc": {
+    "string": "{counter,plural,one{Та энэ харилцагчийг устгахдаа итгэлтэй байна уу?} other{Та {displayQuantity} харилцагчийг устгахдаа итгэлтэй байна уу?}}"
+  },
+  "N5UuEK": {
+    "context": "header",
+    "string": "Хүргэхэд бэлэн бараа"
+  },
+  "N76zUg": {
+    "context": "page header",
+    "string": "Харилцагч үүсгэх"
+  },
+  "NCp87D": {
+    "context": "no warehouses info",
+    "string": "Энэ хувилбарт агуулах тохируулаагүй байна. Хувилбарын нөөц нэмэхийн тулд агуулах тохируулах эсвэл доорх товчийг дарж байгаа агуулахаас сонгоно уу."
+  },
+  "NQgbYA": {
+    "string": "Бүртгэлийн тохиргоо"
+  },
+  "NWA+MK": {
+    "context": "dialog content",
+    "string": "<b>Анхаар:</b> Захиалгыг цуцалсны дараа төлбөрийн буцаан олголтыг <b>гараар</b> хийх шаардлагатай."
+  },
+  "NWxomz": {
+    "string": "Биелүүлэлтийн төлөв"
+  },
+  "NmK6zy": {
+    "string": "Төлбөр"
+  },
+  "OGemtu": {
+    "context": "payment status",
+    "string": "Хэсэгчлэн буцаан олгосон"
+  },
+  "OK5+Fh": {
+    "string": "Хувилбар"
+  },
+  "Oe62bR": {
+    "context": "product availability",
+    "string": "Боломжтой эсэх"
+  },
+  "OkLJNT": {
+    "context": "aria-label for collapsed main nav drawer trigger",
+    "string": "Цэсийг нээх"
+  },
+  "Oy1LhB": {
+    "context": "button error state label",
+    "string": "Дахин оролдох"
+  },
+  "P5HhQl": {
+    "context": "catalog section name",
+    "string": "Каталог"
+  },
+  "P7PLVj": {
+    "string": "Огноо"
+  },
+  "PFnobO": {
+    "string": "их"
+  },
+  "PXatmC": {
+    "string": "Харилцагч устгагдлаа"
+  },
+  "PbqNhi": {
+    "context": "order status",
+    "string": "Хэсэгчлэн биелүүлсэн"
+  },
+  "PeEood": {
+    "string": "Харилцагч шинэчлэгдлээ"
+  },
+  "PesQ3H": {
+    "context": "Savebar hint listing which dirty areas will persist on Save",
+    "string": "Хадгалаагүй өөрчлөлт: {segments}"
+  },
+  "Pp/7T7": {
+    "string": "{counter,plural,one{Та энэ ангиллыг устгахдаа итгэлтэй байна уу?} other{Та {displayQuantity} ангиллыг устгахдаа итгэлтэй байна уу?}}"
+  },
+  "PyxGqS": {
+    "context": "customer overview, subtitle on total orders showing the most recent order date",
+    "string": "Сүүлийн захиалга: {date}"
+  },
+  "Q1Uzbb": {
+    "string": "Бүтээгдэхүүн олдсонгүй"
+  },
+  "Q6wcZ5": {
+    "string": "Нэр"
+  },
+  "Q8Qw5B": {
+    "string": "Тайлбар"
+  },
+  "QDxJib": {
+    "string": "Биелүүлэх"
+  },
+  "QHDtwH": {
+    "string": "Ангилалтай"
+  },
+  "QLVddq": {
+    "context": "button",
+    "string": "Харилцагч үүсгэх"
+  },
+  "QlSHOW": {
+    "context": "customer detail sidebar, name email and note",
+    "string": "Холбоо барих"
+  },
+  "RaycYK": {
+    "context": "button",
+    "string": "Хадгалах"
+  },
+  "RlfqSV": {
+    "string": "Захиалга олдсонгүй"
+  },
+  "RrCui3": {
+    "string": "Хураангуй"
+  },
+  "Ruw3iJ": {
+    "context": "activate customer dialog, confirm button label",
+    "string": "Идэвхжүүлэх"
+  },
+  "RyZd9J": {
+    "context": "error message",
+    "string": "Түр хүлээгээд дахин оролдоно уу."
+  },
+  "SDgGcU": {
+    "context": "Button to manually mark order as paid without actual payment",
+    "string": "Төлөгдсөнөөр тэмдэглэх"
+  },
+  "SHF+gG": {
+    "context": "Clear filters button text",
+    "string": "Шүүлтүүрийг арилгах"
+  },
+  "SJhFLU": {
+    "context": "payment status",
+    "string": "Зөвшөөрөгдсөн"
+  },
+  "SM+yG0": {
+    "context": "input label",
+    "string": "SKU (барааны код)"
+  },
+  "SPzIC5": {
+    "context": "success toast after deactivating a customer",
+    "string": "Харилцагч идэвхгүй боллоо"
+  },
+  "SwtcgX": {
+    "context": "product media alt text field label",
+    "string": "Alt текст"
+  },
+  "T1f2Yl": {
+    "string": "Хувилбарын нэр"
+  },
+  "T83iU7": {
+    "string": "Ангилал хайх..."
+  },
+  "TDhHMi": {
+    "string": "Энэ утга давхардахгүй байх ёстой"
+  },
+  "TKmub+": {
+    "string": "Энэ талбарыг бөглөх шаардлагатай"
+  },
+  "TLDkvR": {
+    "context": "transaction event type, transaction was cancelled / voided",
+    "string": "Цуцлалт"
+  },
+  "TWVx7O": {
+    "context": "delete product dialog title",
+    "string": "Бүтээгдэхүүн устгах"
+  },
+  "Ta9j04": {
+    "context": "orders section name",
+    "string": "Захиалгууд"
+  },
+  "TjGYna": {
+    "context": "product inventory, checkbox",
+    "string": "Нөөцийг хянах"
+  },
+  "U2PF0d": {
+    "context": "create category dialog description for root create",
+    "string": "Үндсэн ангилал нэмнэ. Үүсгэсний дараа SEO, медиа, мета өгөгдлийг засаж болно."
+  },
+  "U4By91": {
+    "context": "bulk delete selected subcategories, button tooltip",
+    "string": "Ангиллуудыг устгах"
+  },
+  "U5dMfQ": {
+    "context": "Label for published toggle",
+    "string": "Нийтлэгдсэн"
+  },
+  "ULBvyx": {
+    "context": "order header date, yesterday",
+    "string": "Өчигдөр {time}-д захиалсан"
+  },
+  "UycVMp": {
+    "context": "button",
+    "string": "Дэд ангилал үүсгэх"
+  },
+  "V21v8h": {
+    "string": "{currency} {totalAmount}"
+  },
+  "VEext+": {
+    "string": "Та энэ зургийг устгахдаа итгэлтэй байна уу?"
+  },
+  "VOtpY0": {
+    "context": "TopNav destination link tooltip to parent order",
+    "string": "Захиалга"
+  },
+  "VyKl39": {
+    "context": "Dialog warning text",
+    "string": "Та энэ гүйлгээг {actionType} хийхдээ итгэлтэй байна уу?"
+  },
+  "W2glWk": {
+    "context": "fulfilled fulfillment, warehouse info",
+    "string": "{warehouseName} агуулахаас"
+  },
+  "WE8IFE": {
+    "context": "product name",
+    "string": "Бүтээгдэхүүн"
+  },
+  "Wr5UOV": {
+    "context": "error message",
+    "string": "Нэвтрэхэд алдаа гарлаа. Дахин оролдоно уу."
+  },
+  "WwNtFn": {
+    "context": "delete product variant",
+    "string": "Та {name}-г устгахдаа итгэлтэй байна уу?"
+  },
+  "Wyl25+": {
+    "context": "product inventory, checkbox description",
+    "string": "Нөөцийн хяналт идэвхтэй бол нөөцийн өөрчлөлтийг автоматаар тооцоолно"
+  },
+  "X9tptP": {
+    "string": "Бүрэн татаагүй"
+  },
+  "XBfvKN": {
+    "string": "Захиалгын түүх"
+  },
+  "XJSRDK": {
+    "context": "payment status",
+    "string": "Бүрэн буцаан олгосон"
+  },
+  "XQfBeC": {
+    "context": "Availability card title",
+    "string": "Боломжтой эсэх"
+  },
+  "XUU9sU": {
+    "context": "section header",
+    "string": "Бүх медиа"
+  },
+  "Xm9qOu": {
+    "context": "product pricing, section header",
+    "string": "Үнэ"
+  },
+  "YI6Fhj": {
+    "context": "no address is set in draft order",
+    "string": "Тохируулаагүй"
+  },
+  "YRe93Y": {
+    "string": "Зөв и-мэйл хаяг оруулна уу"
+  },
+  "YUaalK": {
+    "context": "Cancel in progress transaction amount, data display header",
+    "string": "Цуцлалт хүлээгдэж буй"
+  },
+  "YmHxaH": {
+    "context": "button and tooltip, restores the full main nav from the icon rail",
+    "string": "Цэсийг дэлгэх"
+  },
+  "Ynjq+C": {
+    "string": "Бүрэн татсан"
+  },
+  "Yo2kC+": {
+    "string": "Зургийг боловсруулж чадсангүй"
+  },
+  "Yxoq3Y": {
+    "context": "success notification when one or more product images finish uploading",
+    "string": "{count, plural, one {# зураг нэмэгдлээ} other {# зураг нэмэгдлээ}}"
+  },
+  "YzLUXA": {
+    "string": "Энэ утга 0-ээс их байх ёстой."
+  },
+  "Z7YrIb": {
+    "context": "no customer assigned to order",
+    "string": "Тохируулаагүй"
+  },
+  "ZHF4Z9": {
+    "context": "delete product dialog subtitle",
+    "string": "Та {name}-г устгахдаа итгэлтэй байна уу?"
+  },
+  "ZpVtCa": {
+    "string": "Хүргэлтийн хаяг"
+  },
+  "a4iag6": {
+    "context": "order header date, earlier today",
+    "string": "Өнөөдөр {time}-д захиалсан"
+  },
+  "a5eZlA": {
+    "context": "short product count column header in category sidebar",
+    "string": "Бүт."
+  },
+  "a5msuh": {
+    "string": "Тийм"
+  },
+  "aHIrs/": {
+    "string": "Шүүлтүүрийн өгөгдлийг ачаалж чадсангүй. Хуудсыг дахин ачаалж оролдоно уу."
+  },
+  "aRvO6i": {
+    "context": "button",
+    "string": "Агуулах оноох"
+  },
+  "aTe9zV": {
+    "context": "customer overview stat label: average order value of recent orders",
+    "string": "Захиалгын дундаж үнэ"
+  },
+  "aYnI0N": {
+    "context": "customer overview stat label",
+    "string": "Сүүлд нэвтэрсэн"
+  },
+  "aaj/MI": {
+    "string": "Захиалгын нийт дүн"
+  },
+  "acgbDa": {
+    "context": "product created at",
+    "string": "Үүсгэсэн огноо"
+  },
+  "aheQdn": {
+    "string": "Овог"
+  },
+  "b1zuN9": {
+    "string": "Үнэ"
+  },
+  "b810WJ": {
+    "context": "product price",
+    "string": "Үнэ"
+  },
+  "bIttOt": {
+    "context": "customer overview, AOV tooltip",
+    "string": "Энэ сувгийн сүүлийн {windowSize} захиалгын нэг захиалгад ногдох бүтээгдэхүүний дундаж орлого. Хүргэлт, татварыг оруулаагүй."
+  },
+  "bKTEnb": {
+    "context": "button to cancel order",
+    "string": "Захиалга цуцлах"
+  },
+  "bVjFta": {
+    "string": "Харилцагч хайх"
+  },
+  "bj6pTd": {
+    "string": "Ямар нэг зүйл дутуу байна"
+  },
+  "blZJmA": {
+    "context": "ExitFormPrompt ignore changes button",
+    "string": "Өөрчлөлтийг хаях"
+  },
+  "bp/i0x": {
+    "context": "header",
+    "string": "Тоо хэмжээ"
+  },
+  "bzcuDv": {
+    "context": "accessible label for toast dismiss button",
+    "string": "Мэдэгдлийг хаах"
+  },
+  "c24hjq": {
+    "context": "status",
+    "string": "Идэвхтэй"
+  },
+  "c5fFin": {
+    "context": "ExitFormPrompt title",
+    "string": "Өөрчлөлтийг хадгалалгүй гарах уу?"
+  },
+  "c5pMZ8": {
+    "string": "API алдаа"
+  },
+  "cDq5Lx": {
+    "context": "create category dialog description for child create",
+    "string": "Энэ ангилалд дэд ангилал нэмнэ. Үүсгэсний дараа SEO, медиа, мета өгөгдлийг засаж болно."
+  },
+  "cLcy6F": {
+    "string": "Бүтээгдэхүүний тоо"
+  },
+  "cW1RIo": {
+    "context": "section header",
+    "string": "Медиа харах"
+  },
+  "ccXLVi": {
+    "string": "Ангилал"
+  },
+  "cn2ZOU": {
+    "context": "refund amount input label",
+    "string": "Буцаан олгох дүн"
+  },
+  "cv1pnG": {
+    "context": "staff details locale select label",
+    "string": "Хэл"
+  },
+  "d3IQVN": {
+    "context": "warning when client-side validation rejects product media files before upload",
+    "string": "{count, plural, one {# файлыг алгаслаа} other {# файлыг алгаслаа}} (зураг биш)"
+  },
+  "d9UqaJ": {
+    "context": "error message",
+    "string": "Нөөц хүрэлцэхгүй тул тоо хэмжээг өөрчлөх боломжгүй"
+  },
+  "dM86a2": {
+    "string": "Ангилал олдсонгүй"
+  },
+  "dOQB9o": {
+    "context": "payment status",
+    "string": "Цуцлагдсан"
+  },
+  "dnbJKr": {
+    "string": "Энэ гүйлгээнд үйл явдал алга"
+  },
+  "e+L+q3": {
+    "string": "Энэ ангилалд хамаарах бүх бүтээгдэхүүн мөн устгагдана гэдгийг санаарай."
+  },
+  "e3NyeN": {
+    "context": "fulfill card title for a single line",
+    "string": "Хүргэхэд бэлэн бараа"
+  },
+  "e4UtKH": {
+    "context": "Transaction event status - failure",
+    "string": "Амжилтгүй"
+  },
+  "e7yOai": {
+    "context": "shipping address is not set in draft order",
+    "string": "Тохируулаагүй"
+  },
+  "ey0lZj": {
+    "context": "dialog header",
+    "string": "Харилцагч устгах"
+  },
+  "f2WJW7": {
+    "context": "transaction event type, amount was captured from client",
+    "string": "Татан авалт"
+  },
+  "f3F7r5": {
+    "context": "filter field label",
+    "string": "Шинэчилсэн огноо"
+  },
+  "fGOZfh": {
+    "context": "TopNav destination link tooltip to orders list",
+    "string": "Бүх захиалга"
+  },
+  "fL08MU": {
+    "string": "Захиалгын үнийн дүн"
+  },
+  "fS2rip": {
+    "context": "tooltip for taxes amount",
+    "string": "Татварын дүн"
+  },
+  "fXdkiI": {
+    "string": "тэнцүү"
+  },
+  "fjPWOA": {
+    "context": "header",
+    "string": "Харилцагчийн тойм"
+  },
+  "fkplbE": {
+    "context": "order history message",
+    "string": "Захиалга төлөгдсөнөөр тэмдэглэгдсэн"
+  },
+  "fqJXzO": {
+    "context": "order history message",
+    "string": "Гүйлгээний буцаан олголт хүсэгдсэн"
+  },
+  "froISM": {
+    "string": "Энэ и-мэйлтэй хэрэглэгч бүртгэлтэй байна"
+  },
+  "ftcHpD": {
+    "string": "Харилцагч үүсгэгдлээ"
+  },
+  "fw+VAN": {
+    "context": "product's sku",
+    "string": "SKU"
+  },
+  "fxbjge": {
+    "context": "Status when product is currently visible on storefront",
+    "string": "Одоо харагдаж байна"
+  },
+  "fzk04H": {
+    "context": "dialog title",
+    "string": "Зураг устгах"
+  },
+  "gNm1li": {
+    "context": "Refunded transaction amount, data display header",
+    "string": "Буцаан олгосон"
+  },
+  "genRi+": {
+    "context": "deactivate customer dialog, content",
+    "string": "{email}-г идэвхгүй болгох уу? Тэр цаашид нэвтрэх болон шинэ захиалга хийх боломжгүй болно."
+  },
+  "glR0om": {
+    "string": "Хүргэлт"
+  },
+  "hJZwTS": {
+    "string": "И-мэйл хаяг"
+  },
+  "hLUYBt": {
+    "context": "payment status",
+    "string": "Хүлээгдэж буй"
+  },
+  "hVPucN": {
+    "string": "Цайвар горим"
+  },
+  "hkENym": {
+    "string": "Харилцагч"
+  },
+  "hlj1XE": {
+    "context": "category detail cogs menu, navigates to create a child category",
+    "string": "Дэд ангилал үүсгэх"
+  },
+  "hlsvPO": {
+    "context": "aria-label, avatar button opening the account menu in the collapsed main nav",
+    "string": "Бүртгэлийн цэс"
+  },
+  "hzSNj4": {
+    "string": "Удирдах самбар"
+  },
+  "i61KzJ": {
+    "context": "filter value validation error",
+    "string": "Утга хэт урт байна."
+  },
+  "i8FLQQ": {
+    "context": "load more subcategories in category tree",
+    "string": "{count, plural, one {Дахин # дэд ангилал ачаалах} other {Дахин # дэд ангилал ачаалах}}"
+  },
+  "if9gAZ": {
+    "context": "Transaction event status - unknown status, info without event data",
+    "string": "Мэдээлэл"
+  },
+  "j6dFO1": {
+    "context": "product detail cogs menu, opens the delete-confirmation dialog",
+    "string": "Бүтээгдэхүүн устгах"
+  },
+  "jGvclB": {
+    "string": "Гүйлгээний лавлагаа"
+  },
+  "jvlQkk": {
+    "context": "aria-label, button expanding or collapsing a sidebar menu group",
+    "string": "{section} дэд цэс"
+  },
+  "k4brJy": {
+    "string": "SKU"
+  },
+  "kFkPWB": {
+    "string": "Дугаар"
+  },
+  "kFsTMN": {
+    "string": "Харилцагчдыг устгах"
+  },
+  "kVKMLf": {
+    "context": "notifier after transfer funds mutation succeeds",
+    "string": "Буцаан олголтын хүсэлтийг төлбөрийн үйлчилгээ рүү илгээлээ"
+  },
+  "kVTWtR": {
+    "context": "product updated at",
+    "string": "Сүүлд шинэчилсэн"
+  },
+  "kgVqk1": {
+    "string": "Ангиллын нэр"
+  },
+  "l1pZJx": {
+    "string": "Бүрэн зөвшөөрөгдөөгүй"
+  },
+  "l3iOju": {
+    "context": "transaction event type, transaction was refunded to client",
+    "string": "Буцаан олголт"
+  },
+  "lDPwGU": {
+    "context": "short subcategory count column header in category sidebar",
+    "string": "Дэд"
+  },
+  "lL1HTg": {
+    "string": "Захиалга төлөгдсөнөөр тэмдэглэгдлээ"
+  },
+  "lNZuWl": {
+    "string": "Бүх захиалга"
+  },
+  "lxP7Rb": {
+    "context": "warning notification when some product image uploads in a batch failed",
+    "string": "{success, plural, one {# зураг} other {# зураг}} нэмэгдлээ, {failed, plural, one {# амжилтгүй} other {# амжилтгүй}}"
+  },
+  "mFC5Rq": {
+    "string": "Агуулах оноох"
+  },
+  "mGiA6q": {
+    "context": "modal button upload",
+    "string": "Байршуулах"
+  },
+  "mIRBuW": {
+    "string": "Нийтлэгдсэн эсэх"
+  },
+  "mKu838": {
+    "context": "customer overview, value tooltip heading for shipping and refund breakdown",
+    "string": "Эдгээр захиалгаас"
+  },
+  "mMEpFC": {
+    "context": "customer overview, refunded row label in value tooltip",
+    "string": "Буцаан олгосон"
+  },
+  "n8tEIV": {
+    "context": "customer overview, last login tooltip",
+    "string": "Энэ харилцагч өөрийн бүртгэлд хамгийн сүүлд нэвтэрсэн хугацаа."
+  },
+  "nG76Ql": {
+    "context": "TopNav destination link tooltip to categories list",
+    "string": "Бүх ангилал"
+  },
+  "nOo0oL": {
+    "context": "error message",
+    "string": "Биелүүлэхэд бараа хүрэлцэхгүй байна"
+  },
+  "nRiOg+": {
+    "string": "Уучлаарай, хуудас олдсонгүй"
+  },
+  "nSMe3f": {
+    "context": "Refund in progress transaction amount, data display header",
+    "string": "Буцаан олголт хүлээгдэж буй"
+  },
+  "nYD7NT": {
+    "string": "{date}-ны #{index} гүйлгээ"
+  },
+  "nZDQbr": {
+    "context": "column header",
+    "string": "Харилцагчийн нэр"
+  },
+  "ng7bVJ": {
+    "context": "button and tooltip, shrinks the main nav to an icon rail",
+    "string": "Цэсийг хураах"
+  },
+  "o5GUx9": {
+    "string": "Төлөгдөөгүй үлдэгдэл"
+  },
+  "oB0y5Y": {
+    "context": "order status",
+    "string": "Биелүүлээгүй"
+  },
+  "oUWADl": {
+    "string": "Үгүй"
+  },
+  "of/+iV": {
+    "context": "transaction event type, refund was reversed, funds are back to store account",
+    "string": "Буцаан олголт буцаагдсан"
+  },
+  "ofT0HH": {
+    "context": "Info box description for unpublished products",
+    "string": "Харилцагчид энэ бүтээгдэхүүнийг хайж олох, харах боломжгүй."
+  },
+  "p6ugX0": {
+    "context": "button to keep order",
+    "string": "Захиалгыг хэвээр үлдээх"
+  },
+  "phIGQ1": {
+    "context": "Canceled transaction amount, data display header",
+    "string": "Цуцлагдсан"
+  },
+  "pkUbrL": {
+    "string": "Ерөнхий мэдээлэл"
+  },
+  "pkjXPD": {
+    "context": "order status",
+    "string": "Биелүүлсэн"
+  },
+  "pmXN+Q": {
+    "context": "TopNav destination link tooltip to products list",
+    "string": "Бүх бүтээгдэхүүн"
+  },
+  "q7bXR4": {
+    "string": "Төлбөрийн хураангуй"
+  },
+  "q8ep2I": {
+    "context": "dialog header",
+    "string": "Харилцагчдыг устгах"
+  },
+  "qDwvZ4": {
+    "string": "Үл мэдэгдэх алдаа"
+  },
+  "qKiqXs": {
+    "context": "Date suffix for toggle controls",
+    "string": "{date}-аас хойш"
+  },
+  "qLbse5": {
+    "context": "button",
+    "string": "Гарах"
+  },
+  "qT6YYk": {
+    "context": "order line total price",
+    "string": "Нийт"
+  },
+  "qXjR1X": {
+    "context": "customer overview, shipping row label in value tooltip",
+    "string": "Хүргэлт"
+  },
+  "qcTYIh": {
+    "context": "Save composition segment for product name, SEO, organization, and description",
+    "string": "мэдээлэл"
+  },
+  "qiBefD": {
+    "context": "customer recent orders table column: order total including shipping and tax",
+    "string": "Нийт"
+  },
+  "qjT9IB": {
+    "context": "savebar label shown on detail pages where the current user lacks permission to edit",
+    "string": "Зөвхөн унших"
+  },
+  "qtF0Ft": {
+    "context": "transaction event type, amount was authorized, but not captured",
+    "string": "Зөвшөөрөл"
+  },
+  "rGj6RR": {
+    "context": "order header date, older than yesterday",
+    "string": "{date}-нд захиалсан"
+  },
+  "rU/Mqz": {
+    "context": "aria-label, button closing the main nav drawer",
+    "string": "Цэсийг хаах"
+  },
+  "rbkmfG": {
+    "context": "button",
+    "string": "Хувилбарыг устгах"
+  },
+  "rbrahO": {
+    "string": "Хаах"
+  },
+  "rgDdIY": {
+    "context": "category detail cogs menu, opens the delete-confirmation dialog",
+    "string": "Ангилал устгах"
+  },
+  "ri3kK9": {
+    "context": "order placement date",
+    "string": "Огноо"
+  },
+  "rqiCWU": {
+    "string": "Өөрчлөлт хадгалагдлаа"
+  },
+  "rwOx2s": {
+    "string": "Доорх талбарт гүйлгээний лавлагааг оруулна уу:"
+  },
+  "s81JoX": {
+    "context": "TopNav destination link tooltip to customers list",
+    "string": "Бүх харилцагч"
+  },
+  "sG0w22": {
+    "context": "dialog title",
+    "string": "Ангиллуудыг устгах"
+  },
+  "sK1FPw": {
+    "context": "categories section name",
+    "string": "Ангиллууд"
+  },
+  "sdA14A": {
+    "context": "Status label when object is published in a channel",
+    "string": "Нийтлэгдсэн"
+  },
+  "sfEbeB": {
+    "string": "Та энэ захиалгыг төлөгдсөнөөр тэмдэглэх гэж байна."
+  },
+  "suAexp": {
+    "context": "aria label for list view button",
+    "string": "Жагсаалт харагдац"
+  },
+  "tCLTCb": {
+    "context": "tab name",
+    "string": "Бүх бүтээгдэхүүн"
+  },
+  "tGpTam": {
+    "context": "filter field label",
+    "string": "Захиалгын төлөв"
+  },
+  "tQA//+": {
+    "context": "customer overview, recent net sales tooltip",
+    "string": "Энэ сувагт энэ харилцагчийн сүүлийн {windowSize} захиалгын бүтээгдэхүүний орлогын нийлбэр. Хүргэлт, татварыг оруулаагүй. Хөнгөлөлтийг хассан."
+  },
+  "tZnV8L": {
+    "context": "Header row stock label",
+    "string": "Нөөц"
+  },
+  "tvpAXl": {
+    "context": "ordered product quantity",
+    "string": "Тоо хэмжээ"
+  },
+  "u2QjRn": {
+    "context": "create product dialog title",
+    "string": "Бүтээгдэхүүн үүсгэх"
+  },
+  "uCn/rd": {
+    "context": "dialog header",
+    "string": "Зураг устгах"
+  },
+  "uOC/uQ": {
+    "string": "Зураг шинэчлэгдлээ"
+  },
+  "ufmuTp": {
+    "context": "button",
+    "string": "Устгах"
+  },
+  "uqxjSR": {
+    "context": "column picker section header",
+    "string": "Багана"
+  },
+  "uwk5e9": {
+    "context": "bulk delete button",
+    "string": "Бүтээгдэхүүнүүдийг устгах"
+  },
+  "v0fBOU": {
+    "string": "Бүгдийг хураах"
+  },
+  "vEYtiq": {
+    "string": "Ангиллын нэр"
+  },
+  "vW3tb6": {
+    "context": "name",
+    "string": "Бүтээгдэхүүний нэр"
+  },
+  "vaFjs6": {
+    "string": "Нэмэх боломжтой агуулах алга"
+  },
+  "vcMnX2": {
+    "context": "unfulfilled fulfillment, section header",
+    "string": "Биелүүлээгүй захиалгын мөрүүд"
+  },
+  "vlVTmY": {
+    "string": "Бүтээгдэхүүн устгагдлаа"
+  },
+  "vof5TR": {
+    "context": "button",
+    "string": "Ангилал үүсгэх"
+  },
+  "vuKrlW": {
+    "string": "Нөөц"
+  },
+  "vzgZ3U": {
+    "context": "card header",
+    "string": "Нэвтрэх"
+  },
+  "wTHjt3": {
+    "string": "Захиалга хайх..."
+  },
+  "wUWSv2": {
+    "context": "product bulk delete success notification",
+    "string": "Бүтээгдэхүүнүүд устгагдлаа"
+  },
+  "wVjyOX": {
+    "string": "Бүрэн зөвшөөрөгдсөн"
+  },
+  "we4Lby": {
+    "string": "Мэдээлэл"
+  },
+  "weguIe": {
+    "context": "deactivate customer dialog, confirm button label",
+    "string": "Идэвхгүй болгох"
+  },
+  "wmeRVH": {
+    "context": "dialog header",
+    "string": "#{orderNumber} захиалгыг цуцлах"
+  },
+  "x/ZVlU": {
+    "string": "Бүтээгдэхүүн"
+  },
+  "x1k81A": {
+    "context": "order history message",
+    "string": "Бараа биелүүлэгдсэн"
+  },
+  "xEyXOV": {
+    "context": "pagination next page button aria label",
+    "string": "Дараагийн хуудас"
+  },
+  "xRkj2h": {
+    "string": "Та {categoryName}-г устгахдаа итгэлтэй байна уу?"
+  },
+  "xfGZsi": {
+    "context": "configuration section name",
+    "string": "Тохиргоо"
+  },
+  "xgPXGD": {
+    "string": "Харилцагчид устгагдлаа"
+  },
+  "xl7Fag": {
+    "string": "Ангилал үүсгэгдлээ"
+  },
+  "xmv4OJ": {
+    "context": "customer recent orders table column: order number",
+    "string": "Захиалга"
+  },
+  "xo5UIb": {
+    "context": "dialog title",
+    "string": "Ангилал устгах"
+  },
+  "xrKHS6": {
+    "string": "Амжилттай"
+  },
+  "xwXFUB": {
+    "context": "customer overview, total orders tooltip",
+    "string": "Сонгосон сувагт энэ харилцагчийн хийсэн захиалгын тоо. Ноорог болон цуцлагдсан захиалгыг тооцохгүй."
+  },
+  "xzqW+K": {
+    "context": "Add condition button on the list filter panel",
+    "string": "Нөхцөл нэмэх"
+  },
+  "yDkmX7": {
+    "context": "dialog content",
+    "string": "{counter,plural,one{Та энэ бүтээгдэхүүнийг устгахдаа итгэлтэй байна уу?} other{Та {displayQuantity} бүтээгдэхүүнийг устгахдаа итгэлтэй байна уу?}}"
+  },
+  "yH56V+": {
+    "string": "Өө!..."
+  },
+  "ySqncG": {
+    "context": "ExitFormPrompt keep editing button",
+    "string": "Үргэлжлүүлэн засах"
+  },
+  "yn7Stx": {
+    "context": "date group header",
+    "string": "Тодорхойгүй"
+  },
+  "zP3Rb6": {
+    "context": "customer detail cogs menu, deactivates the customer account",
+    "string": "Хэрэглэгчийг идэвхгүй болгох"
+  },
+  "zRrcOG": {
+    "context": "order history message",
+    "string": "Захиалга цуцлагдсан"
+  },
+  "zWgbGg": {
+    "string": "Өнөөдөр"
+  },
+  "zdyqBq": {
+    "context": "account settings profile card title when viewing yourself",
+    "string": "Миний профайл"
+  },
+  "zhDXGJ": {
+    "context": "TopNav destination link tooltip to parent product",
+    "string": "Бүтээгдэхүүн"
+  },
+  "zmKgYS": {
+    "context": "order header date, same year and older than yesterday",
+    "string": "{date}, {time}-д захиалсан"
+  }
+}

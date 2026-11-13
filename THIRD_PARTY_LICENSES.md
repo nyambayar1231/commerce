@@ -3,6 +3,9 @@
 Code adapted from the following projects is used under their licenses. Files containing adapted
 code carry a header naming the source file (see CLAUDE.md).
 
+`apps/dashboard/locale/mn.json` (JSON, so no header) takes part of its Mongolian texts from
+saleor-dashboard's `locale/mn.json`, under the Saleor Dashboard license below (PLAN M11.4).
+
 ## Saleor Dashboard — https://github.com/saleor/saleor-dashboard
 
 ```
