@@ -91,6 +91,30 @@ docker compose -f docker-compose.prod.yml up -d
 Migrations are forward-only (CLAUDE.md), so a release must work with the schema of the previous
 one while it rolls out.
 
+## Backups
+
+`infra/backup/backup.sh s3://<backup-bucket>/nightly` streams a `pg_dump` (custom format,
+compressed) of the stack's Postgres into S3 as `commerce-<UTC time>.dump`. On AWS it uses the
+server's AWS CLI and the instance role (no keys); the backup bucket's lifecycle rule deletes dumps
+after 30 days (infra/aws). Run it nightly from the server's crontab (`crontab -e`), in Mongolia's
+night (cron runs in the server's time zone, UTC by default):
+
+```cron
+15 19 * * * /home/ubuntu/commerce/infra/backup/backup.sh s3://<backup-bucket>/nightly >> /home/ubuntu/backup.log 2>&1
+```
+
+Check a backup restores (a restore drill, e.g. monthly):
+
+```sh
+aws s3 ls s3://<backup-bucket>/nightly/
+infra/backup/restore.sh s3://<backup-bucket>/nightly/commerce-<time>.dump   # into commerce_restore
+```
+
+`restore.sh` drops and re-creates the target database (default `commerce_restore`, never the
+live one) and prints its user and order counts. To recover the live database: stop `api` and
+`worker`, run `restore.sh <dump> commerce`, start them again. Both scripts honor
+`AWS_ENDPOINT_URL` (try them against a local S3 server) and `COMPOSE_PROJECT_NAME`.
+
 ## Health checks
 
 - `GET /health/live`: 200 while the process serves requests (the image's Docker healthcheck).

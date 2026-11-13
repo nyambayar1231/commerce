@@ -262,7 +262,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M10.1 | CI green: find why the simultaneous-login throttling test lets both attempts through on GitHub (race in the code or in the test) and fix it | Done |
 | M10.2 | Compose profile for `s3`/`mailpit`, optional `depends_on`, lazy nginx `/media/`; checked by running the stack with and without the profile | Done |
 | M10.3 | Caddy service + `Caddyfile` (domain from env, automatic TLS, proxies to `web`); `PUBLIC_URL` etc. documented for HTTPS | Done |
-| M10.4 | Backups: `pg_dump` script + cron line, upload to the backup bucket, restore procedure; restore tested locally | Proposed |
+| M10.4 | Backups: `pg_dump` script + cron line, upload to the backup bucket, restore procedure; restore tested locally | Done |
 | M10.5 | CDK app in `infra/aws` (decision 4): the stack, a Vitest test asserting the synthesized template (buckets, policies, ports), `cdk synth` and `cdk diff` against the account; covered by `pnpm lint`/`typecheck`/`test` | Proposed |
 | M10.6 | `docs/deploy.md` AWS section: Resend domain setup, first deploy, upgrade, backups, costs after the credits | Proposed |
 | M10.7 | First deploy with the owner: stack created, DNS, Resend verified, images loaded, superuser; acceptance checks run on the live site | Proposed |
@@ -290,6 +290,11 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   a forged `X-Forwarded-For` is ignored, throttling keys on the real address); HSTS, nosniff,
   HTTP→HTTPS redirect; `web` published on loopback only. Tested locally with `SITE_DOMAIN=localhost`
   (Caddy's local CA); the real certificate is first requested in M10.7.
+- **M10.4 result:** `infra/backup/backup.sh` (pg_dump custom format piped to `aws s3 cp`, host AWS
+  CLI + instance role) and `restore.sh` (into `commerce_restore` by default, prints counts); cron
+  line and drill in docs/deploy.md. Tested locally against a SeaweedFS bucket: the restored
+  database has the same 20 migrations, 25 tables and the user; the live one is untouched. The
+  30-day expiry is the backup bucket's lifecycle rule (M10.5).
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
