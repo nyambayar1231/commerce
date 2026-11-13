@@ -1,7 +1,8 @@
 # Deploying
 
-How the production images are built and run (PLAN M9.6). No cloud vendor is chosen yet; this
-describes the images, the configuration they need and a single-machine stack that runs them.
+How the production images are built and run (PLAN M9.6), and how they run on AWS (PLAN M10):
+one EC2 instance in `ap-northeast-2` (Seoul) serving https://admin.dino-craft.lol, media in S3,
+email through Resend. The AWS runbook is the last section, "AWS (production)".
 
 ## Images
 
@@ -131,3 +132,93 @@ Both are served by the API on port 4000; the `web` image does not expose them.
 3. Make the objects publicly readable (a bucket policy allowing `s3:GetObject`, or CloudFront in
    front of a private bucket) and set `MEDIA_PUBLIC_URL` to that public base URL.
 4. Remove the `/media/` block from the nginx config if nothing else uses it.
+
+## AWS (production)
+
+Everything is in `ap-northeast-2` (Seoul), CLI profile `commerce` (`aws login --profile commerce`;
+the credentials last 12 hours and renew without the browser for 90 days).
+
+**What exists** (`infra/aws`, the CDK stack `Commerce`; outputs with
+`aws cloudformation describe-stacks --stack-name Commerce --query 'Stacks[0].Outputs'`):
+one t4g.small (Ubuntu 24.04 arm64, 30 GB) with an Elastic IP, ports 80/443 only, no SSH; a media
+bucket (public objects), a backup bucket (private, 30 days) and an artifacts bucket (private,
+7 days); an instance role for Session Manager and the buckets, which the containers use through
+the instance metadata service (`.env.prod` has no AWS keys). The repository is cloned in
+`/home/ubuntu/commerce`; `.env.prod` there (mode 600) was generated on the server, with the Resend
+key read from Parameter Store (`/commerce/resend-api-key`).
+
+**Secrets** live in Systems Manager → Parameter Store (SecureString), not in the repository:
+`/commerce/resend-api-key`, `/commerce/superuser-password`. The Postgres password and `SECRET_KEY`
+exist only in the server's `.env.prod`.
+
+**DNS** (Porkbun): `admin` A → the Elastic IP; Resend's `send`/`rsend` CNAMEs and the
+`resend._domainkey` TXT; `_dmarc` TXT `v=DMARC1; p=none;`. Email is sent from
+`noreply@dino-craft.lol` through `smtps://resend:<key>@smtp.resend.com:465`.
+
+### Changing the infrastructure
+
+```sh
+pnpm --filter @commerce/infra-aws cdk diff --profile commerce     # read it first
+pnpm --filter @commerce/infra-aws cdk deploy --profile commerce
+```
+
+The AMI is pinned (`UBUNTU_AMI` in `infra/aws/lib/commerceStack.ts`): a different AMI or instance
+type replaces the instance and its disk, Postgres included. Take a backup first and restore after.
+User-data changes do not replace it (they only run on a new instance).
+
+### Running a command on the server
+
+Session Manager instead of SSH. Interactive (needs the Session Manager plugin,
+`brew install --cask session-manager-plugin`):
+
+```sh
+aws ssm start-session --profile commerce --region ap-northeast-2 --target <instance id>
+sudo -iu ubuntu && cd commerce
+```
+
+Or one command, without the plugin:
+
+```sh
+aws ssm send-command --profile commerce --region ap-northeast-2 --instance-ids <instance id> \
+  --document-name AWS-RunShellScript --parameters 'commands=["<command>"]'
+aws ssm get-command-invocation --profile commerce --region ap-northeast-2 \
+  --instance-id <instance id> --command-id <command id from the first call>
+```
+
+`AWS-RunShellScript` runs `sh` as root; wrap bash scripts as `bash -c '…'`, and run git as
+`sudo -u ubuntu git …` (the clone belongs to `ubuntu`).
+
+### Releasing a new version
+
+The instance is too small to build the images, so they are built on a Mac (Apple Silicon builds
+`linux/arm64` natively) and travel through the artifacts bucket:
+
+```sh
+# on the Mac, at the commit to release (pushed to GitHub)
+docker build --platform linux/arm64 --target api -t commerce-api .
+docker build --platform linux/arm64 --target web -t commerce-web .
+docker save commerce-api commerce-web | gzip -1 \
+  | aws s3 cp - s3://<artifacts bucket>/images/$(git rev-parse --short HEAD).tar.gz --profile commerce
+
+# on the server (as root through Session Manager), same commit
+cd /home/ubuntu/commerce && sudo -u ubuntu git pull
+aws s3 cp s3://<artifacts bucket>/images/<commit>.tar.gz - | gunzip | docker load
+docker compose --env-file .env.prod -f docker-compose.prod.yml --profile https run --rm migrate
+docker compose --env-file .env.prod -f docker-compose.prod.yml --profile https up -d --no-build
+```
+
+Use `up -d` without `--wait`: the worker has no healthcheck and `--wait` then fails. Check with
+`… ps` and `curl https://admin.dino-craft.lol/`.
+
+### Backups on the server
+
+The `ubuntu` user's crontab runs `infra/backup/backup.sh s3://<backup bucket>/nightly` at 19:15
+UTC (03:15 in Ulaanbaatar), logging to `/home/ubuntu/backup.log`. Drill:
+`infra/backup/restore.sh s3://<backup bucket>/nightly/<file>.dump` (see "Backups").
+
+### Costs
+
+The AWS free plan's credits cover the instance (t4g.small), its public IPv4 address, 30 GB of gp3
+and S3 for about six months. Afterwards, roughly: t4g.small ≈ $15, public IPv4 ≈ $3.60, EBS ≈ $2.50
+per month, S3 a few cents. Resend's free tier: 3,000 emails a month, 100 a day.
+

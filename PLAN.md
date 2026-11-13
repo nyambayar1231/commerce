@@ -265,8 +265,8 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M10.3 | Caddy service + `Caddyfile` (domain from env, automatic TLS, proxies to `web`); `PUBLIC_URL` etc. documented for HTTPS | Done |
 | M10.4 | Backups: `pg_dump` script + cron line, upload to the backup bucket, restore procedure; restore tested locally | Done |
 | M10.5 | CDK app in `infra/aws` (decision 4): the stack, a Vitest test asserting the synthesized template (buckets, policies, ports), `cdk synth` and `cdk diff` against the account; covered by `pnpm lint`/`typecheck`/`test` | Done |
-| M10.6 | `docs/deploy.md` AWS section: Resend domain setup, first deploy, upgrade, backups, costs after the credits | Proposed |
-| M10.7 | First deploy with the owner: stack created, DNS, Resend verified, images loaded, superuser; acceptance checks run on the live site | Proposed |
+| M10.6 | `docs/deploy.md` AWS section: Resend domain setup, first deploy, upgrade, backups, costs after the credits | Done |
+| M10.7 | First deploy with the owner: stack created, DNS, Resend verified, images loaded, superuser; acceptance checks run on the live site | In progress |
 
 - **Domain (owner, 2026-11-13):** `dino-craft.lol`, registered and DNS-hosted at Porkbun (auto-renew
   off, expires 2027-09-10). Owner rule: every AWS resource and default is in `ap-northeast-2`.
@@ -305,6 +305,14 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   (`CDKToolkit` stack); `cdk diff` shows only the intended resources; 6 template tests. The
   account id comes from the profile, not the code. Not deployed yet (M10.7). The 85 unset CDK
   feature flags are left at their defaults.
+- **M10.7 so far (2026-11-13):** `cdk deploy` done (instance `i-03eef8d111139f3a3`, Elastic IP
+  54.180.205.134); DNS and Resend verified by the owner; secrets in Parameter Store; images built on
+  the Mac and loaded through the artifacts bucket; stack up with the `https` profile; superuser
+  created. Checked: Let's Encrypt certificate for admin.dino-craft.lol, HTTP→HTTPS, GraphQL; a
+  container gets the instance role (IMDS hop limit 2); backup from cron's environment to S3 and a
+  restore drill; a registration email accepted by Resend (worker "Job done"). Found and fixed:
+  `aws` is in /snap/bin on the server. Waiting on the owner: the email in the inbox, and a product
+  image upload landing in S3 from the dashboard.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
