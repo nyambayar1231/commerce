@@ -320,6 +320,10 @@
     "context": "bulk action button label with selected count",
     "string": "{action} ({count})"
   },
+  "AA0eYf": {
+    "context": "staff details sidebar card title for dashboard locale",
+    "string": "Dashboard language"
+  },
   "AHOQr2": {
     "string": "Search products..."
   },
@@ -482,6 +486,9 @@
   "HvJPcU": {
     "string": "Category deleted"
   },
+  "I06jIl": {
+    "string": "Note: some languages might have incomplete translations that will be displayed in English."
+  },
   "IH47ID": {
     "string": "Use button above to add new product variants"
   },
@@ -589,6 +596,10 @@
     "context": "customers section name",
     "string": "Customers"
   },
+  "MkPAWX": {
+    "context": "pill on staff details when viewing your own profile",
+    "string": "Me"
+  },
   "N2IrpM": {
     "string": "Confirm"
   },
@@ -606,6 +617,9 @@
   "NCp87D": {
     "context": "no warehouses info",
     "string": "There are no warehouses set up for this variant. To add stock quantity to the variant configure a warehouse or use existing one by clicking button below."
+  },
+  "NQgbYA": {
+    "string": "Account Settings"
   },
   "NWA+MK": {
     "context": "dialog content",
@@ -932,6 +946,10 @@
     "context": "accessible label for toast dismiss button",
     "string": "Close notification"
   },
+  "c24hjq": {
+    "context": "status",
+    "string": "Active"
+  },
   "c5fFin": {
     "context": "ExitFormPrompt title",
     "string": "Leave without saving changes?"
@@ -956,6 +974,10 @@
   "cn2ZOU": {
     "context": "refund amount input label",
     "string": "Amount to refund"
+  },
+  "cv1pnG": {
+    "context": "staff details locale select label",
+    "string": "Language"
   },
   "d3IQVN": {
     "context": "warning when client-side validation rejects product media files before upload",
@@ -1462,6 +1484,10 @@
   },
   "zWgbGg": {
     "string": "Today"
+  },
+  "zdyqBq": {
+    "context": "account settings profile card title when viewing yourself",
+    "string": "My profile"
   },
   "zhDXGJ": {
     "context": "TopNav destination link tooltip to parent product",

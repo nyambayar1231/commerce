@@ -31,3 +31,13 @@
   margin-left: 20px;
   margin-bottom: var(--mu-spacing-2);
 }
+
+/* Saleor's Account Settings link fills its list item (sprinkles display block, width 100%) and
+   keeps the item's padding, so the whole row is the link. */
+.menuLink {
+  display: block;
+  width: 100%;
+  padding: var(--mu-spacing-2) var(--mu-spacing-1-5);
+  color: inherit;
+  text-decoration: none;
+}

@@ -1,15 +1,17 @@
 // Adapted from saleor-dashboard: src/components/Sidebar/user/Controls.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Saleor's ⋯ account menu: the signed-in header (rail only), Log out and the theme item.
-// Account Settings returns with the staff detail page (admin phase); the feedback button, Features
-// preview and "Go to Saleor Cloud" are omitted.
+// Saleor's ⋯ account menu: the signed-in header (rail only), Account Settings (the signed-in
+// user's staff page, PLAN M11.2), Log out and the theme item. The feedback button, Features preview
+// and "Go to Saleor Cloud" are omitted.
 import { Box, Button, Dropdown, List, Text } from "@saleor/macaw-ui";
 import { EllipsisVertical } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
+import { Link } from "react-router";
 
 import { useUser } from "../../../auth/AuthProvider";
 import { getUserInitials, getUserName } from "../../../misc";
+import { staffMemberDetailsUrl } from "../../../staff/urls";
 import { useTheme } from "../../../theme/hook";
 import { navigationLucideIconProps } from "../../icons";
 import { UserAvatar } from "../../UserAvatar/UserAvatar";
@@ -111,6 +113,21 @@ export const UserControls = ({ collapsed = false }: { collapsed?: boolean }) => 
                     {user.email}
                   </Text>
                 </Box>
+              )}
+              {user && (
+                <Dropdown.Item>
+                  <List.Item borderRadius={4} data-test-id="account-settings-button">
+                    <Link
+                      to={staffMemberDetailsUrl(user.id)}
+                      className={styles.menuLink}
+                      onClick={() => setOpen(false)}
+                    >
+                      <Text>
+                        <FormattedMessage id="NQgbYA" defaultMessage="Account Settings" />
+                      </Text>
+                    </Link>
+                  </List.Item>
+                </Dropdown.Item>
               )}
               <Dropdown.Item>
                 <List.Item

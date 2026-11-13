@@ -14,6 +14,7 @@ import { sectionNames } from "./intl";
 import { NotFound } from "./NotFound";
 import { OrderSection } from "./orders";
 import { ProductSection } from "./products";
+import { StaffSection } from "./staff";
 
 // Saleor's top-level <Switch> (src/index.tsx), limited to the sections on our roadmap.
 // "Catalog" is a menu group, not a route: Saleor has no /catalog page.
@@ -85,6 +86,8 @@ function Dashboard() {
               </SectionRoute>
             }
           />
+          {/* No permission, as Saleor's: everyone reaches their own Account settings (M11.2). */}
+          <Route path="/staff/*" element={<StaffSection />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AppLayout>

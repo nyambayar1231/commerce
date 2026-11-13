@@ -282,7 +282,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | Step | What | Status |
 |---|---|---|
 | M11.1 | Locale infrastructure: Saleor's LocaleProvider (en, mn; default mn; localStorage; lazy mn.json; `<html lang>`), `extract-messages`, defaultMessages.json, an empty mn.json; e2e forced to English; tests | Done |
-| M11.2 | Account settings page (decision 4) and the user menu's "Account Settings"; checked against Saleor's page | Proposed |
+| M11.2 | Account settings page (decision 4) and the user menu's "Account Settings"; checked against Saleor's page | Done |
 | M11.3 | Every visible string through react-intl (audit of hard-coded text, labels in TS objects, Macaw props); Saleor's ids where Saleor has the same text | Proposed |
 | M11.4 | Mongolian: Saleor's entries copied, the rest drafted by the lead; the coverage test (decision 6) | Proposed |
 | M11.5 | Owner review of the Mongolian (a side-by-side list English / Mongolian), corrections applied | Proposed |
@@ -304,6 +304,13 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   path sets `locale=en`. ProductBulkDeleteDialog keeps Saleor's `id={messages.x.id}` JSX, so the
   extractor warns about it (its messages come from messages.ts). 5 provider tests; 436 dashboard
   tests and the golden path pass.
+- **M11.2 result:** `/staff/:id` (no permission, as Saleor) shows Account settings for the signed-in
+  user, Not found for any other id; the user menu's first item is Saleor's "Account Settings".
+  The page: Saleor's title (name, "Me" pill, Active), "My profile" (initials, name and email,
+  read-only), the "Dashboard language" card (English / Монгол; save, then reload as Saleor). Checked
+  side by side with Saleor's page in the browser; switching saved `en` and reloaded. Left out (no
+  staff list or editing yet): the back link, savebar, password reset, navigation pins, extension
+  widgets, metadata.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
