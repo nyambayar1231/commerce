@@ -15,8 +15,9 @@ if [ $# -ne 1 ] || [[ "$1" != s3://* ]]; then
 fi
 destination="${1%/}"
 
-# cron starts with a minimal PATH; the AWS CLI installer puts `aws` in /usr/local/bin or ~/.local/bin.
-export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+# cron starts with a minimal PATH; `aws` is in /snap/bin (the server's snap), /usr/local/bin or
+# ~/.local/bin (the AWS CLI installer).
+export PATH="$HOME/.local/bin:/usr/local/bin:/snap/bin:$PATH"
 export AWS_REGION="${AWS_REGION:-ap-northeast-2}"
 
 cd "$(dirname "$0")/../.."

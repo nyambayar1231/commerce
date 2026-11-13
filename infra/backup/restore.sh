@@ -20,7 +20,7 @@ if [[ ! "$database" =~ ^[a-z_][a-z0-9_]*$ ]]; then
   exit 2
 fi
 
-export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+export PATH="$HOME/.local/bin:/usr/local/bin:/snap/bin:$PATH"
 export AWS_REGION="${AWS_REGION:-ap-northeast-2}"
 
 cd "$(dirname "$0")/../.."
