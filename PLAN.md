@@ -329,6 +329,13 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   `translations.test.ts` fails CI on a missing or unknown Mongolian entry (option (a), the lead's recommendation; the owner
   may switch to a report-only check); a removed entry was caught. At runtime an untranslated
   message still shows its English text.
+- **M11.6 findings:** every date, number and money format already takes the locale from react-intl
+  (`intl.formatDate`, the grid cells' `useIntl().locale`); nothing hard-codes `en`. But Chrome 157
+  ships no Mongolian date/number data (`Intl.DateTimeFormat.supportedLocalesOf(["mn"])` is empty) and
+  falls back to en-US, so in Chrome dates read "Thursday, November 12, 2026"; Safari and Firefox
+  have the data. Numbers look the same either way (140,000); plural rules are fine. Fix awaiting the
+  owner's OK (new dependency): FormatJS's `@formatjs/intl-datetimeformat` polyfill with only the
+  `mn` data, loaded only when the browser lacks it.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
