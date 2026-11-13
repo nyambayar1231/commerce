@@ -7,7 +7,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
-| M10 | Deploy to AWS | Approved |
+| M10 | Deploy to AWS | In progress |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
@@ -221,7 +221,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   and opens the order by URL; CI is one GitHub Actions workflow (checks, e2e, image builds).
 - **M9 notes:** CI's first run on GitHub (2026-11-12, run 43195696034) failed one test:
   `auth.test.ts` "lets only one of two simultaneous attempts from an IP through" got two successes
-  (images and e2e jobs passed). Fixed in M10.1. The order and product grids are canvas (Glide), so e2e tests can't read rows;
+  (images and e2e jobs passed). A flaky test, fixed in M10.1. The order and product grids are canvas (Glide), so e2e tests can't read rows;
   old millisecond product-list cursors are now refused as invalid. ADR-0014 still says thumbnail
   rate limiting "comes with M9" (left unchanged: accepted ADRs change only with the owner).
 
@@ -245,7 +245,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
    The account needs a one-time `cdk bootstrap` in `ap-northeast-2` (creates the `CDKToolkit`
    stack and its small assets bucket).
 
-**Proposed by the lead (2026-11-13), awaiting the owner's OK:**
+**Proposed by the lead, approved by the owner (2026-11-13):**
 5. **Postgres stays a container on the instance** (same version as dev/CI, no RDS cost after the
    credits); nightly `pg_dump` to a private S3 bucket, restore tested once.
 6. **t4g (Arm) instance; images built on the owner's Mac** (`linux/arm64`) and copied with
@@ -259,7 +259,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 
 | Step | What | Status |
 |---|---|---|
-| M10.1 | CI green: find why the simultaneous-login throttling test lets both attempts through on GitHub (race in the code or in the test) and fix it | Proposed |
+| M10.1 | CI green: find why the simultaneous-login throttling test lets both attempts through on GitHub (race in the code or in the test) and fix it | Done |
 | M10.2 | Compose profile for `s3`/`mailpit`, optional `depends_on`, lazy nginx `/media/`; checked by running the stack with and without the profile | Proposed |
 | M10.3 | Caddy service + `Caddyfile` (domain from env, automatic TLS, proxies to `web`); `PUBLIC_URL` etc. documented for HTTPS | Proposed |
 | M10.4 | Backups: `pg_dump` script + cron line, upload to the backup bucket, restore procedure; restore tested locally | Proposed |
@@ -273,7 +273,11 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   restores into a scratch database; CI is green on `main`.
 - **Out of scope:** the storefront (M4), multiple instances / load balancer, RDS, CloudFront,
   monitoring and alerting beyond the AWS budget alert, CI-driven deploys.
-- **Status:** Approved by the owner 2026-11-13 (decisions 1–4); decisions 5–7 await the owner's OK.
+- **Status:** In progress since 2026-11-13; all decisions approved.
+- **M10.1 result:** the code was right, the test wasn't: two in-process logins don't always overlap,
+  and a successful login clears the IP block (as Saleor), so the second one sometimes got through
+  (1 in 30 locally). Replaced by a test that holds the block as an in-flight attempt, plus
+  `rateLimit.test.ts` (10 simultaneous `tryBlock` claims, exactly one wins).
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.

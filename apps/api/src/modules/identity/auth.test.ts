@@ -4,6 +4,7 @@ import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { clientAt } from "../../../test/graphql.ts";
 import { createApp } from "../../app.ts";
 import { clientIpOf } from "../../clientIp.ts";
+import { tryBlock } from "../rateLimit/index.ts";
 import { createSuperuser } from "./index.ts";
 import { delaySeconds } from "./login.ts";
 
@@ -255,9 +256,12 @@ describe("login throttling", () => {
     expect(await blockSeconds(IP)).toBe(1);
   });
 
-  it("lets only one of two simultaneous attempts from an IP through", async () => {
-    const results = await Promise.all([loginFrom(IP), loginFrom(IP)]);
-    expect(results.map((r) => codesOf(r.body)).sort()).toEqual([[], ["LOGIN_ATTEMPT_DELAYED"]]);
+  // Two real simultaneous logins don't always overlap (the first can finish, and a success clears
+  // the block, before the second starts), so the in-flight attempt is its block, claimed as
+  // authenticate() claims it; tryBlock's atomicity is tested in rateLimit.test.ts.
+  it("delays an attempt while another attempt from the IP is in flight", async () => {
+    expect(await tryBlock(db, `login:block:ip:${IP}`, 1)).toBeNull();
+    expect(codesOf((await loginFrom(IP)).body)).toEqual(["LOGIN_ATTEMPT_DELAYED"]);
   });
 });
 
