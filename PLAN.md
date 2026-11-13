@@ -239,8 +239,8 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 2. **Media in AWS S3, email through Resend's SMTP** (`smtps://resend:<key>@smtp.resend.com:465`).
 3. **One EC2 instance runs `docker-compose.prod.yml`**; Caddy is added for HTTPS.
 4. **The AWS resources are a small AWS CDK app in TypeScript** (one stack): media bucket +
-   public-read policy, backup bucket, instance role and profile, security group (22 from the
-   owner's IP, 80, 443), instance, Elastic IP. New dependencies `aws-cdk-lib`, `constructs` and the
+   public-read policy, backup bucket, instance role and profile, security group (80, 443; no SSH,
+   the owner chose Session Manager on 2026-11-13), instance, Elastic IP. New dependencies `aws-cdk-lib`, `constructs` and the
    `aws-cdk` CLI (exact versions), in a new workspace package `infra/aws` (`@commerce/infra-aws`).
    The account needs a one-time `cdk bootstrap` in `ap-northeast-2` (creates the `CDKToolkit`
    stack and its small assets bucket).
@@ -248,8 +248,9 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 **Proposed by the lead, approved by the owner (2026-11-13):**
 5. **Postgres stays a container on the instance** (same version as dev/CI, no RDS cost after the
    credits); nightly `pg_dump` to a private S3 bucket, restore tested once.
-6. **t4g (Arm) instance; images built on the owner's Mac** (`linux/arm64`) and copied with
-   `docker save | ssh … docker load`; no image registry. Building on a 1–2 GB instance would run out
+6. **t4g (Arm) instance; images built on the owner's Mac** (`linux/arm64`) and copied through a
+   private artifacts bucket (`docker save` → S3 → `docker load` by a Session Manager command; no
+   SSH, owner 2026-11-13); no image registry. Building on a 1–2 GB instance would run out
    of memory.
 7. **The stack's S3 server and Mailpit move behind a Compose profile** (`local-services`), so the
    AWS deployment leaves them out; nginx's `/media/` proxy resolves lazily so nginx starts without
@@ -263,7 +264,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M10.2 | Compose profile for `s3`/`mailpit`, optional `depends_on`, lazy nginx `/media/`; checked by running the stack with and without the profile | Done |
 | M10.3 | Caddy service + `Caddyfile` (domain from env, automatic TLS, proxies to `web`); `PUBLIC_URL` etc. documented for HTTPS | Done |
 | M10.4 | Backups: `pg_dump` script + cron line, upload to the backup bucket, restore procedure; restore tested locally | Done |
-| M10.5 | CDK app in `infra/aws` (decision 4): the stack, a Vitest test asserting the synthesized template (buckets, policies, ports), `cdk synth` and `cdk diff` against the account; covered by `pnpm lint`/`typecheck`/`test` | Proposed |
+| M10.5 | CDK app in `infra/aws` (decision 4): the stack, a Vitest test asserting the synthesized template (buckets, policies, ports), `cdk synth` and `cdk diff` against the account; covered by `pnpm lint`/`typecheck`/`test` | Done |
 | M10.6 | `docs/deploy.md` AWS section: Resend domain setup, first deploy, upgrade, backups, costs after the credits | Proposed |
 | M10.7 | First deploy with the owner: stack created, DNS, Resend verified, images loaded, superuser; acceptance checks run on the live site | Proposed |
 
@@ -295,6 +296,15 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   line and drill in docs/deploy.md. Tested locally against a SeaweedFS bucket: the restored
   database has the same 20 migrations, 25 tables and the user; the live one is untouched. The
   30-day expiry is the backup bucket's lifecycle rule (M10.5).
+- **M10.5 result:** `infra/aws` (`@commerce/infra-aws`, aws-cdk-lib 2.276.0, constructs 10.8.1,
+  aws-cdk 2.1148.1): stack `Commerce` in ap-northeast-2 with media (public objects by policy),
+  backups (30 days) and artifacts (7 days) buckets, a one-subnet VPC without NAT, a security group
+  with 80/443 only, a t4g.small on a pinned Ubuntu 24.04 arm64 AMI (30 GB gp3, IMDSv2 with hop
+  limit 2 so containers get the role), Session Manager in the role, an Elastic IP; user data
+  installs Docker, Compose v2, the AWS CLI, swap and clones the repo. `cdk bootstrap` done
+  (`CDKToolkit` stack); `cdk diff` shows only the intended resources; 6 template tests. The
+  account id comes from the profile, not the code. Not deployed yet (M10.7). The 85 unset CDK
+  feature flags are left at their defaults.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.

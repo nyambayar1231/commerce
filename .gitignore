@@ -22,3 +22,4 @@ coverage/
 # Playwright output (e2e/, PLAN M9.7)
 test-results/
 playwright-report/
+cdk.out

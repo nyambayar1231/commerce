@@ -1,0 +1,21 @@
+{
+  "name": "@commerce/infra-aws",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "cdk": "cdk"
+  },
+  "devDependencies": {
+    "@commerce/tsconfig": "workspace:*",
+    "@types/node": "22.20.5",
+    "aws-cdk": "2.1148.1",
+    "vitest": "5.1.0"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.276.0",
+    "constructs": "10.8.1"
+  }
+}

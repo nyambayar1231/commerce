@@ -125,6 +125,7 @@ pnpm schema:print   # regenerate apps/api/schema.graphql (commit it)
 pnpm codegen        # regenerate dashboard GraphQL types from schema.graphql (commit them)
 pnpm e2e            # Playwright golden paths on a fresh commerce_e2e DB (needs db:up; once: pnpm --filter @commerce/e2e e2e:install)
 docker compose -f docker-compose.prod.yml --profile local-services up -d --build   # production images, whole stack on :8080 (docs/deploy.md)
+pnpm --filter @commerce/infra-aws cdk diff --profile commerce    # AWS stack (infra/aws, ap-northeast-2): diff | deploy
 ```
 
 AI workflow (details in `docs/ai-workflow/README.md`):

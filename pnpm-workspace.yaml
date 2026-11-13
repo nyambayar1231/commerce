@@ -3,6 +3,8 @@ packages:
   - "packages/*"
   # Playwright golden paths (PLAN M9.7): drive the dashboard and the API end to end.
   - "e2e"
+  # The AWS infrastructure as a CDK app (PLAN M10.5).
+  - "infra/aws"
 
 # pnpm blocks dependency install scripts by default. esbuild (used by drizzle-kit) needs its
 # script to install the native binary for this platform.
