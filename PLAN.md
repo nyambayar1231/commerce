@@ -7,6 +7,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
+| M10 | Deploy to AWS | Approved |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
@@ -218,12 +219,61 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   build step), `web` is nginx with the dashboard and an API proxy on one origin, SeaweedFS and
   Mailpit stand in for S3/SMTP in `docker-compose.prod.yml`; the golden path has no "mark as paid"
   and opens the order by URL; CI is one GitHub Actions workflow (checks, e2e, image builds).
-- **M9 notes:** the CI workflow has not run on GitHub yet (nothing was pushed): its first run
-  is its real check. The order and product grids are canvas (Glide), so e2e tests can't read rows;
+- **M9 notes:** CI's first run on GitHub (2026-11-12, run 43195696034) failed one test:
+  `auth.test.ts` "lets only one of two simultaneous attempts from an IP through" got two successes
+  (images and e2e jobs passed). Fixed in M10.1. The order and product grids are canvas (Glide), so e2e tests can't read rows;
   old millisecond product-list cursors are now refused as invalid. ADR-0014 still says thumbnail
   rate limiting "comes with M9" (left unchanged: accepted ADRs change only with the owner).
 
 ---
+
+## M10 — Deploy to AWS
+- **Objective:** the stack from M9 runs on AWS behind HTTPS on the owner's domain, with media in
+  S3, email through Resend, nightly database backups, and a written runbook to deploy and upgrade.
+- **Concepts:** EC2 + Elastic IP, IAM instance roles (no keys on the server), S3 public-read
+  buckets, automatic TLS (ACME), email domain authentication (SPF/DKIM/DMARC), backup and restore.
+
+**Owner decisions (2026-11-13):**
+1. **AWS on the free plan** (credits, about 6 months), region `ap-northeast-2` (Seoul), CLI
+   profile `commerce`.
+2. **Media in AWS S3, email through Resend's SMTP** (`smtps://resend:<key>@smtp.resend.com:465`).
+3. **One EC2 instance runs `docker-compose.prod.yml`**; Caddy is added for HTTPS.
+4. **The AWS resources are a small AWS CDK app in TypeScript** (one stack): media bucket +
+   public-read policy, backup bucket, instance role and profile, security group (22 from the
+   owner's IP, 80, 443), instance, Elastic IP. New dependencies `aws-cdk-lib`, `constructs` and the
+   `aws-cdk` CLI (exact versions), in a new workspace package `infra/aws` (`@commerce/infra-aws`).
+   The account needs a one-time `cdk bootstrap` in `ap-northeast-2` (creates the `CDKToolkit`
+   stack and its small assets bucket).
+
+**Proposed by the lead (2026-11-13), awaiting the owner's OK:**
+5. **Postgres stays a container on the instance** (same version as dev/CI, no RDS cost after the
+   credits); nightly `pg_dump` to a private S3 bucket, restore tested once.
+6. **t4g (Arm) instance; images built on the owner's Mac** (`linux/arm64`) and copied with
+   `docker save | ssh … docker load`; no image registry. Building on a 1–2 GB instance would run out
+   of memory.
+7. **The stack's S3 server and Mailpit move behind a Compose profile** (`local-services`), so the
+   AWS deployment leaves them out; nginx's `/media/` proxy resolves lazily so nginx starts without
+   them.
+
+**Steps (each one commit, one report):**
+
+| Step | What | Status |
+|---|---|---|
+| M10.1 | CI green: find why the simultaneous-login throttling test lets both attempts through on GitHub (race in the code or in the test) and fix it | Proposed |
+| M10.2 | Compose profile for `s3`/`mailpit`, optional `depends_on`, lazy nginx `/media/`; checked by running the stack with and without the profile | Proposed |
+| M10.3 | Caddy service + `Caddyfile` (domain from env, automatic TLS, proxies to `web`); `PUBLIC_URL` etc. documented for HTTPS | Proposed |
+| M10.4 | Backups: `pg_dump` script + cron line, upload to the backup bucket, restore procedure; restore tested locally | Proposed |
+| M10.5 | CDK app in `infra/aws` (decision 4): the stack, a Vitest test asserting the synthesized template (buckets, policies, ports), `cdk synth` and `cdk diff` against the account; covered by `pnpm lint`/`typecheck`/`test` | Proposed |
+| M10.6 | `docs/deploy.md` AWS section: Resend domain setup, first deploy, upgrade, backups, costs after the credits | Proposed |
+| M10.7 | First deploy with the owner: stack created, DNS, Resend verified, images loaded, superuser; acceptance checks run on the live site | Proposed |
+
+- **Needs from the owner:** a domain name (for HTTPS and Resend) before M10.3/M10.7; DNS access.
+- **Acceptance:** `https://<domain>` serves the dashboard with a valid certificate; a product image
+  upload lands in S3 and displays; a registration email arrives through Resend; last night's backup
+  restores into a scratch database; CI is green on `main`.
+- **Out of scope:** the storefront (M4), multiple instances / load balancer, RDS, CloudFront,
+  monitoring and alerting beyond the AWS budget alert, CI-driven deploys.
+- **Status:** Approved by the owner 2026-11-13 (decisions 1–4); decisions 5–7 await the owner's OK.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
