@@ -4,6 +4,7 @@
 // stack).
 import { type PropsWithChildren, type ReactNode, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { useIntl } from "react-intl";
 import { Toaster, toast } from "sonner";
 import { borderHeight, savebarHeight } from "../AppLayout/consts";
 import { useSavebarRef } from "../Savebar/SavebarRefContext";
@@ -29,6 +30,7 @@ const TOAST_STACK_GAP_PX = 12;
  * on detail pages.
  */
 export const NotificationsToaster = (): ReactNode => {
+  const intl = useIntl();
   const { isSavebarMounted } = useSavebarRef();
   const container = document.getElementById("toast-portal");
 
@@ -51,6 +53,12 @@ export const NotificationsToaster = (): ReactNode => {
       onPointerDown={stopPropagation}
     >
       <Toaster
+        // sonner's default is "Notifications"; ours follows the dashboard language (M11.3).
+        containerAriaLabel={intl.formatMessage({
+          id: "4WCH+l",
+          defaultMessage: "Notifications",
+          description: "notifications region label for screen readers",
+        })}
         className={styles.toaster}
         position="bottom-right"
         expand

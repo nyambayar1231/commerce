@@ -8,9 +8,15 @@
 import { Box, Button, DynamicCombobox, Select } from "@saleor/macaw-ui";
 import { X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useIntl } from "react-intl";
 
 import { iconSize, iconStrokeWidth } from "../../icons";
-import type { ConditionItem } from "../FilterElement/ConditionOptions";
+import {
+  rowMessages,
+  translateCondition,
+  translateLeftOperand,
+  translateValidation,
+} from "../intl";
 import type { FilterEventEmitter } from "./EventEmitter";
 import type { ErrorLookup } from "./errors";
 import { getFilterControlId } from "./filterControlId";
@@ -37,6 +43,7 @@ export const RowComponent = ({
   error,
   layout = "panel",
 }: RowProps): React.ReactNode => {
+  const intl = useIntl();
   // The row's own operand is missing from the add list once its maxOccurrences is reached; keep
   // it selectable so the select can show its label.
   const operands = useMemo(() => {
@@ -55,15 +62,30 @@ export const RowComponent = ({
       ...leftOptions,
     ];
   }, [leftOptions, item.value]);
+  // Labels in the dashboard language (M11.3); the operands themselves keep their English labels.
+  const shownOperands = useMemo(
+    () =>
+      operands.map((operand) => ({
+        ...operand,
+        label: translateLeftOperand(intl, operand.value, operand.label),
+      })),
+    [operands, intl],
+  );
+  const shownLabel = translateLeftOperand(intl, item.value.value, item.value.label);
+  const conditionOptions = item.condition.options.map((option) => ({
+    ...option,
+    label: translateCondition(intl, option.label),
+  }));
+  const selectedCondition = item.condition.selected.conditionValue;
   const [query, setQuery] = useState("");
   const visibleOperands = useMemo(() => {
     const needle = query.trim().toLowerCase();
 
     // The input shows the selected label after a pick; that text must not hide the others.
-    return needle === "" || needle === item.value.label.toLowerCase()
-      ? operands
-      : operands.filter((operand) => operand.label.toLowerCase().includes(needle));
-  }, [operands, query, item.value.label]);
+    return needle === "" || needle === shownLabel.toLowerCase()
+      ? shownOperands
+      : shownOperands.filter((operand) => operand.label.toLowerCase().includes(needle));
+  }, [shownOperands, query, shownLabel]);
 
   return (
     <Box
@@ -79,7 +101,7 @@ export const RowComponent = ({
       <DynamicCombobox
         id={getFilterControlId("left", index)}
         data-test-id={`left-${index}`}
-        value={operands.find((operand) => operand.value === item.value.value) ?? null}
+        value={shownOperands.find((operand) => operand.value === item.value.value) ?? null}
         options={visibleOperands}
         onInputValueChange={setQuery}
         onChange={(value) => {
@@ -92,21 +114,27 @@ export const RowComponent = ({
           }
         }}
         error={error.left.show}
-        helperText={error.left.text}
+        helperText={translateValidation(intl, error.left.text)}
       />
 
       <Select
         id={getFilterControlId("condition", index)}
         data-test-id={`condition-${index}`}
-        value={item.condition.selected.conditionValue}
-        options={item.condition.options}
+        value={
+          selectedCondition
+            ? (conditionOptions.find((option) => option.value === selectedCondition.value) ?? null)
+            : null
+        }
+        options={conditionOptions}
         onChange={(value) => {
-          if (value) {
-            emitter.changeCondition(index, value as ConditionItem);
+          // Back to the untranslated condition: its label is what the URL stores.
+          const condition = item.condition.options.find((option) => option.value === value?.value);
+          if (condition) {
+            emitter.changeCondition(index, condition);
           }
         }}
         error={error.condition.show}
-        helperText={error.condition.text}
+        helperText={translateValidation(intl, error.condition.text)}
       />
 
       <div className={styles.valueField}>
@@ -115,14 +143,14 @@ export const RowComponent = ({
           index={index}
           emitter={emitter}
           error={error.right.show}
-          helperText={error.right.text}
+          helperText={translateValidation(intl, error.right.text)}
         />
       </div>
 
       <Button
         marginLeft="auto"
         variant="tertiary"
-        aria-label="Remove condition"
+        aria-label={intl.formatMessage(rowMessages.removeCondition)}
         data-test-id={`remove-row-${index}`}
         icon={<X size={iconSize.medium} strokeWidth={iconStrokeWidth} />}
         onClick={() => emitter.removeRow(index)}

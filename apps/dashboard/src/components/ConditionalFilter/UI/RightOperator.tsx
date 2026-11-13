@@ -6,6 +6,7 @@
 // that pick categories from the API. Saleor's attributes, bulk select, metadata and
 // reference/swatch pickers are dropped.
 import { DynamicCombobox, DynamicMultiselect, Input, RangeInput, Select } from "@saleor/macaw-ui";
+import { type IntlShape, useIntl } from "react-intl";
 
 import type { ConditionSelected } from "../FilterElement/ConditionSelected";
 import {
@@ -15,6 +16,7 @@ import {
   isItemOptionArray,
   isTuple,
 } from "../FilterElement/ConditionValue";
+import { booleanMessages } from "../intl";
 import type { FilterEventEmitter } from "./EventEmitter";
 import { getFilterControlId } from "./filterControlId";
 import {
@@ -46,6 +48,9 @@ const BOOLEAN_OPTIONS: ItemOption[] = [
   { label: "Yes", value: "true", slug: "true" },
   { label: "No", value: "false", slug: "false" },
 ];
+
+const booleanLabel = (intl: IntlShape, value: string): string =>
+  intl.formatMessage(value === "true" ? booleanMessages.yes : booleanMessages.no);
 
 const optionFromString = (value: string): ItemOption => ({
   label: value,
@@ -97,6 +102,8 @@ export const RightOperator = ({
   error,
   helperText,
 }: RightOperatorProps) => {
+  const intl = useIntl();
+
   if (isNumberInput(selected)) {
     return (
       <Input
@@ -161,10 +168,18 @@ export const RightOperator = ({
       <Select
         id={getFilterControlId("right", index)}
         data-test-id={`right-${index}`}
-        value={selectedOption(selected.value)}
-        options={BOOLEAN_OPTIONS}
+        value={(() => {
+          const option = selectedOption(selected.value);
+          return option ? { ...option, label: booleanLabel(intl, option.value) } : null;
+        })()}
+        options={BOOLEAN_OPTIONS.map((option) => ({
+          ...option,
+          label: booleanLabel(intl, option.value),
+        }))}
         onChange={(value) => {
-          if (value) emitter.changeRightOperator(index, value);
+          // The model keeps the English option; only the shown label is translated (M11.3).
+          const option = BOOLEAN_OPTIONS.find((entry) => entry.value === value?.value);
+          if (option) emitter.changeRightOperator(index, option);
         }}
         error={error}
         helperText={helperText}

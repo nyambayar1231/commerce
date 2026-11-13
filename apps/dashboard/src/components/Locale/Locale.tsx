@@ -7,8 +7,9 @@
 // Unlike Saleor, nothing renders until that file is loaded, so a Mongolian page never flashes
 // English first. Saleor's 42 locales are cut to the two we ship.
 import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
-import { IntlProvider, ReactIntlErrorCode } from "react-intl";
+import { IntlProvider, ReactIntlErrorCode, useIntl } from "react-intl";
 import useLocalStorage from "../../hooks/useLocalStorage";
+import { commonMessages } from "../../intl";
 
 export const Locale = {
   EN: "en",
@@ -55,6 +56,15 @@ export const LocaleContext = createContext<LocaleContextType>({
 
 export const useLocale = () => useContext(LocaleContext);
 
+/** The browser tab's title, "Dashboard" in the dashboard language (index.html has the English one). */
+const DocumentTitle = () => {
+  const intl = useIntl();
+  useEffect(() => {
+    document.title = intl.formatMessage(commonMessages.dashboard);
+  }, [intl]);
+  return null;
+};
+
 export const LocaleProvider = ({ children }: { children: ReactNode }) => {
   const [stored, setLocale] = useLocalStorage<string>("locale", defaultLocale);
   // An unknown stored value (an old or hand-edited one) means the default.
@@ -100,7 +110,10 @@ export const LocaleProvider = ({ children }: { children: ReactNode }) => {
       }}
       key={locale}
     >
-      <LocaleContext.Provider value={{ locale, setLocale }}>{children}</LocaleContext.Provider>
+      <LocaleContext.Provider value={{ locale, setLocale }}>
+        <DocumentTitle />
+        {children}
+      </LocaleContext.Provider>
     </IntlProvider>
   );
 };

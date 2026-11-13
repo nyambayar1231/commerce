@@ -113,7 +113,12 @@ export const OrderValue = ({
         >
           <FormattedMessage defaultMessage="Taxes " id="HTiAMm" />
           <Text color="default2" fontWeight="medium" size={3}>
-            (included)
+            {/* Saleor leaves this English (M11.3). */}
+            <FormattedMessage
+              defaultMessage="(included)"
+              description="order summary, taxes are included in the prices"
+              id="HY1ZL6"
+            />
           </Text>
         </OrderSummaryListItem>
       </Box>

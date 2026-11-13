@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { cleanup, render } from "@testing-library/react";
+import { IntlProvider } from "react-intl";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -12,14 +13,16 @@ const editLink = (): HTMLAnchorElement | null =>
 
 const renderTile = (props: Partial<Parameters<typeof MediaTile>[0]> = {}) =>
   render(
-    <MemoryRouter>
-      <MediaTile
-        media={{ alt: "Front", url: "https://example.com/1.webp" }}
-        editHref="/products/product-1/image/media-1"
-        onDelete={() => undefined}
-        {...props}
-      />
-    </MemoryRouter>,
+    <IntlProvider locale="en">
+      <MemoryRouter>
+        <MediaTile
+          media={{ alt: "Front", url: "https://example.com/1.webp" }}
+          editHref="/products/product-1/image/media-1"
+          onDelete={() => undefined}
+          {...props}
+        />
+      </MemoryRouter>
+    </IntlProvider>,
   );
 
 describe("MediaTile", () => {

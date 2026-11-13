@@ -50,6 +50,10 @@
     "context": "pagination previous page button aria label",
     "string": "Previous page"
   },
+  "/wMahJ": {
+    "context": "filter condition",
+    "string": "in"
+  },
   "0/Y0nG": {
     "context": "date group header",
     "string": "Last 7 days"
@@ -144,6 +148,10 @@
   "4VLj3S": {
     "context": "overcharged order status",
     "string": "Overcharged"
+  },
+  "4WCH+l": {
+    "context": "notifications region label for screen readers",
+    "string": "Notifications"
   },
   "4fJ17F": {
     "context": "Charge in progress transaction amount, data display header",
@@ -360,9 +368,16 @@
     "context": "sidebar header meta for number of child categories",
     "string": "{count, plural, one {# subcategory} other {# subcategories}}"
   },
+  "BvGp1I": {
+    "string": "between"
+  },
   "CJpx4E": {
     "context": "page header",
     "string": "Order no. {orderNumber} - Add Fulfillment"
+  },
+  "CLy6Vn": {
+    "context": "filter value validation error",
+    "string": "The value must be higher"
   },
   "CWDuMj": {
     "context": "remaining quantity",
@@ -409,6 +424,10 @@
   "EHRXv4": {
     "context": "product media detail page header",
     "string": "Edit Image"
+  },
+  "EZQEUW": {
+    "context": "media tile edit button label",
+    "string": "Edit image"
   },
   "EbVf0Z": {
     "context": "transaction reference",
@@ -483,6 +502,10 @@
   "HTiAMm": {
     "string": "Taxes"
   },
+  "HY1ZL6": {
+    "context": "order summary, taxes are included in the prices",
+    "string": "(included)"
+  },
   "HvJPcU": {
     "string": "Category deleted"
   },
@@ -519,6 +542,10 @@
   "Irflxf": {
     "context": "window title",
     "string": "Create category"
+  },
+  "IzkXXK": {
+    "context": "filter row remove button label",
+    "string": "Remove condition"
   },
   "J0lNnk": {
     "context": "column label",
@@ -559,6 +586,13 @@
   "KXX8oX": {
     "context": "product media gallery dropzone hint when click-to-upload is disabled",
     "string": "Drag and drop to upload"
+  },
+  "KzcNvP": {
+    "context": "column picker button label",
+    "string": "Pick columns"
+  },
+  "L5IuDw": {
+    "string": "lower"
   },
   "L8seEc": {
     "string": "Subtotal"
@@ -657,6 +691,9 @@
   "P7PLVj": {
     "string": "Date"
   },
+  "PFnobO": {
+    "string": "greater"
+  },
   "PXatmC": {
     "string": "Customer Removed"
   },
@@ -689,6 +726,9 @@
   },
   "QDxJib": {
     "string": "Fulfill"
+  },
+  "QHDtwH": {
+    "string": "Has category"
   },
   "QLVddq": {
     "context": "button",
@@ -891,6 +931,9 @@
     "context": "short product count column header in category sidebar",
     "string": "Prods"
   },
+  "a5msuh": {
+    "string": "Yes"
+  },
   "aHIrs/": {
     "string": "Failed to load filter data. Please refresh page to try again."
   },
@@ -915,6 +958,9 @@
   },
   "aheQdn": {
     "string": "Last Name"
+  },
+  "b1zuN9": {
+    "string": "Price"
   },
   "b810WJ": {
     "context": "product price",
@@ -1020,6 +1066,10 @@
     "context": "transaction event type, amount was captured from client",
     "string": "Capture"
   },
+  "f3F7r5": {
+    "context": "filter field label",
+    "string": "Updated at"
+  },
   "fGOZfh": {
     "context": "TopNav destination link tooltip to orders list",
     "string": "All orders"
@@ -1030,6 +1080,9 @@
   "fS2rip": {
     "context": "tooltip for taxes amount",
     "string": "Tax amount"
+  },
+  "fXdkiI": {
+    "string": "is"
   },
   "fjPWOA": {
     "context": "header",
@@ -1056,6 +1109,10 @@
   "fxbjge": {
     "context": "Status when product is currently visible on storefront",
     "string": "Visible now"
+  },
+  "fzk04H": {
+    "context": "dialog title",
+    "string": "Delete image"
   },
   "gNm1li": {
     "context": "Refunded transaction amount, data display header",
@@ -1091,6 +1148,10 @@
   },
   "hzSNj4": {
     "string": "Dashboard"
+  },
+  "i61KzJ": {
+    "context": "filter value validation error",
+    "string": "The value is too long."
   },
   "i8FLQQ": {
     "context": "load more subcategories in category tree",
@@ -1159,6 +1220,9 @@
     "context": "modal button upload",
     "string": "Upload"
   },
+  "mIRBuW": {
+    "string": "Is published"
+  },
   "mKu838": {
     "context": "customer overview, value tooltip heading for shipping and refund breakdown",
     "string": "From these orders"
@@ -1203,6 +1267,9 @@
   "oB0y5Y": {
     "context": "order status",
     "string": "Unfulfilled"
+  },
+  "oUWADl": {
+    "string": "No"
   },
   "of/+iV": {
     "context": "transaction event type, refund was reversed, funds are back to store account",
@@ -1328,6 +1395,10 @@
   "tCLTCb": {
     "context": "tab name",
     "string": "All products"
+  },
+  "tGpTam": {
+    "context": "filter field label",
+    "string": "Order Status"
   },
   "tQA//+": {
     "context": "customer overview, recent net sales tooltip",

@@ -8,7 +8,7 @@
 import { Box, Popover, Text } from "@saleor/macaw-ui";
 import { Columns3 } from "lucide-react";
 import { useState } from "react";
-import { FormattedMessage } from "react-intl";
+import { FormattedMessage, useIntl } from "react-intl";
 
 import { iconSize, iconStrokeWidthBySize } from "../../icons";
 import type { AvailableColumn } from "../types";
@@ -31,6 +31,13 @@ export const ColumnPicker = ({
   side,
   align,
 }: ColumnPickerProps) => {
+  const intl = useIntl();
+  // Ours: Saleor leaves this label in English (M11.3).
+  const pickColumns = intl.formatMessage({
+    id: "KzcNvP",
+    defaultMessage: "Pick columns",
+    description: "column picker button label",
+  });
   const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
@@ -44,8 +51,8 @@ export const ColumnPicker = ({
           type="button"
           className={styles.trigger}
           data-test-id="open-column-picker-button"
-          title="Pick columns"
-          aria-label="Pick columns"
+          title={pickColumns}
+          aria-label={pickColumns}
         >
           <Columns3 size={iconSize.small} strokeWidth={iconStrokeWidthBySize.small} />
         </button>

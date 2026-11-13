@@ -6,6 +6,7 @@
 // delete, M2.5.3a); `editHref` opens the image detail page (M2.5.3b).
 import { Spinner } from "@saleor/macaw-ui";
 import { Pencil, Trash2 } from "lucide-react";
+import { useIntl } from "react-intl";
 import { Link } from "react-router";
 
 import { iconSize, iconStrokeWidthBySize } from "../icons";
@@ -30,6 +31,7 @@ export const MediaTile = ({
   editHref,
   onDelete,
 }: MediaTileProps) => {
+  const intl = useIntl();
   const isEditable = editHref !== undefined || onDelete !== undefined;
 
   return (
@@ -42,7 +44,11 @@ export const MediaTile = ({
                 <Link
                   className={styles.controlButton}
                   to={editHref}
-                  aria-label="Edit image"
+                  aria-label={intl.formatMessage({
+                    id: "EZQEUW",
+                    defaultMessage: "Edit image",
+                    description: "media tile edit button label",
+                  })}
                   data-test-id="product-media-edit"
                 >
                   <Pencil size={iconSize.small} strokeWidth={iconStrokeWidthBySize.small} />
@@ -53,7 +59,11 @@ export const MediaTile = ({
                   type="button"
                   className={styles.controlButton}
                   onClick={onDelete}
-                  aria-label="Delete image"
+                  aria-label={intl.formatMessage({
+                    id: "fzk04H",
+                    defaultMessage: "Delete image",
+                    description: "dialog title",
+                  })}
                   data-test-id="product-media-delete"
                 >
                   <Trash2 size={iconSize.small} strokeWidth={iconStrokeWidthBySize.small} />
