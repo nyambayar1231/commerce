@@ -7,6 +7,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 
 | Milestone | Title | Status |
 |---|---|---|
+| M11 | Dashboard in Mongolian and English | Approved |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
@@ -241,6 +242,59 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
     dino-craft.lol for `/` (cleared by emptying the browser cache).
 
 ---
+
+## M11 — Dashboard in Mongolian and English
+- **Objective:** every dashboard screen reads in Mongolian or English; a staff member picks the
+  language in Account settings, as in Saleor, and the choice is remembered.
+- **Concepts:** ICU messages with react-intl, message extraction (formatjs), lazy-loaded locale
+  files, locale-aware dates and numbers, translation coverage as a test.
+- **Saleor reference:** `../saleor-dashboard/src/components/Locale/Locale.tsx` (provider,
+  localStorage `locale`, lazy `locale/<code>.json`), `src/staff/components/StaffPreferences/`
+  (the "Dashboard language" card on the staff details page of the signed-in user, reached from the
+  user menu's "Account Settings"), `locale/mn.json` (Crowdin, partial). Our messages already use
+  react-intl with Saleor's ids (319 of 329); Saleor's mn.json translates 102 of them.
+
+**Owner decisions (2026-11-13):**
+1. **Languages:** Mongolian and English. **Default Mongolian**; the choice is remembered (Saleor's
+   localStorage `locale`).
+2. **The picker is Saleor's:** a minimal Account settings page (the signed-in user's staff details
+   page) with the "Dashboard language" card, linked from the user menu's "Account Settings"
+   (closes M1.1.7's open item).
+3. **Translations:** Saleor's mn.json where it covers our messages; the lead drafts the rest, the
+   owner reviews them.
+
+**Proposed by the lead (2026-11-13), awaiting the owner's OK:**
+4. **Minimal Account settings** = Saleor's URL `/staff/<id>` for the signed-in user only (another
+   id → not found until staff pages exist); the title is the user's name; a read-only card with
+   first name, last name and email (no editing, avatar or password change yet); the right sidebar
+   has the "Dashboard language" card (Combobox with English and Монгол, page reload after a
+   change, as Saleor). Language names in their own language ("Монгол"; Saleor shows "Mongolian").
+5. **Extraction:** `@formatjs/cli` (new dev dependency, exact version) with Saleor's
+   `extract-messages` script writes `apps/dashboard/locale/defaultMessages.json` (generated,
+   committed, checked for drift like the GraphQL types); `locale/mn.json` is hand-edited (its
+   Saleor-sourced entries noted in THIRD_PARTY_LICENSES.md).
+6. **Coverage is a test:** a dashboard unit test fails when a message has no Mongolian entry, or
+   mn.json has an entry for an unknown id. The Playwright golden path runs in English (it sets the
+   `locale` item before loading the page), so its selectors stay as they are.
+
+**Steps (each one commit, one report):**
+
+| Step | What | Status |
+|---|---|---|
+| M11.1 | Locale infrastructure: Saleor's LocaleProvider (en, mn; default mn; localStorage; lazy mn.json; `<html lang>`), `extract-messages`, defaultMessages.json, an empty mn.json; e2e forced to English; tests | Proposed |
+| M11.2 | Account settings page (decision 4) and the user menu's "Account Settings"; checked against Saleor's page | Proposed |
+| M11.3 | Every visible string through react-intl (audit of hard-coded text, labels in TS objects, Macaw props); Saleor's ids where Saleor has the same text | Proposed |
+| M11.4 | Mongolian: Saleor's entries copied, the rest drafted by the lead; the coverage test (decision 6) | Proposed |
+| M11.5 | Owner review of the Mongolian (a side-by-side list English / Mongolian), corrections applied | Proposed |
+| M11.6 | Dates, numbers and money formatted in the chosen locale (no hard-coded `en`); released to production (docs/deploy.md) | Proposed |
+
+- **Acceptance:** a first visit shows Mongolian; switching to English in Account settings sticks
+  across reloads and logins; no screen shows an untranslated message in Mongolian; dates follow
+  the language; CI green, golden path included; live on admin.dino-craft.lol.
+- **Out of scope:** translating catalog content (product/category names, Saleor's Translations
+  feature), API error messages (the dashboard shows its own per error code), other languages,
+  editing the profile or password on Account settings, the storefront.
+- **Status:** Approved by the owner 2026-11-13 (decisions 1–3); decisions 4–6 await the owner's OK.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
