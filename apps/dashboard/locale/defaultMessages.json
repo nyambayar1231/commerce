@@ -173,6 +173,10 @@
     "context": "product stock, section header",
     "string": "Inventory"
   },
+  "527G9G": {
+    "context": "printed order",
+    "string": "Shipping method"
+  },
   "577R2r": {
     "string": "Invalid value"
   },
@@ -831,6 +835,10 @@
   "V21v8h": {
     "string": "{currency} {totalAmount}"
   },
+  "V6z6Se": {
+    "context": "printed order",
+    "string": "Placed {date}"
+  },
   "VEext+": {
     "string": "Are you sure you want to delete this image?"
   },
@@ -849,6 +857,10 @@
   "WE8IFE": {
     "context": "product name",
     "string": "Product"
+  },
+  "WVbUh7": {
+    "context": "printed order",
+    "string": "Status: {status}"
   },
   "Wr5UOV": {
     "context": "error message",
@@ -1058,6 +1070,10 @@
     "context": "shipping address is not set in draft order",
     "string": "Not set"
   },
+  "eKHtk8": {
+    "context": "print order button",
+    "string": "Print"
+  },
   "ey0lZj": {
     "context": "dialog header",
     "string": "Delete Customer"
@@ -1208,6 +1224,10 @@
   },
   "lNZuWl": {
     "string": "All orders"
+  },
+  "lNcdXC": {
+    "context": "printed order line",
+    "string": "Unit price"
   },
   "lxP7Rb": {
     "context": "warning notification when some product image uploads in a batch failed",

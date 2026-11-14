@@ -177,3 +177,31 @@ test("staff finds the order and fulfils it", async () => {
     },
   });
 });
+
+test("staff prints the order", async () => {
+  // window.print() opens a native dialog Playwright can't drive: count the calls instead, then
+  // render the page as the printer sees it.
+  await page.evaluate(() => {
+    // No DOM types in this package: the page's window, typed by hand.
+    const target = globalThis as unknown as { print: () => void; printCalls: number };
+    target.printCalls = 0;
+    target.print = () => {
+      target.printCalls += 1;
+    };
+  });
+  await page.getByRole("button", { name: "Print", exact: true }).click();
+  expect(
+    await page.evaluate(() => (globalThis as unknown as { printCalls: number }).printCalls),
+  ).toBe(1);
+
+  const printView = page.getByTestId("order-print-view");
+  await expect(printView).toBeHidden();
+  await page.emulateMedia({ media: "print" });
+  await expect(printView).toBeVisible();
+  await expect(page.getByRole("button", { name: "Print", exact: true })).toBeHidden();
+  await expect(printView).toContainText(`Order #${orderNumber}`);
+  await expect(printView).toContainText(PRODUCT);
+  await expect(printView.getByTestId("order-print-total")).toHaveText(/MNT\s*\d/);
+  await page.screenshot({ path: "test-results/order-print.png", fullPage: true });
+  await page.emulateMedia({ media: null });
+});

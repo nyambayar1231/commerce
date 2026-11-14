@@ -1,0 +1,114 @@
+/* Hidden on screen; while printing, the only thing on the page (see OrderPrintView.tsx). */
+.root {
+  display: none;
+}
+
+@media print {
+  @page {
+    margin: 15mm;
+  }
+
+  :global(body > *:not([data-order-print])) {
+    display: none !important;
+  }
+
+  :global(body) {
+    background: #fff !important;
+  }
+
+  .root {
+    display: block;
+    color: #000;
+    background: #fff;
+    font:
+      11pt / 1.4 system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+  }
+}
+
+.header {
+  margin-bottom: 8mm;
+}
+
+.title {
+  margin: 0 0 2mm;
+  font-size: 18pt;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5mm 10mm;
+  margin-bottom: 8mm;
+}
+
+.field {
+  break-inside: avoid;
+}
+
+.label {
+  font-size: 9pt;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 1mm;
+}
+
+.address {
+  font-style: normal;
+}
+
+.lines {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 6mm;
+}
+
+.lines th,
+.lines td {
+  padding: 2mm 2mm 2mm 0;
+  border-bottom: 1px solid #999;
+  text-align: left;
+  vertical-align: top;
+}
+
+.lines th {
+  font-size: 9pt;
+  border-bottom-color: #000;
+}
+
+.lines tr {
+  break-inside: avoid;
+}
+
+.number {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.variant {
+  font-size: 9pt;
+}
+
+.totals {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: end;
+  gap: 1mm 10mm;
+  margin: 0;
+  padding-right: 2mm;
+  font-variant-numeric: tabular-nums;
+}
+
+.totals dd {
+  margin: 0;
+  text-align: right;
+}
+
+.grandTotal {
+  font-weight: 700;
+  font-size: 13pt;
+}

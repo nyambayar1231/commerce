@@ -302,9 +302,33 @@ describe("OrderDetailsPage", () => {
     expect(getEventDetails(empty, intl, "MNT")).toBeNull();
   });
 
+  it("prints the order: the Print button opens the browser's print dialog on the print view", () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    renderPage(order({ shippingMethodName: "Express", billingAddress: null }));
+
+    byTestId("print-order-button")?.click();
+    expect(print).toHaveBeenCalledOnce();
+
+    const view = byTestId("order-print-view");
+    expect(view?.parentElement).toBe(document.body);
+    const printed = view?.textContent ?? "";
+    expect(printed).toContain("Order #7");
+    expect(printed).toContain("Status: Unfulfilled");
+    expect(printed).toContain("bat@example.com");
+    expect(printed).toContain("Peace Ave 1");
+    expect(printed).toContain("Express");
+    expect(printed).toContain("Boots");
+    expect(printed).toContain("B-42");
+    expect(document.querySelectorAll('[data-test-id="order-print-line"]')).toHaveLength(1);
+    expect(byTestId("order-print-total")?.textContent).toBe("MNT 2,500");
+    print.mockRestore();
+  });
+
   it("shows skeletons while loading", () => {
     renderPage(undefined);
 
     expect(text()).not.toContain("Order #");
+    expect(byTestId("print-order-button")).toBeNull();
+    expect(byTestId("order-print-view")).toBeNull();
   });
 });

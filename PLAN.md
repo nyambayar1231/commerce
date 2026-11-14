@@ -381,7 +381,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 
 | Step | What | Status |
 |---|---|---|
-| M13.1 | Print: the order page's "Print" action and a print-only order view (decision 4) | Approved |
+| M13.1 | Print: the order page's "Print" action and a print-only order view (decision 4) | Done |
 | M13.2 | Draft API: migration (`DRAFT`, nullable fields + CHECK, events `DRAFT_CREATED`, `PLACED_FROM_DRAFT`, `ADDED_PRODUCTS`, `REMOVED_PRODUCTS`), `draftOrderCreate`, `draftOrderUpdate` (customer/email, addresses, shipping method), `draftOrderDelete`, `draftOrders`; `orders` excludes drafts; tests | Approved |
 | M13.3 | Draft lines API: `orderLinesCreate`, `orderLineUpdate`, `orderLineDelete` (drafts only), totals recalculated; tests | Approved |
 | M13.4 | `draftOrderComplete`: Saleor's checks (lines, email, addresses, shipping), stock reserved, prices frozen, `UNFULFILLED`; tests | Approved |

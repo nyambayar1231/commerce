@@ -6,9 +6,10 @@
 // the Fulfill button and the fulfillments, the summary with "Mark as Paid", the transactions with
 // their Refund button, the history — and the customer card in the right sidebar. Left out: the
 // GraphiQL and metadata entries, draft and unconfirmed orders, invoices, the customer note, app
-// widgets and the price breakdown modal.
-import { Box } from "@saleor/macaw-ui";
-import { Package, Trash2 } from "lucide-react";
+// widgets and the price breakdown modal. Ours, not Saleor's: the "Print" button and the printed
+// view (PLAN M13 decision 4).
+import { Box, Button } from "@saleor/macaw-ui";
+import { Package, Printer, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { defineMessage, useIntl } from "react-intl";
 
@@ -21,6 +22,7 @@ import { orderListPath } from "../../urls";
 import { OrderCustomer } from "../OrderCustomer/OrderCustomer";
 import { OrderDetailsItemsSection } from "../OrderDetailsItemsSection/OrderDetailsItemsSection";
 import { OrderHistory } from "../OrderHistory/OrderHistory";
+import { OrderPrintView } from "../OrderPrintView/OrderPrintView";
 import { OrderSummary } from "../OrderSummary/OrderSummary";
 import { OrderTransactionsSection } from "../OrderTransactionsSection/OrderTransactionsSection";
 import { Title } from "./Title";
@@ -29,6 +31,12 @@ const cancelOrderMessage = defineMessage({
   id: "9ZtJhn",
   defaultMessage: "Cancel order",
   description: "cancel button",
+});
+
+const printMessage = defineMessage({
+  id: "eKHtk8",
+  defaultMessage: "Print",
+  description: "print order button",
 });
 
 /** Saleor's Order.canCancel for our orders: not canceled and nothing fulfilled (PLAN M6 decision 2). */
@@ -77,6 +85,17 @@ export const OrderDetailsPage = ({
         title={<Title order={order} />}
         actionsGap={3}
       >
+        {order && (
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={() => window.print()}
+            data-test-id="print-order-button"
+          >
+            <Printer size={iconSize.small} strokeWidth={iconStrokeWidthBySize.small} />
+            {intl.formatMessage(printMessage)}
+          </Button>
+        )}
         {menuItems.length > 0 && <TopNav.Menu dataTestId="menu" items={menuItems} />}
       </TopNav>
       <DetailPageLayout.Content data-test-id="order-fulfillment">
@@ -86,6 +105,7 @@ export const OrderDetailsPage = ({
             <OrderSummary order={order} onMarkAsPaid={onMarkAsPaid} />
             <OrderTransactionsSection transactions={order.transactions} onRefund={onRefund} />
             <OrderHistory history={order.events ?? []} currency={order.total.gross.currency} />
+            <OrderPrintView order={order} />
           </Box>
         )}
       </DetailPageLayout.Content>

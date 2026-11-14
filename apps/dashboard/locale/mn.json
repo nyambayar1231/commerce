@@ -173,6 +173,10 @@
     "context": "product stock, section header",
     "string": "Нөөц"
   },
+  "527G9G": {
+    "context": "printed order",
+    "string": "Хүргэлтийн арга"
+  },
   "577R2r": {
     "string": "Буруу утга"
   },
@@ -831,6 +835,10 @@
   "V21v8h": {
     "string": "{currency} {totalAmount}"
   },
+  "V6z6Se": {
+    "context": "printed order",
+    "string": "Захиалсан огноо: {date}"
+  },
   "VEext+": {
     "string": "Та энэ зургийг устгахдаа итгэлтэй байна уу?"
   },
@@ -849,6 +857,10 @@
   "WE8IFE": {
     "context": "product name",
     "string": "Бүтээгдэхүүн"
+  },
+  "WVbUh7": {
+    "context": "printed order",
+    "string": "Төлөв: {status}"
   },
   "Wr5UOV": {
     "context": "error message",
@@ -1058,6 +1070,10 @@
     "context": "shipping address is not set in draft order",
     "string": "Тохируулаагүй"
   },
+  "eKHtk8": {
+    "context": "print order button",
+    "string": "Хэвлэх"
+  },
   "ey0lZj": {
     "context": "dialog header",
     "string": "Харилцагч устгах"
@@ -1208,6 +1224,10 @@
   },
   "lNZuWl": {
     "string": "Бүх захиалга"
+  },
+  "lNcdXC": {
+    "context": "printed order line",
+    "string": "Нэгжийн үнэ"
   },
   "lxP7Rb": {
     "context": "warning notification when some product image uploads in a batch failed",
