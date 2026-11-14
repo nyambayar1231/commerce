@@ -10,6 +10,7 @@ import { createContext, type ReactNode, useContext, useEffect, useState } from "
 import { IntlProvider, ReactIntlErrorCode, useIntl } from "react-intl";
 import useLocalStorage from "../../hooks/useLocalStorage";
 import { commonMessages } from "../../intl";
+import { polyfillDateTimeFormat } from "./polyfillDateTimeFormat";
 
 export const Locale = {
   EN: "en",
@@ -82,8 +83,12 @@ export const LocaleProvider = ({ children }: { children: ReactNode }) => {
     }
     let current = true;
     setMessages(undefined);
-    localeFiles[locale]()
-      .then((file) => {
+    // Mongolian date data comes with the translations (M11.6); without it, dates stay English.
+    const dates = polyfillDateTimeFormat(locale).catch((error: unknown) => {
+      console.error(`Could not load the ${locale} date formats`, error);
+    });
+    Promise.all([localeFiles[locale](), dates])
+      .then(([file]) => {
         if (current) setMessages(toIntlMessages(file.default));
       })
       .catch((error: unknown) => {

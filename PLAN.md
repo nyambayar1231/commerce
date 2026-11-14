@@ -286,7 +286,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M11.3 | Every visible string through react-intl (audit of hard-coded text, labels in TS objects, Macaw props); Saleor's ids where Saleor has the same text | Done |
 | M11.4 | Mongolian: Saleor's entries copied, the rest drafted by the lead; the coverage test (decision 6) | Done |
 | M11.5 | Owner review of the Mongolian (a side-by-side list English / Mongolian), corrections applied | Waiting on the owner: https://claude.ai/artifact/1T6fwP7u3WDM5tvAi278J5 |
-| M11.6 | Dates, numbers and money formatted in the chosen locale (no hard-coded `en`); released to production (docs/deploy.md) | In progress: code checked, Chrome polyfill and release await the owner |
+| M11.6 | Dates, numbers and money formatted in the chosen locale (no hard-coded `en`); released to production (docs/deploy.md) | In progress: done but the production release |
 
 - **Acceptance:** a first visit shows Mongolian; switching to English in Account settings sticks
   across reloads and logins; no screen shows an untranslated message in Mongolian; dates follow
@@ -333,9 +333,11 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   (`intl.formatDate`, the grid cells' `useIntl().locale`); nothing hard-codes `en`. But Chrome 157
   ships no Mongolian date/number data (`Intl.DateTimeFormat.supportedLocalesOf(["mn"])` is empty) and
   falls back to en-US, so in Chrome dates read "Thursday, November 12, 2026"; Safari and Firefox
-  have the data. Numbers look the same either way (140,000); plural rules are fine. Fix awaiting the
-  owner's OK (new dependency): FormatJS's `@formatjs/intl-datetimeformat` polyfill with only the
-  `mn` data, loaded only when the browser lacks it.
+  have the data. Numbers look the same either way (140,000); plural rules are fine. Fixed with the
+  owner's OK (2026-11-14): `@formatjs/intl-datetimeformat` 7.9.0 (FormatJS's polyfill), loaded only
+  in Mongolian and only where the browser lacks the data (`polyfillDateTimeFormat.ts`): `mn` data +
+  the golden time zones, ~180 kB gzip as lazy chunks; the browser's own time zone is kept (the
+  polyfill defaults to UTC). Checked in Chrome: "2026 оны 11-р сарын 12 14:03 (GMT+8)".
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
