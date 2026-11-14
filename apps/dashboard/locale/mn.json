@@ -164,6 +164,10 @@
     "context": "notifications region label for screen readers",
     "string": "Мэдэгдлүүд"
   },
+  "4XhJY+": {
+    "context": "dialog header",
+    "string": "{channelName}-с бүтээгдэхүүн нэмэх"
+  },
   "4Z14xW": {
     "context": "button",
     "string": "Дуусгах"
@@ -348,6 +352,10 @@
   "9exKzi": {
     "context": "Close the list filter panel without clearing applied filters",
     "string": "Хаах"
+  },
+  "9mrWKz": {
+    "context": "no products placeholder",
+    "string": "Энэ захиалгын сувагт хайлтад тохирох бүтээгдэхүүн алга."
   },
   "9qKFTA": {
     "context": "Product category",

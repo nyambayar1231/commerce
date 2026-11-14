@@ -75,3 +75,11 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
+
+## Saleor macaw-ui (legacy 0.7) — https://github.com/saleor/macaw-ui
+
+`apps/dashboard/src/components/Checkbox/Checkbox.tsx` redraws macaw-ui 0.7.4's checkbox icons
+(`src/icons/CheckboxIcon.tsx`, `src/icons/CheckboxCheckedIcon.tsx`), © Saleor Commerce, used
+under the Creative Commons Attribution 4.0 International license
+(https://creativecommons.org/licenses/by/4.0/). Changed: React props renamed and the tick's color
+taken from a CSS class.

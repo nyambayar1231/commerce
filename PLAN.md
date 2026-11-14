@@ -306,6 +306,10 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   Our Datagrid gained Saleor's cell editing, change tracking, number cell and row actions. Left
   out: discounts, "is gift", the metadata button; Status shows one pill (Saleor: a
   tags cell from glide-data-grid-cells). Mongolian for the new texts is ours except "Статус".
+  "Add products" is now Saleor's dialog: picker header with the search, a 56px-row table with
+  Saleor's legacy 48px-hit-area checkboxes (redrawn from macaw-ui 0.7, CC-BY-4.0) and 40px
+  thumbnails; the title names the shop ("Add product from {shop}"). Still the first 20 matches (no
+  infinite scroll, backfill or "load more variants").
 - **M13.1 (print):** our own print view (Saleor has none), approved by the owner (2026-11-14).
 
 ## M11 — Dashboard in Mongolian and English

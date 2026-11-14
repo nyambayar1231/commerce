@@ -1,0 +1,88 @@
+/*
+ * Adapted from saleor-dashboard: src/orders/components/OrderProductAddDialog/styles.ts,
+ * src/components/ResponsiveTable/ResponsiveTable.module.css (the bleed table),
+ * src/components/TableCellAvatar/styles.ts and src/components/AssignPickerListEmptyState/
+ * (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ */
+
+/* ResponsiveTable `bleed`: 8px between cells, the modal's padding at both ends. */
+.table td {
+  vertical-align: middle;
+  padding: 0 8px;
+}
+
+.table td:first-child {
+  padding-right: 8px;
+  padding-left: var(--modal-padding, var(--mu-spacing-6));
+}
+
+.table td:last-child {
+  padding-right: var(--modal-padding, var(--mu-spacing-6));
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* TableCellAvatar: Saleor's 53px avatar box plus the 8px paddings (our cells are border-box). */
+.avatar {
+  width: 69px;
+}
+
+.avatarImage {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 40px;
+  height: 40px;
+  padding: 3.25px;
+  border: 1px solid var(--mu-colors-border-default1);
+  border-radius: 2px;
+  color: var(--mu-colors-text-default2);
+  overflow: hidden;
+}
+
+.avatarImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Saleor's variantCheckbox: 8px right of the product checkbox column. */
+.variantCheckbox {
+  position: relative;
+  left: 8px;
+}
+
+.textRight {
+  text-align: right;
+}
+
+/* Money: the currency a little smaller, then the amount. */
+.money {
+  font-weight: 500;
+}
+
+.currency {
+  font-size: 0.87em;
+  margin-right: 0.2rem;
+}
+
+/* AssignPickerListEmptyState / Loading: a centered message filling the list. */
+.stateCell.stateCell {
+  border-bottom: none;
+  padding: 0;
+}
+
+.state {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  width: 100%;
+  box-sizing: border-box;
+  padding-inline: var(--modal-padding, var(--mu-spacing-6));
+}

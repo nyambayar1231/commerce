@@ -165,6 +165,10 @@
     "context": "notifications region label for screen readers",
     "string": "Notifications"
   },
+  "4XhJY+": {
+    "context": "dialog header",
+    "string": "Add product from {channelName}"
+  },
   "4Z14xW": {
     "context": "button",
     "string": "Finalize"
@@ -349,6 +353,10 @@
   "9exKzi": {
     "context": "Close the list filter panel without clearing applied filters",
     "string": "Close"
+  },
+  "9mrWKz": {
+    "context": "no products placeholder",
+    "string": "No products are available matching query in the channel assigned to this order."
   },
   "9qKFTA": {
     "context": "Product category",
@@ -833,6 +841,7 @@
     "string": "Please wait a moment before trying again."
   },
   "S2xLxV": {
+    "context": "search placeholder",
     "string": "Search by product name, attribute, product type etc..."
   },
   "SDgGcU": {
@@ -884,6 +893,7 @@
     "string": "Orders"
   },
   "Taa5V7": {
+    "context": "dialog subtitle",
     "string": "You can only add products available for the order's channel"
   },
   "TjGYna": {
@@ -1521,6 +1531,7 @@
     "string": "Please provide a transaction reference using the input below:"
   },
   "s6oAC+": {
+    "context": "search label",
     "string": "Search products"
   },
   "s81JoX": {
@@ -1543,6 +1554,7 @@
     "string": "You're going to mark this order as paid."
   },
   "shmSDX": {
+    "context": "no products placeholder",
     "string": "No products are available in the channel assigned to this order."
   },
   "suAexp": {

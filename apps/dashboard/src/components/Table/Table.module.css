@@ -1,0 +1,67 @@
+/*
+ * Adapted from saleor-dashboard: src/components/Table/Table.module.css (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ * Saleor's native replacements for the MUI table primitives (MUI v4 defaults + legacy macaw-ui
+ * overrides). Root font-size is 50.782% as in Saleor, so 1.6rem = 13px. Head and footer cells
+ * come with their first user.
+ */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.row {
+  position: relative;
+  color: inherit;
+  vertical-align: middle;
+  outline: 0;
+}
+
+.rowHover:hover {
+  background-color: var(--mu-colors-background-default1-hovered);
+  transition: background-color 200ms;
+}
+
+.rowSelected,
+.rowSelected:hover {
+  background-color: var(--mu-colors-background-accent1-hovered);
+}
+
+.cell {
+  height: 56px;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--mu-colors-border-default1);
+  color: var(--mu-colors-text-default1);
+  font-size: 1.6rem;
+  line-height: 1.56;
+  text-align: left;
+  vertical-align: inherit;
+}
+
+/* macaw MuiTableCell.paddingCheckbox */
+.cellPaddingCheckbox {
+  width: 52px;
+  padding: 0;
+}
+
+.cellPaddingCheckbox:first-child {
+  width: 72px;
+  padding: 0 18px;
+}
+
+.cellPaddingCheckbox:last-child {
+  padding-right: 20px;
+}
+
+.cellPaddingNone,
+.cellPaddingNone:first-child,
+.cellPaddingNone:last-child {
+  padding: 0;
+}
+
+.alignRight {
+  text-align: right;
+}
