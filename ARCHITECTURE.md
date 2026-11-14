@@ -273,6 +273,8 @@ Saleor stays obvious:
 | `orderFulfill`: no `notifyCustomer`, `trackingNumber` or `allowStockToBeExceeded`; a canceled order is `INVALID`; a negative quantity is `INVALID_QUANTITY`; a line of another order is `NOT_FOUND`; an unknown warehouse is `NOT_FOUND`; untracked variants (or deleted ones) need no stock row | those inputs exist; Saleor fulfills canceled orders, sums negative entries, accepts any order's lines, reports a missing stock as `INSUFFICIENT_STOCK` | No emails yet (M8), no tracking or approval (PLAN M6 decision 2); the extra checks close holes that would otherwise reach a DB CHECK as a 500. |
 | `orderMarkAsPaid` charges what the transactions leave uncovered (a manual transaction) and is `TRANSACTION_ERROR` when nothing is | refuses any order that has transactions; charges the whole total | Our orders always have a transaction (completion requires payment), so Saleor's rule would make the action useless (PLAN M6 decision 5). |
 | `transactionRequestAction` supports `REFUND` only (`CHARGE`/`CANCEL` are `INVALID`), answered at once with `REFUND_REQUEST` + `REFUND_SUCCESS`; only an order's transactions; no refund reasons; `amount` is a `Decimal` | an app handles every action asynchronously; checkout transactions too; refund reasons and `PositiveDecimal` | One built-in dummy gateway (PLAN M6 decision 1); refunding a checkout's transaction would need the checkout's lock. |
+| Draft orders (M13): `draftOrderCreate` takes no `lines` and no channel, vouchers, notes, metadata or `save*Address`; `draftOrderComplete` also requires `userEmail` (`REQUIRED`); the line mutations edit drafts only (`NOT_EDITABLE`) and cap a line at 10,000 items (`INVALID_QUANTITY`); `orderFulfill`/`orderMarkAsPaid` refuse a draft (`INVALID`) | `lines` on create, channels and vouchers; a draft may have no customer; unconfirmed orders are editable too; no cap | Single channel, no vouchers; our orders need an email (the CHECK and the confirmation flow); the cap keeps line totals safe integers. |
+| `Shop.countries` lists every known country code | the countries of the shop's shipping zones | We have no shipping zones (PLAN M5 decision 1). |
 | `tokenCreate` throttling takes the client IP from the socket, or (with `TRUST_PROXY=true`) the last `X-Forwarded-For` entry; `LOGIN_ATTEMPT_DELAYED`'s time is ISO 8601 | the first valid `X-Forwarded-For` entry, always; Python's datetime text | A client sets the first entry, so trusting it lets anyone pick a fresh IP per guess (PLAN M9.3). |
 
 **The database** handles:
@@ -575,7 +577,7 @@ state lives in the URL (`before`/`after`).
 | GraphQL contract | Vitest + Yoga `fetch` | permissions, error shapes, pagination |
 | Concurrency | Vitest + parallel transactions | overselling and double-complete scenarios (M5.4) |
 | Dashboard | Vitest + Testing Library | variables builder, URL state, forms. The Glide canvas is not unit-tested |
-| End-to-end | Playwright (`e2e/`, `pnpm e2e`) | the golden path: staff creates a product in the dashboard → a customer buys it through the API → staff fulfils it (M9.7; fresh `commerce_e2e` database) |
+| End-to-end | Playwright (`e2e/`, `pnpm e2e`) | the golden path: staff creates a product in the dashboard → a customer buys it through the API → staff fulfils and prints it → staff creates an order by hand (draft: products, customer, address, shipping), finalizes and fulfils it (M9.7, M13; fresh `commerce_e2e` database) |
 
 **Checks:** `typecheck`, `lint`, `test`, a schema-print diff, and a `drizzle-kit check` of the migrations, all orchestrated
 by Turborepo.

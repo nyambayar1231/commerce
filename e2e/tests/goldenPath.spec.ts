@@ -3,7 +3,9 @@ import { API_URL, DASHBOARD_URL, STAFF_EMAIL, STAFF_PASSWORD } from "../env.ts";
 
 // The golden path (PLAN M9.7, ARCHITECTURE §11): staff creates a published product with stock in
 // the dashboard → a customer buys it through the GraphQL API (the storefront is M4) → staff finds
-// the order in the dashboard and fulfils it. The steps share state, so they run in order.
+// the order in the dashboard and fulfils it, then prints it. M13: staff creates an order by hand
+// (a draft: products, customer, address, shipping), finalizes and fulfils it. The steps share
+// state, so they run in order.
 test.describe.configure({ mode: "serial" });
 
 const PRODUCT = `E2E Hoodie ${Date.now()}`;
@@ -265,4 +267,24 @@ test("staff sets the draft's customer, address and shipping, then finalizes it",
   await expect(page).toHaveURL(/\/orders\/(?!drafts)[^/?]+$/);
   await expect(page.getByTestId("status-info")).toHaveText("Unfulfilled");
   await expect(page.getByRole("button", { name: "Fulfill", exact: true })).toBeVisible();
+});
+
+test("staff fulfils the order made from the draft", async () => {
+  await page.getByRole("button", { name: "Fulfill", exact: true }).click();
+  await expect(page).toHaveURL(/\/fulfill/);
+  await expect(page.getByRole("spinbutton", { name: "Quantity" })).toHaveValue("2");
+  await page.getByRole("button", { name: "Fulfill", exact: true }).last().click();
+  await expect(page.getByTestId("status-info")).toHaveText("Fulfilled");
+
+  // 5 in stock: 2 bought through the API, 2 sold from the draft, both fulfilled.
+  const response = await page.request.post(API_URL, {
+    headers: { "content-type": "application/json", origin: DASHBOARD_URL },
+    data: {
+      query: "query ($v: ID!) { productVariant(id: $v) { stocks { quantity quantityAllocated } } }",
+      variables: { v: variantId },
+    },
+  });
+  expect(await response.json()).toEqual({
+    data: { productVariant: { stocks: [{ quantity: 1, quantityAllocated: 0 }] } },
+  });
 });

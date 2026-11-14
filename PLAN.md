@@ -388,7 +388,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M13.5 | Dashboard: the Drafts list (`/orders/drafts`, menu item) and "Create order" | Done |
 | M13.6 | Dashboard: the draft page (lines, add products dialog, quantities, remove, Finalize, delete); history messages; Mongolian | Done |
 | M13.7 | Dashboard: the draft's customer, addresses and shipping method (Saleor's dialogs) | Done |
-| M13.8 | Playwright golden path for create → finalize → fulfill; release | Approved |
+| M13.8 | Playwright golden path for create → finalize → fulfill; release | In progress (golden path done; release waits for the owner's go) |
 
 - **Acceptance:** a staff member creates an order from the dashboard, finalizes it, fulfils it and
   prints it; a draft never shows in the order list or the customer's orders; CI green; live on
