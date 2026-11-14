@@ -8,13 +8,12 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | Milestone | Title | Status |
 |---|---|---|
 | M11 | Dashboard in Mongolian and English | In progress |
-| M13 | Draft orders ("Create order") and order printing | Approved |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
 (foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11), M5 (checkout API, 2026-11-11), M6 (orders, 2026-11-11), M7 (customer accounts, 2026-11-12), M8 (background jobs and email, 2026-11-12), M9 (hardening &
-deployability, 2026-11-12), M10 (deploy to AWS, 2026-11-13), M12 (continuous deployment, 2026-11-14).
+deployability, 2026-11-12), M10 (deploy to AWS, 2026-11-13), M12 (continuous deployment, 2026-11-14), M13 (draft orders and order printing, 2026-11-14).
 
 ## Open items from finished milestones
 
@@ -252,6 +251,47 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 
 ---
 
+- **M13.2 (draft order API), lead's decisions awaiting the owner's OK:** `order_event` stays append-only except
+  that a draft's events are deleted with the draft (migration 0021 replaces the trigger function);
+  `orderFulfill`/`orderMarkAsPaid` refuse a draft (`INVALID`) and `orderCancel` answers
+  `CANNOT_CANCEL_ORDER` (Saleor's can_cancel); a draft's customer can't read it through
+  `order(id)` or `me.orders`; `OrderError` gained Saleor's `addressType`; `Order.shippingMethod`
+  is null for orders placed from a checkout (they keep only the name and price).
+- **M13.3, awaiting the owner's OK:** `draftOrderCreate` takes no `lines` (Saleor's dashboard
+  creates an empty draft, then adds lines); no line `price` overrides; a line holds at most
+  10,000 items (`INVALID_QUANTITY`, ours: keeps totals safe integers); the line mutations edit
+  drafts only (`NOT_EDITABLE`, Saleor also edits unconfirmed orders); every line change re-reads
+  all of the draft's line prices and names from the catalog. Catalog now owns the "published"
+  rule (`isProductPublished`), which checkout reuses.
+- **M13.4, awaiting the owner's OK:** finalizing needs a customer email (`REQUIRED` on
+  `userEmail`; Saleor allows none, our orders and their CHECK require one); the shipping price is
+  the method's price at finalization; a failed finalization still saves the re-read line prices
+  and shipping price (the draft follows the catalog anyway); short stock is one
+  `INSUFFICIENT_STOCK` error per variant naming its lines (Saleor: per line and warehouse).
+- **M13.5 left out or different from Saleor, awaiting the owner's OK:** "Create order" creates the
+  draft at once (Saleor first asks for a channel); the Drafts list has no channel column, filters,
+  presets, row selection or bulk delete; "All draft orders" is plain text (no presets); the date
+  column uses the order list's date cell (Saleor: text).
+- **M13.6 left out or different from Saleor, awaiting the owner's OK:** M13.6 was split in two
+  (page and lines; customer, addresses and shipping in M13.7), so the golden path moved to M13.8.
+  The lines are a plain table like the Fulfill page's (Saleor: an editable Glide grid with a row
+  menu): the quantity saves on blur or Enter, a trash button removes; no "is gift", status,
+  discount or metadata columns. The add-products dialog shows the first 20 published matches (no
+  infinite scroll or "load more variants") and adds one of each chosen variant. Finalize and line
+  errors are error toasts (Saleor shows some next to the fields); Finalize opens the placed order
+  at /orders/:id. No channel alert, metadata, notes or widgets. Saleor's Mongolian for "order
+  line" toasts said "order list" and is corrected.
+- **M13.7 left out or different from Saleor, awaiting the owner's OK:** the API gained Saleor's
+  `Shop.countries` (every known country; Saleor lists its shipping zones' countries) for the
+  address form. "Change customer" searches accounts or takes "Use email: …" as Saleor, but without
+  Saleor's customer-change dialog (no address books to copy addresses from). Addresses are edited
+  for any draft, also an email-only one (Saleor: only with an account), with Saleor's "Add new
+  address" form only and its "Set the same for billing / shipping address" checkbox. The shipping
+  dialog lists active methods only (Saleor also shows unavailable ones, disabled). Found, not
+  fixed: the golden path's variant sometimes has an empty name (the line shows "-"); it predates
+  M13.
+- **M13.1 (print):** our own print view (Saleor has none), approved by the owner (2026-11-14).
+
 ## M11 — Dashboard in Mongolian and English
 - **Objective:** every dashboard screen reads in Mongolian or English; a staff member picks the
   language in Account settings, as in Saleor, and the choice is remembered.
@@ -347,93 +387,6 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   in Mongolian and only where the browser lacks the data (`polyfillDateTimeFormat.ts`): `mn` data +
   the golden time zones, ~180 kB gzip as lazy chunks; the browser's own time zone is kept (the
   polyfill defaults to UTC). Checked in Chrome: "2026 оны 11-р сарын 12 14:03 (GMT+8)".
-
-## M13 — Draft orders ("Create order") and order printing
-
-- **Objective:** staff create an order by hand in the dashboard, as Saleor's "Create order":
-  a draft with lines, a customer, addresses and a shipping method, finalized into a normal order
-  that is then fulfilled, paid and refunded with M6's actions. Any order can be printed.
-- **Concepts:** an order's draft state on the same row (a status-dependent CHECK), recalculated
-  draft totals, stock reserved on finalize (as checkout completion), a browser print view.
-- **Saleor reference:** API `../saleor-core/saleor/graphql/order/mutations/draft_order_create.py`,
-  `draft_order_update.py`, `draft_order_complete.py`, `draft_order_delete.py`,
-  `order_lines_create.py`, `order_line_update.py`, `order_line_delete.py`; dashboard
-  `../saleor-dashboard/src/orders/components/OrderDraftListPage/`, `OrderDraftPage/`,
-  `OrderDraftDetails/`, `OrderProductAddDialog/`, `OrderCustomerChangeDialog/`,
-  `OrderCustomerAddressesEditDialog/`, `OrderShippingMethodEditDialog/`. Saleor has no print
-  button (its closest feature is plugin-generated invoices).
-
-**Owner decisions (2026-11-14):**
-1. **Same table:** a draft is an `order` row with Saleor's `DRAFT` status and gets its number at
-   creation. Email, addresses and shipping become nullable; a CHECK requires them unless the
-   status is `DRAFT`. `orders` lists no drafts; `draftOrders` lists only drafts (Saleor).
-2. **Prices and stock:** a draft line's price is the variant's current price, re-read while it is a
-   draft and frozen at finalize. `draftOrderComplete` reserves stock as checkout completion does
-   and fails on short stock (Saleor's `INSUFFICIENT_STOCK`). The order starts unpaid ("Mark as
-   paid" exists).
-3. **Minimal scope:** Drafts list, Create order, add/edit/remove lines, customer (a customer
-   account or just an email), shipping and billing address, shipping method, Finalize, delete
-   draft. No discounts, no confirmation email on finalize, no channel picker (one channel).
-4. **Print:** a "Print" action on the order page opens a print view (order number, date,
-   customer, addresses, lines, totals) and the browser's print dialog; dashboard only.
-
-**Steps (each one commit, one report):**
-
-| Step | What | Status |
-|---|---|---|
-| M13.1 | Print: the order page's "Print" action and a print-only order view (decision 4) | Done |
-| M13.2 | Draft API: migration (`DRAFT`, nullable fields + CHECK, events `DRAFT_CREATED`, `PLACED_FROM_DRAFT`, `ADDED_PRODUCTS`, `REMOVED_PRODUCTS`), `draftOrderCreate`, `draftOrderUpdate` (customer/email, addresses, shipping method), `draftOrderDelete`, `draftOrders`; `orders` excludes drafts; tests | Done |
-| M13.3 | Draft lines API: `orderLinesCreate`, `orderLineUpdate`, `orderLineDelete` (drafts only), totals recalculated; tests | Done |
-| M13.4 | `draftOrderComplete`: Saleor's checks (lines, email, addresses, shipping), stock reserved, prices frozen, `UNFULFILLED`; tests | Done |
-| M13.5 | Dashboard: the Drafts list (`/orders/drafts`, menu item) and "Create order" | Done |
-| M13.6 | Dashboard: the draft page (lines, add products dialog, quantities, remove, Finalize, delete); history messages; Mongolian | Done |
-| M13.7 | Dashboard: the draft's customer, addresses and shipping method (Saleor's dialogs) | Done |
-| M13.8 | Playwright golden path for create → finalize → fulfill; release | In progress (golden path done; release waits for the owner's go) |
-
-- **Acceptance:** a staff member creates an order from the dashboard, finalizes it, fulfils it and
-  prints it; a draft never shows in the order list or the customer's orders; CI green; live on
-  admin.dino-craft.lol.
-- **Lead's decisions in M13.2, awaiting the owner's OK:** `order_event` stays append-only except
-  that a draft's events are deleted with the draft (migration 0021 replaces the trigger function);
-  `orderFulfill`/`orderMarkAsPaid` refuse a draft (`INVALID`) and `orderCancel` answers
-  `CANNOT_CANCEL_ORDER` (Saleor's can_cancel); a draft's customer can't read it through
-  `order(id)` or `me.orders`; `OrderError` gained Saleor's `addressType`; `Order.shippingMethod`
-  is null for orders placed from a checkout (they keep only the name and price).
-- **M13.3, awaiting the owner's OK:** `draftOrderCreate` takes no `lines` (Saleor's dashboard
-  creates an empty draft, then adds lines); no line `price` overrides; a line holds at most
-  10,000 items (`INVALID_QUANTITY`, ours: keeps totals safe integers); the line mutations edit
-  drafts only (`NOT_EDITABLE`, Saleor also edits unconfirmed orders); every line change re-reads
-  all of the draft's line prices and names from the catalog. Catalog now owns the "published"
-  rule (`isProductPublished`), which checkout reuses.
-- **M13.4, awaiting the owner's OK:** finalizing needs a customer email (`REQUIRED` on
-  `userEmail`; Saleor allows none, our orders and their CHECK require one); the shipping price is
-  the method's price at finalization; a failed finalization still saves the re-read line prices
-  and shipping price (the draft follows the catalog anyway); short stock is one
-  `INSUFFICIENT_STOCK` error per variant naming its lines (Saleor: per line and warehouse).
-- **M13.5 left out or different from Saleor, awaiting the owner's OK:** "Create order" creates the
-  draft at once (Saleor first asks for a channel); the Drafts list has no channel column, filters,
-  presets, row selection or bulk delete; "All draft orders" is plain text (no presets); the date
-  column uses the order list's date cell (Saleor: text).
-- **M13.6 left out or different from Saleor, awaiting the owner's OK:** M13.6 was split in two
-  (page and lines; customer, addresses and shipping in M13.7), so the golden path moved to M13.8.
-  The lines are a plain table like the Fulfill page's (Saleor: an editable Glide grid with a row
-  menu): the quantity saves on blur or Enter, a trash button removes; no "is gift", status,
-  discount or metadata columns. The add-products dialog shows the first 20 published matches (no
-  infinite scroll or "load more variants") and adds one of each chosen variant. Finalize and line
-  errors are error toasts (Saleor shows some next to the fields); Finalize opens the placed order
-  at /orders/:id. No channel alert, metadata, notes or widgets. Saleor's Mongolian for "order
-  line" toasts said "order list" and is corrected.
-- **M13.7 left out or different from Saleor, awaiting the owner's OK:** the API gained Saleor's
-  `Shop.countries` (every known country; Saleor lists its shipping zones' countries) for the
-  address form. "Change customer" searches accounts or takes "Use email: …" as Saleor, but without
-  Saleor's customer-change dialog (no address books to copy addresses from). Addresses are edited
-  for any draft, also an email-only one (Saleor: only with an account), with Saleor's "Add new
-  address" form only and its "Set the same for billing / shipping address" checkbox. The shipping
-  dialog lists active methods only (Saleor also shows unavailable ones, disabled). Found, not
-  fixed: the golden path's variant sometimes has an empty name (the line shows "-"); it predates
-  M13.
-- **Out of scope:** discounts, draft-order emails/invoices, channels, editing a finalized order's
-  lines (Saleor's unconfirmed orders), bulk draft delete.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
