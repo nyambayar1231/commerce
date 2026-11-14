@@ -128,6 +128,7 @@ pnpm extract-messages   # dashboard messages → apps/dashboard/locale/defaultMe
 pnpm e2e            # Playwright golden paths on a fresh commerce_e2e DB (needs db:up; once: pnpm --filter @commerce/e2e e2e:install)
 docker compose -f docker-compose.prod.yml --profile local-services up -d --build   # production images, whole stack on :8080 (docs/deploy.md)
 pnpm --filter @commerce/infra-aws cdk diff --profile commerce    # AWS stack (infra/aws, ap-northeast-2): diff | deploy
+gh run list --workflow deploy.yml   # production releases: automatic after CI on main (docs/deploy.md); rollback = Run workflow with a commit
 ```
 
 AI workflow (details in `docs/ai-workflow/README.md`):

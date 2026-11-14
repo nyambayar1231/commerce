@@ -190,25 +190,48 @@ aws ssm get-command-invocation --profile commerce --region ap-northeast-2 \
 
 ### Releasing a new version
 
-The instance is too small to build the images, so they are built on a Mac (Apple Silicon builds
-`linux/arm64` natively) and travel through the artifacts bucket:
+Automatic (PLAN M12): every push to `main` whose CI run succeeds is released by
+`.github/workflows/deploy.yml`, with no approval step. It builds the arm64 images on GitHub's Arm
+runner, uploads them to `s3://<artifacts bucket>/images/<commit>.tar.gz`, and runs
+`scripts/deploy/release.sh` on the server through Session Manager: a database backup, the commit's
+images, migrations, a restart and a health check (API healthy, dashboard and GraphQL answering).
+A failure turns the workflow red and prints the script's output. Watch it in GitHub → Actions →
+Deploy, or `gh run list --workflow deploy.yml`.
+
+**Rollback:** Actions → Deploy → Run workflow, with the commit of `main` to go back to (the images
+are rebuilt from it). Migrations are forward-only (CLAUDE.md), so a rollback across a migration
+keeps the newer schema; releases must work with the previous schema while they roll out.
+
+**How GitHub reaches AWS:** OIDC, no stored keys. The CDK stack's `Deploy` role trusts only
+`repo:nyambayar1231/commerce:ref:refs/heads/main` and may only put `images/*` in the artifacts
+bucket and run `AWS-RunShellScript` on the instance. Its settings are repository variables
+(Settings → Secrets and variables → Actions → Variables), from the stack's outputs:
+
+| Variable | Stack output |
+|---|---|
+| `AWS_DEPLOY_ROLE_ARN` | `DeployRoleArn` |
+| `DEPLOY_INSTANCE_ID` | `InstanceId` |
+| `ARTIFACTS_BUCKET` | `ArtifactsBucket` |
+| `BACKUP_BUCKET` | `BackupBucket` |
+
+**By hand** (CI down, or a release from a Mac): build and upload as the workflow does, then run
+the same command on the server as root through Session Manager:
 
 ```sh
-# on the Mac, at the commit to release (pushed to GitHub)
+# on the Mac, at a commit of main that is pushed
+sha=$(git rev-parse HEAD)
 docker build --platform linux/arm64 --target api -t commerce-api .
 docker build --platform linux/arm64 --target web -t commerce-web .
 docker save commerce-api commerce-web | gzip -1 \
-  | aws s3 cp - s3://<artifacts bucket>/images/$(git rev-parse --short HEAD).tar.gz --profile commerce
+  | aws s3 cp - s3://<artifacts bucket>/images/$sha.tar.gz --profile commerce
 
-# on the server (as root through Session Manager), same commit
-cd /home/ubuntu/commerce && sudo -u ubuntu git pull
-aws s3 cp s3://<artifacts bucket>/images/<commit>.tar.gz - | gunzip | docker load
-docker compose --env-file .env.prod -f docker-compose.prod.yml --profile https run --rm migrate
-docker compose --env-file .env.prod -f docker-compose.prod.yml --profile https up -d --no-build
+# on the server
+cd /home/ubuntu/commerce && sudo -u ubuntu git fetch -q origin \
+  && sudo -u ubuntu git checkout -q --detach <sha> \
+  && bash scripts/deploy/release.sh <sha> <artifacts bucket> <backup bucket>
 ```
 
-Use `up -d` without `--wait`: the worker has no healthcheck and `--wait` then fails. Check with
-`… ps` and `curl https://admin.dino-craft.lol/`.
+The server's checkout is a detached commit, not the `main` branch.
 
 ### Backups on the server
 

@@ -9,4 +9,6 @@ new CommerceStack(app, "Commerce", {
   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: "ap-northeast-2" },
   description:
     "commerce: one EC2 instance running docker-compose.prod.yml, its S3 buckets and role",
+  // Its main branch deploys through GitHub Actions (PLAN M12).
+  githubRepository: "nyambayar1231/commerce",
 });

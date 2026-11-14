@@ -93,3 +93,59 @@ describe("CommerceStack", () => {
     expect(retained).toHaveLength(2);
   });
 });
+
+describe("the GitHub deploy role (PLAN M12)", () => {
+  const withDeploy = Template.fromStack(
+    new CommerceStack(new App(), "Commerce", {
+      env: { account: "123456789012", region: "ap-northeast-2" },
+      githubRepository: "owner/repo",
+    }),
+  );
+
+  it("trusts only the repository's main branch through GitHub's OIDC provider", () => {
+    withDeploy.hasResourceProperties("AWS::IAM::OIDCProvider", {
+      Url: "https://token.actions.githubusercontent.com",
+      ClientIdList: ["sts.amazonaws.com"],
+    });
+    withDeploy.hasResourceProperties("AWS::IAM::Role", {
+      AssumeRolePolicyDocument: {
+        Statement: [
+          Match.objectLike({
+            Action: "sts:AssumeRoleWithWebIdentity",
+            Condition: {
+              StringEquals: {
+                "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
+                "token.actions.githubusercontent.com:sub": "repo:owner/repo:ref:refs/heads/main",
+              },
+            },
+          }),
+        ],
+      },
+    });
+  });
+
+  it("may only upload images and run a command on the instance", () => {
+    const policies = withDeploy.findResources("AWS::IAM::Policy", {
+      Properties: { PolicyName: Match.stringLikeRegexp("^Deploy") },
+    });
+    const actions = Object.values(policies)
+      .flatMap((policy) => policy.Properties.PolicyDocument.Statement)
+      .flatMap((statement: { Action: string | string[] }) => [statement.Action].flat())
+      .sort();
+    expect(actions).toEqual([
+      "s3:Abort*",
+      "s3:PutObject",
+      "s3:PutObjectLegalHold",
+      "s3:PutObjectRetention",
+      "s3:PutObjectTagging",
+      "s3:PutObjectVersionTagging",
+      "ssm:GetCommandInvocation",
+      "ssm:ListCommandInvocations",
+      "ssm:SendCommand",
+    ]);
+  });
+
+  it("is absent without a repository", () => {
+    template.resourceCountIs("AWS::IAM::OIDCProvider", 0);
+  });
+});

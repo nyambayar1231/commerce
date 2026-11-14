@@ -367,9 +367,9 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 
 | Step | What | Status |
 |---|---|---|
-| M12.1 | CDK: GitHub OIDC provider + `Deploy` role (decision 3); `cdk diff`, `cdk deploy`; template tests | Proposed |
-| M12.2 | `scripts/deploy/release.sh` (decision 4) | Proposed |
-| M12.3 | `deploy.yml` (decisions 1, 2, 5); repository variables set | Proposed |
+| M12.1 | CDK: GitHub OIDC provider + `Deploy` role (decision 3); `cdk diff`, `cdk deploy`; template tests | Code done; deploy waits for the owner's AWS sign-in |
+| M12.2 | `scripts/deploy/release.sh` (decision 4) | Done |
+| M12.3 | `deploy.yml` (decisions 1, 2, 5); repository variables set | Workflow done; variables after M12.1's deploy |
 | M12.4 | First automatic deploy (ships M11); live site checked; docs/deploy.md and CLAUDE.md updated | Proposed |
 
 - **Acceptance:** a push to `main` ends, after CI, with the new commit running on the server and the

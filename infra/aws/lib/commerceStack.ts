@@ -24,6 +24,11 @@ export const UBUNTU_AMI = "ami-093a68505ea068a90";
 export interface CommerceStackProps extends StackProps {
   /** Free-plan eligible in ap-northeast-2: t4g.micro (1 GB) or t4g.small (2 GB). */
   instanceType?: string;
+  /**
+   * The GitHub repository ("owner/name") whose `main` branch may deploy (PLAN M12): its workflows
+   * get the Deploy role through OIDC. Without it, no deploy role is made.
+   */
+  githubRepository?: string;
 }
 
 export class CommerceStack extends Stack {
@@ -139,6 +144,59 @@ export class CommerceStack extends Stack {
     });
     new CfnOutput(this, "BackupBucket", { value: backups.bucketName });
     new CfnOutput(this, "ArtifactsBucket", { value: artifacts.bucketName });
+
+    if (props.githubRepository) {
+      this.addDeployRole(props.githubRepository, artifacts, instance);
+    }
+  }
+
+  // Continuous deployment (PLAN M12): GitHub Actions sign in through OIDC, so no AWS keys are
+  // stored anywhere. Only workflows running on this repository's `main` branch (pushes,
+  // workflow_run and manual runs there) can assume the role, and it can only upload images to the
+  // artifacts bucket and run a shell command on this one instance (the release script).
+  private addDeployRole(repository: string, artifacts: s3.Bucket, instance: ec2.Instance): void {
+    const issuer = "token.actions.githubusercontent.com";
+    const github = new iam.OidcProviderNative(this, "GitHubOidc", {
+      url: `https://${issuer}`,
+      clientIds: ["sts.amazonaws.com"],
+    });
+    const role = new iam.Role(this, "Deploy", {
+      description: "GitHub Actions deploys of the main branch (PLAN M12)",
+      maxSessionDuration: Duration.hours(1),
+      assumedBy: new iam.WebIdentityPrincipal(github.oidcProviderArn, {
+        StringEquals: {
+          [`${issuer}:aud`]: "sts.amazonaws.com",
+          [`${issuer}:sub`]: `repo:${repository}:ref:refs/heads/main`,
+        },
+      }),
+    });
+    artifacts.grantPut(role, "images/*");
+    role.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["ssm:SendCommand"],
+        resources: [
+          this.formatArn({
+            service: "ec2",
+            resource: "instance",
+            resourceName: instance.instanceId,
+          }),
+          this.formatArn({
+            service: "ssm",
+            account: "",
+            resource: "document",
+            resourceName: "AWS-RunShellScript",
+          }),
+        ],
+      }),
+    );
+    // These two take no resource; they only read the results of commands.
+    role.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["ssm:GetCommandInvocation", "ssm:ListCommandInvocations"],
+        resources: ["*"],
+      }),
+    );
+    new CfnOutput(this, "DeployRoleArn", { value: role.roleArn });
   }
 }
 
