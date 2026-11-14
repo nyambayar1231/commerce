@@ -4,6 +4,7 @@ import { MoneyType, TaxedMoneyType } from "../../graphql/money.ts";
 import { requirePermission } from "../../graphql/permissions.ts";
 import { Decimal } from "../../graphql/scalars.ts";
 import { toMoney } from "../catalog/index.ts";
+import { OrderType } from "../orders/graphql.ts";
 import {
   type CheckoutPayload,
   CheckoutType,
@@ -19,6 +20,7 @@ import {
   createShippingMethod,
   deleteShippingMethod,
   getCheckoutShippingMethod,
+  getShippingMethod,
   listActiveShippingMethods,
   listShippingMethods,
   parseStoredAddress,
@@ -83,7 +85,7 @@ export const AddressType = builder.objectRef<Address>("Address").implement({
   }),
 });
 
-const AddressInput = builder.inputType("AddressInput", {
+export const AddressInput = builder.inputType("AddressInput", {
   fields: (t) => ({
     firstName: t.string({ description: "Given name." }),
     lastName: t.string({ description: "Family name." }),
@@ -151,6 +153,25 @@ builder.node(ShippingMethodType, {
     }),
   }),
 });
+
+// Saleor's Order.shippingMethod and Order.shippingMethods, for draft orders (PLAN M13): the
+// method a draft remembers, and the methods it may choose. An order placed from a checkout keeps
+// only the method's name and price, so its shippingMethod is null.
+builder.objectFields(OrderType, (t) => ({
+  shippingMethod: t.field({
+    type: ShippingMethodType,
+    nullable: true,
+    description: "Shipping method for this order.",
+    resolve: (order, _args, ctx) =>
+      order.shippingMethodId === null ? null : getShippingMethod(ctx.db, order.shippingMethodId),
+  }),
+  shippingMethods: t.field({
+    type: [ShippingMethodType],
+    description: "Shipping methods that can be used with this order.",
+    resolve: (order, _args, ctx) =>
+      order.status === "DRAFT" ? listActiveShippingMethods(ctx.db) : [],
+  }),
+}));
 
 // Saleor's Delivery. We keep no per-checkout delivery rows, so its id is the shipping method's
 // (ARCHITECTURE §4 deviations).

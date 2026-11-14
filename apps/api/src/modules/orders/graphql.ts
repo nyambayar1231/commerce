@@ -30,13 +30,17 @@ const taxed = (amountMinor: number, currency: string) => {
 };
 
 export const OrderStatusEnum = builder.enumType("OrderStatus", {
-  values: ["UNFULFILLED", "PARTIALLY_FULFILLED", "FULFILLED", "CANCELED"] as const,
+  values: ["DRAFT", "UNFULFILLED", "PARTIALLY_FULFILLED", "FULFILLED", "CANCELED"] as const,
 });
 
-// Saleor's OrderEventsEnum values we record (PLACED at completion, the rest from M6.4's actions).
+// Saleor's OrderEventsEnum values we record (PLACED at completion, M6.4's actions, M13's drafts).
 const OrderEventsEnum = builder.enumType("OrderEventsEnum", {
   values: [
     "PLACED",
+    "DRAFT_CREATED",
+    "ADDED_PRODUCTS",
+    "REMOVED_PRODUCTS",
+    "PLACED_FROM_DRAFT",
     "FULFILLMENT_FULFILLED_ITEMS",
     "CANCELED",
     "ORDER_MARKED_AS_PAID",
@@ -196,9 +200,12 @@ builder.queryField("order", (t) =>
     args: { id: t.arg.id({ required: true, description: "ID of an order." }) },
     resolve: async (_parent, { id }, ctx) => {
       const order = await getOrder(ctx.db, fromGlobalId("Order", String(id)));
-      // The customer the order belongs to reads it without a permission; anyone else needs
-      // MANAGE_ORDERS, and is refused alike whether or not the id exists.
-      if (order && ctx.user && order.userId === ctx.user.id) return order;
+      // The customer the order belongs to reads it without a permission (not while it is a
+      // draft, PLAN M13 decision 1); anyone else needs MANAGE_ORDERS, and is refused alike
+      // whether or not the id exists.
+      if (order && order.status !== "DRAFT" && ctx.user && order.userId === ctx.user.id) {
+        return order;
+      }
       await requirePermission(ctx, "MANAGE_ORDERS");
       return order;
     },

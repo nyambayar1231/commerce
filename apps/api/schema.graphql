@@ -955,6 +955,61 @@ type Delivery {
   shippingMethod: ShippingMethod
 }
 
+type DraftOrderCreate {
+  errors: [OrderError!]!
+
+  """Created draft order."""
+  order: Order
+}
+
+input DraftOrderCreateInput {
+  """Billing address of the customer."""
+  billingAddress: AddressInput
+
+  """Shipping address of the customer."""
+  shippingAddress: AddressInput
+
+  """ID of a selected shipping method."""
+  shippingMethod: ID
+
+  """Customer associated with the draft order."""
+  user: ID
+
+  """Email address of the customer."""
+  userEmail: String
+}
+
+type DraftOrderDelete {
+  errors: [OrderError!]!
+
+  """Deleted draft order."""
+  order: Order
+}
+
+input DraftOrderInput {
+  """Billing address of the customer."""
+  billingAddress: AddressInput
+
+  """Shipping address of the customer."""
+  shippingAddress: AddressInput
+
+  """ID of a selected shipping method."""
+  shippingMethod: ID
+
+  """Customer associated with the draft order."""
+  user: ID
+
+  """Email address of the customer."""
+  userEmail: String
+}
+
+type DraftOrderUpdate {
+  errors: [OrderError!]!
+
+  """Updated draft order."""
+  order: Order
+}
+
 """Represents order fulfillment."""
 type Fulfillment implements Node {
   """Date and time when fulfillment was created."""
@@ -1259,6 +1314,39 @@ type Mutation {
     """Fields required to update a customer."""
     input: CustomerInput!
   ): CustomerUpdate
+
+  """
+  Creates a new draft order.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  draftOrderCreate(
+    """Fields required to create an order."""
+    input: DraftOrderCreateInput!
+  ): DraftOrderCreate
+
+  """
+  Deletes a draft order.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  draftOrderDelete(
+    """ID of a draft order to delete."""
+    id: ID!
+  ): DraftOrderDelete
+
+  """
+  Updates a draft order.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  draftOrderUpdate(
+    """ID of a draft order to update."""
+    id: ID!
+
+    """Fields required to update an order."""
+    input: DraftOrderInput!
+  ): DraftOrderUpdate
 
   """End the current session. Succeeds when there is none."""
   logout: Logout!
@@ -1630,8 +1718,14 @@ type Order implements Node {
   """Shipping address: the checkout's, copied at completion."""
   shippingAddress: Address
 
+  """Shipping method for this order."""
+  shippingMethod: ShippingMethod
+
   """Method used for shipping."""
   shippingMethodName: String
+
+  """Shipping methods that can be used with this order."""
+  shippingMethods: [ShippingMethod!]!
 
   """Total price of shipping."""
   shippingPrice: TaxedMoney!
@@ -1729,6 +1823,9 @@ enum OrderDirection {
 }
 
 type OrderError {
+  """A type of address that causes the error."""
+  addressType: AddressTypeEnum
+
   """The error code."""
   code: OrderErrorCode!
 
@@ -1756,6 +1853,8 @@ enum OrderErrorCode {
   INVALID
   INVALID_QUANTITY
   NOT_FOUND
+  REQUIRED
+  SHIPPING_METHOD_NOT_APPLICABLE
   TRANSACTION_ERROR
   ZERO_QUANTITY
 }
@@ -1789,10 +1888,14 @@ type OrderEvent implements Node {
 }
 
 enum OrderEventsEnum {
+  ADDED_PRODUCTS
   CANCELED
+  DRAFT_CREATED
   FULFILLMENT_FULFILLED_ITEMS
   ORDER_MARKED_AS_PAID
   PLACED
+  PLACED_FROM_DRAFT
+  REMOVED_PRODUCTS
   TRANSACTION_REFUND_REQUESTED
 }
 
@@ -1907,6 +2010,7 @@ input OrderSortingInput {
 
 enum OrderStatus {
   CANCELED
+  DRAFT
   FULFILLED
   PARTIALLY_FULFILLED
   UNFULFILLED
@@ -2599,6 +2703,24 @@ type Query {
     """Sort customers."""
     sortBy: UserSortingInput
   ): UserCountableConnection
+
+  """
+  List of draft orders.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  draftOrders(
+    after: String
+    before: String
+    first: Int
+    last: Int
+
+    """Search draft orders."""
+    search: String
+
+    """Sort draft orders."""
+    sortBy: OrderSortingInput
+  ): OrderCountableConnection
 
   """Return the currently authenticated user."""
   me: User

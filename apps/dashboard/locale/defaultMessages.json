@@ -1428,6 +1428,10 @@
     "context": "Header row stock label",
     "string": "Stock"
   },
+  "toDL5R": {
+    "context": "order status",
+    "string": "Draft"
+  },
   "tvpAXl": {
     "context": "ordered product quantity",
     "string": "Quantity"

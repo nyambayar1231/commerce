@@ -71,7 +71,7 @@ async function walk(args: OrderListArgs, pageSize: number, backwards = false) {
       ...args,
       ...(backwards ? { last: pageSize, before: cursor } : { first: pageSize, after: cursor }),
     });
-    const ids = page.rows.map((row) => row.node.userEmail);
+    const ids = page.rows.map((row) => row.node.userEmail ?? "");
     if (backwards) seen.unshift(...ids);
     else seen.push(...ids);
     const more = backwards ? page.hasPreviousPage : page.hasNextPage;

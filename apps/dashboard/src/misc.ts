@@ -120,6 +120,8 @@ export const transformOrderStatus = (
       return { localized: intl.formatMessage(orderStatusMessages.unfulfilled), status: "warning" };
     case "CANCELED":
       return { localized: intl.formatMessage(commonStatusMessages.cancelled), status: "error" };
+    case "DRAFT":
+      return { localized: intl.formatMessage(orderStatusMessages.draft), status: "neutral" };
   }
 };
 

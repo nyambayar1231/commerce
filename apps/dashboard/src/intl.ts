@@ -134,6 +134,11 @@ export const commonStatusMessages = defineMessages({
 });
 
 export const orderStatusMessages = defineMessages({
+  draft: {
+    id: "toDL5R",
+    defaultMessage: "Draft",
+    description: "order status",
+  },
   fulfilled: {
     id: "pkjXPD",
     defaultMessage: "Fulfilled",

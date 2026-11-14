@@ -141,6 +141,20 @@
       "when": 1794465983153,
       "tag": "0019_rate_limit",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794652662522,
+      "tag": "0020_draft_orders",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794652987833,
+      "tag": "0021_draft_order_event_delete",
+      "breakpoints": true
     }
   ]
 }

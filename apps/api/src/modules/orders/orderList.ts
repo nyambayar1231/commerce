@@ -27,6 +27,8 @@ export interface OrderWhere {
   ids?: readonly string[] | null;
   /** The orders of one user (`User.orders`); not part of the GraphQL `where` input. */
   userId?: string | null;
+  /** List drafts (`draftOrders`) instead of placed orders (Saleor's drafts()/non_draft()). */
+  drafts?: boolean;
   status?: { eq?: OrderStatus | null; oneOf?: readonly OrderStatus[] | null } | null;
 }
 
@@ -124,8 +126,8 @@ const encodeCursor = (value: unknown, id: string): string =>
   Buffer.from(JSON.stringify([value, id])).toString("base64");
 
 function whereToSql(args: OrderListArgs): SQL {
-  const filters: SQL[] = [];
   const where = args.where;
+  const filters: SQL[] = [where?.drafts ? sql`o.status = 'DRAFT'` : sql`o.status <> 'DRAFT'`];
   if (where?.ids != null) {
     filters.push(
       where.ids.length === 0
@@ -155,7 +157,7 @@ function whereToSql(args: OrderListArgs): SQL {
     const byNumber = /^\d{1,15}$/.test(search) ? sql` OR o.number = ${Number(search)}` : sql``;
     filters.push(sql`(o.user_email ILIKE ${pattern}${byNumber})`);
   }
-  return filters.length > 0 ? sql`WHERE ${sql.join(filters, sql` AND `)}` : sql``;
+  return sql`WHERE ${sql.join(filters, sql` AND `)}`;
 }
 
 export async function listOrders(db: Executor, args: OrderListArgs): Promise<OrderPage> {

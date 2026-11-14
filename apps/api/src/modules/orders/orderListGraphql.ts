@@ -292,3 +292,33 @@ builder.queryField("orders", (t) =>
     OrderConnection,
   ),
 );
+
+// Saleor's draftOrders (saleor/graphql/order/schema.py resolve_draft_orders): the drafts only,
+// with the orders list's sorting and search (PLAN M13 decision 1). No `where`/`filter` yet.
+builder.queryField("draftOrders", (t) =>
+  t.connection(
+    {
+      type: OrderType,
+      nullable: true,
+      description: `List of draft orders.\n\n${MANAGE_ORDERS}`,
+      args: {
+        sortBy: t.arg({ type: OrderSortingInput, description: "Sort draft orders." }),
+        search: t.arg.string({ description: "Search draft orders." }),
+      },
+      resolve: async (_parent, { sortBy, search, ...args }, ctx, info) => {
+        await requirePermission(ctx, "MANAGE_ORDERS");
+        const page = validatePagination("draftOrders", args, isEdgesRequested(info));
+        return listOrdersOrThrow(ctx, {
+          ...args,
+          ...page,
+          search,
+          sort: sortBy
+            ? { field: sortBy.field as OrderSortField, direction: sortBy.direction }
+            : null,
+          where: { drafts: true },
+        });
+      },
+    },
+    OrderConnection,
+  ),
+);

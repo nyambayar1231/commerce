@@ -8,6 +8,19 @@ export {
 } from "./confirmationEmail.ts";
 
 export type {
+  DraftCustomer,
+  DraftOrderInput,
+  DraftOrderResult,
+  DraftShippingMethod,
+} from "./drafts.ts";
+export {
+  createDraftOrder,
+  deleteDraftOrder,
+  lockDraftOrder,
+  saveDraftTotals,
+  updateDraftOrder,
+} from "./drafts.ts";
+export type {
   FulfillLineInput,
   FulfillmentLineRow,
   FulfillmentRow,

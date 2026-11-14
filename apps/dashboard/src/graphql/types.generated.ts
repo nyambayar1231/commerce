@@ -143,14 +143,20 @@ export type OrderErrorCode =
   | 'INVALID'
   | 'INVALID_QUANTITY'
   | 'NOT_FOUND'
+  | 'REQUIRED'
+  | 'SHIPPING_METHOD_NOT_APPLICABLE'
   | 'TRANSACTION_ERROR'
   | 'ZERO_QUANTITY';
 
 export type OrderEventsEnum =
+  | 'ADDED_PRODUCTS'
   | 'CANCELED'
+  | 'DRAFT_CREATED'
   | 'FULFILLMENT_FULFILLED_ITEMS'
   | 'ORDER_MARKED_AS_PAID'
   | 'PLACED'
+  | 'PLACED_FROM_DRAFT'
+  | 'REMOVED_PRODUCTS'
   | 'TRANSACTION_REFUND_REQUESTED';
 
 export type OrderFulfillInput = {
@@ -199,6 +205,7 @@ export type OrderSortingInput = {
 
 export type OrderStatus =
   | 'CANCELED'
+  | 'DRAFT'
   | 'FULFILLED'
   | 'PARTIALLY_FULFILLED'
   | 'UNFULFILLED';

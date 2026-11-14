@@ -16,6 +16,7 @@ import "../modules/inventory/graphql.ts";
 import "../modules/orders/graphql.ts";
 import "../modules/orders/orderListGraphql.ts";
 import "../modules/orders/lifecycleGraphql.ts";
+import "../modules/orders/draftGraphql.ts";
 import "../modules/shop/graphql.ts";
 
 export const schema = builder.toSchema();

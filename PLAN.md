@@ -382,7 +382,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | Step | What | Status |
 |---|---|---|
 | M13.1 | Print: the order page's "Print" action and a print-only order view (decision 4) | Done |
-| M13.2 | Draft API: migration (`DRAFT`, nullable fields + CHECK, events `DRAFT_CREATED`, `PLACED_FROM_DRAFT`, `ADDED_PRODUCTS`, `REMOVED_PRODUCTS`), `draftOrderCreate`, `draftOrderUpdate` (customer/email, addresses, shipping method), `draftOrderDelete`, `draftOrders`; `orders` excludes drafts; tests | Approved |
+| M13.2 | Draft API: migration (`DRAFT`, nullable fields + CHECK, events `DRAFT_CREATED`, `PLACED_FROM_DRAFT`, `ADDED_PRODUCTS`, `REMOVED_PRODUCTS`), `draftOrderCreate`, `draftOrderUpdate` (customer/email, addresses, shipping method), `draftOrderDelete`, `draftOrders`; `orders` excludes drafts; tests | Done |
 | M13.3 | Draft lines API: `orderLinesCreate`, `orderLineUpdate`, `orderLineDelete` (drafts only), totals recalculated; tests | Approved |
 | M13.4 | `draftOrderComplete`: Saleor's checks (lines, email, addresses, shipping), stock reserved, prices frozen, `UNFULFILLED`; tests | Approved |
 | M13.5 | Dashboard: the Drafts list (`/orders/drafts`, menu item) and "Create order" | Approved |
@@ -392,6 +392,12 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 - **Acceptance:** a staff member creates an order from the dashboard, finalizes it, fulfils it and
   prints it; a draft never shows in the order list or the customer's orders; CI green; live on
   admin.dino-craft.lol.
+- **Lead's decisions in M13.2, awaiting the owner's OK:** `order_event` stays append-only except
+  that a draft's events are deleted with the draft (migration 0021 replaces the trigger function);
+  `orderFulfill`/`orderMarkAsPaid` refuse a draft (`INVALID`) and `orderCancel` answers
+  `CANNOT_CANCEL_ORDER` (Saleor's can_cancel); a draft's customer can't read it through
+  `order(id)` or `me.orders`; `OrderError` gained Saleor's `addressType`; `Order.shippingMethod`
+  is null for orders placed from a checkout (they keep only the name and price).
 - **Out of scope:** discounts, draft-order emails/invoices, channels, editing a finalized order's
   lines (Saleor's unconfirmed orders), bulk draft delete.
 

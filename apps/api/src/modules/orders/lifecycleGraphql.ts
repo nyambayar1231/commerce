@@ -3,6 +3,7 @@ import { builder } from "../../graphql/builder.ts";
 import { fromGlobalId, toGlobalId } from "../../graphql/globalId.ts";
 import { requirePermission } from "../../graphql/permissions.ts";
 import { DateTime, Decimal, UUID } from "../../graphql/scalars.ts";
+import { AddressTypeEnum } from "../checkout/graphql.ts";
 import { WarehouseType } from "../inventory/graphql.ts";
 import { getWarehouse } from "../inventory/index.ts";
 import { TransactionActionEnum, TransactionItemType } from "../payments/graphql.ts";
@@ -123,6 +124,7 @@ builder.objectFields(OrderType, (t) => ({
       "List of actions that can be performed in the current state of an order. MARK_AS_PAID " +
       "while the transactions leave part of the total uncharged.",
     resolve: async (order, _args, ctx) => {
+      if (order.status === "DRAFT") return [];
       const transactions = await ctx.paymentLoaders.transactionsByOrderId.load(order.id);
       return uncoveredAmount(order, transactions) > 0 ? ["MARK_AS_PAID" as const] : [];
     },
@@ -190,20 +192,23 @@ const OrderErrorCodeEnum = builder.enumType("OrderErrorCode", {
     "INVALID",
     "INVALID_QUANTITY",
     "NOT_FOUND",
+    "REQUIRED",
+    "SHIPPING_METHOD_NOT_APPLICABLE",
     "TRANSACTION_ERROR",
     "ZERO_QUANTITY",
   ] as const,
 });
 
-type OrderErrorData = {
+export type OrderErrorData = {
   field: string | null;
   message: string;
   code: (typeof OrderErrorCodeEnum)["$inferType"];
   warehouse: string | null;
   orderLines: string[] | null;
+  addressType: "SHIPPING" | "BILLING" | null;
 };
 
-const OrderErrorType = builder.objectRef<OrderErrorData>("OrderError").implement({
+export const OrderErrorType = builder.objectRef<OrderErrorData>("OrderError").implement({
   fields: (t) => ({
     field: t.exposeString("field", {
       nullable: true,
@@ -227,16 +232,23 @@ const OrderErrorType = builder.objectRef<OrderErrorData>("OrderError").implement
       description: "List of order line IDs that cause the error.",
       resolve: (error) => error.orderLines,
     }),
+    addressType: t.field({
+      type: AddressTypeEnum,
+      nullable: true,
+      description: "A type of address that causes the error.",
+      resolve: (error) => error.addressType,
+    }),
   }),
 });
 
 /** Domain errors carry primary keys; the API exposes global IDs. */
-const toOrderError = (error: OrderError): OrderErrorData => ({
+export const toOrderError = (error: OrderError): OrderErrorData => ({
   field: error.field,
   message: error.message,
   code: error.code,
   warehouse: error.warehouse ? toGlobalId("Warehouse", error.warehouse) : null,
   orderLines: error.orderLines?.map((id) => toGlobalId("OrderLine", id)) ?? null,
+  addressType: error.addressType ?? null,
 });
 
 const TransactionRequestActionErrorCodeEnum = builder.enumType(
@@ -279,9 +291,9 @@ const TransactionRequestActionErrorType = builder
 
 // ── Payloads ─────────────────────────────────────────────────────────────────────────────────
 
-type OrderPayloadData = { order: OrderRow | null; errors: OrderErrorData[] };
+export type OrderPayloadData = { order: OrderRow | null; errors: OrderErrorData[] };
 
-const orderPayload = (name: string, description: string) =>
+export const orderPayload = (name: string, description: string) =>
   builder.objectRef<OrderPayloadData>(name).implement({
     fields: (t) => ({
       order: t.field({ type: OrderType, nullable: true, description, resolve: (p) => p.order }),

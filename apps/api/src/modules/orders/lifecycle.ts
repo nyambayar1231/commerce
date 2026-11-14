@@ -37,7 +37,9 @@ export type OrderErrorCode =
   | "FULFILL_ORDER_LINE"
   | "INSUFFICIENT_STOCK"
   | "CANNOT_CANCEL_ORDER"
-  | "TRANSACTION_ERROR";
+  | "TRANSACTION_ERROR"
+  | "REQUIRED"
+  | "SHIPPING_METHOD_NOT_APPLICABLE";
 
 /** Saleor's OrderError, with primary keys (the GraphQL layer turns them into global IDs). */
 export type OrderError = {
@@ -46,6 +48,8 @@ export type OrderError = {
   message: string;
   orderLines?: string[];
   warehouse?: string;
+  /** Which address an address error belongs to (draft orders). */
+  addressType?: "SHIPPING" | "BILLING";
 };
 
 const error = (
@@ -58,6 +62,8 @@ const error = (
 const MESSAGES = {
   orderNotFound: "Order does not exist.",
   canceledFulfill: "Can't fulfill a canceled order.",
+  draftFulfill: "Can't fulfill a draft order.",
+  draftMarkAsPaid: "Can't mark a draft order as paid.",
   duplicatedWarehouse: "Duplicated warehouse ID.",
   duplicatedLine: "Duplicated order line ID.",
   lineNotFound: "Order line does not belong to this order.",
@@ -164,6 +170,9 @@ export async function fulfillOrder(
     if (!order) return { ok: false, errors: [error("order", "NOT_FOUND", MESSAGES.orderNotFound)] };
     if (order.status === "CANCELED") {
       return { ok: false, errors: [error("order", "INVALID", MESSAGES.canceledFulfill)] };
+    }
+    if (order.status === "DRAFT") {
+      return { ok: false, errors: [error("order", "INVALID", MESSAGES.draftFulfill)] };
     }
 
     const orderLines = await tx
@@ -333,7 +342,8 @@ export async function cancelOrder(
       .from(schema.fulfillment)
       .where(eq(schema.fulfillment.orderId, order.id))
       .limit(1);
-    if (order.status === "CANCELED" || fulfilled) {
+    // Saleor's can_cancel: a draft is deleted instead (draftOrderDelete).
+    if (order.status === "CANCELED" || order.status === "DRAFT" || fulfilled) {
       return { ok: false, errors: [error("order", "CANNOT_CANCEL_ORDER", MESSAGES.cannotCancel)] };
     }
 
@@ -388,6 +398,9 @@ export async function markOrderAsPaid(
   return db.transaction(async (tx) => {
     const order = await lockOrder(tx, input.orderId);
     if (!order) return { ok: false, errors: [error("order", "NOT_FOUND", MESSAGES.orderNotFound)] };
+    if (order.status === "DRAFT") {
+      return { ok: false, errors: [error("order", "INVALID", MESSAGES.draftMarkAsPaid)] };
+    }
     const transactions = await lockOrderTransactions(tx, order.id);
     const amount = uncoveredAmount(order, transactions);
     if (amount === 0) {

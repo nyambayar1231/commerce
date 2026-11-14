@@ -2,7 +2,9 @@
 // owned by the API's `orders` module. An order is a snapshot: lines copy names, SKU and prices,
 // addresses are JSON copies, and totals are fixed at creation, so later catalog or checkout changes
 // never alter it. Fulfillments (M6.4) record what left a warehouse: Saleor's `order.Fulfillment` and
-// `order.FulfillmentLine`, one fulfillment per warehouse per orderFulfill.
+// `order.FulfillmentLine`, one fulfillment per warehouse per orderFulfill. A draft (M13, Saleor's
+// DRAFT status) is an order row staff are still building: its customer, addresses and shipping may
+// be missing and its prices follow the catalog until it is completed, when it becomes UNFULFILLED.
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -17,20 +19,29 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { productVariant } from "./catalog.ts";
+import { shippingMethod } from "./checkout.ts";
 import { user } from "./identity.ts";
 import { warehouse } from "./inventory.ts";
 
-/** Saleor's OrderStatus subset (ARCHITECTURE §3): UNFULFILLED → PARTIALLY_FULFILLED → FULFILLED, or CANCELED. */
+/**
+ * Saleor's OrderStatus subset (ARCHITECTURE §3): DRAFT → UNFULFILLED → PARTIALLY_FULFILLED →
+ * FULFILLED, or CANCELED.
+ */
 export const ORDER_STATUSES = [
+  "DRAFT",
   "UNFULFILLED",
   "PARTIALLY_FULFILLED",
   "FULFILLED",
   "CANCELED",
 ] as const;
 
-/** Saleor's OrderEvents values we record (PLACED at completion, the rest from M6.4's actions). */
+/** Saleor's OrderEvents values we record (PLACED at completion, M6.4's actions, M13's drafts). */
 export const ORDER_EVENT_TYPES = [
   "PLACED",
+  "DRAFT_CREATED",
+  "ADDED_PRODUCTS",
+  "REMOVED_PRODUCTS",
+  "PLACED_FROM_DRAFT",
   "FULFILLMENT_FULFILLED_ITEMS",
   "CANCELED",
   "ORDER_MARKED_AS_PAID",
@@ -50,10 +61,16 @@ export const order = pgTable(
     number: bigint("number", { mode: "number" }).notNull().unique().generatedAlwaysAsIdentity(),
     status: text("status").notNull(),
     userId: uuid("user_id").references(() => user.id, { onDelete: "set null" }),
-    userEmail: text("user_email").notNull(),
-    billingAddress: jsonb("billing_address").notNull(),
-    shippingAddress: jsonb("shipping_address").notNull(),
-    shippingMethodName: text("shipping_method_name").notNull(),
+    // Null only while the order is a draft (order_complete_unless_draft).
+    userEmail: text("user_email"),
+    billingAddress: jsonb("billing_address"),
+    shippingAddress: jsonb("shipping_address"),
+    shippingMethodName: text("shipping_method_name"),
+    // The method a draft's shipping price is re-read from at completion; a checkout's order keeps
+    // only the name and price (the method may change or go away later).
+    shippingMethodId: uuid("shipping_method_id").references(() => shippingMethod.id, {
+      onDelete: "set null",
+    }),
     shippingPriceAmount: bigint("shipping_price_amount", { mode: "number" }).notNull(),
     subtotalAmount: bigint("subtotal_amount", { mode: "number" }).notNull(),
     totalAmount: bigint("total_amount", { mode: "number" }).notNull(),
@@ -66,6 +83,10 @@ export const order = pgTable(
   },
   (table) => [
     check("order_status_known", sql.raw(`"status" IN (${inList(ORDER_STATUSES)})`)),
+    check(
+      "order_complete_unless_draft",
+      sql`${table.status} = 'DRAFT' OR (${table.userEmail} IS NOT NULL AND ${table.billingAddress} IS NOT NULL AND ${table.shippingAddress} IS NOT NULL AND ${table.shippingMethodName} IS NOT NULL)`,
+    ),
     check("order_shipping_price_not_negative", sql`${table.shippingPriceAmount} >= 0`),
     check("order_subtotal_not_negative", sql`${table.subtotalAmount} >= 0`),
     check(

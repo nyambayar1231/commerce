@@ -163,9 +163,11 @@ export const orderConfirmationHandler = defineJobHandler(
   orderConfirmationQueue,
   async ({ orderId }, { db, mailer }) => {
     const order = await getOrder(db, orderId);
-    // A deleted order (none today) has nothing left to confirm; finishing the job is right.
-    if (!order) return;
+    // A deleted order has nothing left to confirm, and a draft (no email yet) is never confirmed;
+    // finishing the job is right.
+    if (!order || order.userEmail === null) return;
     const [lines, shop] = await Promise.all([getOrderLinesByOrderIds(db, [orderId]), getShop(db)]);
-    await mailer.send({ to: order.userEmail, ...renderOrderConfirmation(order, lines, shop.name) });
+    const to = order.userEmail;
+    await mailer.send({ to, ...renderOrderConfirmation(order, lines, shop.name) });
   },
 );
