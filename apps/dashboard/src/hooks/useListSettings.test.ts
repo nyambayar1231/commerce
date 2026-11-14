@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import useListSettings, {
   CUSTOMER_LIST_DEFAULT_COLUMNS,
   listSettingsStorageKey,
+  ORDER_DRAFT_DETAILS_DEFAULT_COLUMNS,
   ORDER_DRAFT_LIST_DEFAULT_COLUMNS,
   ORDER_LIST_DEFAULT_COLUMNS,
   PAGINATE_BY,
@@ -42,6 +43,10 @@ describe("useListSettings", () => {
       CATEGORY_LIST: { rowNumber: 50 },
       COLLECTION_PRODUCTS_LIST: { rowNumber: PAGINATE_BY },
       CUSTOMER_LIST: { columns: CUSTOMER_LIST_DEFAULT_COLUMNS, rowNumber: PAGINATE_BY },
+      ORDER_DRAFT_DETAILS_LIST: {
+        columns: ORDER_DRAFT_DETAILS_DEFAULT_COLUMNS,
+        rowNumber: PAGINATE_BY,
+      },
       ORDER_DRAFT_LIST: { columns: ORDER_DRAFT_LIST_DEFAULT_COLUMNS, rowNumber: PAGINATE_BY },
       ORDER_LIST: { columns: ORDER_LIST_DEFAULT_COLUMNS, rowNumber: PAGINATE_BY },
       PRODUCT_LIST: { columns: PRODUCT_LIST_DEFAULT_COLUMNS, rowNumber: PAGINATE_BY },

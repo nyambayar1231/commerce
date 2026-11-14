@@ -162,6 +162,13 @@
       "when": 1794658001247,
       "tag": "0022_order_shipping_optional",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794659416755,
+      "tag": "0023_order_billing_optional",
+      "breakpoints": true
     }
   ]
 }

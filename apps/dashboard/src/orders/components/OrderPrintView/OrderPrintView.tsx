@@ -2,8 +2,9 @@
 // plugin-generated invoices), so this is our own: number, date, status, customer, addresses,
 // shipping method, lines and totals in plain black on white. It is mounted on <body> and hidden
 // on screen; while printing, its stylesheet hides everything else, so both the page's Print
-// button and the browser's own Print show it. Shipping (address, method, cost) is printed only for
-// an order that has it: the shop doesn't ship yet (owner, 2026-11-14).
+// button and the browser's own Print show it. The addresses and shipping (method, cost) are
+// printed only for an order that has them: the shop doesn't ship or take addresses yet (owner,
+// 2026-11-14).
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { defineMessage, defineMessages, FormattedMessage, useIntl } from "react-intl";
@@ -111,9 +112,11 @@ export const OrderPrintView = ({ order }: { order: OrderDetailsFragment }) => {
         <Field label={<FormattedMessage {...messages.customer} />}>
           <div>{order.userEmail || EMPTY}</div>
         </Field>
-        <Field label={<FormattedMessage {...messages.billingAddress} />}>
-          <Address address={order.billingAddress} />
-        </Field>
+        {order.billingAddress && (
+          <Field label={<FormattedMessage {...messages.billingAddress} />}>
+            <Address address={order.billingAddress} />
+          </Field>
+        )}
         {order.shippingAddress && (
           <Field label={<FormattedMessage {...messages.shippingAddress} />}>
             <Address address={order.shippingAddress} />

@@ -1,8 +1,9 @@
 /*
  * Adapted from saleor-dashboard: src/components/Datagrid/styles.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
  * See THIRD_PARTY_LICENSES.md
- * Saleor's useStyles (legacy macaw-ui makeStyles) as plain CSS; only the classes a read-only list
- * grid uses (the column-picker slot, no row-action menu or cell-editor portal yet).
+ * Saleor's useStyles (legacy macaw-ui makeStyles) as plain CSS: the list grid's classes, the
+ * row-action bar and Glide's cell-editor overlay (it renders into <div id="portal">). Fullscreen
+ * and column-group classes come with their first user.
  */
 .actionBtnBar {
   position: absolute;
@@ -61,4 +62,102 @@
   top: -1000px;
   left: -1000px;
   touch-action: pan-y;
+}
+
+.rowAction {
+  border-top: 1px solid var(--mu-colors-border-default1);
+  border-bottom: 1px solid var(--mu-colors-border-default1);
+  border-left: 1px solid var(--mu-colors-border-default1);
+  border-right: none;
+  color: var(--mu-colors-text-default1);
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  justify-items: center;
+  height: calc(40px - 1px);
+  background: var(--mu-colors-background-default1);
+  box-shadow: -8px 0 8px -4px rgba(0, 0, 0, 0.12);
+}
+
+.rowAction:not(:last-child) {
+  margin-bottom: -1px;
+}
+
+/* 8px smaller than the cell, for visual padding. */
+.ghostIcon {
+  color: var(--mu-colors-text-default1);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Glide's overlay editor (Saleor's `portal` class, set on #portal by usePortalClasses). */
+:global(#portal) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2;
+}
+
+:global(#portal) input::-webkit-outer-spin-button,
+:global(#portal) input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+:global(#portal) input[type="number"] {
+  appearance: textfield;
+}
+
+:global(#portal) :global(.clip-region) {
+  border: 1px solid var(--mu-colors-border-accent1);
+  display: flex;
+  align-items: stretch;
+}
+
+:global(#portal) :global(.gdg-growing-entry) {
+  flex: 1;
+  margin-top: 0;
+}
+
+:global(#portal) :global(.gdg-style) {
+  background: var(--mu-colors-background-default1);
+  border: none;
+  /* Glide styles this box inline; Saleor overrides it with !important. */
+  /* biome-ignore lint/complexity/noImportantStyles: beats Glide's inline style (Saleor's) */
+  box-shadow: none !important;
+  /* biome-ignore lint/complexity/noImportantStyles: beats Glide's inline style (Saleor's) */
+  padding: 0 !important;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+}
+
+:global(#portal) input,
+:global(#portal) textarea {
+  appearance: none;
+  background: none;
+  border: none;
+  color: var(--mu-colors-text-default1);
+  font-size: var(--mu-font-size-3);
+  letter-spacing: var(--mu-letter-spacing-3);
+  line-height: var(--mu-line-height-3);
+  font-weight: var(--mu-font-weight-regular);
+  padding: var(--mu-spacing-1);
+  outline: 0;
+}
+
+:global(#portal) input[type="number"] {
+  text-align: right;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: normal;
 }

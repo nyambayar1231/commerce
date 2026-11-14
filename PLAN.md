@@ -297,6 +297,15 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   address only; the print view follows. Finalize's errors are shown in red next to the customer,
   the billing address or the lines, with one toast saying so. Checkout still requires shipping
   (revisit with the storefront, M4).
+- **Draft page after M13 (owner, 2026-11-14): no billing address, Saleor's editable lines grid.**
+  A draft finalizes without a billing address too (migration 0023: a placed order needs only an
+  email); the dashboard shows an address only on an order that has one, and the draft edits none
+  (the address dialog is gone). The lines are Saleor's Glide grid: quantity edited in the cell
+  (saves when the cell is left), column picker, row "⋮" menu with "Product details" and "Remove
+  product" (Saleor's confirmation dialog); Finalize's per-line errors show in the Status column.
+  Our Datagrid gained Saleor's cell editing, change tracking, number cell and row actions. Left
+  out: discounts, "is gift", metadata button, the spacer column; Status shows one pill (Saleor: a
+  tags cell from glide-data-grid-cells). Mongolian for the new texts is ours except "Статус".
 - **M13.1 (print):** our own print view (Saleor has none), approved by the owner (2026-11-14).
 
 ## M11 — Dashboard in Mongolian and English

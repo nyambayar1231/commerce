@@ -15,8 +15,8 @@ import type { OrderRow } from "./orders.ts";
 // Saleor's draftOrderComplete (saleor/graphql/order/mutations/draft_order_complete.py,
 // validate_draft_order in saleor/graphql/order/utils.py) for PLAN M13.4. In one transaction, with
 // checkout completion's lock order (order → variants FOR KEY SHARE → stock rows by id): the draft's
-// prices are re-read one last time (decision 2), Saleor's checks run (minus shipping: the shop
-// doesn't ship yet, owner 2026-11-14, so a draft needs no shipping address or method; one that
+// prices are re-read one last time (decision 2), Saleor's checks run (minus shipping and the billing address: the shop
+// doesn't ship yet, owner 2026-11-14, so a draft needs no address or shipping method; one that
 // has a method gets its current price), stock is reserved for tracked lines (or the draft stays a draft with
 // INSUFFICIENT_STOCK), the customer is linked by email, and the order becomes UNFULFILLED with a
 // PLACED_FROM_DRAFT event. No confirmation email (decision 3); the order starts unpaid.
@@ -32,7 +32,6 @@ const MESSAGES = {
   notDraft: "The order is not draft.",
   noLines: "Could not create order without any products.",
   noEmail: "Can't finalize draft with no customer email.",
-  noBillingAddress: "Can't finalize draft with no billing address.",
   shippingNotApplicable: "Shipping method is not applicable.",
   deletedVariant: "Could not create orders with non-existing products.",
   notPublished: "Can't finalize draft with unpublished product.",
@@ -62,13 +61,6 @@ export async function completeDraftOrder(
 
     // Saleor's validate_draft_order, in its order, plus the email our orders require.
     const errors: OrderError[] = [];
-    if (draft.billingAddress === null) {
-      errors.push({
-        field: "billingAddress",
-        code: "BILLING_ADDRESS_NOT_SET",
-        message: MESSAGES.noBillingAddress,
-      });
-    }
     const method = draft.shippingMethodId === null ? null : input.shippingMethod;
     if (draft.shippingMethodId !== null && (method === null || !method.isActive)) {
       errors.push({

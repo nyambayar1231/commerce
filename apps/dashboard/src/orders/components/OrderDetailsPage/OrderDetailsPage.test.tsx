@@ -187,10 +187,11 @@ describe("OrderDetailsPage", () => {
   it("says when the customer or addresses are missing", () => {
     renderPage(order({ userEmail: null, shippingAddress: null, billingAddress: null }));
 
-    // Customer and billing address say "Not set"; an order without shipping shows no shipping
-    // address at all (the shop doesn't ship yet).
-    expect(screen.getAllByText("Not set")).toHaveLength(2);
+    // The customer says "Not set"; an order without addresses shows none at all (the shop doesn't
+    // ship or take addresses yet).
+    expect(screen.getAllByText("Not set")).toHaveLength(1);
     expect(document.querySelector('[data-test-id="shipping-address-section"]')).toBeNull();
+    expect(document.querySelector('[data-test-id="billing-address-section"]')).toBeNull();
   });
 
   it("links a customer account's order to the customer's profile", () => {

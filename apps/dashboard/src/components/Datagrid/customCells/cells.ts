@@ -1,6 +1,6 @@
 // Adapted from saleor-dashboard: src/components/Datagrid/customCells/cells.ts (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Only the cells our lists use so far.
+// Only the cells our grids use so far.
 import {
   type CustomCell,
   type GridCell,
@@ -11,6 +11,7 @@ import {
 
 import type { DateCell } from "./DateCell";
 import type { MoneyCell } from "./MoneyCell";
+import { type NumberCell, type NumberCellProps, numberCellEmptyValue } from "./NumberCell";
 import type { PillCell, PillColor } from "./PillCell";
 
 export function readonlyTextCell(
@@ -165,5 +166,24 @@ export function dateCell(value: string, opts?: Partial<GridCell>): DateCell {
       value,
     },
     kind: GridCellKind.Custom,
+  };
+}
+
+/** Saleor's numberCell: an editable number (e.g. a draft line's quantity). */
+export function numberCell(
+  value: number | typeof numberCellEmptyValue,
+  options?: NumberCellProps["options"],
+): NumberCell {
+  return {
+    allowOverlay: true,
+    readonly: false,
+    cursor: options?.cursor,
+    data: {
+      kind: "number-cell",
+      value,
+      options,
+    },
+    kind: GridCellKind.Custom,
+    copyData: value !== numberCellEmptyValue ? value.toString() : "",
   };
 }

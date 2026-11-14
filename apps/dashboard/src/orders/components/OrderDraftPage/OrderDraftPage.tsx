@@ -3,10 +3,10 @@
 // See THIRD_PARTY_LICENSES.md
 // A draft order (PLAN M13.6): back link to the drafts, "Order #n" with the Draft pill, Saleor's
 // menu with "Cancel order" (deletes the draft), the lines with "Add products", the summary, the
-// history, the customer card and the save bar's Back / Finalize. The customer and the billing
-// address are editable (M13.7); the shop doesn't ship yet, so there is no shipping to set (owner,
-// 2026-11-14). Finalize's errors show in red next to what is missing. Left out: metadata, the channel alert, discounts, notes,
-// app widgets.
+// history, the customer card and the save bar's Back / Finalize. The customer is editable (M13.7);
+// the shop doesn't ship or take addresses yet, so there is no shipping or billing address to set
+// (owner, 2026-11-14). Finalize's errors show in red next to what is missing, a line's in its
+// status cell. Left out: metadata, the channel alert, discounts, notes, app widgets.
 import { Box } from "@saleor/macaw-ui";
 import { Package, Trash2 } from "lucide-react";
 import { useMemo } from "react";
@@ -48,22 +48,20 @@ const messages = defineMessages({
     defaultMessage: "Add at least one product before finalizing.",
     description: "draft finalize error",
   },
-  billingRequired: {
-    id: "JcYCB/",
-    defaultMessage: "Add a billing address before finalizing.",
-    description: "draft finalize error",
-  },
 });
 
-/** Finalize's errors, by where the page shows them: the customer, the billing address, the lines. */
+/**
+ * Finalize's errors, by where the page shows them: the customer, a line's status cell (errors
+ * naming lines, as Saleor), or above the lines (the rest).
+ */
 export const groupFinalizeErrors = (errors: readonly OrderErrorFragment[], intl: IntlShape) => {
   const customer = errors.find((error) => error.field === "userEmail");
-  const billing = errors.find((error) => error.field === "billingAddress");
-  const rest = errors.filter((error) => error !== customer && error !== billing);
+  const lineErrors = errors.filter((error) => (error.orderLines?.length ?? 0) > 0);
+  const rest = errors.filter((error) => error !== customer && !lineErrors.includes(error));
 
   return {
     customer: customer ? intl.formatMessage(messages.customerRequired) : undefined,
-    billingAddress: billing ? intl.formatMessage(messages.billingRequired) : undefined,
+    lineErrors,
     lines: rest.map((error) =>
       error.field === "lines" && error.code === "REQUIRED"
         ? intl.formatMessage(messages.linesRequired)
@@ -80,10 +78,11 @@ interface OrderDraftPageProps {
   onDraftFinalize: () => void;
   onDraftRemove: () => void;
   onOrderLineAdd: () => void;
-  onOrderLineChange: (lineId: string, quantity: number) => void;
-  onOrderLineRemove: (lineId: string) => void;
+  onOrderLineChange: (lineId: string, quantity: number) => Promise<unknown>;
+  onOrderLineRemove: (lineId: string) => Promise<boolean>;
+  orderLineRemoveConfirmState?: ConfirmButtonTransitionState;
+  orderLineRemoveErrors?: OrderErrorFragment[];
   onCustomerChange: (change: CustomerChange) => void;
-  onBillingAddressEdit: () => void;
   /** Finalize's errors that the draft still has. */
   errors: OrderErrorFragment[];
 }
@@ -98,8 +97,9 @@ export const OrderDraftPage = ({
   onOrderLineAdd,
   onOrderLineChange,
   onOrderLineRemove,
+  orderLineRemoveConfirmState,
+  orderLineRemoveErrors,
   onCustomerChange,
-  onBillingAddressEdit,
   errors,
 }: OrderDraftPageProps) => {
   const intl = useIntl();
@@ -134,6 +134,9 @@ export const OrderDraftPage = ({
             lines={order?.lines}
             disabled={disabled}
             errors={fieldErrors.lines}
+            lineErrors={fieldErrors.lineErrors}
+            orderLineRemoveConfirmState={orderLineRemoveConfirmState}
+            orderLineRemoveErrors={orderLineRemoveErrors}
             onOrderLineAdd={onOrderLineAdd}
             onOrderLineChange={onOrderLineChange}
             onOrderLineRemove={onOrderLineRemove}
@@ -154,7 +157,6 @@ export const OrderDraftPage = ({
             shippingAddress={order.shippingAddress}
             billingAddress={order.billingAddress}
             onCustomerChange={onCustomerChange}
-            onBillingAddressEdit={onBillingAddressEdit}
             errors={fieldErrors}
           />
         )}

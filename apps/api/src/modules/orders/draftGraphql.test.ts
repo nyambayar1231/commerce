@@ -814,7 +814,6 @@ describe("draftOrderComplete", () => {
     const result = await complete(draft.id, staff.token);
     expect(result.order).toBeNull();
     expect(result.errors.map((error) => [error.field, error.code])).toEqual([
-      ["billingAddress", "BILLING_ADDRESS_NOT_SET"],
       ["lines", "REQUIRED"],
       ["userEmail", "REQUIRED"],
     ]);
@@ -822,12 +821,15 @@ describe("draftOrderComplete", () => {
     expect(row?.status).toBe("DRAFT");
   });
 
-  it("places an order without shipping (the shop doesn't ship yet)", async () => {
+  it("places an order without addresses or shipping (the shop doesn't ship yet)", async () => {
     const staff = await createStaff(db, ["MANAGE_ORDERS"]);
     const { draft } = await readyDraft(staff.token);
     await gql(
       UPDATE,
-      { id: draft.id, input: { shippingAddress: null, shippingMethod: null } },
+      {
+        id: draft.id,
+        input: { billingAddress: null, shippingAddress: null, shippingMethod: null },
+      },
       staff.token,
     );
 

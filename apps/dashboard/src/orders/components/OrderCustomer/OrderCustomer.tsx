@@ -3,14 +3,14 @@
 // See THIRD_PARTY_LICENSES.md
 // "Customer details": the customer's email and the order's shipping and billing addresses, and
 // Saleor's "View profile" link when the order belongs to a customer account (M7.5). A draft
-// (M13.7) passes the editing handlers: Saleor's "Change customer" button opens its customer search
-// (accounts by email, or "Use email: …" for any typed address), and the billing address gets
-// Saleor's "Edit" button. The shop doesn't ship yet (owner, 2026-11-14): the shipping address shows
-// only on an order that has one. Finalize's errors mark the missing customer or billing address
-// in red (`errors`). Left out: the "View orders" link (our order list has no customer filter); copy
-// buttons; pickup locations; Saleor's customer-change dialog (no address books to copy from).
-// Saleor shows "Same as shipping address" only when both are one address row; ours are always
-// separate copies, so the billing address is always printed.
+// (M13.7) passes `onCustomerChange`: Saleor's "Change customer" button opens its customer search
+// (accounts by email, or "Use email: …" for any typed address). The shop takes no addresses yet
+// (owner, 2026-11-14): each address shows only on an order that has one (older checkout orders),
+// and a draft edits neither. Finalize's error about a missing customer shows in red (`errors`).
+// Left out: the "View orders" link (our order list has no customer filter); copy buttons; pickup
+// locations; Saleor's customer-change dialog (no address books to copy from). Saleor shows "Same
+// as shipping address" only when both are one address row; ours are always separate copies, so
+// the billing address is always printed.
 import { useQuery } from "@apollo/client";
 import { Box, Button, DynamicCombobox, type Option, Text } from "@saleor/macaw-ui";
 import { useMemo, useState } from "react";
@@ -25,7 +25,6 @@ import {
   SearchCustomersDocument,
 } from "../../../graphql/types.generated";
 import useDebounce from "../../../hooks/useDebounce";
-import { buttonMessages } from "../../../intl";
 
 const messages = defineMessages({
   changeCustomer: { id: "kKxHG9", defaultMessage: "Change customer" },
@@ -41,9 +40,8 @@ type OrderCustomerProps = Pick<
   "userEmail" | "user" | "shippingAddress" | "billingAddress"
 > & {
   onCustomerChange?: (change: CustomerChange) => void;
-  onBillingAddressEdit?: () => void;
-  /** Error messages to show in red under the customer or the billing address. */
-  errors?: { customer?: string; billingAddress?: string };
+  /** Finalize's error about the customer, shown in red. */
+  errors?: { customer?: string };
 };
 
 const FieldError = ({ children, testId }: { children?: string; testId: string }) =>
@@ -97,19 +95,12 @@ const CustomerEditForm = ({ onChange }: { onChange: (change: CustomerChange) => 
   );
 };
 
-const EditButton = ({ onClick, testId }: { onClick: () => void; testId: string }) => (
-  <Button variant="secondary" size="small" onClick={onClick} data-test-id={testId}>
-    <FormattedMessage {...buttonMessages.edit} />
-  </Button>
-);
-
 export const OrderCustomer = ({
   userEmail,
   user,
   shippingAddress,
   billingAddress,
   onCustomerChange,
-  onBillingAddressEdit,
   errors = {},
 }: OrderCustomerProps) => {
   const [editingCustomer, setEditingCustomer] = useState(false);
@@ -198,28 +189,21 @@ export const OrderCustomer = ({
             </Box>
           )}
 
-          <Box data-test-id="billing-address-section">
-            <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={2}>
-              <Text color="default2" size={4}>
-                <FormattedMessage id="6orx1c" defaultMessage="Billing address" />
-              </Text>
-              {onBillingAddressEdit && (
-                <EditButton onClick={onBillingAddressEdit} testId="edit-billing-address" />
-              )}
-            </Box>
-            {billingAddress ? (
+          {billingAddress && (
+            <Box data-test-id="billing-address-section">
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+                marginBottom={2}
+              >
+                <Text color="default2" size={4}>
+                  <FormattedMessage id="6orx1c" defaultMessage="Billing address" />
+                </Text>
+              </Box>
               <ReadonlyAddress address={billingAddress} />
-            ) : (
-              <Text color={errors.billingAddress ? "critical1" : undefined}>
-                <FormattedMessage
-                  id="YI6Fhj"
-                  defaultMessage="Not set"
-                  description="no address is set in draft order"
-                />
-              </Text>
-            )}
-            <FieldError testId="billing-address-error">{errors.billingAddress}</FieldError>
-          </Box>
+            </Box>
+          )}
         </Box>
       </DashboardCard.Content>
     </DashboardCard>

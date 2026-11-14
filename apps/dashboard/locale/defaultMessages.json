@@ -125,6 +125,7 @@
     "string": "View all orders"
   },
   "32dfzI": {
+    "context": "price or ordered products",
     "string": "Price"
   },
   "3C3Nj5": {
@@ -338,9 +339,6 @@
     "context": "fulfillment section name",
     "string": "Fulfillment"
   },
-  "9YazHG": {
-    "string": "Company"
-  },
   "9Z7LQq": {
     "string": "Use email:"
   },
@@ -379,12 +377,6 @@
   "AubJ/S": {
     "context": "button",
     "string": "Sign in"
-  },
-  "AuwpCm": {
-    "string": "Country area"
-  },
-  "B52Em/": {
-    "string": "Address line 1"
   },
   "BC/h4y": {
     "context": "category detail sidebar children card intro",
@@ -446,9 +438,6 @@
   "D0Rbqc": {
     "context": "collapse truncated toast description",
     "string": "Show less"
-  },
-  "D4W/LE": {
-    "string": "Change customer billing address"
   },
   "DGWVA9": {
     "context": "variant created error message",
@@ -539,6 +528,10 @@
   "GJAX0z": {
     "context": "order history message",
     "string": "Order was placed"
+  },
+  "GrMiRT": {
+    "context": "fallback product name in remove product confirmation dialog",
+    "string": "this product"
   },
   "H4Lcuk": {
     "string": "Category updated"
@@ -633,10 +626,6 @@
     "context": "button",
     "string": "Edit"
   },
-  "JcYCB/": {
-    "context": "draft finalize error",
-    "string": "Add a billing address before finalizing."
-  },
   "JjeZEG": {
     "context": "section header",
     "string": "Organize Product"
@@ -709,6 +698,10 @@
     "context": "customers section name",
     "string": "Customers"
   },
+  "McotWC": {
+    "context": "button label to confirm product removal",
+    "string": "Remove product"
+  },
   "MkPAWX": {
     "context": "pill on staff details when viewing your own profile",
     "string": "Me"
@@ -743,9 +736,6 @@
   },
   "NmK6zy": {
     "string": "Payment"
-  },
-  "O95R3Z": {
-    "string": "Phone"
   },
   "OGemtu": {
     "context": "payment status",
@@ -878,9 +868,6 @@
   "TDhHMi": {
     "string": "This needs to be unique"
   },
-  "TE4fIS": {
-    "string": "City"
-  },
   "TKmub+": {
     "string": "This field is required"
   },
@@ -941,6 +928,9 @@
     "context": "TopNav destination link tooltip to parent order",
     "string": "Order"
   },
+  "VYK2nN": {
+    "string": "Product details"
+  },
   "VyKl39": {
     "context": "Dialog warning text",
     "string": "Are you sure you want to {actionType} this transaction?"
@@ -995,10 +985,6 @@
     "context": "product pricing, section header",
     "string": "Pricing"
   },
-  "YI6Fhj": {
-    "context": "no address is set in draft order",
-    "string": "Not set"
-  },
   "YRe93Y": {
     "string": "Enter a valid email address"
   },
@@ -1034,6 +1020,10 @@
   "ZHF4Z9": {
     "context": "delete product dialog subtitle",
     "string": "Are you sure you want to delete {name}?"
+  },
+  "ZJOX8n": {
+    "context": "alert message",
+    "string": "Product no longer exists"
   },
   "ZpVtCa": {
     "string": "Shipping address"
@@ -1199,6 +1189,10 @@
   "fXdkiI": {
     "string": "is"
   },
+  "fdJjic": {
+    "context": "dialog title for removing product from draft order",
+    "string": "Remove product"
+  },
   "fjPWOA": {
     "context": "header",
     "string": "Customer Overview"
@@ -1339,6 +1333,7 @@
     "string": "Unit price"
   },
   "lVwmf5": {
+    "context": "total price of ordered products",
     "string": "Total"
   },
   "lxP7Rb": {
@@ -1380,6 +1375,7 @@
     "string": "Most recent time this customer signed in to their account."
   },
   "nEWp+k": {
+    "context": "quantity of ordered products",
     "string": "Quantity"
   },
   "nG76Ql": {
@@ -1419,14 +1415,8 @@
     "context": "order status",
     "string": "Unfulfilled"
   },
-  "oQY0a2": {
-    "string": "Address line 2"
-  },
   "oUWADl": {
     "string": "No"
-  },
-  "oYGfnY": {
-    "string": "ZIP / Postal code"
   },
   "of/+iV": {
     "context": "transaction event type, refund was reversed, funds are back to store account",
@@ -1575,6 +1565,10 @@
     "context": "Header row stock label",
     "string": "Stock"
   },
+  "th06kZ": {
+    "context": "dialog body asking to confirm product removal from draft order",
+    "string": "Are you sure you want to remove {productName} from this draft order?"
+  },
   "toDL5R": {
     "context": "order status",
     "string": "Draft"
@@ -1582,6 +1576,9 @@
   "tvpAXl": {
     "context": "ordered product quantity",
     "string": "Quantity"
+  },
+  "tzMNF3": {
+    "string": "Status"
   },
   "u2QjRn": {
     "context": "create product dialog title",
@@ -1597,6 +1594,10 @@
   "uU1mx5": {
     "context": "button",
     "string": "Keep draft"
+  },
+  "uY8rPp": {
+    "context": "button label to cancel product removal",
+    "string": "Keep product"
   },
   "ufmuTp": {
     "context": "button",
@@ -1615,9 +1616,6 @@
   },
   "vEYtiq": {
     "string": "Category Name"
-  },
-  "vONi+O": {
-    "string": "Country"
   },
   "vW3tb6": {
     "context": "name",

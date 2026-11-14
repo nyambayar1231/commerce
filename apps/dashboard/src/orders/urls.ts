@@ -82,26 +82,15 @@ export const orderPath = (id: string): string => `${orderSectionUrl}/${id}`;
 // Saleor's OrderUrlDialog, limited to our actions: the open dialog lives in the URL (`action`), and
 // a transaction dialog names its transaction (`id`). Saleor refunds through a separate page; our
 // refund is a dialog on the transaction tile (PLAN M6 decision 1). A draft (M13.6, M13.7) adds Saleor's
-// "add-order-line" and "edit-billing-address"; its "cancel" deletes the draft.
-export type OrderUrlDialog =
-  | "cancel"
-  | "mark-paid"
-  | "refund"
-  | "add-order-line"
-  | "edit-billing-address";
+// "add-order-line"; its "cancel" deletes the draft.
+export type OrderUrlDialog = "cancel" | "mark-paid" | "refund" | "add-order-line";
 
 export interface OrderUrlQueryParams {
   action?: OrderUrlDialog;
   id?: string;
 }
 
-const ORDER_DIALOGS: OrderUrlDialog[] = [
-  "cancel",
-  "mark-paid",
-  "refund",
-  "add-order-line",
-  "edit-billing-address",
-];
+const ORDER_DIALOGS: OrderUrlDialog[] = ["cancel", "mark-paid", "refund", "add-order-line"];
 
 export const orderUrl = (id: string, params?: OrderUrlQueryParams): string => {
   const query = new URLSearchParams(queryEntries({ ...params })).toString();

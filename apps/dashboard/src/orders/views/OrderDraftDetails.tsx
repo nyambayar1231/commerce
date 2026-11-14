@@ -2,9 +2,11 @@
 // OrderDetailsMessages.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // A draft's actions (PLAN M13.6), rendered by OrderDetails for a DRAFT order as in Saleor. The open
-// dialog lives in the URL (`action=add-order-line|cancel`). Line changes save at once with Saleor's
-// toasts and their errors are error toasts; Finalize's errors (what the draft is missing) show in
-// red next to the customer, the billing address or the lines, with one toast saying so. Finalize opens the placed order; deleting goes to the drafts.
+// dialog lives in the URL (`action=add-order-line|cancel`). A quantity edited in the grid saves at
+// once with Saleor's toast (errors are error toasts); removing a line asks first, and its errors
+// show in that dialog. Finalize's errors (what the draft is missing) show in red next to the
+// customer or the lines, with one toast saying so. Finalize opens the placed order; deleting goes
+// to the drafts.
 import { useMutation } from "@apollo/client";
 import { useEffect } from "react";
 import { defineMessages, useIntl } from "react-intl";
@@ -23,7 +25,6 @@ import {
 } from "../../graphql/types.generated";
 import { useNotifier } from "../../hooks/useNotifier/useNotifier";
 import { getOrderErrorMessage } from "../../utils/errors";
-import { OrderAddressEditDialog } from "../components/OrderAddressEditDialog/OrderAddressEditDialog";
 import { OrderDraftCancelDialog } from "../components/OrderDraftCancelDialog/OrderDraftCancelDialog";
 import { OrderDraftPage } from "../components/OrderDraftPage/OrderDraftPage";
 import { OrderProductAddDialog } from "../components/OrderProductAddDialog/OrderProductAddDialog";
@@ -79,10 +80,10 @@ export const OrderDraftDetails = ({ id, order, params }: OrderDraftDetailsProps)
       notify({ status: "success", text: intl.formatMessage(messages.lineUpdated) });
     },
   });
+  // Its errors show in the "Remove product" dialog.
   const [deleteLine, deleteLineOpts] = useMutation(OrderLineDeleteDocument, {
     onCompleted: (result) => {
-      const errors = result.orderLineDelete?.errors ?? [];
-      if (errors.length > 0) return notifyErrors(errors);
+      if ((result.orderLineDelete?.errors.length ?? 0) > 0) return;
       notify({ status: "success", text: intl.formatMessage(messages.lineDeleted) });
     },
   });
@@ -96,14 +97,12 @@ export const OrderDraftDetails = ({ id, order, params }: OrderDraftDetailsProps)
       navigate(orderUrl(id), { replace: true });
     },
   });
-  // One mutation for the customer and the billing address (Saleor's draftOrderUpdate); a dialog closes when it succeeds.
+  // The customer (Saleor's draftOrderUpdate); the customer picker shows no errors, so toast them.
   const [updateDraft, updateDraftOpts] = useMutation(OrderDraftUpdateDocument, {
     onCompleted: (result) => {
       const errors = result.draftOrderUpdate?.errors ?? [];
-      // A dialog shows its own errors; the customer picker has none, so toast them.
-      if (errors.length > 0) return params.action ? undefined : notifyErrors(errors);
+      if (errors.length > 0) return notifyErrors(errors);
       notify({ status: "success", text: intl.formatMessage(messages.draftUpdated) });
-      if (params.action) closeModal();
     },
   });
   const [cancelDraft, cancelDraftOpts] = useMutation(OrderDraftCancelDocument, {
@@ -127,7 +126,6 @@ export const OrderDraftDetails = ({ id, order, params }: OrderDraftDetailsProps)
   useEffect(() => {
     if (params.action === "add-order-line") addLinesOpts.reset();
     if (params.action === "cancel") cancelDraftOpts.reset();
-    if (params.action?.startsWith("edit-")) updateDraftOpts.reset();
   }, [params.action]);
 
   const busy =
@@ -135,17 +133,11 @@ export const OrderDraftDetails = ({ id, order, params }: OrderDraftDetailsProps)
     deleteLineOpts.loading ||
     finalizeOpts.loading ||
     updateDraftOpts.loading;
-  const updateState = getMutationStatus({
-    ...updateDraftOpts,
-    errors: updateDraftOpts.data?.draftOrderUpdate?.errors,
-  });
-  const updateErrors = updateDraftOpts.data?.draftOrderUpdate?.errors ?? [];
-  // Finalize's errors stay until fixed: one about the customer, the billing address or the
-  // missing products goes once the draft has it.
+  // Finalize's errors stay until fixed: one about the customer or the missing products goes once
+  // the draft has it.
   const finalizeErrors = (finalizeOpts.data?.draftOrderComplete?.errors ?? []).filter(
     (error) =>
       !(error.field === "userEmail" && order.userEmail) &&
-      !(error.field === "billingAddress" && order.billingAddress) &&
       !(error.field === "lines" && error.code === "REQUIRED" && order.lines.length > 0),
   );
 
@@ -163,22 +155,20 @@ export const OrderDraftDetails = ({ id, order, params }: OrderDraftDetailsProps)
         onDraftRemove={() => openModal("cancel")}
         onOrderLineAdd={() => openModal("add-order-line")}
         onOrderLineChange={(lineId, quantity) =>
-          void updateLine({ variables: { id: lineId, input: { quantity } } })
+          updateLine({ variables: { id: lineId, input: { quantity } } })
         }
-        onOrderLineRemove={(lineId) => void deleteLine({ variables: { id: lineId } })}
+        onOrderLineRemove={async (lineId) => {
+          const result = await deleteLine({ variables: { id: lineId } });
+
+          return (result.data?.orderLineDelete?.errors.length ?? 1) === 0;
+        }}
+        orderLineRemoveConfirmState={getMutationStatus({
+          ...deleteLineOpts,
+          errors: deleteLineOpts.data?.orderLineDelete?.errors,
+        })}
+        orderLineRemoveErrors={deleteLineOpts.data?.orderLineDelete?.errors ?? []}
         onCustomerChange={(change) => void updateDraft({ variables: { id, input: change } })}
-        onBillingAddressEdit={() => openModal("edit-billing-address")}
         errors={finalizeErrors}
-      />
-      <OrderAddressEditDialog
-        open={params.action === "edit-billing-address"}
-        address={order.billingAddress}
-        confirmButtonState={updateState}
-        errors={updateErrors}
-        onClose={closeModal}
-        onSubmit={(billingAddress) =>
-          void updateDraft({ variables: { id, input: { billingAddress } } })
-        }
       />
       <OrderProductAddDialog
         open={params.action === "add-order-line"}

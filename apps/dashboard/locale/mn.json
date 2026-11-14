@@ -338,9 +338,6 @@
     "context": "fulfillment section name",
     "string": "Биелүүлэлт"
   },
-  "9YazHG": {
-    "string": "Байгууллага"
-  },
   "9Z7LQq": {
     "string": "Имэйл ашиглах:"
   },
@@ -379,12 +376,6 @@
   "AubJ/S": {
     "context": "button",
     "string": "Нэвтрэх"
-  },
-  "AuwpCm": {
-    "string": "Аймаг / муж"
-  },
-  "B52Em/": {
-    "string": "Хаягийн мөр 1"
   },
   "BC/h4y": {
     "context": "category detail sidebar children card intro",
@@ -446,9 +437,6 @@
   "D0Rbqc": {
     "context": "collapse truncated toast description",
     "string": "Хураах"
-  },
-  "D4W/LE": {
-    "string": "Харилцагчийн төлбөрийн хаягийг өөрчлөх"
   },
   "DGWVA9": {
     "context": "variant created error message",
@@ -539,6 +527,10 @@
   "GJAX0z": {
     "context": "order history message",
     "string": "Захиалга хийгдсэн"
+  },
+  "GrMiRT": {
+    "context": "fallback product name in remove product confirmation dialog",
+    "string": "энэ бүтээгдэхүүн"
   },
   "H4Lcuk": {
     "string": "Ангилал шинэчлэгдлээ"
@@ -633,10 +625,6 @@
     "context": "button",
     "string": "Засах"
   },
-  "JcYCB/": {
-    "context": "draft finalize error",
-    "string": "Дуусгахаас өмнө төлбөрийн хаяг оруулна уу."
-  },
   "JjeZEG": {
     "context": "section header",
     "string": "Бүтээгдэхүүнийг ангилах"
@@ -709,6 +697,10 @@
     "context": "customers section name",
     "string": "Харилцагчид"
   },
+  "McotWC": {
+    "context": "button label to confirm product removal",
+    "string": "Бүтээгдэхүүн хасах"
+  },
   "MkPAWX": {
     "context": "pill on staff details when viewing your own profile",
     "string": "Би"
@@ -743,9 +735,6 @@
   },
   "NmK6zy": {
     "string": "Төлбөр"
-  },
-  "O95R3Z": {
-    "string": "Утас"
   },
   "OGemtu": {
     "context": "payment status",
@@ -878,9 +867,6 @@
   "TDhHMi": {
     "string": "Энэ утга давхардахгүй байх ёстой"
   },
-  "TE4fIS": {
-    "string": "Хот"
-  },
   "TKmub+": {
     "string": "Энэ талбарыг бөглөх шаардлагатай"
   },
@@ -941,6 +927,9 @@
     "context": "TopNav destination link tooltip to parent order",
     "string": "Захиалга"
   },
+  "VYK2nN": {
+    "string": "Бүтээгдэхүүний дэлгэрэнгүй"
+  },
   "VyKl39": {
     "context": "Dialog warning text",
     "string": "Та энэ гүйлгээг {actionType} хийхдээ итгэлтэй байна уу?"
@@ -995,10 +984,6 @@
     "context": "product pricing, section header",
     "string": "Үнэ"
   },
-  "YI6Fhj": {
-    "context": "no address is set in draft order",
-    "string": "Тохируулаагүй"
-  },
   "YRe93Y": {
     "string": "Зөв и-мэйл хаяг оруулна уу"
   },
@@ -1034,6 +1019,10 @@
   "ZHF4Z9": {
     "context": "delete product dialog subtitle",
     "string": "Та {name}-г устгахдаа итгэлтэй байна уу?"
+  },
+  "ZJOX8n": {
+    "context": "alert message",
+    "string": "Бүтээгдэхүүн устсан байна"
   },
   "ZpVtCa": {
     "string": "Хүргэлтийн хаяг"
@@ -1198,6 +1187,10 @@
   },
   "fXdkiI": {
     "string": "тэнцүү"
+  },
+  "fdJjic": {
+    "context": "dialog title for removing product from draft order",
+    "string": "Бүтээгдэхүүн хасах"
   },
   "fjPWOA": {
     "context": "header",
@@ -1419,14 +1412,8 @@
     "context": "order status",
     "string": "Биелүүлээгүй"
   },
-  "oQY0a2": {
-    "string": "Хаягийн мөр 2"
-  },
   "oUWADl": {
     "string": "Үгүй"
-  },
-  "oYGfnY": {
-    "string": "Шуудангийн код"
   },
   "of/+iV": {
     "context": "transaction event type, refund was reversed, funds are back to store account",
@@ -1575,6 +1562,10 @@
     "context": "Header row stock label",
     "string": "Нөөц"
   },
+  "th06kZ": {
+    "context": "dialog body asking to confirm product removal from draft order",
+    "string": "{productName}-г энэ ноорог захиалгаас хасахдаа итгэлтэй байна уу?"
+  },
   "toDL5R": {
     "context": "order status",
     "string": "Ноорог"
@@ -1582,6 +1573,9 @@
   "tvpAXl": {
     "context": "ordered product quantity",
     "string": "Тоо хэмжээ"
+  },
+  "tzMNF3": {
+    "string": "Статус"
   },
   "u2QjRn": {
     "context": "create product dialog title",
@@ -1597,6 +1591,10 @@
   "uU1mx5": {
     "context": "button",
     "string": "Ноорогийг үлдээх"
+  },
+  "uY8rPp": {
+    "context": "button label to cancel product removal",
+    "string": "Бүтээгдэхүүнийг үлдээх"
   },
   "ufmuTp": {
     "context": "button",
@@ -1615,9 +1613,6 @@
   },
   "vEYtiq": {
     "string": "Ангиллын нэр"
-  },
-  "vONi+O": {
-    "string": "Улс"
   },
   "vW3tb6": {
     "context": "name",

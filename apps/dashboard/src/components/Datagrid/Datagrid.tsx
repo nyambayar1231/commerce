@@ -1,13 +1,14 @@
 // Adapted from saleor-dashboard: src/components/Datagrid/Datagrid.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// Saleor's Glide wrapper for list pages, read-only so far: columns and cells, loading and empty
-// states, row hover, row links (the invisible anchor that follows the hovered row, so a row opens
-// on click and in a new tab on Cmd/Ctrl/middle-click), checkbox row selection with selection
-// actions, header clicks (sorting), row theme overrides, columns with their own click action (not
-// part of the row link), the chevron/loading custom cells, and the header's column-picker slot
-// with resize/reorder support. Not yet (each comes with its first user): cell editing and change
-// tracking, fullscreen, per-row action menus, tooltips, other custom cells, horizontal-swipe
-// history guard.
+// Saleor's Glide wrapper: columns and cells, loading and empty states, row hover, row links (the
+// invisible anchor that follows the hovered row, so a row opens on click and in a new tab on
+// Cmd/Ctrl/middle-click), checkbox row selection with selection actions, header clicks (sorting),
+// row theme overrides, columns with their own click action (not part of the row link), the
+// header's column-picker slot with resize/reorder support, cell editing with change tracking
+// (`onChange`; edited cells tint until saved, `getCellError` cells turn red) and the per-row
+// action bar (`menuItems` / `renderRowActions`). Not yet (each comes with its first user):
+// fullscreen, tooltips, adding/removing rows in the grid, the trailing "ghost" row,
+// horizontal-swipe history guard.
 import "@glideapps/glide-data-grid/dist/index.css";
 
 import DataEditor, {
@@ -15,6 +16,7 @@ import DataEditor, {
   type DataEditorProps,
   type DataEditorRef,
   type DrawHeaderCallback,
+  type EditableGridCell,
   type GridCell,
   type GridColumn,
   type GridMouseEventArgs,
@@ -25,6 +27,7 @@ import DataEditor, {
 } from "@glideapps/glide-data-grid";
 import { Box, Spinner, useTheme } from "@saleor/macaw-ui";
 import {
+  type MutableRefObject,
   type ReactElement,
   type ReactNode,
   useCallback,
@@ -37,10 +40,16 @@ import type { NavigateOptions } from "react-router";
 
 import { DashboardCard } from "../Card";
 import { Placeholder } from "../Placeholder/Placeholder";
+import { type RowActionItem, RowActions } from "./components/RowActions";
 import { DEFAULT_ROW_MARKER_WIDTH } from "./const";
 import { useCustomCellRenderers } from "./customCells/customRenderers";
 import styles from "./Datagrid.module.css";
 import { headerIcons } from "./headerIcons";
+import {
+  type DatagridChange,
+  type OnDatagridChange,
+  useDatagridChange,
+} from "./hooks/useDatagridChange";
 import { usePointerDragClickGuard } from "./hooks/usePointerDragClickGuard";
 import { activateRowAnchor, hideRowAnchorElement, useRowAnchor } from "./hooks/useRowAnchor";
 import { useRowAnchorHandler } from "./hooks/useRowAnchorHandler";
@@ -56,12 +65,31 @@ import {
 
 type GetRowThemeCallback = NonNullable<DataEditorProps["getRowThemeOverride"]>;
 
+export interface GetCellContentOpts {
+  /** The edits not yet saved (see useDatagridChange). */
+  changes: MutableRefObject<DatagridChange[]>;
+  getChangeIndex: (column: string, row: number) => number;
+}
+
+/** Saleor's single action-bar width: one icon button per row. */
+const ROW_ACTION_BAR_WIDTH = cellHeight;
+
 export interface DatagridProps {
   availableColumns: readonly AvailableColumn[];
   emptyText: string;
   /** Replaces the default dashed placeholder when the grid has no rows. */
   emptyState?: ReactNode;
-  getCellContent: (item: Item) => GridCell;
+  getCellContent: (item: Item, opts: GetCellContentOpts) => GridCell;
+  /** A cell drawn on the critical background. */
+  getCellError?: (item: Item, opts: GetCellContentOpts) => boolean;
+  /** Hears each cell edit; mark the cells clean once saved. */
+  onChange?: OnDatagridChange;
+  /** A row's actions, shown in the sticky right-hand bar. */
+  menuItems?: (index: number) => RowActionItem[];
+  /** Replaces the default RowActions for a row. */
+  renderRowActions?: (index: number) => ReactElement;
+  rowActionBarWidth?: number;
+  columnSelect?: DataEditorProps["columnSelect"];
   rows: number;
   loading?: boolean;
   /** Rendered over the header while rows are selected (e.g. a bulk delete button). */
@@ -99,6 +127,12 @@ export const Datagrid = ({
   emptyText,
   emptyState,
   getCellContent,
+  getCellError,
+  onChange,
+  menuItems,
+  renderRowActions,
+  rowActionBarWidth = ROW_ACTION_BAR_WIDTH,
+  columnSelect = "none",
   rows,
   loading,
   selectionActions,
@@ -146,6 +180,61 @@ export const Datagrid = ({
   const editor = useRef<DataEditorRef | null>(null);
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
   const [selection, setSelection] = useState<GridSelection>();
+  const [areCellsDirty, setCellsDirty] = useState(true);
+  const { changes, getChangeIndex, onCellEdited } = useDatagridChange(
+    availableColumns,
+    onChange,
+    setCellsDirty,
+  );
+  const hasMenuItem = (menuItems?.(0).length ?? 0) > 0 || renderRowActions !== undefined;
+
+  const handleGetCellContent = useCallback(
+    (item: Item): GridCell => {
+      const opts = { changes, getChangeIndex };
+      const columnId = availableColumns[item[0]]?.id ?? "";
+      const changed = changes.current[getChangeIndex(columnId, item[1])] !== undefined;
+      const cell = getCellContent(item, opts);
+
+      if (getCellError?.(item, opts)) {
+        return { ...cell, themeOverride: { bgCell: themeValues.colors.background.critical1 } };
+      }
+
+      if (changed && areCellsDirty) {
+        return {
+          ...cell,
+          themeOverride: {
+            // Saleor's edited-cell tint (not in Macaw's palette).
+            bgCell:
+              theme === "defaultLight" ? "hsla(215, 100%, 96%, 1)" : "hsla(215, 100%, 21%, 1)",
+          },
+        };
+      }
+
+      return cell;
+    },
+    [
+      areCellsDirty,
+      availableColumns,
+      changes,
+      getCellContent,
+      getCellError,
+      getChangeIndex,
+      theme,
+      themeValues,
+    ],
+  );
+
+  const handleOnCellEdited = useCallback(
+    ([column, row]: Item, newValue: EditableGridCell): void => {
+      setCellsDirty(true);
+      onCellEdited([column, row], newValue);
+      // Redraw the row: an edit can change other cells (e.g. the line total).
+      editor.current?.updateCells(
+        availableColumns.map((_, index) => ({ cell: [index, row] as Item })),
+      );
+    },
+    [onCellEdited, availableColumns],
+  );
 
   // Wheel lands on the overlay, not the grid. Forward axes the scroller can
   // move; leave the rest to the page. Always hide afterwards — page or grid
@@ -403,7 +492,9 @@ export const Datagrid = ({
                   drawFocusRing={false}
                   rowMarkerTheme={rowMarkerTheme}
                   className={`${styles.datagrid} dashboard-datagrid`}
-                  getCellContent={getCellContent}
+                  getCellContent={handleGetCellContent}
+                  onCellEdited={handleOnCellEdited}
+                  onPaste
                   columns={availableColumns}
                   rows={rows}
                   freezeColumns={freezeColumns}
@@ -413,7 +504,7 @@ export const Datagrid = ({
                   rowSelect="multi"
                   rowSelectionMode="multi"
                   rangeSelect="multi-rect"
-                  columnSelect="none"
+                  columnSelect={columnSelect}
                   getCellsForSelection
                   onColumnMoved={handleColumnMoved}
                   onColumnResize={handleColumnResize}
@@ -429,11 +520,25 @@ export const Datagrid = ({
                   rowMarkerWidth={rowMarkerWidth ?? DEFAULT_ROW_MARKER_WIDTH}
                   rightElementProps={{ sticky: true }}
                   rightElement={
-                    renderColumnPicker ? (
-                      <div className={styles.rowActionBar}>
-                        <div className={`${styles.columnPicker} ${styles.columnPickerBackground}`}>
-                          {renderColumnPicker()}
+                    renderColumnPicker || hasMenuItem ? (
+                      <div className={styles.rowActionBar} style={{ width: rowActionBarWidth }}>
+                        <div
+                          className={`${styles.columnPicker} ${hasMenuItem ? "" : styles.columnPickerBackground}`}
+                        >
+                          {renderColumnPicker?.()}
                         </div>
+                        {hasMenuItem &&
+                          Array.from({ length: rows }, (_, index) =>
+                            renderRowActions ? (
+                              renderRowActions(index)
+                            ) : (
+                              <RowActions
+                                // biome-ignore lint/suspicious/noArrayIndexKey: one bar per grid row, by position (Saleor's)
+                                key={`row-actions-${index}`}
+                                menuItems={menuItems?.(index) ?? []}
+                              />
+                            ),
+                          )}
                       </div>
                     ) : undefined
                   }

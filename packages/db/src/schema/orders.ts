@@ -61,8 +61,8 @@ export const order = pgTable(
     number: bigint("number", { mode: "number" }).notNull().unique().generatedAlwaysAsIdentity(),
     status: text("status").notNull(),
     userId: uuid("user_id").references(() => user.id, { onDelete: "set null" }),
-    // Email and billing address are null only while the order is a draft
-    // (order_complete_unless_draft); shipping is optional (a draft-made order without shipping).
+    // The email is null only while the order is a draft (order_complete_unless_draft); the
+    // addresses are optional (a draft-made order has neither: owner, 2026-11-14).
     userEmail: text("user_email"),
     billingAddress: jsonb("billing_address"),
     shippingAddress: jsonb("shipping_address"),
@@ -86,7 +86,7 @@ export const order = pgTable(
     check("order_status_known", sql.raw(`"status" IN (${inList(ORDER_STATUSES)})`)),
     check(
       "order_complete_unless_draft",
-      sql`${table.status} = 'DRAFT' OR (${table.userEmail} IS NOT NULL AND ${table.billingAddress} IS NOT NULL)`,
+      sql`${table.status} = 'DRAFT' OR ${table.userEmail} IS NOT NULL`,
     ),
     check("order_shipping_price_not_negative", sql`${table.shippingPriceAmount} >= 0`),
     check("order_subtotal_not_negative", sql`${table.subtotalAmount} >= 0`),

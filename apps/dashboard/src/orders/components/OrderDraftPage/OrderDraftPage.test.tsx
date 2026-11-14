@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -10,6 +10,32 @@ import { ThemeProvider } from "../../../theme/provider";
 import { OrderDraftPage } from "./OrderDraftPage";
 
 afterEach(cleanup);
+
+// The canvas grid needs a real browser (the golden path edits it); the page around it is tested
+// here, with buttons standing in for the grid's quantity edit and "Remove product".
+vi.mock("../OrderDraftDetailsDatagrid/OrderDraftDetailsDatagrid", () => ({
+  OrderDraftDetailsDatagrid: ({
+    lines,
+    errors,
+    onOrderLineChange,
+    onOrderLineRemove,
+  }: {
+    lines: { id: string; productSku: string }[];
+    errors: unknown[];
+    onOrderLineChange: (id: string, quantity: number) => void;
+    onOrderLineRemove: (id: string) => void;
+  }) => (
+    <div data-test-id="lines-grid" data-errors={errors.length}>
+      {lines.map((line) => (
+        <span key={line.id} data-test-id="draft-order-line">
+          {line.productSku}
+        </span>
+      ))}
+      <button type="button" data-test-id="change-line" onClick={() => onOrderLineChange("l1", 5)} />
+      <button type="button" data-test-id="remove-line" onClick={() => onOrderLineRemove("l1")} />
+    </div>
+  ),
+}));
 
 const SavebarAnchor = () => {
   const { setAnchor } = useSavebarRef();
@@ -88,7 +114,6 @@ const renderPage = (order?: OrderDetailsFragment, errors: OrderErrorFragment[] =
     onOrderLineChange: vi.fn(),
     onOrderLineRemove: vi.fn(),
     onCustomerChange: vi.fn(),
-    onBillingAddressEdit: vi.fn(),
     errors,
   };
   render(
@@ -130,19 +155,9 @@ describe("OrderDraftPage", () => {
     byTestId("add-products-button")?.click();
     expect(props.onOrderLineAdd).toHaveBeenCalled();
 
-    const input =
-      byTestId("line-quantity-input")?.querySelector("input") ??
-      (byTestId("line-quantity-input") as HTMLInputElement | null);
-    if (!input) throw new Error("no quantity input");
-    fireEvent.change(input, { target: { value: "5" } });
-    fireEvent.blur(input);
+    byTestId("change-line")?.click();
     expect(props.onOrderLineChange).toHaveBeenCalledWith("l1", 5);
-    // An unchanged or empty value saves nothing.
-    fireEvent.change(input, { target: { value: "" } });
-    fireEvent.blur(input);
-    expect(props.onOrderLineChange).toHaveBeenCalledTimes(1);
-
-    byTestId("remove-line-button")?.click();
+    byTestId("remove-line")?.click();
     expect(props.onOrderLineRemove).toHaveBeenCalledWith("l1");
 
     byTestId("finalize-button")?.click();
@@ -150,42 +165,44 @@ describe("OrderDraftPage", () => {
     expect(byTestId("show-more-button")).toBeTruthy();
   });
 
-  it("shows no shipping or tax, and edits the customer and billing address", () => {
-    const props = renderPage(draft());
+  it("shows no shipping, tax or addresses, and edits the customer", () => {
+    renderPage(draft());
 
     expect(text()).not.toContain("Shipping");
     expect(text()).not.toContain("Taxes");
+    expect(text()).not.toContain("Billing address");
     expect(byTestId("shipping-address-section")).toBeNull();
+    expect(byTestId("billing-address-section")).toBeNull();
     expect(byTestId("change-customer")).toBeTruthy();
-    byTestId("edit-billing-address")?.click();
-    expect(props.onBillingAddressEdit).toHaveBeenCalled();
   });
 
   it("marks what Finalize says is missing in red, next to its field", () => {
-    const error = (field: string, code: OrderErrorFragment["code"]) => ({
+    const error = (
+      field: string,
+      code: OrderErrorFragment["code"],
+      orderLines: string[] | null = null,
+    ) => ({
       __typename: "OrderError" as const,
       field,
       code,
       message: "API message",
-      orderLines: null,
+      orderLines,
       warehouse: null,
       addressType: null,
     });
     renderPage(draft(), [
       error("userEmail", "REQUIRED"),
-      error("billingAddress", "BILLING_ADDRESS_NOT_SET"),
-      error("lines", "INSUFFICIENT_STOCK"),
+      error("lines", "NOT_FOUND"),
+      error("lines", "INSUFFICIENT_STOCK", ["l1"]),
     ]);
 
     expect(byTestId("customer-error")?.textContent).toBe(
       "Choose a customer or type their email before finalizing.",
     );
-    expect(byTestId("billing-address-error")?.textContent).toBe(
-      "Add a billing address before finalizing.",
-    );
-    expect(byTestId("lines-errors")?.textContent).toBe(
-      "Cannot change the quantity because of insufficient stock",
-    );
+    // A line's own error goes to its status cell, the rest above the grid.
+    expect(byTestId("lines-grid")?.getAttribute("data-errors")).toBe("1");
+    expect(byTestId("lines-errors")?.textContent).not.toContain("insufficient stock");
+    expect(byTestId("lines-errors")?.textContent?.length).toBeGreaterThan(0);
   });
 
   it("says when the draft has no lines", () => {
