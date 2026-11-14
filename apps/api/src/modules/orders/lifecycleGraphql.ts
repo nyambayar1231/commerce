@@ -184,6 +184,7 @@ builder.objectFields(OrderEventType, (t) => ({
 // Saleor's OrderErrorCode values our order mutations return.
 const OrderErrorCodeEnum = builder.enumType("OrderErrorCode", {
   values: [
+    "BILLING_ADDRESS_NOT_SET",
     "CANNOT_CANCEL_ORDER",
     "DUPLICATED_INPUT_ITEM",
     "FULFILL_ORDER_LINE",
@@ -193,9 +194,11 @@ const OrderErrorCodeEnum = builder.enumType("OrderErrorCode", {
     "INVALID_QUANTITY",
     "NOT_EDITABLE",
     "NOT_FOUND",
+    "ORDER_NO_SHIPPING_ADDRESS",
     "PRODUCT_NOT_PUBLISHED",
     "REQUIRED",
     "SHIPPING_METHOD_NOT_APPLICABLE",
+    "SHIPPING_METHOD_REQUIRED",
     "TRANSACTION_ERROR",
     "ZERO_QUANTITY",
   ] as const,

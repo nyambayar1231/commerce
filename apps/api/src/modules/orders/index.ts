@@ -6,6 +6,8 @@ export {
   orderConfirmationQueue,
   renderOrderConfirmation,
 } from "./confirmationEmail.ts";
+export type { CompleteDraftResult, CurrentShippingMethod } from "./draftComplete.ts";
+export { completeDraftOrder } from "./draftComplete.ts";
 export type { DraftLineInput, DraftLineResult, DraftLinesResult } from "./draftLines.ts";
 export {
   addDraftOrderLines,

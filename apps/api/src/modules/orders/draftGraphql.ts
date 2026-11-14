@@ -13,10 +13,12 @@ import { getActiveUserIdByEmail, getUsersByIds } from "../identity/index.ts";
 import { OrderEventType, OrderLineType, OrderType } from "./graphql.ts";
 import {
   addDraftOrderLines,
+  completeDraftOrder,
   createDraftOrder,
   type DraftOrderInput,
   deleteDraftOrder,
   deleteDraftOrderLine,
+  getOrder,
   getOrderLinesByIds,
   type OrderError,
   type OrderLineRow,
@@ -173,6 +175,7 @@ const failed = (errors: OrderError[]): OrderPayloadData => ({
 const DraftOrderCreatePayload = orderPayload("DraftOrderCreate", "Created draft order.");
 const DraftOrderUpdatePayload = orderPayload("DraftOrderUpdate", "Updated draft order.");
 const DraftOrderDeletePayload = orderPayload("DraftOrderDelete", "Deleted draft order.");
+const DraftOrderCompletePayload = orderPayload("DraftOrderComplete", "Completed order.");
 
 builder.mutationField("draftOrderCreate", (t) =>
   t.field({
@@ -232,6 +235,41 @@ builder.mutationField("draftOrderDelete", (t) =>
     resolve: async (_parent, { id }, ctx) => {
       await requirePermission(ctx, "MANAGE_ORDERS");
       const result = await deleteDraftOrder(ctx.db, { orderId: fromGlobalId("Order", String(id)) });
+      return result.ok ? { order: result.order, errors: [] } : failed(result.errors);
+    },
+  }),
+);
+
+builder.mutationField("draftOrderComplete", (t) =>
+  t.field({
+    type: DraftOrderCompletePayload,
+    nullable: true,
+    description: `Completes creating an order.\n\n${MANAGE_ORDERS}`,
+    args: {
+      id: t.arg.id({ required: true, description: "ID of the order that will be completed." }),
+    },
+    resolve: async (_parent, { id }, ctx) => {
+      await requirePermission(ctx, "MANAGE_ORDERS");
+      const orderId = fromGlobalId("Order", String(id));
+      // The checkout module owns shipping methods: read the draft's method as it is now.
+      const draft = await getOrder(ctx.db, orderId);
+      const method =
+        draft?.shippingMethodId != null
+          ? await getShippingMethod(ctx.db, draft.shippingMethodId)
+          : null;
+      const result = await completeDraftOrder(ctx.db, {
+        orderId,
+        userId: ctx.user?.id ?? null,
+        shippingMethod: method
+          ? {
+              id: method.id,
+              name: method.name,
+              priceAmount: method.priceAmount,
+              isActive: method.isActive,
+            }
+          : null,
+      });
+      ctx.orderLoaders.linesByOrderId.clearAll();
       return result.ok ? { order: result.order, errors: [] } : failed(result.errors);
     },
   }),

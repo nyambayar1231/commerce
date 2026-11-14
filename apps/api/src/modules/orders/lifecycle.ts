@@ -41,7 +41,10 @@ export type OrderErrorCode =
   | "REQUIRED"
   | "SHIPPING_METHOD_NOT_APPLICABLE"
   | "NOT_EDITABLE"
-  | "PRODUCT_NOT_PUBLISHED";
+  | "PRODUCT_NOT_PUBLISHED"
+  | "BILLING_ADDRESS_NOT_SET"
+  | "ORDER_NO_SHIPPING_ADDRESS"
+  | "SHIPPING_METHOD_REQUIRED";
 
 /** Saleor's OrderError, with primary keys (the GraphQL layer turns them into global IDs). */
 export type OrderError = {

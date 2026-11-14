@@ -955,6 +955,13 @@ type Delivery {
   shippingMethod: ShippingMethod
 }
 
+type DraftOrderComplete {
+  errors: [OrderError!]!
+
+  """Completed order."""
+  order: Order
+}
+
 type DraftOrderCreate {
   errors: [OrderError!]!
 
@@ -1314,6 +1321,16 @@ type Mutation {
     """Fields required to update a customer."""
     input: CustomerInput!
   ): CustomerUpdate
+
+  """
+  Completes creating an order.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  draftOrderComplete(
+    """ID of the order that will be completed."""
+    id: ID!
+  ): DraftOrderComplete
 
   """
   Creates a new draft order.
@@ -1884,6 +1901,7 @@ type OrderError {
 }
 
 enum OrderErrorCode {
+  BILLING_ADDRESS_NOT_SET
   CANNOT_CANCEL_ORDER
   DUPLICATED_INPUT_ITEM
   FULFILL_ORDER_LINE
@@ -1893,9 +1911,11 @@ enum OrderErrorCode {
   INVALID_QUANTITY
   NOT_EDITABLE
   NOT_FOUND
+  ORDER_NO_SHIPPING_ADDRESS
   PRODUCT_NOT_PUBLISHED
   REQUIRED
   SHIPPING_METHOD_NOT_APPLICABLE
+  SHIPPING_METHOD_REQUIRED
   TRANSACTION_ERROR
   ZERO_QUANTITY
 }

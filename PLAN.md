@@ -384,7 +384,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M13.1 | Print: the order page's "Print" action and a print-only order view (decision 4) | Done |
 | M13.2 | Draft API: migration (`DRAFT`, nullable fields + CHECK, events `DRAFT_CREATED`, `PLACED_FROM_DRAFT`, `ADDED_PRODUCTS`, `REMOVED_PRODUCTS`), `draftOrderCreate`, `draftOrderUpdate` (customer/email, addresses, shipping method), `draftOrderDelete`, `draftOrders`; `orders` excludes drafts; tests | Done |
 | M13.3 | Draft lines API: `orderLinesCreate`, `orderLineUpdate`, `orderLineDelete` (drafts only), totals recalculated; tests | Done |
-| M13.4 | `draftOrderComplete`: Saleor's checks (lines, email, addresses, shipping), stock reserved, prices frozen, `UNFULFILLED`; tests | Approved |
+| M13.4 | `draftOrderComplete`: Saleor's checks (lines, email, addresses, shipping), stock reserved, prices frozen, `UNFULFILLED`; tests | Done |
 | M13.5 | Dashboard: the Drafts list (`/orders/drafts`, menu item) and "Create order" | Approved |
 | M13.6 | Dashboard: the draft page (lines + add products dialog, customer and addresses dialogs, shipping method dialog, Finalize, delete); Mongolian messages | Approved |
 | M13.7 | Playwright golden path for create → finalize → fulfill; release | Approved |
@@ -404,6 +404,11 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   drafts only (`NOT_EDITABLE`, Saleor also edits unconfirmed orders); every line change re-reads
   all of the draft's line prices and names from the catalog. Catalog now owns the "published"
   rule (`isProductPublished`), which checkout reuses.
+- **M13.4, awaiting the owner's OK:** finalizing needs a customer email (`REQUIRED` on
+  `userEmail`; Saleor allows none, our orders and their CHECK require one); the shipping price is
+  the method's price at finalization; a failed finalization still saves the re-read line prices
+  and shipping price (the draft follows the catalog anyway); short stock is one
+  `INSUFFICIENT_STOCK` error per variant naming its lines (Saleor: per line and warehouse).
 - **Out of scope:** discounts, draft-order emails/invoices, channels, editing a finalized order's
   lines (Saleor's unconfirmed orders), bulk draft delete.
 

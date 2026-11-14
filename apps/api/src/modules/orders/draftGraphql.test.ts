@@ -1,4 +1,5 @@
 import { closeDb, getDb, schema } from "@commerce/db";
+import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createStaff, createTestClient, expectPermissionDenied } from "../../../test/graphql.ts";
 import { toGlobalId } from "../../graphql/globalId.ts";
@@ -659,5 +660,217 @@ describe("draft order lines", () => {
       staff.token,
     );
     expect(deletePlaced.orderLineDelete.errors).toEqual([notEditable]);
+  });
+});
+
+const COMPLETE = `mutation($id: ID!) {
+  draftOrderComplete(id: $id) {
+    order { id status userEmail user { id } shippingMethodName shippingPrice { gross { amount } }
+      total { gross { amount } } actions events { type } }
+    errors { field code message orderLines variants }
+  }
+}`;
+
+type CompletePayload = {
+  order: {
+    id: string;
+    status: string;
+    userEmail: string | null;
+    user: { id: string } | null;
+    shippingMethodName: string | null;
+    shippingPrice: { gross: { amount: number } };
+    total: { gross: { amount: number } };
+    actions: string[];
+    events: { type: string }[];
+  } | null;
+  errors: {
+    field: string | null;
+    code: string;
+    message: string;
+    orderLines: string[] | null;
+    variants: string[] | null;
+  }[];
+};
+
+describe("draftOrderComplete", () => {
+  /** A draft with a customer, addresses, shipping (500 MNT) and 2 shirts (1,000 MNT, 5 in stock). */
+  async function readyDraft(staffToken: string) {
+    const [warehouse] = await db.select().from(schema.warehouse);
+    const shirt = await variant("Shirt", 1000);
+    await db
+      .update(schema.productVariant)
+      .set({ trackInventory: true })
+      .where(eq(schema.productVariant.id, shirt.rowId));
+    await db
+      .insert(schema.stock)
+      .values({ warehouseId: warehouse?.id ?? "", variantId: shirt.rowId, quantity: 5 });
+    const method = await createShippingMethod(db, { name: "Standard", price: "500" });
+    if (!method.ok) throw new Error("no method");
+    const draft = await createDraft(staffToken, {
+      userEmail: "buyer@example.com",
+      shippingAddress: address,
+      billingAddress: address,
+      shippingMethod: toGlobalId("ShippingMethod", method.shippingMethod.id),
+    });
+    const added = await gql<{ orderLinesCreate: LinesPayload }>(
+      LINES_CREATE,
+      { id: draft.id, input: [{ variantId: shirt.id, quantity: 2 }] },
+      staffToken,
+    );
+    return {
+      draft,
+      shirt,
+      methodId: method.shippingMethod.id,
+      lineId: added.orderLinesCreate.orderLines?.[0]?.id ?? "",
+    };
+  }
+
+  const complete = async (id: string, token: string) =>
+    (await gql<{ draftOrderComplete: CompletePayload }>(COMPLETE, { id }, token))
+      .draftOrderComplete;
+
+  it("needs MANAGE_ORDERS", async () => {
+    const other = await createStaff(db, ["MANAGE_PRODUCTS"]);
+    const staff = await createStaff(db, ["MANAGE_ORDERS"]);
+    const draft = await createDraft(staff.token);
+    expectPermissionDenied(await client.gql(COMPLETE, { id: draft.id }, other.token), [
+      "MANAGE_ORDERS",
+    ]);
+  });
+
+  it("places the order: stock reserved, customer linked, unpaid, then fulfillable", async () => {
+    const staff = await createStaff(db, ["MANAGE_ORDERS"]);
+    const buyer = await customer("buyer@example.com");
+    const { draft, shirt, lineId } = await readyDraft(staff.token);
+
+    const placed = await complete(draft.id, staff.token);
+    expect(placed).toEqual({
+      errors: [],
+      order: {
+        id: draft.id,
+        status: "UNFULFILLED",
+        userEmail: "buyer@example.com",
+        user: { id: toGlobalId("User", buyer.id) },
+        shippingMethodName: "Standard",
+        shippingPrice: { gross: { amount: 500 } },
+        total: { gross: { amount: 2500 } },
+        actions: ["MARK_AS_PAID"],
+        events: [
+          { type: "DRAFT_CREATED" },
+          { type: "ADDED_PRODUCTS" },
+          { type: "PLACED_FROM_DRAFT" },
+        ],
+      },
+    });
+    const [stock] = await db
+      .select()
+      .from(schema.stock)
+      .where(eq(schema.stock.variantId, shirt.rowId));
+    expect(stock).toMatchObject({ quantity: 5, quantityAllocated: 2 });
+
+    // Now an order like any other: listed, readable by its customer, no longer a draft.
+    const lists = await gql<{
+      orders: { totalCount: number };
+      draftOrders: { totalCount: number };
+    }>(LISTS, {}, staff.token);
+    expect([lists.orders.totalCount, lists.draftOrders.totalCount]).toEqual([1, 0]);
+    const own = await client.gql(
+      "query($id: ID!) { order(id: $id) { id } }",
+      { id: draft.id },
+      buyer.token,
+    );
+    expect(own.body).toEqual({ data: { order: { id: draft.id } } });
+    expect((await complete(draft.id, staff.token)).errors).toEqual([
+      expect.objectContaining({ field: "id", code: "INVALID", message: "The order is not draft." }),
+    ]);
+
+    const [warehouse] = await db.select().from(schema.warehouse);
+    const fulfilled = await gql<{
+      orderFulfill: { order: { status: string } | null; errors: unknown[] };
+    }>(
+      `mutation($id: ID!, $input: OrderFulfillInput!) {
+        orderFulfill(order: $id, input: $input) { order { status } errors { code } }
+      }`,
+      {
+        id: draft.id,
+        input: {
+          lines: [
+            {
+              orderLineId: lineId,
+              stocks: [{ quantity: 2, warehouse: toGlobalId("Warehouse", warehouse?.id ?? "") }],
+            },
+          ],
+        },
+      },
+      staff.token,
+    );
+    expect(fulfilled.orderFulfill).toEqual({ order: { status: "FULFILLED" }, errors: [] });
+  });
+
+  it("lists what the draft is missing and stays a draft", async () => {
+    const staff = await createStaff(db, ["MANAGE_ORDERS"]);
+    const draft = await createDraft(staff.token);
+
+    const result = await complete(draft.id, staff.token);
+    expect(result.order).toBeNull();
+    expect(result.errors.map((error) => [error.field, error.code])).toEqual([
+      ["billingAddress", "BILLING_ADDRESS_NOT_SET"],
+      ["shippingAddress", "ORDER_NO_SHIPPING_ADDRESS"],
+      ["shippingMethod", "SHIPPING_METHOD_REQUIRED"],
+      ["lines", "REQUIRED"],
+      ["userEmail", "REQUIRED"],
+    ]);
+    const [row] = await db.select().from(schema.order);
+    expect(row?.status).toBe("DRAFT");
+  });
+
+  it("uses the shipping method's current price and refuses an inactive one", async () => {
+    const staff = await createStaff(db, ["MANAGE_ORDERS"]);
+    const { draft, methodId } = await readyDraft(staff.token);
+
+    await db
+      .update(schema.shippingMethod)
+      .set({ isActive: false })
+      .where(eq(schema.shippingMethod.id, methodId));
+    expect((await complete(draft.id, staff.token)).errors).toEqual([
+      expect.objectContaining({ field: "shippingMethod", code: "SHIPPING_METHOD_NOT_APPLICABLE" }),
+    ]);
+
+    await db
+      .update(schema.shippingMethod)
+      .set({ isActive: true, priceAmount: 800 })
+      .where(eq(schema.shippingMethod.id, methodId));
+    const placed = await complete(draft.id, staff.token);
+    expect(placed.order).toMatchObject({
+      shippingPrice: { gross: { amount: 800 } },
+      total: { gross: { amount: 2800 } },
+    });
+  });
+
+  it("refuses short stock and unpublished products, keeping the draft", async () => {
+    const staff = await createStaff(db, ["MANAGE_ORDERS"]);
+    const { draft, shirt, lineId } = await readyDraft(staff.token);
+
+    await db
+      .update(schema.stock)
+      .set({ quantity: 1 })
+      .where(eq(schema.stock.variantId, shirt.rowId));
+    expect((await complete(draft.id, staff.token)).errors).toEqual([
+      {
+        field: "lines",
+        code: "INSUFFICIENT_STOCK",
+        message: "Insufficient product stock.",
+        orderLines: [lineId],
+        variants: [shirt.id],
+      },
+    ]);
+
+    await db.update(schema.product).set({ isPublished: false });
+    expect((await complete(draft.id, staff.token)).errors).toEqual([
+      expect.objectContaining({ field: "lines", code: "PRODUCT_NOT_PUBLISHED" }),
+    ]);
+    const [row] = await db.select().from(schema.order);
+    expect(row?.status).toBe("DRAFT");
+    expect(await db.select().from(schema.allocation)).toEqual([]);
   });
 });
