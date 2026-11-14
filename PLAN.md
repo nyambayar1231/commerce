@@ -8,6 +8,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | Milestone | Title | Status |
 |---|---|---|
 | M11 | Dashboard in Mongolian and English | In progress |
+| M13 | Draft orders ("Create order") and order printing | Approved |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
@@ -346,6 +347,53 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   in Mongolian and only where the browser lacks the data (`polyfillDateTimeFormat.ts`): `mn` data +
   the golden time zones, ~180 kB gzip as lazy chunks; the browser's own time zone is kept (the
   polyfill defaults to UTC). Checked in Chrome: "2026 оны 11-р сарын 12 14:03 (GMT+8)".
+
+## M13 — Draft orders ("Create order") and order printing
+
+- **Objective:** staff create an order by hand in the dashboard, as Saleor's "Create order":
+  a draft with lines, a customer, addresses and a shipping method, finalized into a normal order
+  that is then fulfilled, paid and refunded with M6's actions. Any order can be printed.
+- **Concepts:** an order's draft state on the same row (a status-dependent CHECK), recalculated
+  draft totals, stock reserved on finalize (as checkout completion), a browser print view.
+- **Saleor reference:** API `../saleor-core/saleor/graphql/order/mutations/draft_order_create.py`,
+  `draft_order_update.py`, `draft_order_complete.py`, `draft_order_delete.py`,
+  `order_lines_create.py`, `order_line_update.py`, `order_line_delete.py`; dashboard
+  `../saleor-dashboard/src/orders/components/OrderDraftListPage/`, `OrderDraftPage/`,
+  `OrderDraftDetails/`, `OrderProductAddDialog/`, `OrderCustomerChangeDialog/`,
+  `OrderCustomerAddressesEditDialog/`, `OrderShippingMethodEditDialog/`. Saleor has no print
+  button (its closest feature is plugin-generated invoices).
+
+**Owner decisions (2026-11-14):**
+1. **Same table:** a draft is an `order` row with Saleor's `DRAFT` status and gets its number at
+   creation. Email, addresses and shipping become nullable; a CHECK requires them unless the
+   status is `DRAFT`. `orders` lists no drafts; `draftOrders` lists only drafts (Saleor).
+2. **Prices and stock:** a draft line's price is the variant's current price, re-read while it is a
+   draft and frozen at finalize. `draftOrderComplete` reserves stock as checkout completion does
+   and fails on short stock (Saleor's `INSUFFICIENT_STOCK`). The order starts unpaid ("Mark as
+   paid" exists).
+3. **Minimal scope:** Drafts list, Create order, add/edit/remove lines, customer (a customer
+   account or just an email), shipping and billing address, shipping method, Finalize, delete
+   draft. No discounts, no confirmation email on finalize, no channel picker (one channel).
+4. **Print:** a "Print" action on the order page opens a print view (order number, date,
+   customer, addresses, lines, totals) and the browser's print dialog; dashboard only.
+
+**Steps (each one commit, one report):**
+
+| Step | What | Status |
+|---|---|---|
+| M13.1 | Print: the order page's "Print" action and a print-only order view (decision 4) | Approved |
+| M13.2 | Draft API: migration (`DRAFT`, nullable fields + CHECK, events `DRAFT_CREATED`, `PLACED_FROM_DRAFT`, `ADDED_PRODUCTS`, `REMOVED_PRODUCTS`), `draftOrderCreate`, `draftOrderUpdate` (customer/email, addresses, shipping method), `draftOrderDelete`, `draftOrders`; `orders` excludes drafts; tests | Approved |
+| M13.3 | Draft lines API: `orderLinesCreate`, `orderLineUpdate`, `orderLineDelete` (drafts only), totals recalculated; tests | Approved |
+| M13.4 | `draftOrderComplete`: Saleor's checks (lines, email, addresses, shipping), stock reserved, prices frozen, `UNFULFILLED`; tests | Approved |
+| M13.5 | Dashboard: the Drafts list (`/orders/drafts`, menu item) and "Create order" | Approved |
+| M13.6 | Dashboard: the draft page (lines + add products dialog, customer and addresses dialogs, shipping method dialog, Finalize, delete); Mongolian messages | Approved |
+| M13.7 | Playwright golden path for create → finalize → fulfill; release | Approved |
+
+- **Acceptance:** a staff member creates an order from the dashboard, finalizes it, fulfils it and
+  prints it; a draft never shows in the order list or the customer's orders; CI green; live on
+  admin.dino-craft.lol.
+- **Out of scope:** discounts, draft-order emails/invoices, channels, editing a finalized order's
+  lines (Saleor's unconfirmed orders), bulk draft delete.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
