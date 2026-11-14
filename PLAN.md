@@ -304,7 +304,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   (saves when the cell is left), column picker, row "⋮" menu with "Product details" and "Remove
   product" (Saleor's confirmation dialog); Finalize's per-line errors show in the Status column.
   Our Datagrid gained Saleor's cell editing, change tracking, number cell and row actions. Left
-  out: discounts, "is gift", metadata button, the spacer column; Status shows one pill (Saleor: a
+  out: discounts, "is gift", the metadata button; Status shows one pill (Saleor: a
   tags cell from glide-data-grid-cells). Mongolian for the new texts is ours except "Статус".
 - **M13.1 (print):** our own print view (Saleor has none), approved by the owner (2026-11-14).
 

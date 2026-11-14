@@ -50,6 +50,7 @@ import {
   type OnDatagridChange,
   useDatagridChange,
 } from "./hooks/useDatagridChange";
+import { EMPTY_COLUMN_ID } from "./hooks/useEmptyColumn";
 import { usePointerDragClickGuard } from "./hooks/usePointerDragClickGuard";
 import { activateRowAnchor, hideRowAnchorElement, useRowAnchor } from "./hooks/useRowAnchor";
 import { useRowAnchorHandler } from "./hooks/useRowAnchorHandler";
@@ -408,7 +409,11 @@ export const Datagrid = ({
         (availableColumn) => availableColumn.id === column.id,
       );
 
-      if ((isSelected || isHovered) && column.id !== "empty" && !columnMeta?.disableReorder) {
+      if (
+        (isSelected || isHovered) &&
+        column.id !== EMPTY_COLUMN_ID &&
+        !columnMeta?.disableReorder
+      ) {
         const iconSize = 16;
         const padding = 8;
         const x = rect.x + rect.width - iconSize - padding;

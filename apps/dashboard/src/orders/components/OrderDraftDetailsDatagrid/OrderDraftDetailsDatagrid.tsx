@@ -4,9 +4,11 @@
 // The draft's lines as Saleor's editable grid: the quantity is edited in its cell (double-click,
 // Enter or just type a number) and saved as soon as the cell is left; the column picker resizes,
 // reorders and hides columns; each row's "⋮" menu opens the product in a new tab or removes the
-// line after Saleor's "Remove product" confirmation. Left out with discounts and metadata: the
+// line after Saleor's "Remove product" confirmation. Saleor's blank 20px first column gives the
+// left inset (frozen with the product column). Left out with discounts and metadata: the
 // "Add/Edit discount" menu item and price-cell click, the metadata button and Saleor's discount
 // ripple.
+import type { GridColumn } from "@glideapps/glide-data-grid";
 import { Box, useTheme } from "@saleor/macaw-ui";
 import { ExternalLink, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -23,6 +25,7 @@ import {
   DatagridChangeStateContext,
   useDatagridChangeState,
 } from "../../../components/Datagrid/hooks/useDatagridChange";
+import { EMPTY_COLUMN_ID, useEmptyColumn } from "../../../components/Datagrid/hooks/useEmptyColumn";
 import { iconSize, iconStrokeWidthBySize } from "../../../components/icons";
 import type { OrderErrorFragment, OrderLineFragment } from "../../../graphql/types.generated";
 import useListSettings, {
@@ -72,9 +75,25 @@ export const OrderDraftDetailsDatagrid = ({
       selectedColumns: settings?.columns ?? ORDER_DRAFT_DETAILS_DEFAULT_COLUMNS,
       onSave: handleColumnChange,
     });
+  // The picker manages the real columns; the blank one is always first.
+  const emptyColumn = useEmptyColumn();
+  const gridColumns = useMemo(
+    () => [emptyColumn, ...visibleColumns],
+    [emptyColumn, visibleColumns],
+  );
+  const handleColumnMoved = useCallback(
+    (startIndex: number, endIndex: number) => handlers.onMove(startIndex - 1, endIndex - 1),
+    [handlers],
+  );
+  const handleColumnResize = useCallback(
+    (column: GridColumn, newSize: number) => {
+      if (column.id !== EMPTY_COLUMN_ID) handlers.onResize(column, newSize);
+    },
+    [handlers],
+  );
   const getCellContent = useMemo(
-    () => createGetCellContent({ columns: visibleColumns, lines, errors, intl, theme }),
-    [visibleColumns, lines, errors, intl, theme],
+    () => createGetCellContent({ columns: gridColumns, lines, errors, intl, theme }),
+    [gridColumns, lines, errors, intl, theme],
   );
 
   const getMenuItems = useCallback(
@@ -147,16 +166,16 @@ export const OrderDraftDetailsDatagrid = ({
         <Datagrid
           rowMarkers="none"
           columnSelect="single"
-          freezeColumns={1}
+          freezeColumns={2}
           verticalBorder={false}
           showTopBorder={false}
-          availableColumns={visibleColumns}
+          availableColumns={gridColumns}
           emptyText={intl.formatMessage(messages.emptyText)}
           getCellContent={getCellContent}
           menuItems={getMenuItems}
           rows={lines.length}
-          onColumnResize={handlers.onResize}
-          onColumnMoved={handlers.onMove}
+          onColumnResize={handleColumnResize}
+          onColumnMoved={handleColumnMoved}
           recentlyAddedColumn={recentlyAddedColumn}
           onClearRecentlyAddedColumn={handlers.onClearRecentlyAddedColumn}
           renderColumnPicker={() => (
