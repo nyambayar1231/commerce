@@ -230,7 +230,8 @@ test("staff adds products to the draft and changes a quantity", async () => {
 
   // The lines are Saleor's canvas grid (no cell text in the DOM): select the first cell, move to
   // Quantity with the arrow keys and type over it, as in a spreadsheet.
-  const grid = page.getByTestId("draft-order-lines-grid").locator("canvas").first();
+  // Glide's scroll layer lies over the canvas and takes the pointer, as for a real mouse.
+  const grid = page.getByTestId("draft-order-lines-grid").locator(".dvn-scroller");
   await grid.click({ position: { x: 60, y: 60 } });
   // Product → status → SKU → variant → quantity.
   for (let step = 0; step < 4; step++) await page.keyboard.press("ArrowRight");
