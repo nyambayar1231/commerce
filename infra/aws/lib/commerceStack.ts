@@ -25,8 +25,9 @@ export interface CommerceStackProps extends StackProps {
   /** Free-plan eligible in ap-northeast-2: t4g.micro (1 GB) or t4g.small (2 GB). */
   instanceType?: string;
   /**
-   * The GitHub repository ("owner/name") whose `main` branch may deploy (PLAN M12): its workflows
-   * get the Deploy role through OIDC. Without it, no deploy role is made.
+   * The GitHub repository whose `main` branch may deploy (PLAN M12), as its OIDC `sub` claim names
+   * it: "owner/name", or "owner@id/name@id" with immutable subjects. Its workflows get the Deploy
+   * role through OIDC. Without it, no deploy role is made.
    */
   githubRepository?: string;
 }

@@ -9,6 +9,9 @@ new CommerceStack(app, "Commerce", {
   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: "ap-northeast-2" },
   description:
     "commerce: one EC2 instance running docker-compose.prod.yml, its S3 buckets and role",
-  // Its main branch deploys through GitHub Actions (PLAN M12).
-  githubRepository: "nyambayar1231/commerce",
+  // Its main branch deploys through GitHub Actions (PLAN M12). The repository uses GitHub's
+  // immutable OIDC subjects (owner and repository with their numeric ids, from
+  // `gh api repos/nyambayar1231/commerce/actions/oidc/customization/sub`), so a renamed or re-created
+  // repository of the same name cannot assume the role.
+  githubRepository: "nyambayar1231@67280085/commerce@1447838245",
 });
