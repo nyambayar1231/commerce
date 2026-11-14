@@ -386,8 +386,9 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M13.3 | Draft lines API: `orderLinesCreate`, `orderLineUpdate`, `orderLineDelete` (drafts only), totals recalculated; tests | Done |
 | M13.4 | `draftOrderComplete`: Saleor's checks (lines, email, addresses, shipping), stock reserved, prices frozen, `UNFULFILLED`; tests | Done |
 | M13.5 | Dashboard: the Drafts list (`/orders/drafts`, menu item) and "Create order" | Done |
-| M13.6 | Dashboard: the draft page (lines + add products dialog, customer and addresses dialogs, shipping method dialog, Finalize, delete); Mongolian messages | Approved |
-| M13.7 | Playwright golden path for create → finalize → fulfill; release | Approved |
+| M13.6 | Dashboard: the draft page (lines, add products dialog, quantities, remove, Finalize, delete); history messages; Mongolian | Done |
+| M13.7 | Dashboard: the draft's customer, addresses and shipping method (Saleor's dialogs) | Approved |
+| M13.8 | Playwright golden path for create → finalize → fulfill; release | Approved |
 
 - **Acceptance:** a staff member creates an order from the dashboard, finalizes it, fulfils it and
   prints it; a draft never shows in the order list or the customer's orders; CI green; live on
@@ -412,8 +413,16 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 - **M13.5 left out or different from Saleor, awaiting the owner's OK:** "Create order" creates the
   draft at once (Saleor first asks for a channel); the Drafts list has no channel column, filters,
   presets, row selection or bulk delete; "All draft orders" is plain text (no presets); the date
-  column uses the order list's date cell (Saleor: text); a draft opens on the order page until
-  M13.6.
+  column uses the order list's date cell (Saleor: text).
+- **M13.6 left out or different from Saleor, awaiting the owner's OK:** M13.6 was split in two
+  (page and lines; customer, addresses and shipping in M13.7), so the golden path moved to M13.8.
+  The lines are a plain table like the Fulfill page's (Saleor: an editable Glide grid with a row
+  menu): the quantity saves on blur or Enter, a trash button removes; no "is gift", status,
+  discount or metadata columns. The add-products dialog shows the first 20 published matches (no
+  infinite scroll or "load more variants") and adds one of each chosen variant. Finalize and line
+  errors are error toasts (Saleor shows some next to the fields); Finalize opens the placed order
+  at /orders/:id. No channel alert, metadata, notes or widgets. Saleor's Mongolian for "order
+  line" toasts said "order list" and is corrected.
 - **Out of scope:** discounts, draft-order emails/invoices, channels, editing a finalized order's
   lines (Saleor's unconfirmed orders), bulk draft delete.
 

@@ -94,6 +94,31 @@ export function getProductErrorMessage(
 // Saleor Commerce). Saleor's messages for the OrderErrorCode values our order actions return;
 // the rest fall back to the common messages (the API's own message first).
 const orderErrorMessages = defineMessages({
+  billingNotSet: {
+    id: "IFWHn0",
+    defaultMessage: "Billing address is not set",
+    description: "error message",
+  },
+  noShippingAddress: {
+    id: "Wlc67M",
+    defaultMessage: "Cannot choose a shipping method for an order without the shipping address",
+    description: "error message",
+  },
+  notEditable: {
+    id: "r+8q4B",
+    defaultMessage: "Only draft orders can be edited",
+    description: "error message",
+  },
+  shippingNotApplicable: {
+    id: "VEE4gD",
+    defaultMessage: "Shipping method is not valid for chosen shipping address",
+    description: "error message",
+  },
+  shippingRequired: {
+    id: "ychKsb",
+    defaultMessage: "Shipping method is required for this order",
+    description: "error message",
+  },
   cannotCancelOrder: {
     id: "BM1JiJ",
     defaultMessage: "This order cannot be cancelled",
@@ -120,6 +145,16 @@ export function getOrderErrorMessage(
   intl: IntlShape,
 ): string | undefined {
   switch (err?.code) {
+    case "BILLING_ADDRESS_NOT_SET":
+      return intl.formatMessage(orderErrorMessages.billingNotSet);
+    case "NOT_EDITABLE":
+      return intl.formatMessage(orderErrorMessages.notEditable);
+    case "ORDER_NO_SHIPPING_ADDRESS":
+      return intl.formatMessage(orderErrorMessages.noShippingAddress);
+    case "SHIPPING_METHOD_NOT_APPLICABLE":
+      return intl.formatMessage(orderErrorMessages.shippingNotApplicable);
+    case "SHIPPING_METHOD_REQUIRED":
+      return intl.formatMessage(orderErrorMessages.shippingRequired);
     case "CANNOT_CANCEL_ORDER":
       return intl.formatMessage(orderErrorMessages.cannotCancelOrder);
     case "FULFILL_ORDER_LINE":

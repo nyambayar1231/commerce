@@ -178,3 +178,30 @@ export const orderDraftList = gql`
   }
   ${pageInfoFragment}
 `;
+
+// Saleor's SearchOrderVariant (src/searches/useOrderVariantSearch.ts) for the add-products dialog:
+// published products matching the search, with their variants' SKU and price (single channel).
+export const searchOrderVariant = gql`
+  query SearchOrderVariant($first: Int!, $query: String!) {
+    products(first: $first, search: $query, where: { isPublished: true }) {
+      edges {
+        node {
+          id
+          name
+          thumbnail {
+            url
+          }
+          variants {
+            id
+            name
+            sku
+            price {
+              amount
+              currency
+            }
+          }
+        }
+      }
+    }
+  }
+`;

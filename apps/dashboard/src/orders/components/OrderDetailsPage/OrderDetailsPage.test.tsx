@@ -115,6 +115,7 @@ const order = (overrides: Partial<OrderDetailsFragment> = {}): OrderDetailsFragm
       type: "PLACED",
       amount: null,
       transactionReference: null,
+      lines: null,
       fulfilledItems: null,
       user: null,
     },
@@ -269,7 +270,7 @@ describe("OrderDetailsPage", () => {
 
   it("describes events: fulfilled items, refund amount, mark-as-paid reference", () => {
     const intl = createIntl({ locale: "en" });
-    const empty = { fulfilledItems: null, transactionReference: null, amount: null };
+    const empty = { fulfilledItems: null, lines: null, transactionReference: null, amount: null };
 
     expect(
       getEventDetails(

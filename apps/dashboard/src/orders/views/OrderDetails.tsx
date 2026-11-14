@@ -5,7 +5,8 @@
 // URL as Saleor's (`action=cancel|mark-paid|refund`, `id=<transaction>` for a refund); each
 // mutation returns the order (or the refunded transaction) so the page updates from Apollo's
 // cache, then closes the dialog with Saleor's toast. Refunds are offered only to staff with
-// HANDLE_PAYMENTS (the API's permission). An unknown id is not found.
+// HANDLE_PAYMENTS (the API's permission). An unknown id is not found. A draft (M13.6) renders the
+// draft page instead, as Saleor's OrderDetails does.
 import { useMutation, useQuery } from "@apollo/client";
 import { useEffect, useState } from "react";
 import { defineMessages, useIntl } from "react-intl";
@@ -26,6 +27,7 @@ import { OrderDetailsPage } from "../components/OrderDetailsPage/OrderDetailsPag
 import { OrderMarkAsPaidDialog } from "../components/OrderMarkAsPaidDialog/OrderMarkAsPaidDialog";
 import { OrderTransactionRefundDialog } from "../components/OrderTransactionRefundDialog/OrderTransactionRefundDialog";
 import { type OrderUrlDialog, orderFulfillUrl, orderUrl, parseOrderUrl } from "../urls";
+import { OrderDraftDetails } from "./OrderDraftDetails";
 
 // Saleor's OrderDetailsMessages toasts for these actions.
 const messages = defineMessages({
@@ -105,6 +107,10 @@ export const OrderDetails = () => {
 
   if (!loading && !order) {
     return <NotFound />;
+  }
+
+  if (order?.status === "DRAFT") {
+    return <OrderDraftDetails id={id} order={order} params={params} />;
   }
 
   return (

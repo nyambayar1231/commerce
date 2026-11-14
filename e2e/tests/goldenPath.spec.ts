@@ -215,3 +215,22 @@ test("staff creates a draft order from the Drafts list", async () => {
   await expect(page.getByText("Draft order created")).toBeVisible();
   await expect(page).toHaveURL(/\/orders\/drafts\/[^/?]+$/);
 });
+
+test("staff adds products to the draft and changes a quantity", async () => {
+  await page.getByRole("button", { name: "Add products" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Search products").fill(PRODUCT);
+  await dialog.getByRole("checkbox", { name: PRODUCT, exact: true }).check();
+  await dialog.getByRole("button", { name: "Confirm" }).click();
+  await expect(page.getByText("Order line added")).toBeVisible();
+  const line = page.getByTestId("draft-order-line");
+  await expect(line).toContainText(PRODUCT);
+  await expect(line).toContainText("45,000");
+
+  const quantity = line.getByRole("spinbutton", { name: "Quantity" });
+  await quantity.fill("2");
+  await quantity.press("Enter");
+  await expect(page.getByText("Order line updated")).toBeVisible();
+  await expect(line).toContainText("90,000");
+  await page.screenshot({ path: "test-results/draft-page.png", fullPage: true });
+});

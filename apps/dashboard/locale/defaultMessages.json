@@ -15,6 +15,10 @@
     "context": "aria label for grid view button",
     "string": "Grid view"
   },
+  "+HuipK": {
+    "context": "variant sku",
+    "string": "SKU {sku}"
+  },
   "+LyCI8": {
     "context": "detail page top bar, settings menu button tooltip",
     "string": "More actions"
@@ -120,6 +124,9 @@
     "context": "button",
     "string": "View all orders"
   },
+  "32dfzI": {
+    "string": "Price"
+  },
   "3C3Nj5": {
     "context": "button",
     "string": "Add variant"
@@ -156,6 +163,10 @@
   "4WCH+l": {
     "context": "notifications region label for screen readers",
     "string": "Notifications"
+  },
+  "4Z14xW": {
+    "context": "button",
+    "string": "Finalize"
   },
   "4fJ17F": {
     "context": "Charge in progress transaction amount, data display header",
@@ -213,6 +224,10 @@
   "6AMFki": {
     "context": "product name",
     "string": "Name"
+  },
+  "6GTAm2": {
+    "context": "order history message",
+    "string": "Products were deleted from the order"
   },
   "6Jgwpc": {
     "string": "No payment received"
@@ -305,6 +320,9 @@
     "context": "Product availability status when not visible in a channel",
     "string": "Hidden"
   },
+  "9OtpHt": {
+    "string": "Order line deleted"
+  },
   "9RvXNg": {
     "context": "section header",
     "string": "Media Information"
@@ -381,6 +399,10 @@
   },
   "BvGp1I": {
     "string": "between"
+  },
+  "C50ahv": {
+    "context": "button",
+    "string": "Add products"
   },
   "CJpx4E": {
     "context": "page header",
@@ -474,6 +496,9 @@
   "FiO/W/": {
     "string": "Delete categories"
   },
+  "Fn3bE0": {
+    "string": "Order line updated"
+  },
   "FopBSj": {
     "context": "error message",
     "string": "Your username and/or password are incorrect. Please try again."
@@ -517,11 +542,21 @@
     "context": "order summary, taxes are included in the prices",
     "string": "(included)"
   },
+  "HlCkMT": {
+    "string": "Order line added"
+  },
   "HvJPcU": {
     "string": "Category deleted"
   },
+  "Hwp65F": {
+    "string": "Draft finalized"
+  },
   "I06jIl": {
     "string": "Note: some languages might have incomplete translations that will be displayed in English."
+  },
+  "IFWHn0": {
+    "context": "error message",
+    "string": "Billing address is not set"
   },
   "IH47ID": {
     "string": "Use button above to add new product variants"
@@ -611,6 +646,9 @@
   "L8seEc": {
     "string": "Subtotal"
   },
+  "LKD6fB": {
+    "string": "Remove product"
+  },
   "LQg8/p": {
     "context": "customer detail cogs menu, opens the delete-confirmation dialog",
     "string": "Delete user"
@@ -689,6 +727,10 @@
   },
   "OK5+Fh": {
     "string": "Variant"
+  },
+  "OKGd/k": {
+    "context": "order history message",
+    "string": "Order was created from draft"
   },
   "Oe62bR": {
     "context": "product availability",
@@ -774,6 +816,9 @@
     "context": "error message",
     "string": "Please wait a moment before trying again."
   },
+  "S2xLxV": {
+    "string": "Search by product name, attribute, product type etc..."
+  },
   "SDgGcU": {
     "context": "Button to manually mark order as paid without actual payment",
     "string": "Mark as Paid"
@@ -822,6 +867,9 @@
     "context": "orders section name",
     "string": "Orders"
   },
+  "Taa5V7": {
+    "string": "You can only add products available for the order's channel"
+  },
   "TjGYna": {
     "context": "product inventory, checkbox",
     "string": "Track Inventory"
@@ -853,6 +901,10 @@
     "context": "printed order",
     "string": "Placed {date}"
   },
+  "VEE4gD": {
+    "context": "error message",
+    "string": "Shipping method is not valid for chosen shipping address"
+  },
   "VEext+": {
     "string": "Are you sure you want to delete this image?"
   },
@@ -875,6 +927,10 @@
   "WVbUh7": {
     "context": "printed order",
     "string": "Status: {status}"
+  },
+  "Wlc67M": {
+    "context": "error message",
+    "string": "Cannot choose a shipping method for an order without the shipping address"
   },
   "Wr5UOV": {
     "context": "error message",
@@ -921,6 +977,10 @@
     "context": "Cancel in progress transaction amount, data display header",
     "string": "Pending cancel"
   },
+  "Yk0avO": {
+    "context": "dialog header",
+    "string": "Delete Draft Order"
+  },
   "YmHxaH": {
     "context": "button and tooltip, restores the full main nav from the icon rail",
     "string": "Expand navigation"
@@ -962,6 +1022,10 @@
   },
   "aHIrs/": {
     "string": "Failed to load filter data. Please refresh page to try again."
+  },
+  "aHasbu": {
+    "context": "dialog content",
+    "string": "Are you sure you want to delete draft <b>{orderNumber}</b>?"
   },
   "aRvO6i": {
     "context": "button",
@@ -1165,6 +1229,10 @@
   "hVPucN": {
     "string": "Light Mode"
   },
+  "hWO1SD": {
+    "context": "order history message",
+    "string": "Draft order was created"
+  },
   "hkENym": {
     "string": "Customer"
   },
@@ -1243,6 +1311,9 @@
     "context": "printed order line",
     "string": "Unit price"
   },
+  "lVwmf5": {
+    "string": "Total"
+  },
   "lxP7Rb": {
     "context": "warning notification when some product image uploads in a batch failed",
     "string": "{success, plural, one {# image} other {# images}} added, {failed, plural, one {# failed} other {# failed}}"
@@ -1269,9 +1340,16 @@
     "context": "customer overview, refunded row label in value tooltip",
     "string": "Refunded"
   },
+  "mWYRZY": {
+    "context": "order history message",
+    "string": "Products were added to the order"
+  },
   "n8tEIV": {
     "context": "customer overview, last login tooltip",
     "string": "Most recent time this customer signed in to their account."
+  },
+  "nEWp+k": {
+    "string": "Quantity"
   },
   "nG76Ql": {
     "context": "TopNav destination link tooltip to categories list",
@@ -1382,6 +1460,10 @@
     "context": "transaction event type, amount was authorized, but not captured",
     "string": "Authorization"
   },
+  "r+8q4B": {
+    "context": "error message",
+    "string": "Only draft orders can be edited"
+  },
   "rGj6RR": {
     "context": "order header date, older than yesterday",
     "string": "Placed {date}"
@@ -1411,6 +1493,9 @@
   "rwOx2s": {
     "string": "Please provide a transaction reference using the input below:"
   },
+  "s6oAC+": {
+    "string": "Search products"
+  },
   "s81JoX": {
     "context": "TopNav destination link tooltip to customers list",
     "string": "All customers"
@@ -1429,6 +1514,9 @@
   },
   "sfEbeB": {
     "string": "You're going to mark this order as paid."
+  },
+  "shmSDX": {
+    "string": "No products are available in the channel assigned to this order."
   },
   "suAexp": {
     "context": "aria label for list view button",
@@ -1468,6 +1556,10 @@
   },
   "uOC/uQ": {
     "string": "Image updated"
+  },
+  "uU1mx5": {
+    "context": "button",
+    "string": "Keep draft"
   },
   "ufmuTp": {
     "context": "button",
@@ -1511,6 +1603,10 @@
   "vzgZ3U": {
     "context": "card header",
     "string": "Sign In"
+  },
+  "wL850U": {
+    "context": "draft order lines, section header",
+    "string": "Order lines"
   },
   "wTHjt3": {
     "string": "Search Orders..."
@@ -1586,6 +1682,10 @@
   "ySqncG": {
     "context": "ExitFormPrompt keep editing button",
     "string": "Keep editing"
+  },
+  "ychKsb": {
+    "context": "error message",
+    "string": "Shipping method is required for this order"
   },
   "yn7Stx": {
     "context": "date group header",

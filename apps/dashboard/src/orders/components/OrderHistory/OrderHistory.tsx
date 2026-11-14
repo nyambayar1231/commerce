@@ -31,6 +31,7 @@ import { groupEventsByDate, type TimelineDateGroupKey } from "./groupEventsByDat
 // lucide's RotateCcw stands in).
 const eventIconMap: Partial<Record<OrderEventsEnum, LucideIcon>> = {
   PLACED: ShoppingCartIcon,
+  PLACED_FROM_DRAFT: ShoppingCartIcon,
   FULFILLMENT_FULFILLED_ITEMS: PackageIcon,
   CANCELED: XIcon,
   ORDER_MARKED_AS_PAID: CheckCircleIcon,
@@ -51,6 +52,30 @@ export const getEventMessage = (event: Pick<OrderEventFragment, "type">, intl: I
       return intl.formatMessage({
         id: "GJAX0z",
         defaultMessage: "Order was placed",
+        description: "order history message",
+      });
+    case "DRAFT_CREATED":
+      return intl.formatMessage({
+        id: "hWO1SD",
+        defaultMessage: "Draft order was created",
+        description: "order history message",
+      });
+    case "ADDED_PRODUCTS":
+      return intl.formatMessage({
+        id: "mWYRZY",
+        defaultMessage: "Products were added to the order",
+        description: "order history message",
+      });
+    case "REMOVED_PRODUCTS":
+      return intl.formatMessage({
+        id: "6GTAm2",
+        defaultMessage: "Products were deleted from the order",
+        description: "order history message",
+      });
+    case "PLACED_FROM_DRAFT":
+      return intl.formatMessage({
+        id: "OKGd/k",
+        defaultMessage: "Order was created from draft",
         description: "order history message",
       });
     case "FULFILLMENT_FULFILLED_ITEMS":
@@ -128,10 +153,14 @@ const groupLabel = (key: TimelineDateGroupKey, isSoleGroup: boolean, intl: IntlS
 
 /** The details line under an event's title, or null when it has none. */
 export const getEventDetails = (
-  event: Pick<OrderEventFragment, "fulfilledItems" | "transactionReference" | "amount">,
+  event: Pick<OrderEventFragment, "fulfilledItems" | "transactionReference" | "amount" | "lines">,
   intl: IntlShape,
   currency: string,
 ): string | null => {
+  // The lines an ADDED_PRODUCTS / REMOVED_PRODUCTS event names (Saleor's ExtendedTimelineEvent).
+  if (event.lines && event.lines.length > 0) {
+    return event.lines.map((line) => `${line.quantity ?? 0} × ${line.itemName ?? ""}`).join(", ");
+  }
   if (event.fulfilledItems && event.fulfilledItems.length > 0) {
     return event.fulfilledItems
       .map((item) => {

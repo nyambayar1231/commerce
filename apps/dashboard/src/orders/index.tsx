@@ -2,7 +2,7 @@
 // See THIRD_PARTY_LICENSES.md
 // The orders section's routes (Saleor's OrderSection), mounted at /orders/*: the list and the
 // order detail page with its Fulfill page, and the drafts list (M13.5) with each draft at
-// /orders/drafts/:id. The draft page arrives in M13.6; until then a draft opens on the order page.
+// /orders/drafts/:id (OrderDetails renders the draft page for a draft, as Saleor).
 import { Route, Routes } from "react-router";
 
 import { NotFound } from "../NotFound";

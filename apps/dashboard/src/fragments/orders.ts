@@ -127,6 +127,10 @@ export const orderEventFragment = gql`
     type
     amount
     transactionReference
+    lines {
+      itemName
+      quantity
+    }
     fulfilledItems {
       id
       quantity

@@ -15,6 +15,10 @@
     "context": "aria label for grid view button",
     "string": "Хавтан харагдац"
   },
+  "+HuipK": {
+    "context": "variant sku",
+    "string": "SKU {sku}"
+  },
   "+LyCI8": {
     "context": "detail page top bar, settings menu button tooltip",
     "string": "Бусад үйлдэл"
@@ -120,6 +124,9 @@
     "context": "button",
     "string": "Бүх захиалгыг харах"
   },
+  "32dfzI": {
+    "string": "Үнэ"
+  },
   "3C3Nj5": {
     "context": "button",
     "string": "Хувилбар нэмэх"
@@ -156,6 +163,10 @@
   "4WCH+l": {
     "context": "notifications region label for screen readers",
     "string": "Мэдэгдлүүд"
+  },
+  "4Z14xW": {
+    "context": "button",
+    "string": "Дуусгах"
   },
   "4fJ17F": {
     "context": "Charge in progress transaction amount, data display header",
@@ -213,6 +224,10 @@
   "6AMFki": {
     "context": "product name",
     "string": "Нэр"
+  },
+  "6GTAm2": {
+    "context": "order history message",
+    "string": "Захиалгаас бүтээгдэхүүн хасагдлаа"
   },
   "6Jgwpc": {
     "string": "Төлбөр хүлээн аваагүй"
@@ -305,6 +320,9 @@
     "context": "Product availability status when not visible in a channel",
     "string": "Нуугдсан"
   },
+  "9OtpHt": {
+    "string": "Захиалгын мөр устгагдлаа"
+  },
   "9RvXNg": {
     "context": "section header",
     "string": "Медиагийн мэдээлэл"
@@ -381,6 +399,10 @@
   },
   "BvGp1I": {
     "string": "хооронд"
+  },
+  "C50ahv": {
+    "context": "button",
+    "string": "Бүтээгдэхүүн нэмэх"
   },
   "CJpx4E": {
     "context": "page header",
@@ -474,6 +496,9 @@
   "FiO/W/": {
     "string": "Ангиллуудыг устгах"
   },
+  "Fn3bE0": {
+    "string": "Захиалгын мөр шинэчлэгдлээ"
+  },
   "FopBSj": {
     "context": "error message",
     "string": "Нэвтрэх нэр эсвэл нууц үг буруу байна. Дахин оролдоно уу."
@@ -517,11 +542,21 @@
     "context": "order summary, taxes are included in the prices",
     "string": "(багтсан)"
   },
+  "HlCkMT": {
+    "string": "Захиалгын мөр нэмэгдлээ"
+  },
   "HvJPcU": {
     "string": "Ангилал устгагдлаа"
   },
+  "Hwp65F": {
+    "string": "Ноорог захиалга баталгаажлаа"
+  },
   "I06jIl": {
     "string": "Анхаар: зарим хэлний орчуулга бүрэн биш байж болох бөгөөд орчуулаагүй хэсэг англиар харагдана."
+  },
+  "IFWHn0": {
+    "context": "error message",
+    "string": "Төлбөрийн хаяг оруулаагүй байна"
   },
   "IH47ID": {
     "string": "Шинэ хувилбар нэмэхийн тулд дээрх товчийг ашиглана уу"
@@ -611,6 +646,9 @@
   "L8seEc": {
     "string": "Дүн"
   },
+  "LKD6fB": {
+    "string": "Бүтээгдэхүүнийг хасах"
+  },
   "LQg8/p": {
     "context": "customer detail cogs menu, opens the delete-confirmation dialog",
     "string": "Хэрэглэгчийг устгах"
@@ -689,6 +727,10 @@
   },
   "OK5+Fh": {
     "string": "Хувилбар"
+  },
+  "OKGd/k": {
+    "context": "order history message",
+    "string": "Ноорог захиалгаас захиалга үүслээ"
   },
   "Oe62bR": {
     "context": "product availability",
@@ -774,6 +816,9 @@
     "context": "error message",
     "string": "Түр хүлээгээд дахин оролдоно уу."
   },
+  "S2xLxV": {
+    "string": "Бүтээгдэхүүний нэрээр хайх..."
+  },
   "SDgGcU": {
     "context": "Button to manually mark order as paid without actual payment",
     "string": "Төлөгдсөнөөр тэмдэглэх"
@@ -822,6 +867,9 @@
     "context": "orders section name",
     "string": "Захиалгууд"
   },
+  "Taa5V7": {
+    "string": "Зөвхөн захиалгын сувагт байгаа бүтээгдэхүүнийг нэмэх боломжтой"
+  },
   "TjGYna": {
     "context": "product inventory, checkbox",
     "string": "Нөөцийг хянах"
@@ -853,6 +901,10 @@
     "context": "printed order",
     "string": "Захиалсан огноо: {date}"
   },
+  "VEE4gD": {
+    "context": "error message",
+    "string": "Хүргэлтийн арга сонгосон хүргэлтийн хаягт тохирохгүй байна"
+  },
   "VEext+": {
     "string": "Та энэ зургийг устгахдаа итгэлтэй байна уу?"
   },
@@ -875,6 +927,10 @@
   "WVbUh7": {
     "context": "printed order",
     "string": "Төлөв: {status}"
+  },
+  "Wlc67M": {
+    "context": "error message",
+    "string": "Хүргэлтийн хаяггүй захиалгад хүргэлтийн арга сонгох боломжгүй"
   },
   "Wr5UOV": {
     "context": "error message",
@@ -921,6 +977,10 @@
     "context": "Cancel in progress transaction amount, data display header",
     "string": "Цуцлалт хүлээгдэж буй"
   },
+  "Yk0avO": {
+    "context": "dialog header",
+    "string": "Ноорог захиалга устгах"
+  },
   "YmHxaH": {
     "context": "button and tooltip, restores the full main nav from the icon rail",
     "string": "Цэсийг дэлгэх"
@@ -962,6 +1022,10 @@
   },
   "aHIrs/": {
     "string": "Шүүлтүүрийн өгөгдлийг ачаалж чадсангүй. Хуудсыг дахин ачаалж оролдоно уу."
+  },
+  "aHasbu": {
+    "context": "dialog content",
+    "string": "<b>{orderNumber}</b> дугаартай ноорог захиалгыг устгахдаа итгэлтэй байна уу?"
   },
   "aRvO6i": {
     "context": "button",
@@ -1165,6 +1229,10 @@
   "hVPucN": {
     "string": "Цайвар горим"
   },
+  "hWO1SD": {
+    "context": "order history message",
+    "string": "Ноорог захиалга үүслээ"
+  },
   "hkENym": {
     "string": "Харилцагч"
   },
@@ -1243,6 +1311,9 @@
     "context": "printed order line",
     "string": "Нэгжийн үнэ"
   },
+  "lVwmf5": {
+    "string": "Нийт"
+  },
   "lxP7Rb": {
     "context": "warning notification when some product image uploads in a batch failed",
     "string": "{success, plural, one {# зураг} other {# зураг}} нэмэгдлээ, {failed, plural, one {# амжилтгүй} other {# амжилтгүй}}"
@@ -1269,9 +1340,16 @@
     "context": "customer overview, refunded row label in value tooltip",
     "string": "Буцаан олгосон"
   },
+  "mWYRZY": {
+    "context": "order history message",
+    "string": "Захиалгад бүтээгдэхүүн нэмэгдлээ"
+  },
   "n8tEIV": {
     "context": "customer overview, last login tooltip",
     "string": "Энэ харилцагч өөрийн бүртгэлд хамгийн сүүлд нэвтэрсэн хугацаа."
+  },
+  "nEWp+k": {
+    "string": "Тоо ширхэг"
   },
   "nG76Ql": {
     "context": "TopNav destination link tooltip to categories list",
@@ -1382,6 +1460,10 @@
     "context": "transaction event type, amount was authorized, but not captured",
     "string": "Зөвшөөрөл"
   },
+  "r+8q4B": {
+    "context": "error message",
+    "string": "Зөвхөн ноорог захиалгыг засах боломжтой"
+  },
   "rGj6RR": {
     "context": "order header date, older than yesterday",
     "string": "{date}-нд захиалсан"
@@ -1411,6 +1493,9 @@
   "rwOx2s": {
     "string": "Доорх талбарт гүйлгээний лавлагааг оруулна уу:"
   },
+  "s6oAC+": {
+    "string": "Бүтээгдэхүүн хайх"
+  },
   "s81JoX": {
     "context": "TopNav destination link tooltip to customers list",
     "string": "Бүх харилцагч"
@@ -1429,6 +1514,9 @@
   },
   "sfEbeB": {
     "string": "Та энэ захиалгыг төлөгдсөнөөр тэмдэглэх гэж байна."
+  },
+  "shmSDX": {
+    "string": "Энэ захиалгын сувагт нэмэх бүтээгдэхүүн алга."
   },
   "suAexp": {
     "context": "aria label for list view button",
@@ -1468,6 +1556,10 @@
   },
   "uOC/uQ": {
     "string": "Зураг шинэчлэгдлээ"
+  },
+  "uU1mx5": {
+    "context": "button",
+    "string": "Ноорогийг үлдээх"
   },
   "ufmuTp": {
     "context": "button",
@@ -1511,6 +1603,10 @@
   "vzgZ3U": {
     "context": "card header",
     "string": "Нэвтрэх"
+  },
+  "wL850U": {
+    "context": "draft order lines, section header",
+    "string": "Захиалгын мөрүүд"
   },
   "wTHjt3": {
     "string": "Захиалга хайх..."
@@ -1586,6 +1682,10 @@
   "ySqncG": {
     "context": "ExitFormPrompt keep editing button",
     "string": "Үргэлжлүүлэн засах"
+  },
+  "ychKsb": {
+    "context": "error message",
+    "string": "Энэ захиалгад хүргэлтийн арга сонгох шаардлагатай"
   },
   "yn7Stx": {
     "context": "date group header",

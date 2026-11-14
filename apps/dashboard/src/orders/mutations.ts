@@ -129,3 +129,79 @@ export const orderDraftCreate = gql`
   }
   ${orderErrorFragment}
 `;
+
+// Saleor's draft order mutations (src/orders/mutations.ts): each returns the order with the
+// detail page's fields, so the page updates from Apollo's cache.
+export const orderDraftFinalize = gql`
+  mutation OrderDraftFinalize($id: ID!) {
+    draftOrderComplete(id: $id) {
+      errors {
+        ...OrderError
+      }
+      order {
+        ...OrderDetails
+      }
+    }
+  }
+  ${orderErrorFragment}
+  ${orderDetailsFragments}
+`;
+
+export const orderDraftCancel = gql`
+  mutation OrderDraftCancel($id: ID!) {
+    draftOrderDelete(id: $id) {
+      errors {
+        ...OrderError
+      }
+      order {
+        id
+      }
+    }
+  }
+  ${orderErrorFragment}
+`;
+
+export const orderLinesAdd = gql`
+  mutation OrderLinesAdd($id: ID!, $input: [OrderLineCreateInput!]!) {
+    orderLinesCreate(id: $id, input: $input) {
+      errors {
+        ...OrderError
+      }
+      order {
+        ...OrderDetails
+      }
+    }
+  }
+  ${orderErrorFragment}
+  ${orderDetailsFragments}
+`;
+
+export const orderLineUpdate = gql`
+  mutation OrderLineUpdate($id: ID!, $input: OrderLineInput!) {
+    orderLineUpdate(id: $id, input: $input) {
+      errors {
+        ...OrderError
+      }
+      order {
+        ...OrderDetails
+      }
+    }
+  }
+  ${orderErrorFragment}
+  ${orderDetailsFragments}
+`;
+
+export const orderLineDelete = gql`
+  mutation OrderLineDelete($id: ID!) {
+    orderLineDelete(id: $id) {
+      errors {
+        ...OrderError
+      }
+      order {
+        ...OrderDetails
+      }
+    }
+  }
+  ${orderErrorFragment}
+  ${orderDetailsFragments}
+`;
