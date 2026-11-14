@@ -363,3 +363,301 @@ describe("draft orders", () => {
     ).rejects.toMatchObject({ cause: { constraint_name: "order_complete_unless_draft" } });
   });
 });
+
+const LINES_CREATE = `mutation($id: ID!, $input: [OrderLineCreateInput!]!) {
+  orderLinesCreate(id: $id, input: $input) {
+    order { subtotal { gross { amount } } total { gross { amount } } lines { id quantity } }
+    orderLines { id productName variantName productSku quantity unitPrice { gross { amount } } totalPrice { gross { amount } } }
+    errors { field code message variants }
+  }
+}`;
+const LINE_UPDATE = `mutation($id: ID!, $quantity: Int!) {
+  orderLineUpdate(id: $id, input: { quantity: $quantity }) {
+    order { total { gross { amount } } }
+    orderLine { id quantity unitPrice { gross { amount } } totalPrice { gross { amount } } }
+    errors { field code message }
+  }
+}`;
+const LINE_DELETE = `mutation($id: ID!) {
+  orderLineDelete(id: $id) {
+    order { total { gross { amount } } lines { id } }
+    orderLine { id productName }
+    errors { field code message }
+  }
+}`;
+const HISTORY = `query($id: ID!) {
+  order(id: $id) { events { type lines { itemName quantity orderLine { id } } } }
+}`;
+
+type Line = {
+  id: string;
+  productName: string;
+  variantName: string;
+  productSku: string | null;
+  quantity: number;
+  unitPrice: { gross: { amount: number } };
+  totalPrice: { gross: { amount: number } };
+};
+type LinesPayload = {
+  order: {
+    subtotal: { gross: { amount: number } };
+    total: { gross: { amount: number } };
+    lines: { id: string; quantity: number }[];
+  } | null;
+  orderLines: Line[] | null;
+  errors: { field: string | null; code: string; message: string; variants: string[] | null }[];
+};
+
+/** A product with one variant at `price` MNT; returns the variant's global ID and row id. */
+async function variant(name: string, price: number, published = true) {
+  const [product] = await db
+    .insert(schema.product)
+    .values({ name, slug: `p-${crypto.randomUUID()}`, isPublished: published })
+    .returning();
+  const [row] = await db
+    .insert(schema.productVariant)
+    .values({
+      productId: product?.id ?? "",
+      name: "M",
+      sku: `${name}-SKU`,
+      priceAmount: price,
+      currency: "MNT",
+    })
+    .returning();
+  if (!row) throw new Error("no variant");
+  return { id: toGlobalId("ProductVariant", row.id), rowId: row.id };
+}
+
+describe("draft order lines", () => {
+  it("need MANAGE_ORDERS", async () => {
+    const other = await createStaff(db, ["MANAGE_PRODUCTS"]);
+    const staff = await createStaff(db, ["MANAGE_ORDERS"]);
+    const draft = await createDraft(staff.token);
+    expectPermissionDenied(
+      await client.gql(LINES_CREATE, { id: draft.id, input: [] }, other.token),
+      ["MANAGE_ORDERS"],
+    );
+  });
+
+  it("adds lines, merging a variant onto its line, and records the products added", async () => {
+    const staff = await createStaff(db, ["MANAGE_ORDERS"]);
+    const shirt = await variant("Shirt", 1000);
+    const hat = await variant("Hat", 300);
+    const draft = await createDraft(staff.token);
+
+    const first = await gql<{ orderLinesCreate: LinesPayload }>(
+      LINES_CREATE,
+      {
+        id: draft.id,
+        input: [
+          { variantId: shirt.id, quantity: 1 },
+          { variantId: hat.id, quantity: 2 },
+          { variantId: shirt.id, quantity: 2 },
+        ],
+      },
+      staff.token,
+    );
+    expect(first.orderLinesCreate.errors).toEqual([]);
+    expect(first.orderLinesCreate.orderLines).toEqual([
+      expect.objectContaining({
+        productName: "Shirt",
+        variantName: "M",
+        productSku: "Shirt-SKU",
+        quantity: 3,
+        unitPrice: { gross: { amount: 1000 } },
+        totalPrice: { gross: { amount: 3000 } },
+      }),
+      expect.objectContaining({
+        productName: "Hat",
+        quantity: 2,
+        totalPrice: { gross: { amount: 600 } },
+      }),
+    ]);
+    expect(first.orderLinesCreate.order).toMatchObject({
+      subtotal: { gross: { amount: 3600 } },
+      total: { gross: { amount: 3600 } },
+    });
+
+    // The shirt again adds to its line; forceNewLine makes a second one.
+    const second = await gql<{ orderLinesCreate: LinesPayload }>(
+      LINES_CREATE,
+      {
+        id: draft.id,
+        input: [
+          { variantId: shirt.id, quantity: 1 },
+          { variantId: hat.id, quantity: 1, forceNewLine: true },
+        ],
+      },
+      staff.token,
+    );
+    expect(second.orderLinesCreate.order?.lines.map((line) => line.quantity).sort()).toEqual([
+      1, 2, 4,
+    ]);
+    expect(second.orderLinesCreate.order?.total).toEqual({ gross: { amount: 4900 } });
+
+    const history = await gql<{
+      order: { events: { type: string; lines: { itemName: string; quantity: number }[] | null }[] };
+    }>(HISTORY, { id: draft.id }, staff.token);
+    expect(history.order.events.map((event) => [event.type, event.lines])).toEqual([
+      ["DRAFT_CREATED", null],
+      [
+        "ADDED_PRODUCTS",
+        [
+          { itemName: "Shirt (M)", quantity: 3, orderLine: expect.anything() },
+          { itemName: "Hat (M)", quantity: 2, orderLine: expect.anything() },
+        ],
+      ],
+      [
+        "ADDED_PRODUCTS",
+        [
+          { itemName: "Shirt (M)", quantity: 1, orderLine: expect.anything() },
+          { itemName: "Hat (M)", quantity: 1, orderLine: expect.anything() },
+        ],
+      ],
+    ]);
+  });
+
+  it("changes and removes lines at the catalog's current price", async () => {
+    const staff = await createStaff(db, ["MANAGE_ORDERS"]);
+    const shirt = await variant("Shirt", 1000);
+    const draft = await createDraft(staff.token);
+    const added = await gql<{ orderLinesCreate: LinesPayload }>(
+      LINES_CREATE,
+      { id: draft.id, input: [{ variantId: shirt.id, quantity: 2 }] },
+      staff.token,
+    );
+    const lineId = added.orderLinesCreate.orderLines?.[0]?.id ?? "";
+
+    // The catalog price changes; the draft follows it on its next change (PLAN M13 decision 2).
+    await db.update(schema.productVariant).set({ priceAmount: 1500 });
+    const updated = await gql<{ orderLineUpdate: LinesPayload & { orderLine: Line } }>(
+      LINE_UPDATE,
+      { id: lineId, quantity: 1 },
+      staff.token,
+    );
+    expect(updated.orderLineUpdate).toMatchObject({
+      errors: [],
+      order: { total: { gross: { amount: 1500 } } },
+      orderLine: { quantity: 1, unitPrice: { gross: { amount: 1500 } } },
+    });
+
+    const deleted = await gql<{ orderLineDelete: LinesPayload & { orderLine: Line } }>(
+      LINE_DELETE,
+      { id: lineId },
+      staff.token,
+    );
+    expect(deleted.orderLineDelete).toMatchObject({
+      errors: [],
+      order: { total: { gross: { amount: 0 } }, lines: [] },
+      orderLine: { id: lineId, productName: "Shirt" },
+    });
+
+    const history = await gql<{
+      order: {
+        events: {
+          type: string;
+          lines: { itemName: string; quantity: number; orderLine: unknown }[] | null;
+        }[];
+      };
+    }>(HISTORY, { id: draft.id }, staff.token);
+    expect(history.order.events.slice(2)).toEqual([
+      {
+        type: "REMOVED_PRODUCTS",
+        lines: [{ itemName: "Shirt (M)", quantity: 1, orderLine: null }],
+      },
+      {
+        type: "REMOVED_PRODUCTS",
+        lines: [{ itemName: "Shirt (M)", quantity: 1, orderLine: null }],
+      },
+    ]);
+  });
+
+  it("returns Saleor's errors", async () => {
+    const staff = await createStaff(db, ["MANAGE_ORDERS"]);
+    const shirt = await variant("Shirt", 1000);
+    const hidden = await variant("Hidden", 1000, false);
+    const draft = await createDraft(staff.token);
+    const add = async (input: object[], id = draft.id) =>
+      (await gql<{ orderLinesCreate: LinesPayload }>(LINES_CREATE, { id, input }, staff.token))
+        .orderLinesCreate.errors;
+
+    expect(await add([{ variantId: shirt.id, quantity: 0 }])).toEqual([
+      {
+        field: "quantity",
+        code: "ZERO_QUANTITY",
+        message: "Variants quantity must be greater than 0.",
+        variants: [shirt.id],
+      },
+    ]);
+    expect(await add([{ variantId: hidden.id, quantity: 1 }])).toEqual([
+      {
+        field: "lines",
+        code: "PRODUCT_NOT_PUBLISHED",
+        message:
+          "Can't add product variant that are not published in the channel associated with this draft order.",
+        variants: [hidden.id],
+      },
+    ]);
+    const unknown = toGlobalId("ProductVariant", crypto.randomUUID());
+    expect(await add([{ variantId: unknown, quantity: 1 }])).toEqual([
+      {
+        field: "variantId",
+        code: "NOT_FOUND",
+        message: "Product variant does not exist.",
+        variants: [unknown],
+      },
+    ]);
+    expect(await add([{ variantId: shirt.id, quantity: 10_001 }])).toEqual([
+      {
+        field: "quantity",
+        code: "INVALID_QUANTITY",
+        message: "A line can hold at most 10000 items.",
+        variants: null,
+      },
+    ]);
+
+    const added = await gql<{ orderLinesCreate: LinesPayload }>(
+      LINES_CREATE,
+      { id: draft.id, input: [{ variantId: shirt.id, quantity: 1 }] },
+      staff.token,
+    );
+    const lineId = added.orderLinesCreate.orderLines?.[0]?.id ?? "";
+    const update = await gql<{ orderLineUpdate: LinesPayload }>(
+      LINE_UPDATE,
+      { id: lineId, quantity: 0 },
+      staff.token,
+    );
+    expect(update.orderLineUpdate.errors).toEqual([
+      { field: "quantity", code: "ZERO_QUANTITY", message: "Ensure this value is greater than 0." },
+    ]);
+
+    // A placed order's lines can't be edited.
+    await db.update(schema.order).set({
+      status: "UNFULFILLED",
+      userEmail: "a@example.com",
+      billingAddress: address,
+      shippingAddress: address,
+      shippingMethodName: "Standard",
+    });
+    const notEditable = {
+      field: "id",
+      code: "NOT_EDITABLE",
+      message: "Only draft and unconfirmed orders can be edited.",
+    };
+    expect(await add([{ variantId: shirt.id, quantity: 1 }])).toEqual([
+      { ...notEditable, variants: null },
+    ]);
+    const updatePlaced = await gql<{ orderLineUpdate: LinesPayload }>(
+      LINE_UPDATE,
+      { id: lineId, quantity: 2 },
+      staff.token,
+    );
+    expect(updatePlaced.orderLineUpdate.errors).toEqual([notEditable]);
+    const deletePlaced = await gql<{ orderLineDelete: LinesPayload }>(
+      LINE_DELETE,
+      { id: lineId },
+      staff.token,
+    );
+    expect(deletePlaced.orderLineDelete.errors).toEqual([notEditable]);
+  });
+});

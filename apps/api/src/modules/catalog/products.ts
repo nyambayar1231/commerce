@@ -12,6 +12,17 @@ import { generateUniqueSlug, slugTaken } from "./slug.ts";
 // publication lives on the product and the price on each variant (ADR-0013).
 
 export type ProductRow = typeof schema.product.$inferSelect;
+
+/**
+ * Catalog's anonymous visibility rule (productGraphql.ts `isVisible`): published, and not
+ * scheduled for later. Checkout and draft orders sell only such products.
+ */
+export function isProductPublished(product: ProductRow): boolean {
+  return (
+    product.isPublished &&
+    (product.publishedAt === null || product.publishedAt.getTime() <= Date.now())
+  );
+}
 export type ProductVariantRow = typeof schema.productVariant.$inferSelect;
 
 /**

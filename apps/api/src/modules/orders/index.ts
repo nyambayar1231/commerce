@@ -6,7 +6,14 @@ export {
   orderConfirmationQueue,
   renderOrderConfirmation,
 } from "./confirmationEmail.ts";
-
+export type { DraftLineInput, DraftLineResult, DraftLinesResult } from "./draftLines.ts";
+export {
+  addDraftOrderLines,
+  deleteDraftOrderLine,
+  MAX_DRAFT_LINE_QUANTITY,
+  refreshDraftLines,
+  updateDraftOrderLine,
+} from "./draftLines.ts";
 export type {
   DraftCustomer,
   DraftOrderInput,

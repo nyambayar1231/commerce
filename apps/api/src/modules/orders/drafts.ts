@@ -100,13 +100,14 @@ export async function saveDraftTotals(tx: Executor, orderId: string): Promise<Or
 export async function lockDraftOrder(
   tx: Executor,
   orderId: string,
-  notDraftMessage: string = DRAFT_MESSAGES.notDraft,
+  notDraft: Pick<OrderError, "code" | "message"> = {
+    code: "INVALID",
+    message: DRAFT_MESSAGES.notDraft,
+  },
 ): Promise<DraftOrderResult> {
   const order = await lockOrder(tx, orderId);
   if (!order) return notFound();
-  if (order.status !== "DRAFT") {
-    return { ok: false, errors: [{ field: "id", code: "INVALID", message: notDraftMessage }] };
-  }
+  if (order.status !== "DRAFT") return { ok: false, errors: [{ field: "id", ...notDraft }] };
   return { ok: true, order };
 }
 
@@ -173,7 +174,10 @@ export async function deleteDraftOrder(
   input: { orderId: string },
 ): Promise<DraftOrderResult> {
   return db.transaction(async (tx) => {
-    const locked = await lockDraftOrder(tx, input.orderId, DRAFT_MESSAGES.notDraftDelete);
+    const locked = await lockDraftOrder(tx, input.orderId, {
+      code: "INVALID",
+      message: DRAFT_MESSAGES.notDraftDelete,
+    });
     if (!locked.ok) return locked;
     const transactions = await lockOrderTransactions(tx, input.orderId);
     if (transactions.length > 0) {

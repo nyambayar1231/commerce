@@ -1375,6 +1375,42 @@ type Mutation {
   ): OrderFulfill
 
   """
+  Deletes an order line from a draft order.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  orderLineDelete(
+    """ID of the order line to delete."""
+    id: ID!
+  ): OrderLineDelete
+
+  """
+  Updates an order line of a draft order.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  orderLineUpdate(
+    """ID of the order line to update."""
+    id: ID!
+
+    """Fields required to update an order line."""
+    input: OrderLineInput!
+  ): OrderLineUpdate
+
+  """
+  Create order lines for a draft order.
+  
+  Requires one of the following permissions: MANAGE_ORDERS.
+  """
+  orderLinesCreate(
+    """ID of the order to add the lines to."""
+    id: ID!
+
+    """Fields required to add order lines."""
+    input: [OrderLineCreateInput!]!
+  ): OrderLinesCreate
+
+  """
   Mark order as manually paid.
   
   Requires one of the following permissions: MANAGE_ORDERS.
@@ -1840,6 +1876,9 @@ type OrderError {
   """List of order line IDs that cause the error."""
   orderLines: [ID!]
 
+  """List of product variants that are associated with the error"""
+  variants: [ID!]
+
   """Warehouse ID which causes the error."""
   warehouse: ID
 }
@@ -1852,7 +1891,9 @@ enum OrderErrorCode {
   INSUFFICIENT_STOCK
   INVALID
   INVALID_QUANTITY
+  NOT_EDITABLE
   NOT_FOUND
+  PRODUCT_NOT_PUBLISHED
   REQUIRED
   SHIPPING_METHOD_NOT_APPLICABLE
   TRANSACTION_ERROR
@@ -1873,6 +1914,9 @@ type OrderEvent implements Node {
   """The ID of the object."""
   id: ID!
 
+  """The concerned lines."""
+  lines: [OrderEventOrderLineObject!]
+
   """The transaction reference of captured payment."""
   transactionReference: String
 
@@ -1885,6 +1929,17 @@ type OrderEvent implements Node {
   Requires one of the following permissions: MANAGE_ORDERS.
   """
   user: User
+}
+
+type OrderEventOrderLineObject {
+  """The variant name."""
+  itemName: String
+
+  """The order line (null once it was removed)."""
+  orderLine: OrderLine
+
+  """The variant quantity."""
+  quantity: Int
 }
 
 enum OrderEventsEnum {
@@ -1963,6 +2018,54 @@ type OrderLine implements Node {
 
   """Name of the variant of product in order line."""
   variantName: String!
+}
+
+input OrderLineCreateInput {
+  """
+  Flag that allow force splitting the same variant into multiple lines by skipping the matching logic.
+  """
+  forceNewLine: Boolean = false
+
+  """Number of variant items ordered."""
+  quantity: Int!
+
+  """Product variant ID."""
+  variantId: ID!
+}
+
+type OrderLineDelete {
+  errors: [OrderError!]!
+
+  """A related order."""
+  order: Order
+
+  """An order line that was deleted."""
+  orderLine: OrderLine
+}
+
+input OrderLineInput {
+  """Number of variant items ordered."""
+  quantity: Int!
+}
+
+type OrderLineUpdate {
+  errors: [OrderError!]!
+
+  """A related order."""
+  order: Order
+
+  """An updated order line."""
+  orderLine: OrderLine
+}
+
+type OrderLinesCreate {
+  errors: [OrderError!]!
+
+  """Related order."""
+  order: Order
+
+  """List of added order lines."""
+  orderLines: [OrderLine!]
 }
 
 type OrderMarkAsPaid {

@@ -4,6 +4,7 @@ import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
   getProduct,
   getProductVariantsByIds,
+  isProductPublished,
   type ProductRow,
   type ProductVariantRow,
 } from "../catalog/index.ts";
@@ -176,13 +177,8 @@ async function loadProducts(
   return new Map(rows.filter((row): row is ProductRow => row !== null).map((row) => [row.id, row]));
 }
 
-/** Catalog's anonymous visibility rule (catalog/productGraphql.ts `isVisible`). */
-export function isPublished(product: ProductRow): boolean {
-  return (
-    product.isPublished &&
-    (product.publishedAt === null || product.publishedAt.getTime() <= Date.now())
-  );
-}
+/** Catalog's anonymous visibility rule (catalog's isProductPublished). */
+export const isPublished = isProductPublished;
 
 /** Saleor's `available_quantity_for_stock`, for the variants that track inventory. */
 async function loadAvailableQuantities(

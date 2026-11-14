@@ -39,7 +39,9 @@ export type OrderErrorCode =
   | "CANNOT_CANCEL_ORDER"
   | "TRANSACTION_ERROR"
   | "REQUIRED"
-  | "SHIPPING_METHOD_NOT_APPLICABLE";
+  | "SHIPPING_METHOD_NOT_APPLICABLE"
+  | "NOT_EDITABLE"
+  | "PRODUCT_NOT_PUBLISHED";
 
 /** Saleor's OrderError, with primary keys (the GraphQL layer turns them into global IDs). */
 export type OrderError = {
@@ -50,6 +52,8 @@ export type OrderError = {
   warehouse?: string;
   /** Which address an address error belongs to (draft orders). */
   addressType?: "SHIPPING" | "BILLING";
+  /** The product variants that cause the error (draft order lines). */
+  variants?: string[];
 };
 
 const error = (

@@ -383,7 +383,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 |---|---|---|
 | M13.1 | Print: the order page's "Print" action and a print-only order view (decision 4) | Done |
 | M13.2 | Draft API: migration (`DRAFT`, nullable fields + CHECK, events `DRAFT_CREATED`, `PLACED_FROM_DRAFT`, `ADDED_PRODUCTS`, `REMOVED_PRODUCTS`), `draftOrderCreate`, `draftOrderUpdate` (customer/email, addresses, shipping method), `draftOrderDelete`, `draftOrders`; `orders` excludes drafts; tests | Done |
-| M13.3 | Draft lines API: `orderLinesCreate`, `orderLineUpdate`, `orderLineDelete` (drafts only), totals recalculated; tests | Approved |
+| M13.3 | Draft lines API: `orderLinesCreate`, `orderLineUpdate`, `orderLineDelete` (drafts only), totals recalculated; tests | Done |
 | M13.4 | `draftOrderComplete`: Saleor's checks (lines, email, addresses, shipping), stock reserved, prices frozen, `UNFULFILLED`; tests | Approved |
 | M13.5 | Dashboard: the Drafts list (`/orders/drafts`, menu item) and "Create order" | Approved |
 | M13.6 | Dashboard: the draft page (lines + add products dialog, customer and addresses dialogs, shipping method dialog, Finalize, delete); Mongolian messages | Approved |
@@ -398,6 +398,12 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   `CANNOT_CANCEL_ORDER` (Saleor's can_cancel); a draft's customer can't read it through
   `order(id)` or `me.orders`; `OrderError` gained Saleor's `addressType`; `Order.shippingMethod`
   is null for orders placed from a checkout (they keep only the name and price).
+- **M13.3, awaiting the owner's OK:** `draftOrderCreate` takes no `lines` (Saleor's dashboard
+  creates an empty draft, then adds lines); no line `price` overrides; a line holds at most
+  10,000 items (`INVALID_QUANTITY`, ours: keeps totals safe integers); the line mutations edit
+  drafts only (`NOT_EDITABLE`, Saleor also edits unconfirmed orders); every line change re-reads
+  all of the draft's line prices and names from the catalog. Catalog now owns the "published"
+  rule (`isProductPublished`), which checkout reuses.
 - **Out of scope:** discounts, draft-order emails/invoices, channels, editing a finalized order's
   lines (Saleor's unconfirmed orders), bulk draft delete.
 

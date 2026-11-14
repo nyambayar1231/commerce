@@ -77,6 +77,7 @@ export {
   getProductVariant,
   getProductVariants,
   getProductVariantsByIds,
+  isProductPublished,
   lockProductVariant,
   lockVariantsForKeyShare,
   ProductNotFoundError,

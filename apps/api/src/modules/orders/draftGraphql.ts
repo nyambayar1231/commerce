@@ -10,20 +10,33 @@ import {
 } from "../checkout/index.ts";
 import { AddressInput } from "../checkout/shippingGraphql.ts";
 import { getActiveUserIdByEmail, getUsersByIds } from "../identity/index.ts";
+import { OrderEventType, OrderLineType, OrderType } from "./graphql.ts";
 import {
+  addDraftOrderLines,
   createDraftOrder,
   type DraftOrderInput,
   deleteDraftOrder,
+  deleteDraftOrderLine,
+  getOrderLinesByIds,
   type OrderError,
+  type OrderLineRow,
   updateDraftOrder,
+  updateDraftOrderLine,
 } from "./index.ts";
-import { type OrderPayloadData, orderPayload, toOrderError } from "./lifecycleGraphql.ts";
+import {
+  OrderErrorType,
+  type OrderPayloadData,
+  orderPayload,
+  toOrderError,
+} from "./lifecycleGraphql.ts";
 
 // Saleor's draftOrderCreate, draftOrderUpdate and draftOrderDelete
 // (saleor/graphql/order/mutations/draft_order_*.py) for PLAN M13.2. The GraphQL layer composes the
 // modules (ARCHITECTURE §2 rule 2): the checkout module cleans the addresses and owns the shipping
-// methods, identity resolves the customer, and the orders module stores the result. Left out:
-// lines on create (orderLinesCreate, M13.3), channels, vouchers, discounts, customer notes,
+// methods, identity resolves the customer, and the orders module stores the result. The lines
+// mutations (M13.3) edit drafts only (Saleor also edits unconfirmed orders). Left out: `lines` on
+// draftOrderCreate (Saleor's dashboard creates an empty draft and adds lines), `price` overrides,
+// channels, vouchers, discounts, customer notes,
 // redirect URLs, metadata, `save*Address` and the language code.
 
 const MANAGE_ORDERS = "Requires one of the following permissions: MANAGE_ORDERS.";
@@ -36,7 +49,7 @@ const MESSAGES = {
 } as const;
 
 // Saleor's DraftOrderInput, without the fields listed above; DraftOrderCreateInput has the same
-// fields (it gains `lines` in M13.3).
+// fields (no `lines`, see above).
 const draftOrderInputType = (name: string) =>
   builder.inputType(name, {
     fields: (t) => ({
@@ -220,6 +233,197 @@ builder.mutationField("draftOrderDelete", (t) =>
       await requirePermission(ctx, "MANAGE_ORDERS");
       const result = await deleteDraftOrder(ctx.db, { orderId: fromGlobalId("Order", String(id)) });
       return result.ok ? { order: result.order, errors: [] } : failed(result.errors);
+    },
+  }),
+);
+
+// ── Lines (M13.3) ──────────────────────────────────────────────────────────────────────────────
+
+const OrderLineCreateInput = builder.inputType("OrderLineCreateInput", {
+  fields: (t) => ({
+    quantity: t.int({ required: true, description: "Number of variant items ordered." }),
+    variantId: t.id({ required: true, description: "Product variant ID." }),
+    forceNewLine: t.boolean({
+      defaultValue: false,
+      description:
+        "Flag that allow force splitting the same variant into multiple lines by skipping the " +
+        "matching logic.",
+    }),
+  }),
+});
+
+const OrderLineInput = builder.inputType("OrderLineInput", {
+  fields: (t) => ({
+    quantity: t.int({ required: true, description: "Number of variant items ordered." }),
+  }),
+});
+
+const OrderLinesCreatePayload = builder
+  .objectRef<OrderPayloadData & { orderLines: OrderLineRow[] | null }>("OrderLinesCreate")
+  .implement({
+    fields: (t) => ({
+      order: t.field({
+        type: OrderType,
+        nullable: true,
+        description: "Related order.",
+        resolve: (p) => p.order,
+      }),
+      orderLines: t.field({
+        type: [OrderLineType],
+        nullable: true,
+        description: "List of added order lines.",
+        resolve: (p) => p.orderLines,
+      }),
+      errors: t.field({ type: [OrderErrorType], resolve: (p) => p.errors }),
+    }),
+  });
+
+const orderLinePayload = (name: string, description: string) =>
+  builder.objectRef<OrderPayloadData & { orderLine: OrderLineRow | null }>(name).implement({
+    fields: (t) => ({
+      order: t.field({
+        type: OrderType,
+        nullable: true,
+        description: "A related order.",
+        resolve: (p) => p.order,
+      }),
+      orderLine: t.field({
+        type: OrderLineType,
+        nullable: true,
+        description,
+        resolve: (p) => p.orderLine,
+      }),
+      errors: t.field({ type: [OrderErrorType], resolve: (p) => p.errors }),
+    }),
+  });
+
+const OrderLineUpdatePayload = orderLinePayload("OrderLineUpdate", "An updated order line.");
+const OrderLineDeletePayload = orderLinePayload(
+  "OrderLineDelete",
+  "An order line that was deleted.",
+);
+
+const lineFailed = (errors: OrderError[]) => ({
+  order: null,
+  orderLine: null,
+  errors: errors.map(toOrderError),
+});
+
+builder.mutationField("orderLinesCreate", (t) =>
+  t.field({
+    type: OrderLinesCreatePayload,
+    nullable: true,
+    description: `Create order lines for a draft order.\n\n${MANAGE_ORDERS}`,
+    args: {
+      id: t.arg.id({ required: true, description: "ID of the order to add the lines to." }),
+      input: t.arg({
+        type: [OrderLineCreateInput],
+        required: true,
+        description: "Fields required to add order lines.",
+      }),
+    },
+    resolve: async (_parent, { id, input }, ctx) => {
+      await requirePermission(ctx, "MANAGE_ORDERS");
+      const result = await addDraftOrderLines(ctx.db, {
+        orderId: fromGlobalId("Order", String(id)),
+        userId: ctx.user?.id ?? null,
+        lines: input.map((line) => ({
+          variantId: fromGlobalId("ProductVariant", String(line.variantId)),
+          quantity: line.quantity,
+          forceNewLine: line.forceNewLine ?? false,
+        })),
+      });
+      ctx.orderLoaders.linesByOrderId.clearAll();
+      return result.ok
+        ? { order: result.order, orderLines: result.lines, errors: [] }
+        : { order: null, orderLines: null, errors: result.errors.map(toOrderError) };
+    },
+  }),
+);
+
+builder.mutationField("orderLineUpdate", (t) =>
+  t.field({
+    type: OrderLineUpdatePayload,
+    nullable: true,
+    description: `Updates an order line of a draft order.\n\n${MANAGE_ORDERS}`,
+    args: {
+      id: t.arg.id({ required: true, description: "ID of the order line to update." }),
+      input: t.arg({
+        type: OrderLineInput,
+        required: true,
+        description: "Fields required to update an order line.",
+      }),
+    },
+    resolve: async (_parent, { id, input }, ctx) => {
+      await requirePermission(ctx, "MANAGE_ORDERS");
+      const result = await updateDraftOrderLine(ctx.db, {
+        lineId: fromGlobalId("OrderLine", String(id)),
+        userId: ctx.user?.id ?? null,
+        quantity: input.quantity,
+      });
+      ctx.orderLoaders.linesByOrderId.clearAll();
+      return result.ok
+        ? { order: result.order, orderLine: result.line, errors: [] }
+        : lineFailed(result.errors);
+    },
+  }),
+);
+
+builder.mutationField("orderLineDelete", (t) =>
+  t.field({
+    type: OrderLineDeletePayload,
+    nullable: true,
+    description: `Deletes an order line from a draft order.\n\n${MANAGE_ORDERS}`,
+    args: { id: t.arg.id({ required: true, description: "ID of the order line to delete." }) },
+    resolve: async (_parent, { id }, ctx) => {
+      await requirePermission(ctx, "MANAGE_ORDERS");
+      const result = await deleteDraftOrderLine(ctx.db, {
+        lineId: fromGlobalId("OrderLine", String(id)),
+        userId: ctx.user?.id ?? null,
+      });
+      ctx.orderLoaders.linesByOrderId.clearAll();
+      return result.ok
+        ? { order: result.order, orderLine: result.line, errors: [] }
+        : lineFailed(result.errors);
+    },
+  }),
+);
+
+// Saleor's OrderEventOrderLineObject: the lines an ADDED_PRODUCTS / REMOVED_PRODUCTS event names.
+type EventLineData = { lineId: string; itemName: string; quantity: number };
+
+const OrderEventOrderLineObject = builder
+  .objectRef<EventLineData>("OrderEventOrderLineObject")
+  .implement({
+    fields: (t) => ({
+      quantity: t.exposeInt("quantity", { nullable: true, description: "The variant quantity." }),
+      itemName: t.exposeString("itemName", { nullable: true, description: "The variant name." }),
+      orderLine: t.field({
+        type: OrderLineType,
+        nullable: true,
+        description: "The order line (null once it was removed).",
+        resolve: async (line, _args, ctx) =>
+          (await getOrderLinesByIds(ctx.db, [line.lineId]))[0] ?? null,
+      }),
+    }),
+  });
+
+builder.objectField(OrderEventType, "lines", (t) =>
+  t.field({
+    type: [OrderEventOrderLineObject],
+    nullable: true,
+    description: "The concerned lines.",
+    resolve: (event) => {
+      const lines = (event.payload as { lines?: unknown } | null)?.lines;
+      if (!Array.isArray(lines)) return null;
+      return lines.filter(
+        (line): line is EventLineData =>
+          typeof line === "object" &&
+          line !== null &&
+          typeof (line as EventLineData).lineId === "string" &&
+          typeof (line as EventLineData).itemName === "string" &&
+          typeof (line as EventLineData).quantity === "number",
+      );
     },
   }),
 );

@@ -191,7 +191,9 @@ const OrderErrorCodeEnum = builder.enumType("OrderErrorCode", {
     "INSUFFICIENT_STOCK",
     "INVALID",
     "INVALID_QUANTITY",
+    "NOT_EDITABLE",
     "NOT_FOUND",
+    "PRODUCT_NOT_PUBLISHED",
     "REQUIRED",
     "SHIPPING_METHOD_NOT_APPLICABLE",
     "TRANSACTION_ERROR",
@@ -206,6 +208,7 @@ export type OrderErrorData = {
   warehouse: string | null;
   orderLines: string[] | null;
   addressType: "SHIPPING" | "BILLING" | null;
+  variants: string[] | null;
 };
 
 export const OrderErrorType = builder.objectRef<OrderErrorData>("OrderError").implement({
@@ -238,6 +241,11 @@ export const OrderErrorType = builder.objectRef<OrderErrorData>("OrderError").im
       description: "A type of address that causes the error.",
       resolve: (error) => error.addressType,
     }),
+    variants: t.idList({
+      nullable: true,
+      description: "List of product variants that are associated with the error",
+      resolve: (error) => error.variants,
+    }),
   }),
 });
 
@@ -249,6 +257,7 @@ export const toOrderError = (error: OrderError): OrderErrorData => ({
   warehouse: error.warehouse ? toGlobalId("Warehouse", error.warehouse) : null,
   orderLines: error.orderLines?.map((id) => toGlobalId("OrderLine", id)) ?? null,
   addressType: error.addressType ?? null,
+  variants: error.variants?.map((id) => toGlobalId("ProductVariant", id)) ?? null,
 });
 
 const TransactionRequestActionErrorCodeEnum = builder.enumType(
