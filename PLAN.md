@@ -244,7 +244,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   green push to `main` deploys itself (`.github/workflows/deploy.yml` → `scripts/deploy/release.sh`
   through Session Manager), GitHub → AWS through OIDC with the immutable subject; checked with an
   untouched push (run 43577402519). Open:
-  - Every push to `main` deploys, docs-only ones too (a ~1.5 min restart-free-ish release).
+  - Every push to `main` deploys, docs-only ones too (about 1.5 min, with a restart of a few seconds).
   - `actions/checkout@v4` and `aws-actions/configure-aws-credentials@v4` run on the deprecated
     Node 20 (GitHub warns); move to their next majors when they exist.
   - Images in the artifacts bucket expire after 7 days; a rollback rebuilds from the commit anyway.
