@@ -6,8 +6,8 @@
 // row per published product (Saleor's checkbox selecting all its variants, thumbnail, name) and a
 // row per variant under it (its own checkbox, name and SKU, price). Confirm adds one of each
 // selected variant. Simplified: the first 20 matches (no infinite scroll, backfill or "load more
-// variants"; the search narrows them); single channel, so the title names the shop and every
-// published variant has a price.
+// variants"; the search narrows them); single channel, so the title names the shop, there is no
+// "only the order's channel" subtitle, and every published variant has a price.
 import { useQuery } from "@apollo/client";
 import { Box, Input, Spinner, Text } from "@saleor/macaw-ui";
 import { Image } from "lucide-react";
@@ -46,11 +46,6 @@ const skuMessage = defineMessage<{ sku: string }>({
 });
 
 const messages = defineMessages({
-  subtitle: {
-    defaultMessage: "You can only add products available for the order's channel",
-    id: "Taa5V7",
-    description: "dialog subtitle",
-  },
   search: {
     defaultMessage: "Search products",
     description: "search label",
@@ -171,7 +166,6 @@ export const OrderProductAddDialog = ({
     <DashboardModal onChange={onClose} open={open}>
       <DashboardModal.Content size="picker">
         <DashboardModal.PickerHeader
-          description={<FormattedMessage {...messages.subtitle} />}
           toolbar={
             <Box data-test-id="search-query">
               <Input

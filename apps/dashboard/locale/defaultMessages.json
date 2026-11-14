@@ -892,10 +892,6 @@
     "context": "orders section name",
     "string": "Orders"
   },
-  "Taa5V7": {
-    "context": "dialog subtitle",
-    "string": "You can only add products available for the order's channel"
-  },
   "TjGYna": {
     "context": "product inventory, checkbox",
     "string": "Track Inventory"
