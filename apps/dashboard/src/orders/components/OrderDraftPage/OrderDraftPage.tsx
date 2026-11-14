@@ -129,7 +129,7 @@ export const OrderDraftPage = ({
         {order && <TopNav.Menu dataTestId="menu" items={menuItems} />}
       </TopNav>
       <DetailPageLayout.Content data-test-id="draft-order-page">
-        <Box display="flex" flexDirection="column" gap={6} paddingTop={6}>
+        <Box display="flex" flexDirection="column" gap={6}>
           <OrderDraftDetails
             lines={order?.lines}
             disabled={disabled}

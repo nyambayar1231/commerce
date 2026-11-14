@@ -1,0 +1,38 @@
+/*
+ * Adapted from saleor-dashboard: src/orders/components/OrderCardTitle/OrderCardTitle.module.css
+ * (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
+ * See THIRD_PARTY_LICENSES.md
+ * The order cards' title row and the dashed line between it and a lines grid. The eyebrow
+ * (date, warehouse, tracking number) comes with the fulfillment cards that need it.
+ */
+.header {
+  padding: 16px 3.2rem 13px 3.2rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.datagridSeparator {
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-top: 1px dashed var(--mu-colors-border-default1);
+  width: 100%;
+}

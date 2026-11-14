@@ -2,17 +2,19 @@
 // OrderDraftDetailsProducts/OrderDraftDetailsProducts.tsx (BSD-3-Clause, Copyright (c) 2020-2021,
 // Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// "Order lines" with "Add products", then the draft's lines: a skeleton while loading, Saleor's
-// placeholder when there are none, else Saleor's editable grid (OrderDraftDetailsDatagrid).
+// Saleor's order card title "Order lines" with "Add products", a dashed line, then the draft's
+// lines: a skeleton while loading, Saleor's placeholder when there are none, else Saleor's
+// editable grid (OrderDraftDetailsDatagrid) with Saleor's 24px below it.
 // Finalize's errors about a line show in its status cell; the others (no products) in red above
 // the grid. Left out: the channel checks on "Add products" (single channel) and its tooltip.
-import { Button, Skeleton, Text } from "@saleor/macaw-ui";
+import { Box, Button, Skeleton, Text } from "@saleor/macaw-ui";
 import { defineMessages, FormattedMessage } from "react-intl";
 
 import { DashboardCard } from "../../../components/Card";
 import type { ConfirmButtonTransitionState } from "../../../components/ConfirmButton/ConfirmButton";
 import { Placeholder } from "../../../components/Placeholder/Placeholder";
 import type { OrderErrorFragment, OrderLineFragment } from "../../../graphql/types.generated";
+import { OrderCardDatagridSeparator, OrderCardTitle } from "../OrderCardTitle/OrderCardTitle";
 import { OrderDraftDetailsDatagrid } from "../OrderDraftDetailsDatagrid/OrderDraftDetailsDatagrid";
 
 export const messages = defineMessages({
@@ -58,11 +60,9 @@ export const OrderDraftDetails = ({
 
   return (
     <DashboardCard gap={0} data-test-id="draft-order-lines">
-      <DashboardCard.Header>
-        <DashboardCard.Title>
-          <FormattedMessage {...messages.title} />
-        </DashboardCard.Title>
-        <DashboardCard.Toolbar>
+      <OrderCardTitle
+        title={<FormattedMessage {...messages.title} />}
+        toolbar={
           <Button
             variant="secondary"
             onClick={onOrderLineAdd}
@@ -71,8 +71,8 @@ export const OrderDraftDetails = ({
           >
             <FormattedMessage {...messages.addProducts} />
           </Button>
-        </DashboardCard.Toolbar>
-      </DashboardCard.Header>
+        }
+      />
       {errors.length > 0 && (
         <DashboardCard.Content paddingBottom={2} data-test-id="lines-errors">
           {errors.map((error) => (
@@ -82,6 +82,7 @@ export const OrderDraftDetails = ({
           ))}
         </DashboardCard.Content>
       )}
+      {hasLines && <OrderCardDatagridSeparator />}
       <DashboardCard.Content {...(hasLines ? { paddingX: 0 } : { paddingBottom: 6 })}>
         {lines === undefined ? (
           <Skeleton />
@@ -99,6 +100,7 @@ export const OrderDraftDetails = ({
             <FormattedMessage {...messages.emptyText} />
           </Placeholder>
         )}
+        {hasLines && <Box backgroundColor="default1" paddingBottom={6} />}
       </DashboardCard.Content>
     </DashboardCard>
   );
