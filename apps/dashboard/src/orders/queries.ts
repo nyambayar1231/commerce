@@ -134,3 +134,47 @@ export const orderFulfillData = gql`
     }
   }
 `;
+
+// Saleor's OrderDraftList query without the channel: the drafts list's columns.
+export const orderDraftList = gql`
+  query OrderDraftList(
+    $first: Int
+    $after: String
+    $last: Int
+    $before: String
+    $search: String
+    $sort: OrderSortingInput
+  ) {
+    draftOrders(
+      before: $before
+      after: $after
+      first: $first
+      last: $last
+      search: $search
+      sortBy: $sort
+    ) {
+      edges {
+        node {
+          id
+          number
+          created
+          userEmail
+          billingAddress {
+            firstName
+            lastName
+          }
+          total {
+            gross {
+              amount
+              currency
+            }
+          }
+        }
+      }
+      pageInfo {
+        ...PageInfo
+      }
+    }
+  }
+  ${pageInfoFragment}
+`;

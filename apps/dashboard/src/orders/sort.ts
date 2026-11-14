@@ -3,7 +3,12 @@
 // See THIRD_PARTY_LICENSES.md
 // Saleor sorts the date column by the deprecated CREATION_DATE; we send its replacement CREATED_AT.
 import type { OrderDirection, OrderSortField } from "../graphql/types.generated";
-import { type OrderListUrlQueryParams, OrderListUrlSortField } from "./urls";
+import {
+  type OrderDraftListUrlQueryParams,
+  OrderDraftListUrlSortField,
+  type OrderListUrlQueryParams,
+  OrderListUrlSortField,
+} from "./urls";
 
 export const DEFAULT_SORT_KEY = OrderListUrlSortField.number;
 
@@ -37,6 +42,43 @@ export const getSortUrlParams = (
   params: OrderListUrlQueryParams,
   field: OrderListUrlSortField,
 ): OrderListUrlQueryParams => ({
+  ...params,
+  after: undefined,
+  before: undefined,
+  sort: field,
+  asc: params.sort === field ? !params.asc : true,
+});
+
+// Saleor's src/orders/views/OrderDraftList/sort.ts: number, date and customer sort (total doesn't).
+function getDraftSortQueryField(
+  sort: OrderDraftListUrlQueryParams["sort"],
+): OrderSortField | undefined {
+  switch (sort) {
+    case OrderDraftListUrlSortField.number:
+      return "NUMBER";
+    case OrderDraftListUrlSortField.date:
+      return "CREATED_AT";
+    case OrderDraftListUrlSortField.customer:
+      return "CUSTOMER";
+    default:
+      return undefined;
+  }
+}
+
+export const DEFAULT_DRAFT_SORT_KEY = OrderDraftListUrlSortField.number;
+
+export const getDraftSortQueryVariables = (
+  params: OrderDraftListUrlQueryParams,
+): { direction: OrderDirection; field: OrderSortField } | undefined => {
+  const field = getDraftSortQueryField(params.sort);
+
+  return field ? { direction: params.asc === false ? "DESC" : "ASC", field } : undefined;
+};
+
+export const getDraftSortUrlParams = (
+  params: OrderDraftListUrlQueryParams,
+  field: OrderDraftListUrlSortField,
+): OrderDraftListUrlQueryParams => ({
   ...params,
   after: undefined,
   before: undefined,

@@ -5,9 +5,9 @@ import { matchPath } from "react-router";
 import type { PermissionEnum } from "../../../graphql/types.generated";
 import type { SidebarMenuItem } from "./types";
 
-// Saleor's version also handles extensions, navigation pins, customer-type shortcuts, draft orders
-// and a "/dashboard" mount prefix; none of those exist here. React Router 7's `end` replaces
-// v5's `exact`.
+// Saleor's version also handles extensions, navigation pins, customer-type shortcuts
+// and a "/dashboard" mount prefix; none of those exist here. Its draft-orders rule is ported.
+// React Router 7's `end` replaces v5's `exact`.
 export function isMenuActive(location: string, menuItem: SidebarMenuItem) {
   const menuUrlsToCheck = [...(menuItem.matchUrls || []), menuItem.url]
     .filter((item): item is string => Boolean(item))
@@ -18,6 +18,12 @@ export function isMenuActive(location: string, menuItem: SidebarMenuItem) {
   }
 
   const activeUrl = location.split("?")[0] ?? location;
+
+  // Saleor's rule: the drafts pages live under /orders/, but only "Drafts" is active there.
+  const isDraftPage = !!matchPath({ path: "/orders/drafts", end: false }, activeUrl);
+  if (isDraftPage && menuUrlsToCheck.some((url) => url.replace(/\/$/, "") === "/orders")) {
+    return false;
+  }
 
   return menuUrlsToCheck.some((menuItemUrl) => {
     return !!matchPath({ path: menuItemUrl, end: menuItemUrl === "/" }, activeUrl);

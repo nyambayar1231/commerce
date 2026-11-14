@@ -14,6 +14,17 @@ import {
 } from "./utils";
 
 describe("isMenuActive", () => {
+  it("lights only Drafts on the drafts pages, as Saleor", () => {
+    const orders = { ...mockMenuItem, url: "/orders/" };
+    const drafts = { ...mockMenuItem, url: "/orders/drafts" };
+
+    expect(isMenuActive("/orders/drafts", orders)).toBe(false);
+    expect(isMenuActive("/orders/drafts/T3JkZXI6MQ", orders)).toBe(false);
+    expect(isMenuActive("/orders/drafts/T3JkZXI6MQ", drafts)).toBe(true);
+    expect(isMenuActive("/orders/T3JkZXI6MQ", orders)).toBe(true);
+    expect(isMenuActive("/orders/T3JkZXI6MQ", drafts)).toBe(false);
+  });
+
   const mockMenuItem: SidebarMenuItem = {
     id: "test-item",
     label: "Test Item",

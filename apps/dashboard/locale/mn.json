@@ -85,6 +85,10 @@
     "context": "section header",
     "string": "Сүүлийн захиалгууд"
   },
+  "1Uj0Wd": {
+    "context": "order draft total price",
+    "string": "Нийт"
+  },
   "1WbTJ5": {
     "context": "product variants, title",
     "string": "Хувилбарууд"
@@ -339,6 +343,9 @@
   "AHOQr2": {
     "string": "Бүтээгдэхүүн хайх..."
   },
+  "AQDJ1d": {
+    "string": "Ноорог захиалга үүслээ"
+  },
   "AiurXc": {
     "string": "Үлдэгдэл зөвшөөрөл"
   },
@@ -547,6 +554,9 @@
     "context": "window title",
     "string": "Ангилал үүсгэх"
   },
+  "IzECoP": {
+    "string": "Ноорог захиалга хайх..."
+  },
   "IzkXXK": {
     "context": "filter row remove button label",
     "string": "Нөхцөлийг хасах"
@@ -619,6 +629,10 @@
   "Le6/M7": {
     "context": "activate customer dialog, header",
     "string": "Харилцагчийг идэвхжүүлэх"
+  },
+  "LshEVn": {
+    "context": "button",
+    "string": "Захиалга үүсгэх"
   },
   "MHY5da": {
     "string": "Хүргэлтийн төлбөр"
@@ -1233,6 +1247,10 @@
     "context": "warning notification when some product image uploads in a batch failed",
     "string": "{success, plural, one {# зураг} other {# зураг}} нэмэгдлээ, {failed, plural, one {# амжилтгүй} other {# амжилтгүй}}"
   },
+  "mCP0UD": {
+    "context": "order draft creation date",
+    "string": "Огноо"
+  },
   "mFC5Rq": {
     "string": "Агуулах оноох"
   },
@@ -1258,6 +1276,10 @@
   "nG76Ql": {
     "context": "TopNav destination link tooltip to categories list",
     "string": "Бүх ангилал"
+  },
+  "nJ0tek": {
+    "context": "tab name",
+    "string": "Бүх ноорог захиалга"
   },
   "nOo0oL": {
     "context": "error message",
@@ -1568,6 +1590,10 @@
   "yn7Stx": {
     "context": "date group header",
     "string": "Тодорхойгүй"
+  },
+  "ytKTTO": {
+    "context": "draft orders section name",
+    "string": "Ноорог"
   },
   "zP3Rb6": {
     "context": "customer detail cogs menu, deactivates the customer account",

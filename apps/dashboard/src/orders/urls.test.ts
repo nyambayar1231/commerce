@@ -1,7 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { getSortQueryVariables, getSortUrlParams } from "./sort";
-import { orderFulfillUrl, orderListUrl, orderUrl, parseOrderListUrl, parseOrderUrl } from "./urls";
+import {
+  getDraftSortQueryVariables,
+  getDraftSortUrlParams,
+  getSortQueryVariables,
+  getSortUrlParams,
+} from "./sort";
+import {
+  orderDraftListUrl,
+  orderDraftUrl,
+  orderFulfillUrl,
+  orderListUrl,
+  orderUrl,
+  parseOrderDraftListUrl,
+  parseOrderListUrl,
+  parseOrderUrl,
+} from "./urls";
 
 describe("order list URL", () => {
   it("round-trips filters, search, sort and the cursor", () => {
@@ -51,5 +65,36 @@ describe("order list sort", () => {
       before: undefined,
     });
     expect(getSortUrlParams({ sort: "number", asc: false }, "date").asc).toBe(true);
+  });
+});
+
+describe("draft order URLs", () => {
+  it("round-trips search, sort and the cursor, and links to a draft", () => {
+    const url = orderDraftListUrl({ query: "ada", sort: "customer", asc: true, after: "c1" });
+
+    expect(url).toBe("/orders/drafts?query=ada&sort=customer&asc=true&after=c1");
+    expect(parseOrderDraftListUrl(new URLSearchParams(url.split("?")[1]))).toEqual({
+      query: "ada",
+      sort: "customer",
+      asc: true,
+      after: "c1",
+    });
+    expect(orderDraftListUrl()).toBe("/orders/drafts");
+    expect(parseOrderDraftListUrl(new URLSearchParams("sort=payment&asc=1"))).toEqual({});
+    expect(orderDraftUrl("T3JkZXI6MQ==")).toBe("/orders/drafts/T3JkZXI6MQ%3D%3D");
+  });
+
+  it("maps sort fields to Saleor's, total not sortable", () => {
+    expect(getDraftSortQueryVariables({ sort: "date", asc: false })).toEqual({
+      field: "CREATED_AT",
+      direction: "DESC",
+    });
+    expect(getDraftSortQueryVariables({ sort: "total" })).toBeUndefined();
+    expect(getDraftSortUrlParams({ sort: "number", asc: false, after: "x" }, "number")).toEqual({
+      sort: "number",
+      asc: true,
+      after: undefined,
+      before: undefined,
+    });
   });
 });

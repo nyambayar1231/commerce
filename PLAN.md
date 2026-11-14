@@ -385,7 +385,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M13.2 | Draft API: migration (`DRAFT`, nullable fields + CHECK, events `DRAFT_CREATED`, `PLACED_FROM_DRAFT`, `ADDED_PRODUCTS`, `REMOVED_PRODUCTS`), `draftOrderCreate`, `draftOrderUpdate` (customer/email, addresses, shipping method), `draftOrderDelete`, `draftOrders`; `orders` excludes drafts; tests | Done |
 | M13.3 | Draft lines API: `orderLinesCreate`, `orderLineUpdate`, `orderLineDelete` (drafts only), totals recalculated; tests | Done |
 | M13.4 | `draftOrderComplete`: Saleor's checks (lines, email, addresses, shipping), stock reserved, prices frozen, `UNFULFILLED`; tests | Done |
-| M13.5 | Dashboard: the Drafts list (`/orders/drafts`, menu item) and "Create order" | Approved |
+| M13.5 | Dashboard: the Drafts list (`/orders/drafts`, menu item) and "Create order" | Done |
 | M13.6 | Dashboard: the draft page (lines + add products dialog, customer and addresses dialogs, shipping method dialog, Finalize, delete); Mongolian messages | Approved |
 | M13.7 | Playwright golden path for create → finalize → fulfill; release | Approved |
 
@@ -409,6 +409,11 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   the method's price at finalization; a failed finalization still saves the re-read line prices
   and shipping price (the draft follows the catalog anyway); short stock is one
   `INSUFFICIENT_STOCK` error per variant naming its lines (Saleor: per line and warehouse).
+- **M13.5 left out or different from Saleor, awaiting the owner's OK:** "Create order" creates the
+  draft at once (Saleor first asks for a channel); the Drafts list has no channel column, filters,
+  presets, row selection or bulk delete; "All draft orders" is plain text (no presets); the date
+  column uses the order list's date cell (Saleor: text); a draft opens on the order page until
+  M13.6.
 - **Out of scope:** discounts, draft-order emails/invoices, channels, editing a finalized order's
   lines (Saleor's unconfirmed orders), bulk draft delete.
 

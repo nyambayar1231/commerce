@@ -113,3 +113,51 @@ export const parseOrderUrl = (search: URLSearchParams): OrderUrlQueryParams => {
 export const orderFulfillPath = (id: string): string => `${orderPath(id)}/fulfill`;
 
 export const orderFulfillUrl = (id: string): string => orderFulfillPath(encodeURIComponent(id));
+
+// Saleor's draft order URLs: the list at /orders/drafts (sort, search and page in the URL as the
+// order list; no filters or presets yet) and a draft at /orders/drafts/:id.
+export const orderDraftListPath = `${orderSectionUrl}/drafts`;
+
+export const OrderDraftListUrlSortField = {
+  number: "number",
+  date: "date",
+  customer: "customer",
+  total: "total",
+} as const;
+
+export type OrderDraftListUrlSortField =
+  (typeof OrderDraftListUrlSortField)[keyof typeof OrderDraftListUrlSortField];
+
+export interface OrderDraftListUrlQueryParams {
+  query?: string;
+  sort?: OrderDraftListUrlSortField;
+  asc?: boolean;
+  after?: string;
+  before?: string;
+}
+
+export const orderDraftListUrl = (params?: OrderDraftListUrlQueryParams): string => {
+  const query = new URLSearchParams(queryEntries({ ...params })).toString();
+
+  return `${orderDraftListPath}${query ? `?${query}` : ""}`;
+};
+
+const DRAFT_SORT_FIELDS = Object.values(OrderDraftListUrlSortField) as string[];
+
+export const parseOrderDraftListUrl = (search: URLSearchParams): OrderDraftListUrlQueryParams => {
+  const params: OrderDraftListUrlQueryParams = {};
+  const sort = search.get("sort");
+  const asc = search.get("asc");
+
+  if (search.get("query")) params.query = search.get("query") ?? undefined;
+  if (sort && DRAFT_SORT_FIELDS.includes(sort)) params.sort = sort as OrderDraftListUrlSortField;
+  if (asc === "true" || asc === "false") params.asc = asc === "true";
+  if (search.get("after")) params.after = search.get("after") ?? undefined;
+  else if (search.get("before")) params.before = search.get("before") ?? undefined;
+
+  return params;
+};
+
+export const orderDraftPath = (id: string): string => `${orderDraftListPath}/${id}`;
+
+export const orderDraftUrl = (id: string): string => orderDraftPath(encodeURIComponent(id));

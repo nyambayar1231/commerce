@@ -3,10 +3,10 @@
 // See THIRD_PARTY_LICENSES.md
 // The header and card. Saleor shows "All orders" as the label of its filter-presets dropdown next
 // to a hidden TopNav title; without presets we show that label as text. Then Saleor's card: the
-// status filter and search, and the datagrid with its pagination. Left out: the "Create order"
-// button (no draft orders, M6 out of scope), the help link, the GraphiQL/settings menu, limits,
+// status filter and search, and the datagrid with its pagination, and Saleor's "Create order"
+// button (M13.5). Left out: the help link, the GraphiQL/settings menu, limits,
 // extensions and the search syntax tooltip.
-import { Box, Text } from "@saleor/macaw-ui";
+import { Box, Button, Text } from "@saleor/macaw-ui";
 import type { ComponentProps } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
@@ -15,17 +15,22 @@ import { TopNav } from "../../../components/AppLayout/TopNav";
 import { DashboardCard } from "../../../components/Card";
 import { ListPageLayout } from "../../../components/Layouts/List/Root";
 import { sectionNames } from "../../../intl";
+import { messages as draftMessages } from "../OrderDraftListPage/OrderDraftListPage";
 import { OrderListDatagrid } from "../OrderListDatagrid/OrderListDatagrid";
 import { messages } from "./messages";
 
 interface OrderListPageProps extends ComponentProps<typeof OrderListDatagrid> {
   initialSearch: string;
   onSearchChange: (query: string) => void;
+  onAdd: () => void;
+  creating: boolean;
 }
 
 export const OrderListPage = ({
   initialSearch,
   onSearchChange,
+  onAdd,
+  creating,
   ...listProps
 }: OrderListPageProps) => {
   const intl = useIntl();
@@ -37,6 +42,9 @@ export const OrderListPage = ({
           <Text size={6}>
             <FormattedMessage {...messages.allOrders} />
           </Text>
+          <Button data-test-id="create-order-button" disabled={creating} onClick={onAdd}>
+            <FormattedMessage {...draftMessages.createOrder} />
+          </Button>
         </Box>
       </TopNav>
       <DashboardCard>

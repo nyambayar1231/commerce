@@ -205,3 +205,13 @@ test("staff prints the order", async () => {
   await page.screenshot({ path: "test-results/order-print.png", fullPage: true });
   await page.emulateMedia({ media: null });
 });
+
+test("staff creates a draft order from the Drafts list", async () => {
+  await page.getByRole("link", { name: "Drafts" }).click();
+  await expect(page).toHaveURL(/\/orders\/drafts\?sort=number&asc=false/);
+  await expect(page.getByText("All draft orders")).toBeVisible();
+  await page.screenshot({ path: "test-results/drafts-list.png" });
+  await page.getByRole("button", { name: "Create order" }).click();
+  await expect(page.getByText("Draft order created")).toBeVisible();
+  await expect(page).toHaveURL(/\/orders\/drafts\/[^/?]+$/);
+});

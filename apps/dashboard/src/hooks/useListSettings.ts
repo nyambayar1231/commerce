@@ -35,10 +35,14 @@ export const ORDER_LIST_DEFAULT_COLUMNS = [
 // Saleor's CUSTOMER_LIST default columns.
 export const CUSTOMER_LIST_DEFAULT_COLUMNS = ["name", "email", "orders"];
 
+// Saleor's ORDER_DRAFT_LIST default columns minus channel (single channel).
+export const ORDER_DRAFT_LIST_DEFAULT_COLUMNS = ["number", "date", "customer", "total"];
+
 export type ListViews =
   | "CATEGORY_LIST"
   | "COLLECTION_PRODUCTS_LIST"
   | "CUSTOMER_LIST"
+  | "ORDER_DRAFT_LIST"
   | "ORDER_LIST"
   | "PRODUCT_LIST";
 
@@ -61,6 +65,10 @@ const defaultListSettings: AppListViewSettings = {
   CUSTOMER_LIST: {
     rowNumber: PAGINATE_BY,
     columns: CUSTOMER_LIST_DEFAULT_COLUMNS,
+  },
+  ORDER_DRAFT_LIST: {
+    rowNumber: PAGINATE_BY,
+    columns: ORDER_DRAFT_LIST_DEFAULT_COLUMNS,
   },
   ORDER_LIST: {
     rowNumber: PAGINATE_BY,

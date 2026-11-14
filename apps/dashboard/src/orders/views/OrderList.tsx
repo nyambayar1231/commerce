@@ -5,7 +5,8 @@
 // Saleor. Saleor's list without a sort param sorts by number, descending; we redirect such a URL to
 // that sort so the column shows its arrow (as our product list does). The conditional filters in the
 // URL become the query's `where`. Searching keeps the chosen sort (Saleor switches to `rank`, which
-// our API answers as number). Not yet: draft order creation, filter presets, the settings link.
+// our API answers as number). "Create order" makes a draft (M13.5). Not yet: filter presets, the
+// settings link.
 import { useQuery } from "@apollo/client";
 import { useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router";
@@ -18,6 +19,7 @@ import { createPaginationState, usePaginator } from "../../hooks/usePaginator";
 import { OrderListPage } from "../components/OrderListPage/OrderListPage";
 import { DEFAULT_SORT_KEY, getSortQueryVariables, getSortUrlParams } from "../sort";
 import { filterUrlEntries, orderListUrl, parseOrderListUrl } from "../urls";
+import { useCreateDraftOrder } from "../useCreateDraftOrder";
 
 export const OrderList = () => {
   const [searchParams] = useSearchParams();
@@ -35,6 +37,7 @@ const OrderListContent = () => {
   const params = useMemo(() => parseOrderListUrl(searchParams), [searchParams]);
   const where = useMemo(() => createOrderQueryVariables(params.filters ?? []), [params.filters]);
   const { settings, updateListSettings } = useListSettings("ORDER_LIST");
+  const { createDraftOrder, creating } = useCreateDraftOrder();
 
   useEffect(() => {
     if (params.sort === undefined) {
@@ -73,6 +76,8 @@ const OrderListContent = () => {
       onSearchChange={(query) =>
         navigate(orderListUrl({ ...params, ...firstPage, query }), { replace: true })
       }
+      onAdd={createDraftOrder}
+      creating={creating}
       orders={orders}
       disabled={loading && !data}
       sort={{ sort: params.sort, asc: params.asc }}

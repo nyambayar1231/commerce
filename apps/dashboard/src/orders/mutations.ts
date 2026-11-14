@@ -114,3 +114,18 @@ export const orderTransactionRefund = gql`
   ${transactionEventFragment}
   ${orderEventFragment}
 `;
+
+// Saleor's OrderDraftCreate: an empty draft (single channel, so no channel input).
+export const orderDraftCreate = gql`
+  mutation OrderDraftCreate($input: DraftOrderCreateInput!) {
+    draftOrderCreate(input: $input) {
+      errors {
+        ...OrderError
+      }
+      order {
+        id
+      }
+    }
+  }
+  ${orderErrorFragment}
+`;

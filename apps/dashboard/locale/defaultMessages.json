@@ -85,6 +85,10 @@
     "context": "section header",
     "string": "Recent Orders"
   },
+  "1Uj0Wd": {
+    "context": "order draft total price",
+    "string": "Total"
+  },
   "1WbTJ5": {
     "context": "product variants, title",
     "string": "Variants"
@@ -339,6 +343,9 @@
   "AHOQr2": {
     "string": "Search products..."
   },
+  "AQDJ1d": {
+    "string": "Draft order created"
+  },
   "AiurXc": {
     "string": "Outstanding authorized"
   },
@@ -547,6 +554,9 @@
     "context": "window title",
     "string": "Create category"
   },
+  "IzECoP": {
+    "string": "Search draft orders..."
+  },
   "IzkXXK": {
     "context": "filter row remove button label",
     "string": "Remove condition"
@@ -619,6 +629,10 @@
   "Le6/M7": {
     "context": "activate customer dialog, header",
     "string": "Activate customer"
+  },
+  "LshEVn": {
+    "context": "button",
+    "string": "Create order"
   },
   "MHY5da": {
     "string": "Shipping cost"
@@ -1233,6 +1247,10 @@
     "context": "warning notification when some product image uploads in a batch failed",
     "string": "{success, plural, one {# image} other {# images}} added, {failed, plural, one {# failed} other {# failed}}"
   },
+  "mCP0UD": {
+    "context": "order draft creation date",
+    "string": "Date"
+  },
   "mFC5Rq": {
     "string": "Assign Warehouses"
   },
@@ -1258,6 +1276,10 @@
   "nG76Ql": {
     "context": "TopNav destination link tooltip to categories list",
     "string": "All categories"
+  },
+  "nJ0tek": {
+    "context": "tab name",
+    "string": "All draft orders"
   },
   "nOo0oL": {
     "context": "error message",
@@ -1568,6 +1590,10 @@
   "yn7Stx": {
     "context": "date group header",
     "string": "Unknown"
+  },
+  "ytKTTO": {
+    "context": "draft orders section name",
+    "string": "Drafts"
   },
   "zP3Rb6": {
     "context": "customer detail cogs menu, deactivates the customer account",
