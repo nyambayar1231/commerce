@@ -8,13 +8,12 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | Milestone | Title | Status |
 |---|---|---|
 | M11 | Dashboard in Mongolian and English | In progress |
-| M12 | Continuous deployment to AWS | In progress |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
 (foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11), M5 (checkout API, 2026-11-11), M6 (orders, 2026-11-11), M7 (customer accounts, 2026-11-12), M8 (background jobs and email, 2026-11-12), M9 (hardening &
-deployability, 2026-11-12), M10 (deploy to AWS, 2026-11-13).
+deployability, 2026-11-12), M10 (deploy to AWS, 2026-11-13), M12 (continuous deployment, 2026-11-14).
 
 ## Open items from finished milestones
 
@@ -241,6 +240,14 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   - A test customer `nyambayarlucky+m10test@gmail.com` (unconfirmed) is in the production database.
   - Browsers that opened admin.dino-craft.lol while it was Porkbun's parking page cached its 301 to
     dino-craft.lol for `/` (cleared by emptying the browser cache).
+- **M12 (continuous deployment), as documented in docs/deploy.md "Releasing a new version":** every
+  green push to `main` deploys itself (`.github/workflows/deploy.yml` → `scripts/deploy/release.sh`
+  through Session Manager), GitHub → AWS through OIDC with the immutable subject; checked with an
+  untouched push (run 43577402519). Open:
+  - Every push to `main` deploys, docs-only ones too (a ~1.5 min restart-free-ish release).
+  - `actions/checkout@v4` and `aws-actions/configure-aws-credentials@v4` run on the deprecated
+    Node 20 (GitHub warns); move to their next majors when they exist.
+  - Images in the artifacts bucket expire after 7 days; a rollback rebuilds from the commit anyway.
 
 ---
 
@@ -339,51 +346,6 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   in Mongolian and only where the browser lacks the data (`polyfillDateTimeFormat.ts`): `mn` data +
   the golden time zones, ~180 kB gzip as lazy chunks; the browser's own time zone is kept (the
   polyfill defaults to UTC). Checked in Chrome: "2026 оны 11-р сарын 12 14:03 (GMT+8)".
-
-## M12 — Continuous deployment to AWS
-- **Objective:** every push to `main` that passes CI is deployed to admin.dino-craft.lol without
-  anyone building or copying images by hand; a failed deploy shows red in GitHub; any earlier
-  commit can be redeployed.
-- **Concepts:** GitHub Actions `workflow_run`, OIDC federation (no stored AWS keys), least-privilege
-  IAM, native Arm runners, Session Manager Run Command, deploy health checks, rollback by commit.
-
-**Owner decisions (2026-11-14):** build it as proposed; **fully automatic** (no approval step).
-
-**Design (lead, as proposed to the owner):**
-1. `.github/workflows/deploy.yml` runs when the CI workflow completes successfully for a push to
-   `main` (`workflow_run`), and by hand (`workflow_dispatch`, a commit to deploy: rollback). One
-   deploy at a time (`concurrency: production`, never cancelled midway).
-2. Images are built for arm64 on GitHub's Arm runner (`ubuntu-24.04-arm`, free for public repos)
-   and uploaded to the artifacts bucket as `images/<commit>.tar.gz`, as the manual runbook did.
-3. GitHub signs in to AWS through OIDC: CDK adds the GitHub OIDC provider and a `Deploy` role that
-   only this repository's `main` branch (and its manual runs) can assume, allowed only to put
-   `images/*` in the artifacts bucket and to run `AWS-RunShellScript` on the one instance.
-4. The server side is `scripts/deploy/release.sh <commit>` in the repository: backup, `git checkout`
-   of that commit, `docker load`, migrations, `up -d`, then a health check (the API healthy, the
-   dashboard and GraphQL answering through nginx); the workflow waits and fails with its output.
-5. Non-secret settings (role ARN, instance id, bucket names) are repository variables, set once.
-
-**Steps:**
-
-| Step | What | Status |
-|---|---|---|
-| M12.1 | CDK: GitHub OIDC provider + `Deploy` role (decision 3); `cdk diff`, `cdk deploy`; template tests | Done |
-| M12.2 | `scripts/deploy/release.sh` (decision 4) | Done |
-| M12.3 | `deploy.yml` (decisions 1, 2, 5); repository variables set | Done |
-| M12.4 | First automatic deploy (ships M11); live site checked; docs/deploy.md and CLAUDE.md updated | Done; a fully automatic run is being checked |
-
-- **Acceptance:** a push to `main` ends, after CI, with the new commit running on the server and the
-  workflow green; a failing release turns it red; "Run workflow" with an older commit rolls back.
-- **M12 results (2026-11-14):** stack deployed (OIDC provider, `Deploy` role, policy only);
-  variables set with `gh variable set`. The first deploy (run 43576458819) failed to assume the
-  role: this repository sends GitHub's immutable OIDC subject
-  (`repo:nyambayar1231@67280085/commerce@1447838245:ref:refs/heads/main`), so the trust condition
-  now names the ids. Re-run: green in 1m28s (backup, images, migrations, start, health); the live
-  bundle has M11 (Mongolian, Account settings, the date polyfill). The server's checkout is now a
-  detached commit. Actions warn that checkout@v4 / configure-aws-credentials@v4 run on Node 20
-  (deprecated; still working).
-- **Out of scope:** approval gates, blue/green or zero-downtime deploys (a restart of a few seconds
-  is accepted), preview environments, infrastructure (CDK) changes from CI.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.
