@@ -287,7 +287,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M11.3 | Every visible string through react-intl (audit of hard-coded text, labels in TS objects, Macaw props); Saleor's ids where Saleor has the same text | Done |
 | M11.4 | Mongolian: Saleor's entries copied, the rest drafted by the lead; the coverage test (decision 6) | Done |
 | M11.5 | Owner review of the Mongolian (a side-by-side list English / Mongolian), corrections applied | Waiting on the owner: https://claude.ai/artifact/1T6fwP7u3WDM5tvAi278J5 |
-| M11.6 | Dates, numbers and money formatted in the chosen locale (no hard-coded `en`); released to production (docs/deploy.md) | In progress: done but the production release |
+| M11.6 | Dates, numbers and money formatted in the chosen locale (no hard-coded `en`); released to production (docs/deploy.md) | Done (released by M12's first deploy, 2026-11-14) |
 
 - **Acceptance:** a first visit shows Mongolian; switching to English in Account settings sticks
   across reloads and logins; no screen shows an untranslated message in Mongolian; dates follow
@@ -367,13 +367,21 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 
 | Step | What | Status |
 |---|---|---|
-| M12.1 | CDK: GitHub OIDC provider + `Deploy` role (decision 3); `cdk diff`, `cdk deploy`; template tests | Code done; deploy waits for the owner's AWS sign-in |
+| M12.1 | CDK: GitHub OIDC provider + `Deploy` role (decision 3); `cdk diff`, `cdk deploy`; template tests | Done |
 | M12.2 | `scripts/deploy/release.sh` (decision 4) | Done |
-| M12.3 | `deploy.yml` (decisions 1, 2, 5); repository variables set | Workflow done; variables after M12.1's deploy |
-| M12.4 | First automatic deploy (ships M11); live site checked; docs/deploy.md and CLAUDE.md updated | Proposed |
+| M12.3 | `deploy.yml` (decisions 1, 2, 5); repository variables set | Done |
+| M12.4 | First automatic deploy (ships M11); live site checked; docs/deploy.md and CLAUDE.md updated | Done; a fully automatic run is being checked |
 
 - **Acceptance:** a push to `main` ends, after CI, with the new commit running on the server and the
   workflow green; a failing release turns it red; "Run workflow" with an older commit rolls back.
+- **M12 results (2026-11-14):** stack deployed (OIDC provider, `Deploy` role, policy only);
+  variables set with `gh variable set`. The first deploy (run 43576458819) failed to assume the
+  role: this repository sends GitHub's immutable OIDC subject
+  (`repo:nyambayar1231@67280085/commerce@1447838245:ref:refs/heads/main`), so the trust condition
+  now names the ids. Re-run: green in 1m28s (backup, images, migrations, start, health); the live
+  bundle has M11 (Mongolian, Account settings, the date polyfill). The server's checkout is now a
+  detached commit. Actions warn that checkout@v4 / configure-aws-credentials@v4 run on Node 20
+  (deprecated; still working).
 - **Out of scope:** approval gates, blue/green or zero-downtime deploys (a restart of a few seconds
   is accepted), preview environments, infrastructure (CDK) changes from CI.
 
