@@ -3,13 +3,14 @@
 // See THIRD_PARTY_LICENSES.md
 // A draft order (PLAN M13.6): back link to the drafts, "Order #n" with the Draft pill, Saleor's
 // menu with "Cancel order" (deletes the draft), the lines with "Add products", the summary, the
-// history, the customer card and the save bar's Back / Finalize. The customer card, its addresses
-// and the summary's shipping row are editable (M13.7). Left out: metadata, the channel alert, discounts, notes,
+// history, the customer card and the save bar's Back / Finalize. The customer and the billing
+// address are editable (M13.7); the shop doesn't ship yet, so there is no shipping to set (owner,
+// 2026-11-14). Finalize's errors show in red next to what is missing. Left out: metadata, the channel alert, discounts, notes,
 // app widgets.
 import { Box } from "@saleor/macaw-ui";
 import { Package, Trash2 } from "lucide-react";
 import { useMemo } from "react";
-import { defineMessages, useIntl } from "react-intl";
+import { defineMessages, type IntlShape, useIntl } from "react-intl";
 
 import { TopNav } from "../../../components/AppLayout/TopNav";
 import { topNavDestinationMessages } from "../../../components/AppLayout/TopNav/destinationMessages";
@@ -17,7 +18,8 @@ import type { ConfirmButtonTransitionState } from "../../../components/ConfirmBu
 import { iconSize, iconStrokeWidthBySize, topNavLucideIconProps } from "../../../components/icons";
 import { DetailPageLayout } from "../../../components/Layouts/Detail";
 import { Savebar } from "../../../components/Savebar";
-import type { OrderDetailsFragment } from "../../../graphql/types.generated";
+import type { OrderDetailsFragment, OrderErrorFragment } from "../../../graphql/types.generated";
+import { getOrderErrorMessage } from "../../../utils/errors";
 import { orderDraftListUrl } from "../../urls";
 import { type CustomerChange, OrderCustomer } from "../OrderCustomer/OrderCustomer";
 import { Title } from "../OrderDetailsPage/Title";
@@ -36,7 +38,39 @@ const messages = defineMessages({
     defaultMessage: "Finalize",
     description: "button",
   },
+  customerRequired: {
+    id: "Dwm3a0",
+    defaultMessage: "Choose a customer or type their email before finalizing.",
+    description: "draft finalize error",
+  },
+  linesRequired: {
+    id: "zrqtWp",
+    defaultMessage: "Add at least one product before finalizing.",
+    description: "draft finalize error",
+  },
+  billingRequired: {
+    id: "JcYCB/",
+    defaultMessage: "Add a billing address before finalizing.",
+    description: "draft finalize error",
+  },
 });
+
+/** Finalize's errors, by where the page shows them: the customer, the billing address, the lines. */
+export const groupFinalizeErrors = (errors: readonly OrderErrorFragment[], intl: IntlShape) => {
+  const customer = errors.find((error) => error.field === "userEmail");
+  const billing = errors.find((error) => error.field === "billingAddress");
+  const rest = errors.filter((error) => error !== customer && error !== billing);
+
+  return {
+    customer: customer ? intl.formatMessage(messages.customerRequired) : undefined,
+    billingAddress: billing ? intl.formatMessage(messages.billingRequired) : undefined,
+    lines: rest.map((error) =>
+      error.field === "lines" && error.code === "REQUIRED"
+        ? intl.formatMessage(messages.linesRequired)
+        : (getOrderErrorMessage(error, intl) ?? error.message ?? ""),
+    ),
+  };
+};
 
 interface OrderDraftPageProps {
   order?: OrderDetailsFragment;
@@ -49,9 +83,9 @@ interface OrderDraftPageProps {
   onOrderLineChange: (lineId: string, quantity: number) => void;
   onOrderLineRemove: (lineId: string) => void;
   onCustomerChange: (change: CustomerChange) => void;
-  onShippingAddressEdit: () => void;
   onBillingAddressEdit: () => void;
-  onShippingMethodEdit: () => void;
+  /** Finalize's errors that the draft still has. */
+  errors: OrderErrorFragment[];
 }
 
 export const OrderDraftPage = ({
@@ -65,11 +99,11 @@ export const OrderDraftPage = ({
   onOrderLineChange,
   onOrderLineRemove,
   onCustomerChange,
-  onShippingAddressEdit,
   onBillingAddressEdit,
-  onShippingMethodEdit,
+  errors,
 }: OrderDraftPageProps) => {
   const intl = useIntl();
+  const fieldErrors = groupFinalizeErrors(errors, intl);
   const menuItems = useMemo(
     () => [
       {
@@ -99,20 +133,14 @@ export const OrderDraftPage = ({
           <OrderDraftDetails
             lines={order?.lines}
             disabled={disabled}
+            errors={fieldErrors.lines}
             onOrderLineAdd={onOrderLineAdd}
             onOrderLineChange={onOrderLineChange}
             onOrderLineRemove={onOrderLineRemove}
           />
           {order && (
             <>
-              <OrderSummary
-                order={order}
-                editableShipping={{
-                  hasShippingAddress: order.shippingAddress !== null,
-                  hasShippingMethods: order.shippingMethods.length > 0,
-                  onShippingMethodEdit,
-                }}
-              />
+              <OrderSummary order={order} />
               <OrderHistory history={order.events ?? []} currency={order.total.gross.currency} />
             </>
           )}
@@ -126,8 +154,8 @@ export const OrderDraftPage = ({
             shippingAddress={order.shippingAddress}
             billingAddress={order.billingAddress}
             onCustomerChange={onCustomerChange}
-            onShippingAddressEdit={onShippingAddressEdit}
             onBillingAddressEdit={onBillingAddressEdit}
+            errors={fieldErrors}
           />
         )}
       </DetailPageLayout.RightSidebar>

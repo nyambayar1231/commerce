@@ -81,9 +81,6 @@
     "context": "Header row quantity label",
     "string": "Quantity"
   },
-  "129wyQ": {
-    "string": "Change customer shipping address"
-  },
   "16iwCI": {
     "context": "section header",
     "string": "Fulfilled"
@@ -373,9 +370,6 @@
   "AQDJ1d": {
     "string": "Draft order created"
   },
-  "Ai4XSg": {
-    "string": "No shipping address"
-  },
   "AiurXc": {
     "string": "Outstanding authorized"
   },
@@ -471,8 +465,9 @@
     "context": "transaction event type, transaction was chargeback by payment provider",
     "string": "Chargeback"
   },
-  "Dg4Y2p": {
-    "string": "Set shipping method"
+  "Dwm3a0": {
+    "context": "draft finalize error",
+    "string": "Choose a customer or type their email before finalizing."
   },
   "E1C9pp": {
     "context": "transaction event type, authorization amount was changed",
@@ -530,9 +525,6 @@
   "FpIcp9": {
     "string": "No customers found"
   },
-  "G+MtyG": {
-    "string": "No applicable shipping methods"
-  },
   "G2WJ1J": {
     "context": "order header date, less than an hour ago",
     "string": "Placed {minutes, plural, one {# minute} other {# minutes}} ago"
@@ -548,9 +540,6 @@
     "context": "order history message",
     "string": "Order was placed"
   },
-  "GiS5VI": {
-    "string": "Change"
-  },
   "H4Lcuk": {
     "string": "Category updated"
   },
@@ -564,13 +553,6 @@
   "HRy5qF": {
     "context": "customer overview stat label",
     "string": "Total orders"
-  },
-  "HTiAMm": {
-    "string": "Taxes"
-  },
-  "HY1ZL6": {
-    "context": "order summary, taxes are included in the prices",
-    "string": "(included)"
   },
   "HlCkMT": {
     "string": "Order line added"
@@ -650,6 +632,10 @@
   "Ja7gHc": {
     "context": "button",
     "string": "Edit"
+  },
+  "JcYCB/": {
+    "context": "draft finalize error",
+    "string": "Add a billing address before finalizing."
   },
   "JjeZEG": {
     "context": "section header",
@@ -856,9 +842,6 @@
     "context": "error message",
     "string": "Please wait a moment before trying again."
   },
-  "RzDYi8": {
-    "string": "Set the same for billing address"
-  },
   "S2xLxV": {
     "string": "Search by product name, attribute, product type etc..."
   },
@@ -939,9 +922,6 @@
   "UycVMp": {
     "context": "button",
     "string": "Create subcategory"
-  },
-  "V/YxJa": {
-    "string": "Edit Shipping Method"
   },
   "V21v8h": {
     "string": "{currency} {totalAmount}"
@@ -1193,10 +1173,6 @@
     "context": "Transaction event status - failure",
     "string": "Failure"
   },
-  "e7yOai": {
-    "context": "shipping address is not set in draft order",
-    "string": "Not set"
-  },
   "eKHtk8": {
     "context": "print order button",
     "string": "Print"
@@ -1219,10 +1195,6 @@
   },
   "fL08MU": {
     "string": "Order value"
-  },
-  "fS2rip": {
-    "context": "tooltip for taxes amount",
-    "string": "Tax amount"
   },
   "fXdkiI": {
     "string": "is"
@@ -1398,6 +1370,10 @@
   "mWYRZY": {
     "context": "order history message",
     "string": "Products were added to the order"
+  },
+  "mZD3xw": {
+    "context": "draft finalize error toast",
+    "string": "The draft can't be finalized yet. Fix the fields marked in red."
   },
   "n8tEIV": {
     "context": "customer overview, last login tooltip",
@@ -1607,9 +1583,6 @@
     "context": "ordered product quantity",
     "string": "Quantity"
   },
-  "txOXvy": {
-    "string": "Set the same for shipping address"
-  },
   "u2QjRn": {
     "context": "create product dialog title",
     "string": "Create product"
@@ -1784,5 +1757,9 @@
   "zmKgYS": {
     "context": "order header date, same year and older than yesterday",
     "string": "Placed {date} at {time}"
+  },
+  "zrqtWp": {
+    "context": "draft finalize error",
+    "string": "Add at least one product before finalizing."
   }
 }

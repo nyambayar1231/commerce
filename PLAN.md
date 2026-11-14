@@ -290,6 +290,13 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   dialog lists active methods only (Saleor also shows unavailable ones, disabled). Found, not
   fixed: the golden path's variant sometimes has an empty name (the line shows "-"); it predates
   M13.
+- **After M13 (owner, 2026-11-14): no shipping or tax for now.** A draft finalizes without a
+  shipping address or method (migration 0022: placed orders need only an email and a billing
+  address); the dashboard shows no Tax row, and shows Shipping and the shipping address only on an
+  order that has them (older checkout orders); the draft page edits the customer and the billing
+  address only; the print view follows. Finalize's errors are shown in red next to the customer,
+  the billing address or the lines, with one toast saying so. Checkout still requires shipping
+  (revisit with the storefront, M4).
 - **M13.1 (print):** our own print view (Saleor has none), approved by the owner (2026-11-14).
 
 ## M11 — Dashboard in Mongolian and English

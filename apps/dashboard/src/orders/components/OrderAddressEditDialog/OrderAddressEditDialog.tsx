@@ -2,15 +2,16 @@
 // (OrderCustomerAddressesEditDialog.tsx, OrderCustomerAddressEdit.tsx, messages.ts) and
 // src/components/AddressEdit/AddressEdit.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// "Change customer shipping / billing address" for a draft: Saleor's address form (names,
-// company, phone, address lines, city, postal code, country, country area), prefilled with the
-// draft's address, and Saleor's "Set the same for billing / shipping address" checkbox. Our
+// "Change customer billing address" for a draft: Saleor's address form (names, company, phone,
+// address lines, city, postal code, country, country area), prefilled with the draft's address.
+// The shop doesn't ship yet (owner, 2026-11-14), so there is no shipping address to edit and no
+// "Set the same for shipping address" checkbox. Our
 // customers have no address book (PLAN M7), so Saleor's "use one of customer addresses" choice
 // and its search are left out: this is Saleor's "Add new address" branch only. Field errors come
 // from the API (OrderError.field + addressType).
 
 import { useQuery } from "@apollo/client";
-import { Box, Checkbox, Input, Select, Text } from "@saleor/macaw-ui";
+import { Box, Input, Select, Text } from "@saleor/macaw-ui";
 import { useEffect, useMemo, useState } from "react";
 import { defineMessages, FormattedMessage, useIntl } from "react-intl";
 
@@ -30,13 +31,8 @@ import {
 import { commonMessages } from "../../../intl";
 import { getOrderErrorMessage } from "../../../utils/errors";
 
-export type AddressKind = "SHIPPING" | "BILLING";
-
 const messages = defineMessages({
-  shippingTitle: { id: "129wyQ", defaultMessage: "Change customer shipping address" },
   billingTitle: { id: "D4W/LE", defaultMessage: "Change customer billing address" },
-  sameForBilling: { id: "RzDYi8", defaultMessage: "Set the same for billing address" },
-  sameForShipping: { id: "txOXvy", defaultMessage: "Set the same for shipping address" },
   company: { id: "9YazHG", defaultMessage: "Company" },
   phone: { id: "O95R3Z", defaultMessage: "Phone" },
   address1: { id: "B52Em/", defaultMessage: "Address line 1" },
@@ -91,18 +87,15 @@ export const toAddressInput = (data: FormData): AddressInput => ({
 
 interface OrderAddressEditDialogProps {
   open: boolean;
-  kind: AddressKind;
   address: AddressFragment | null;
   confirmButtonState: ConfirmButtonTransitionState;
   errors: OrderErrorFragment[];
   onClose: () => void;
-  /** `alsoOther`: Saleor's "Set the same for …" — use it for the other address too. */
-  onSubmit: (address: AddressInput, alsoOther: boolean) => void;
+  onSubmit: (address: AddressInput) => void;
 }
 
 export const OrderAddressEditDialog = ({
   open,
-  kind,
   address,
   confirmButtonState,
   errors,
@@ -111,7 +104,6 @@ export const OrderAddressEditDialog = ({
 }: OrderAddressEditDialogProps) => {
   const intl = useIntl();
   const [data, setData] = useState<FormData>(EMPTY);
-  const [alsoOther, setAlsoOther] = useState(false);
   const { data: countriesData } = useQuery(ShopCountriesDocument, { skip: !open });
   const countries = useMemo(
     () =>
@@ -125,15 +117,14 @@ export const OrderAddressEditDialog = ({
   useEffect(() => {
     if (open) {
       setData(toFormData(address));
-      setAlsoOther(false);
     }
   }, [open, address]);
 
   // Only this address's field errors go next to the fields; the rest are listed below.
   const fieldError = (field: keyof FormData) =>
-    errors.find((error) => error.field === field && error.addressType === kind);
+    errors.find((error) => error.field === field && error.addressType === "BILLING");
   const otherErrors = errors.filter(
-    (error) => !(error.addressType === kind && error.field && error.field in EMPTY),
+    (error) => !(error.addressType === "BILLING" && error.field && error.field in EMPTY),
   );
 
   const textInput = (field: TextField, label: string) => {
@@ -156,9 +147,7 @@ export const OrderAddressEditDialog = ({
     <DashboardModal onChange={onClose} open={open}>
       <DashboardModal.Content size="md">
         <DashboardModal.Header>
-          <FormattedMessage
-            {...(kind === "SHIPPING" ? messages.shippingTitle : messages.billingTitle)}
-          />
+          <FormattedMessage {...messages.billingTitle} />
         </DashboardModal.Header>
         <DashboardModal.Body>
           <Box
@@ -195,19 +184,6 @@ export const OrderAddressEditDialog = ({
               }
             />
             {textInput("countryArea", intl.formatMessage(messages.countryArea))}
-            <Box __gridColumn="1 / -1">
-              <Checkbox
-                checked={alsoOther}
-                onCheckedChange={(checked) => setAlsoOther(checked === true)}
-                data-test-id="same-address-checkbox"
-              >
-                <Text>
-                  <FormattedMessage
-                    {...(kind === "SHIPPING" ? messages.sameForBilling : messages.sameForShipping)}
-                  />
-                </Text>
-              </Checkbox>
-            </Box>
             {otherErrors.map((error) => (
               <Text
                 key={`${error.code}-${error.field}-${error.addressType}`}
@@ -224,7 +200,7 @@ export const OrderAddressEditDialog = ({
           <ConfirmButton
             transitionState={confirmButtonState}
             data-test-id="confirm-button"
-            onClick={() => onSubmit(toAddressInput(data), alsoOther)}
+            onClick={() => onSubmit(toAddressInput(data))}
           >
             <FormattedMessage {...messages.confirm} />
           </ConfirmButton>

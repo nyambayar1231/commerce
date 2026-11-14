@@ -15,8 +15,9 @@ import type { OrderRow } from "./orders.ts";
 // Saleor's draftOrderComplete (saleor/graphql/order/mutations/draft_order_complete.py,
 // validate_draft_order in saleor/graphql/order/utils.py) for PLAN M13.4. In one transaction, with
 // checkout completion's lock order (order → variants FOR KEY SHARE → stock rows by id): the draft's
-// prices are re-read one last time (decision 2), Saleor's checks run, the shipping price is the
-// method's current one, stock is reserved for tracked lines (or the draft stays a draft with
+// prices are re-read one last time (decision 2), Saleor's checks run (minus shipping: the shop
+// doesn't ship yet, owner 2026-11-14, so a draft needs no shipping address or method; one that
+// has a method gets its current price), stock is reserved for tracked lines (or the draft stays a draft with
 // INSUFFICIENT_STOCK), the customer is linked by email, and the order becomes UNFULFILLED with a
 // PLACED_FROM_DRAFT event. No confirmation email (decision 3); the order starts unpaid.
 
@@ -32,8 +33,6 @@ const MESSAGES = {
   noLines: "Could not create order without any products.",
   noEmail: "Can't finalize draft with no customer email.",
   noBillingAddress: "Can't finalize draft with no billing address.",
-  noShippingAddress: "Can't finalize draft with no shipping address.",
-  noShippingMethod: "Shipping method is required.",
   shippingNotApplicable: "Shipping method is not applicable.",
   deletedVariant: "Could not create orders with non-existing products.",
   notPublished: "Can't finalize draft with unpublished product.",
@@ -70,21 +69,8 @@ export async function completeDraftOrder(
         message: MESSAGES.noBillingAddress,
       });
     }
-    if (draft.shippingAddress === null) {
-      errors.push({
-        field: "shippingAddress",
-        code: "ORDER_NO_SHIPPING_ADDRESS",
-        message: MESSAGES.noShippingAddress,
-      });
-    }
-    const method = input.shippingMethod;
-    if (draft.shippingMethodId === null || method === null) {
-      errors.push({
-        field: "shippingMethod",
-        code: "SHIPPING_METHOD_REQUIRED",
-        message: MESSAGES.noShippingMethod,
-      });
-    } else if (!method.isActive) {
+    const method = draft.shippingMethodId === null ? null : input.shippingMethod;
+    if (draft.shippingMethodId !== null && (method === null || !method.isActive)) {
       errors.push({
         field: "shippingMethod",
         code: "SHIPPING_METHOD_NOT_APPLICABLE",
@@ -112,15 +98,16 @@ export async function completeDraftOrder(
     if (draft.userEmail === null) {
       errors.push({ field: "userEmail", code: "REQUIRED", message: MESSAGES.noEmail });
     }
-    if (errors.length > 0 || method === null) return { ok: false, errors };
+    if (errors.length > 0) return { ok: false, errors };
 
-    // The shipping price is the method's current one (it may have changed since it was chosen).
+    // The shipping price is the method's current one (it may have changed since it was chosen);
+    // without a method there is no shipping.
     await tx
       .update(schema.order)
       .set({
-        shippingMethodName: method.name,
-        shippingPriceAmount: method.priceAmount,
-        totalAmount: sql`${schema.order.subtotalAmount} + ${method.priceAmount}`,
+        shippingMethodName: method?.name ?? null,
+        shippingPriceAmount: method?.priceAmount ?? 0,
+        totalAmount: sql`${schema.order.subtotalAmount} + ${method?.priceAmount ?? 0}`,
       })
       .where(eq(schema.order.id, draft.id));
 

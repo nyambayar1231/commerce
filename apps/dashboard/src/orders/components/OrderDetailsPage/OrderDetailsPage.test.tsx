@@ -50,8 +50,6 @@ const order = (overrides: Partial<OrderDetailsFragment> = {}): OrderDetailsFragm
   userEmail: "bat@example.com",
   user: null,
   shippingMethodName: "Standard",
-  shippingMethod: null,
-  shippingMethods: [],
   billingAddress: address,
   shippingAddress: address,
   lines: [
@@ -189,7 +187,10 @@ describe("OrderDetailsPage", () => {
   it("says when the customer or addresses are missing", () => {
     renderPage(order({ userEmail: null, shippingAddress: null, billingAddress: null }));
 
-    expect(screen.getAllByText("Not set")).toHaveLength(3);
+    // Customer and billing address say "Not set"; an order without shipping shows no shipping
+    // address at all (the shop doesn't ship yet).
+    expect(screen.getAllByText("Not set")).toHaveLength(2);
+    expect(document.querySelector('[data-test-id="shipping-address-section"]')).toBeNull();
   });
 
   it("links a customer account's order to the customer's profile", () => {

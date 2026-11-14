@@ -3,8 +3,8 @@
 // See THIRD_PARTY_LICENSES.md
 // A draft's actions (PLAN M13.6), rendered by OrderDetails for a DRAFT order as in Saleor. The open
 // dialog lives in the URL (`action=add-order-line|cancel`). Line changes save at once with Saleor's
-// toasts; their errors, and Finalize's (what the draft is missing), are error toasts (Saleor shows
-// some of them next to the fields). Finalize opens the placed order; deleting goes to the drafts.
+// toasts and their errors are error toasts; Finalize's errors (what the draft is missing) show in
+// red next to the customer, the billing address or the lines, with one toast saying so. Finalize opens the placed order; deleting goes to the drafts.
 import { useMutation } from "@apollo/client";
 import { useEffect } from "react";
 import { defineMessages, useIntl } from "react-intl";
@@ -27,7 +27,6 @@ import { OrderAddressEditDialog } from "../components/OrderAddressEditDialog/Ord
 import { OrderDraftCancelDialog } from "../components/OrderDraftCancelDialog/OrderDraftCancelDialog";
 import { OrderDraftPage } from "../components/OrderDraftPage/OrderDraftPage";
 import { OrderProductAddDialog } from "../components/OrderProductAddDialog/OrderProductAddDialog";
-import { OrderShippingMethodEditDialog } from "../components/OrderShippingMethodEditDialog/OrderShippingMethodEditDialog";
 import { type OrderUrlQueryParams, orderDraftListUrl, orderDraftUrl, orderUrl } from "../urls";
 
 // Saleor's OrderDetailsMessages toasts (Saleor's Mongolian says "order list" for "order line";
@@ -39,6 +38,11 @@ const messages = defineMessages({
   draftFinalized: { id: "Hwp65F", defaultMessage: "Draft finalized" },
   draftDeleted: { id: "0ix6PR", defaultMessage: "Order cancelled" },
   draftUpdated: { id: "Jq1/jJ", defaultMessage: "Draft order updated" },
+  cannotFinalize: {
+    id: "mZD3xw",
+    defaultMessage: "The draft can't be finalized yet. Fix the fields marked in red.",
+    description: "draft finalize error toast",
+  },
 });
 
 interface OrderDraftDetailsProps {
@@ -84,14 +88,15 @@ export const OrderDraftDetails = ({ id, order, params }: OrderDraftDetailsProps)
   });
   const [finalize, finalizeOpts] = useMutation(OrderDraftFinalizeDocument, {
     onCompleted: (result) => {
-      const errors = result.draftOrderComplete?.errors ?? [];
-      if (errors.length > 0) return notifyErrors(errors);
+      // What is missing shows in red on the page; the toast only says so.
+      if ((result.draftOrderComplete?.errors.length ?? 0) > 0) {
+        return notify({ status: "error", text: intl.formatMessage(messages.cannotFinalize) });
+      }
       notify({ status: "success", text: intl.formatMessage(messages.draftFinalized) });
       navigate(orderUrl(id), { replace: true });
     },
   });
-  // One mutation for the customer, the addresses and the shipping method (Saleor's
-  // draftOrderUpdate); a dialog closes when it succeeds.
+  // One mutation for the customer and the billing address (Saleor's draftOrderUpdate); a dialog closes when it succeeds.
   const [updateDraft, updateDraftOpts] = useMutation(OrderDraftUpdateDocument, {
     onCompleted: (result) => {
       const errors = result.draftOrderUpdate?.errors ?? [];
@@ -135,6 +140,14 @@ export const OrderDraftDetails = ({ id, order, params }: OrderDraftDetailsProps)
     errors: updateDraftOpts.data?.draftOrderUpdate?.errors,
   });
   const updateErrors = updateDraftOpts.data?.draftOrderUpdate?.errors ?? [];
+  // Finalize's errors stay until fixed: one about the customer, the billing address or the
+  // missing products goes once the draft has it.
+  const finalizeErrors = (finalizeOpts.data?.draftOrderComplete?.errors ?? []).filter(
+    (error) =>
+      !(error.field === "userEmail" && order.userEmail) &&
+      !(error.field === "billingAddress" && order.billingAddress) &&
+      !(error.field === "lines" && error.code === "REQUIRED" && order.lines.length > 0),
+  );
 
   return (
     <>
@@ -154,42 +167,18 @@ export const OrderDraftDetails = ({ id, order, params }: OrderDraftDetailsProps)
         }
         onOrderLineRemove={(lineId) => void deleteLine({ variables: { id: lineId } })}
         onCustomerChange={(change) => void updateDraft({ variables: { id, input: change } })}
-        onShippingAddressEdit={() => openModal("edit-shipping-address")}
         onBillingAddressEdit={() => openModal("edit-billing-address")}
-        onShippingMethodEdit={() => openModal("edit-shipping")}
-      />
-      <OrderShippingMethodEditDialog
-        open={params.action === "edit-shipping"}
-        shippingMethods={order.shippingMethods}
-        shippingMethodId={order.shippingMethod?.id ?? null}
-        confirmButtonState={updateState}
-        errors={updateErrors}
-        onClose={closeModal}
-        onSubmit={(shippingMethod) =>
-          void updateDraft({ variables: { id, input: { shippingMethod } } })
-        }
+        errors={finalizeErrors}
       />
       <OrderAddressEditDialog
-        open={params.action === "edit-shipping-address" || params.action === "edit-billing-address"}
-        kind={params.action === "edit-billing-address" ? "BILLING" : "SHIPPING"}
-        address={
-          params.action === "edit-billing-address" ? order.billingAddress : order.shippingAddress
-        }
+        open={params.action === "edit-billing-address"}
+        address={order.billingAddress}
         confirmButtonState={updateState}
         errors={updateErrors}
         onClose={closeModal}
-        onSubmit={(address, alsoOther) => {
-          const shipping = params.action !== "edit-billing-address";
-          void updateDraft({
-            variables: {
-              id,
-              input: {
-                ...(shipping || alsoOther ? { shippingAddress: address } : {}),
-                ...(!shipping || alsoOther ? { billingAddress: address } : {}),
-              },
-            },
-          });
-        }}
+        onSubmit={(billingAddress) =>
+          void updateDraft({ variables: { id, input: { billingAddress } } })
+        }
       />
       <OrderProductAddDialog
         open={params.action === "add-order-line"}

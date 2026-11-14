@@ -11,17 +11,15 @@ import { FormattedMessage } from "react-intl";
 
 import type { OrderDetailsFragment } from "../../../graphql/types.generated";
 import { messages as markAsPaidMessages } from "../OrderMarkAsPaidDialog/OrderMarkAsPaidDialog";
-import { type EditableShipping, OrderValue } from "./OrderValue";
+import { OrderValue } from "./OrderValue";
 import { PaymentsSummary } from "./PaymentsSummary";
 
 interface OrderSummaryProps {
   order: OrderDetailsFragment;
   onMarkAsPaid?: () => void;
-  /** A draft's editable shipping row (M13.7). */
-  editableShipping?: EditableShipping;
 }
 
-export const OrderSummary = ({ order, onMarkAsPaid, editableShipping }: OrderSummaryProps) => (
+export const OrderSummary = ({ order, onMarkAsPaid }: OrderSummaryProps) => (
   <Box paddingX={6} paddingBottom={6} display="grid" gap={5} data-test-id="OrderSummary">
     <Box display="flex" justifyContent="space-between" alignItems="center">
       <Text size={6} fontWeight="medium">
@@ -40,7 +38,6 @@ export const OrderSummary = ({ order, onMarkAsPaid, editableShipping }: OrderSum
         shippingPrice={order.shippingPrice}
         shippingMethodName={order.shippingMethodName}
         total={order.total}
-        editable={editableShipping}
       />
       <PaymentsSummary {...order} />
     </Box>

@@ -81,9 +81,6 @@
     "context": "Header row quantity label",
     "string": "Тоо хэмжээ"
   },
-  "129wyQ": {
-    "string": "Харилцагчийн хүргэлтийн хаягийг өөрчлөх"
-  },
   "16iwCI": {
     "context": "section header",
     "string": "Биелүүлсэн"
@@ -373,9 +370,6 @@
   "AQDJ1d": {
     "string": "Ноорог захиалга үүслээ"
   },
-  "Ai4XSg": {
-    "string": "Хүргэлтийн хаяг алга"
-  },
   "AiurXc": {
     "string": "Үлдэгдэл зөвшөөрөл"
   },
@@ -471,8 +465,9 @@
     "context": "transaction event type, transaction was chargeback by payment provider",
     "string": "Төлбөрийн маргаан"
   },
-  "Dg4Y2p": {
-    "string": "Хүргэлтийн арга сонгох"
+  "Dwm3a0": {
+    "context": "draft finalize error",
+    "string": "Дуусгахаас өмнө харилцагч сонгох эсвэл имэйлийг нь оруулна уу."
   },
   "E1C9pp": {
     "context": "transaction event type, authorization amount was changed",
@@ -530,9 +525,6 @@
   "FpIcp9": {
     "string": "Харилцагч олдсонгүй"
   },
-  "G+MtyG": {
-    "string": "Тохирох хүргэлтийн арга алга"
-  },
   "G2WJ1J": {
     "context": "order header date, less than an hour ago",
     "string": "{minutes, plural, one {# минутын өмнө захиалсан} other {# минутын өмнө захиалсан}}"
@@ -548,9 +540,6 @@
     "context": "order history message",
     "string": "Захиалга хийгдсэн"
   },
-  "GiS5VI": {
-    "string": "Өөрчлөх"
-  },
   "H4Lcuk": {
     "string": "Ангилал шинэчлэгдлээ"
   },
@@ -564,13 +553,6 @@
   "HRy5qF": {
     "context": "customer overview stat label",
     "string": "Нийт захиалга"
-  },
-  "HTiAMm": {
-    "string": "Татвар "
-  },
-  "HY1ZL6": {
-    "context": "order summary, taxes are included in the prices",
-    "string": "(багтсан)"
   },
   "HlCkMT": {
     "string": "Захиалгын мөр нэмэгдлээ"
@@ -650,6 +632,10 @@
   "Ja7gHc": {
     "context": "button",
     "string": "Засах"
+  },
+  "JcYCB/": {
+    "context": "draft finalize error",
+    "string": "Дуусгахаас өмнө төлбөрийн хаяг оруулна уу."
   },
   "JjeZEG": {
     "context": "section header",
@@ -856,9 +842,6 @@
     "context": "error message",
     "string": "Түр хүлээгээд дахин оролдоно уу."
   },
-  "RzDYi8": {
-    "string": "Төлбөрийн хаягт мөн адил тохируулах"
-  },
   "S2xLxV": {
     "string": "Бүтээгдэхүүний нэрээр хайх..."
   },
@@ -939,9 +922,6 @@
   "UycVMp": {
     "context": "button",
     "string": "Дэд ангилал үүсгэх"
-  },
-  "V/YxJa": {
-    "string": "Хүргэлтийн арга засах"
   },
   "V21v8h": {
     "string": "{currency} {totalAmount}"
@@ -1193,10 +1173,6 @@
     "context": "Transaction event status - failure",
     "string": "Амжилтгүй"
   },
-  "e7yOai": {
-    "context": "shipping address is not set in draft order",
-    "string": "Тохируулаагүй"
-  },
   "eKHtk8": {
     "context": "print order button",
     "string": "Хэвлэх"
@@ -1219,10 +1195,6 @@
   },
   "fL08MU": {
     "string": "Захиалгын үнийн дүн"
-  },
-  "fS2rip": {
-    "context": "tooltip for taxes amount",
-    "string": "Татварын дүн"
   },
   "fXdkiI": {
     "string": "тэнцүү"
@@ -1398,6 +1370,10 @@
   "mWYRZY": {
     "context": "order history message",
     "string": "Захиалгад бүтээгдэхүүн нэмэгдлээ"
+  },
+  "mZD3xw": {
+    "context": "draft finalize error toast",
+    "string": "Ноорог захиалгыг одоогоор дуусгах боломжгүй. Улаанаар тэмдэглэсэн талбаруудыг засна уу."
   },
   "n8tEIV": {
     "context": "customer overview, last login tooltip",
@@ -1607,9 +1583,6 @@
     "context": "ordered product quantity",
     "string": "Тоо хэмжээ"
   },
-  "txOXvy": {
-    "string": "Хүргэлтийн хаягт мөн адил тохируулах"
-  },
   "u2QjRn": {
     "context": "create product dialog title",
     "string": "Бүтээгдэхүүн үүсгэх"
@@ -1784,5 +1757,9 @@
   "zmKgYS": {
     "context": "order header date, same year and older than yesterday",
     "string": "{date}, {time}-д захиалсан"
+  },
+  "zrqtWp": {
+    "context": "draft finalize error",
+    "string": "Дуусгахаас өмнө дор хаяж нэг бүтээгдэхүүн нэмнэ үү."
   }
 }

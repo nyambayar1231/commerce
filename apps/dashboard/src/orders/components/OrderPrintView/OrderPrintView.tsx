@@ -2,7 +2,8 @@
 // plugin-generated invoices), so this is our own: number, date, status, customer, addresses,
 // shipping method, lines and totals in plain black on white. It is mounted on <body> and hidden
 // on screen; while printing, its stylesheet hides everything else, so both the page's Print
-// button and the browser's own Print show it.
+// button and the browser's own Print show it. Shipping (address, method, cost) is printed only for
+// an order that has it: the shop doesn't ship yet (owner, 2026-11-14).
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { defineMessage, defineMessages, FormattedMessage, useIntl } from "react-intl";
@@ -15,6 +16,7 @@ import {
 } from "../../../components/ReadonlyAddress/ReadonlyAddress";
 import type { AddressFragment, OrderDetailsFragment } from "../../../graphql/types.generated";
 import { transformOrderStatus } from "../../../misc";
+import { hasShipping } from "../OrderSummary/OrderValue";
 import styles from "./OrderPrintView.module.css";
 
 const titleMessage = defineMessage<{ orderNumber: string }>({
@@ -109,15 +111,19 @@ export const OrderPrintView = ({ order }: { order: OrderDetailsFragment }) => {
         <Field label={<FormattedMessage {...messages.customer} />}>
           <div>{order.userEmail || EMPTY}</div>
         </Field>
-        <Field label={<FormattedMessage {...messages.shippingAddress} />}>
-          <Address address={order.shippingAddress} />
-        </Field>
         <Field label={<FormattedMessage {...messages.billingAddress} />}>
           <Address address={order.billingAddress} />
         </Field>
-        <Field label={<FormattedMessage {...messages.shippingMethod} />}>
-          <div>{order.shippingMethodName || EMPTY}</div>
-        </Field>
+        {order.shippingAddress && (
+          <Field label={<FormattedMessage {...messages.shippingAddress} />}>
+            <Address address={order.shippingAddress} />
+          </Field>
+        )}
+        {order.shippingMethodName && (
+          <Field label={<FormattedMessage {...messages.shippingMethod} />}>
+            <div>{order.shippingMethodName}</div>
+          </Field>
+        )}
       </section>
 
       <table className={styles.lines}>
@@ -161,10 +167,14 @@ export const OrderPrintView = ({ order }: { order: OrderDetailsFragment }) => {
           <FormattedMessage {...messages.subtotal} />
         </dt>
         <dd>{money(order.subtotal.gross.amount)}</dd>
-        <dt>
-          <FormattedMessage {...messages.shipping} />
-        </dt>
-        <dd>{money(order.shippingPrice.gross.amount)}</dd>
+        {hasShipping(order) && (
+          <>
+            <dt>
+              <FormattedMessage {...messages.shipping} />
+            </dt>
+            <dd>{money(order.shippingPrice.gross.amount)}</dd>
+          </>
+        )}
         <dt className={styles.grandTotal}>
           <FormattedMessage {...messages.total} />
         </dt>

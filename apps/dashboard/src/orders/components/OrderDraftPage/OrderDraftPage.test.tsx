@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LocaleProvider } from "../../../components/Locale/Locale";
 import { SavebarRefProvider, useSavebarRef } from "../../../components/Savebar/SavebarRefContext";
-import type { OrderDetailsFragment } from "../../../graphql/types.generated";
+import type { OrderDetailsFragment, OrderErrorFragment } from "../../../graphql/types.generated";
 import { ThemeProvider } from "../../../theme/provider";
 import { OrderDraftPage } from "./OrderDraftPage";
 
@@ -34,8 +34,6 @@ const draft = (overrides: Partial<OrderDetailsFragment> = {}): OrderDetailsFragm
   userEmail: null,
   user: null,
   shippingMethodName: null,
-  shippingMethod: null,
-  shippingMethods: [],
   billingAddress: null,
   shippingAddress: null,
   lines: [
@@ -79,7 +77,7 @@ const draft = (overrides: Partial<OrderDetailsFragment> = {}): OrderDetailsFragm
   ...overrides,
 });
 
-const renderPage = (order?: OrderDetailsFragment) => {
+const renderPage = (order?: OrderDetailsFragment, errors: OrderErrorFragment[] = []) => {
   const props = {
     disabled: false,
     finalizeState: "default" as const,
@@ -90,9 +88,8 @@ const renderPage = (order?: OrderDetailsFragment) => {
     onOrderLineChange: vi.fn(),
     onOrderLineRemove: vi.fn(),
     onCustomerChange: vi.fn(),
-    onShippingAddressEdit: vi.fn(),
     onBillingAddressEdit: vi.fn(),
-    onShippingMethodEdit: vi.fn(),
+    errors,
   };
   render(
     <ThemeProvider>
@@ -153,65 +150,42 @@ describe("OrderDraftPage", () => {
     expect(byTestId("show-more-button")).toBeTruthy();
   });
 
-  it("edits the customer's addresses and the shipping method", () => {
-    const props = renderPage(
-      draft({
-        shippingAddress: null,
-        shippingMethods: [
-          {
-            __typename: "ShippingMethod",
-            id: "sm1",
-            name: "Standard",
-            active: true,
-            price: money(500),
-          },
-        ],
-      }),
-    );
+  it("shows no shipping or tax, and edits the customer and billing address", () => {
+    const props = renderPage(draft());
 
+    expect(text()).not.toContain("Shipping");
+    expect(text()).not.toContain("Taxes");
+    expect(byTestId("shipping-address-section")).toBeNull();
     expect(byTestId("change-customer")).toBeTruthy();
-    byTestId("edit-shipping-address")?.click();
-    expect(props.onShippingAddressEdit).toHaveBeenCalled();
     byTestId("edit-billing-address")?.click();
     expect(props.onBillingAddressEdit).toHaveBeenCalled();
-    // No shipping address yet: Saleor's "No shipping address" instead of the link.
-    expect(text()).toContain("No shipping address");
-    expect(byTestId("add-shipping-carrier")).toBeNull();
   });
 
-  it("offers Set shipping method once there is an address", () => {
-    const address = {
-      __typename: "Address" as const,
-      city: "UB",
-      cityArea: "",
-      companyName: "",
-      country: { __typename: "CountryDisplay" as const, code: "MN", country: "Mongolia" },
-      countryArea: "",
-      firstName: "Bat",
-      lastName: "Dorj",
-      phone: null,
-      postalCode: "",
-      streetAddress1: "A 1",
-      streetAddress2: "",
-    };
-    const props = renderPage(
-      draft({
-        shippingAddress: address,
-        shippingMethods: [
-          {
-            __typename: "ShippingMethod",
-            id: "sm1",
-            name: "Standard",
-            active: true,
-            price: money(500),
-          },
-        ],
-      }),
-    );
+  it("marks what Finalize says is missing in red, next to its field", () => {
+    const error = (field: string, code: OrderErrorFragment["code"]) => ({
+      __typename: "OrderError" as const,
+      field,
+      code,
+      message: "API message",
+      orderLines: null,
+      warehouse: null,
+      addressType: null,
+    });
+    renderPage(draft(), [
+      error("userEmail", "REQUIRED"),
+      error("billingAddress", "BILLING_ADDRESS_NOT_SET"),
+      error("lines", "INSUFFICIENT_STOCK"),
+    ]);
 
-    expect(text()).toContain("Set shipping method");
-    byTestId("add-shipping-carrier")?.click();
-    expect(props.onShippingMethodEdit).toHaveBeenCalled();
+    expect(byTestId("customer-error")?.textContent).toBe(
+      "Choose a customer or type their email before finalizing.",
+    );
+    expect(byTestId("billing-address-error")?.textContent).toBe(
+      "Add a billing address before finalizing.",
+    );
+    expect(byTestId("lines-errors")?.textContent).toBe(
+      "Cannot change the quantity because of insufficient stock",
+    );
   });
 
   it("says when the draft has no lines", () => {

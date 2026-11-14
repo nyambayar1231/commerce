@@ -4,7 +4,7 @@ import { API_URL, DASHBOARD_URL, STAFF_EMAIL, STAFF_PASSWORD } from "../env.ts";
 // The golden path (PLAN M9.7, ARCHITECTURE §11): staff creates a published product with stock in
 // the dashboard → a customer buys it through the GraphQL API (the storefront is M4) → staff finds
 // the order in the dashboard and fulfils it, then prints it. M13: staff creates an order by hand
-// (a draft: products, customer, address, shipping), finalizes and fulfils it. The steps share
+// (a draft: products, customer, billing address; no shipping), finalizes and fulfils it. The steps share
 // state, so they run in order.
 test.describe.configure({ mode: "serial" });
 
@@ -237,14 +237,22 @@ test("staff adds products to the draft and changes a quantity", async () => {
   await page.screenshot({ path: "test-results/draft-page.png", fullPage: true });
 });
 
-test("staff sets the draft's customer, address and shipping, then finalizes it", async () => {
+test("staff sets the draft's customer and billing address, then finalizes it", async () => {
   await page.getByTestId("change-customer").click();
   const customer = page.getByRole("combobox", { name: "Search Customers" });
   await customer.fill("draft-buyer@example.com");
   await page.getByRole("option", { name: "Use email: draft-buyer@example.com" }).click();
   await expect(page.getByTestId("customer-email")).toHaveText("draft-buyer@example.com");
 
-  await page.getByTestId("edit-shipping-address").click();
+  // The shop doesn't ship yet: Finalize first says what is missing, in red.
+  await page.getByTestId("finalize-button").click();
+  await expect(page.getByText("The draft can't be finalized yet.")).toBeVisible();
+  await expect(page.getByTestId("billing-address-error")).toHaveText(
+    "Add a billing address before finalizing.",
+  );
+  await page.screenshot({ path: "test-results/draft-errors.png", fullPage: true });
+
+  await page.getByTestId("edit-billing-address").click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("First name").fill("Bat");
   await dialog.getByLabel("Last name").fill("Dorj");
@@ -252,15 +260,11 @@ test("staff sets the draft's customer, address and shipping, then finalizes it",
   await dialog.getByLabel("City").fill("Ulaanbaatar");
   await dialog.getByRole("combobox", { name: "Country" }).click();
   await page.getByRole("option", { name: "Mongolia" }).click();
-  await dialog.getByText("Set the same for billing address").click();
-  await page.screenshot({ path: "test-results/draft-address-dialog.png" });
   await dialog.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByTestId("billing-address-section")).toContainText("Peace Ave 2");
-
-  await page.getByTestId("add-shipping-carrier").click();
-  await page.getByRole("dialog").getByRole("button", { name: "Confirm" }).click();
-  await expect(page.getByTestId("OrderSummary")).toContainText("Standard");
-  await page.screenshot({ path: "test-results/draft-ready.png", fullPage: true });
+  await expect(page.getByTestId("billing-address-error")).toHaveCount(0);
+  await expect(page.getByTestId("shipping-address-section")).toHaveCount(0);
+  await expect(page.getByTestId("OrderSummary")).not.toContainText("Shipping");
 
   await page.getByTestId("finalize-button").click();
   await expect(page.getByText("Draft finalized")).toBeVisible();

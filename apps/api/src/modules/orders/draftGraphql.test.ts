@@ -815,13 +815,30 @@ describe("draftOrderComplete", () => {
     expect(result.order).toBeNull();
     expect(result.errors.map((error) => [error.field, error.code])).toEqual([
       ["billingAddress", "BILLING_ADDRESS_NOT_SET"],
-      ["shippingAddress", "ORDER_NO_SHIPPING_ADDRESS"],
-      ["shippingMethod", "SHIPPING_METHOD_REQUIRED"],
       ["lines", "REQUIRED"],
       ["userEmail", "REQUIRED"],
     ]);
     const [row] = await db.select().from(schema.order);
     expect(row?.status).toBe("DRAFT");
+  });
+
+  it("places an order without shipping (the shop doesn't ship yet)", async () => {
+    const staff = await createStaff(db, ["MANAGE_ORDERS"]);
+    const { draft } = await readyDraft(staff.token);
+    await gql(
+      UPDATE,
+      { id: draft.id, input: { shippingAddress: null, shippingMethod: null } },
+      staff.token,
+    );
+
+    const placed = await complete(draft.id, staff.token);
+    expect(placed.errors).toEqual([]);
+    expect(placed.order).toMatchObject({
+      status: "UNFULFILLED",
+      shippingMethodName: null,
+      shippingPrice: { gross: { amount: 0 } },
+      total: { gross: { amount: 2000 } },
+    });
   });
 
   it("uses the shipping method's current price and refuses an inactive one", async () => {

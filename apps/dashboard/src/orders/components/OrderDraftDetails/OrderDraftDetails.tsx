@@ -85,6 +85,8 @@ const LineQuantity = ({
 interface OrderDraftDetailsProps {
   lines?: OrderLineFragment[];
   disabled: boolean;
+  /** Finalize's errors about the lines (no products, stock, unpublished), shown in red. */
+  errors?: string[];
   onOrderLineAdd: () => void;
   onOrderLineChange: (lineId: string, quantity: number) => void;
   onOrderLineRemove: (lineId: string) => void;
@@ -93,6 +95,7 @@ interface OrderDraftDetailsProps {
 export const OrderDraftDetails = ({
   lines,
   disabled,
+  errors = [],
   onOrderLineAdd,
   onOrderLineChange,
   onOrderLineRemove,
@@ -117,6 +120,15 @@ export const OrderDraftDetails = ({
           </Button>
         </DashboardCard.Toolbar>
       </DashboardCard.Header>
+      {errors.length > 0 && (
+        <DashboardCard.Content paddingBottom={2} data-test-id="lines-errors">
+          {errors.map((error) => (
+            <Text key={error} color="critical1" size={3} display="block">
+              {error}
+            </Text>
+          ))}
+        </DashboardCard.Content>
+      )}
       {lines === undefined ? (
         <DashboardCard.Content>
           <Skeleton />

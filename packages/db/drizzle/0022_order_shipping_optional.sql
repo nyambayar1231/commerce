@@ -1,0 +1,2 @@
+ALTER TABLE "order" DROP CONSTRAINT "order_complete_unless_draft";--> statement-breakpoint
+ALTER TABLE "order" ADD CONSTRAINT "order_complete_unless_draft" CHECK ("order"."status" = 'DRAFT' OR ("order"."user_email" IS NOT NULL AND "order"."billing_address" IS NOT NULL));
