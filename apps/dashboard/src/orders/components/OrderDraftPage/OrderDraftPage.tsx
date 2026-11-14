@@ -3,8 +3,8 @@
 // See THIRD_PARTY_LICENSES.md
 // A draft order (PLAN M13.6): back link to the drafts, "Order #n" with the Draft pill, Saleor's
 // menu with "Cancel order" (deletes the draft), the lines with "Add products", the summary, the
-// history, the customer card and the save bar's Back / Finalize. The customer, addresses and
-// shipping method are edited in M13.7. Left out: metadata, the channel alert, discounts, notes,
+// history, the customer card and the save bar's Back / Finalize. The customer card, its addresses
+// and the summary's shipping row are editable (M13.7). Left out: metadata, the channel alert, discounts, notes,
 // app widgets.
 import { Box } from "@saleor/macaw-ui";
 import { Package, Trash2 } from "lucide-react";
@@ -19,7 +19,7 @@ import { DetailPageLayout } from "../../../components/Layouts/Detail";
 import { Savebar } from "../../../components/Savebar";
 import type { OrderDetailsFragment } from "../../../graphql/types.generated";
 import { orderDraftListUrl } from "../../urls";
-import { OrderCustomer } from "../OrderCustomer/OrderCustomer";
+import { type CustomerChange, OrderCustomer } from "../OrderCustomer/OrderCustomer";
 import { Title } from "../OrderDetailsPage/Title";
 import { OrderDraftDetails } from "../OrderDraftDetails/OrderDraftDetails";
 import { OrderHistory } from "../OrderHistory/OrderHistory";
@@ -48,6 +48,10 @@ interface OrderDraftPageProps {
   onOrderLineAdd: () => void;
   onOrderLineChange: (lineId: string, quantity: number) => void;
   onOrderLineRemove: (lineId: string) => void;
+  onCustomerChange: (change: CustomerChange) => void;
+  onShippingAddressEdit: () => void;
+  onBillingAddressEdit: () => void;
+  onShippingMethodEdit: () => void;
 }
 
 export const OrderDraftPage = ({
@@ -60,6 +64,10 @@ export const OrderDraftPage = ({
   onOrderLineAdd,
   onOrderLineChange,
   onOrderLineRemove,
+  onCustomerChange,
+  onShippingAddressEdit,
+  onBillingAddressEdit,
+  onShippingMethodEdit,
 }: OrderDraftPageProps) => {
   const intl = useIntl();
   const menuItems = useMemo(
@@ -97,7 +105,14 @@ export const OrderDraftPage = ({
           />
           {order && (
             <>
-              <OrderSummary order={order} />
+              <OrderSummary
+                order={order}
+                editableShipping={{
+                  hasShippingAddress: order.shippingAddress !== null,
+                  hasShippingMethods: order.shippingMethods.length > 0,
+                  onShippingMethodEdit,
+                }}
+              />
               <OrderHistory history={order.events ?? []} currency={order.total.gross.currency} />
             </>
           )}
@@ -110,6 +125,9 @@ export const OrderDraftPage = ({
             user={order.user}
             shippingAddress={order.shippingAddress}
             billingAddress={order.billingAddress}
+            onCustomerChange={onCustomerChange}
+            onShippingAddressEdit={onShippingAddressEdit}
+            onBillingAddressEdit={onBillingAddressEdit}
           />
         )}
       </DetailPageLayout.RightSidebar>

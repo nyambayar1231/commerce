@@ -67,6 +67,11 @@ export const buttonMessages = defineMessages({
     defaultMessage: "Create",
     description: "button",
   },
+  edit: {
+    id: "Ja7gHc",
+    defaultMessage: "Edit",
+    description: "button",
+  },
   delete: {
     id: "ufmuTp",
     defaultMessage: "Delete",

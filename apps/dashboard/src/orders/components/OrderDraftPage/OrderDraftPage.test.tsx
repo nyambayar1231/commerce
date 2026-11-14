@@ -34,6 +34,8 @@ const draft = (overrides: Partial<OrderDetailsFragment> = {}): OrderDetailsFragm
   userEmail: null,
   user: null,
   shippingMethodName: null,
+  shippingMethod: null,
+  shippingMethods: [],
   billingAddress: null,
   shippingAddress: null,
   lines: [
@@ -87,6 +89,10 @@ const renderPage = (order?: OrderDetailsFragment) => {
     onOrderLineAdd: vi.fn(),
     onOrderLineChange: vi.fn(),
     onOrderLineRemove: vi.fn(),
+    onCustomerChange: vi.fn(),
+    onShippingAddressEdit: vi.fn(),
+    onBillingAddressEdit: vi.fn(),
+    onShippingMethodEdit: vi.fn(),
   };
   render(
     <ThemeProvider>
@@ -145,6 +151,67 @@ describe("OrderDraftPage", () => {
     byTestId("finalize-button")?.click();
     expect(props.onDraftFinalize).toHaveBeenCalled();
     expect(byTestId("show-more-button")).toBeTruthy();
+  });
+
+  it("edits the customer's addresses and the shipping method", () => {
+    const props = renderPage(
+      draft({
+        shippingAddress: null,
+        shippingMethods: [
+          {
+            __typename: "ShippingMethod",
+            id: "sm1",
+            name: "Standard",
+            active: true,
+            price: money(500),
+          },
+        ],
+      }),
+    );
+
+    expect(byTestId("change-customer")).toBeTruthy();
+    byTestId("edit-shipping-address")?.click();
+    expect(props.onShippingAddressEdit).toHaveBeenCalled();
+    byTestId("edit-billing-address")?.click();
+    expect(props.onBillingAddressEdit).toHaveBeenCalled();
+    // No shipping address yet: Saleor's "No shipping address" instead of the link.
+    expect(text()).toContain("No shipping address");
+    expect(byTestId("add-shipping-carrier")).toBeNull();
+  });
+
+  it("offers Set shipping method once there is an address", () => {
+    const address = {
+      __typename: "Address" as const,
+      city: "UB",
+      cityArea: "",
+      companyName: "",
+      country: { __typename: "CountryDisplay" as const, code: "MN", country: "Mongolia" },
+      countryArea: "",
+      firstName: "Bat",
+      lastName: "Dorj",
+      phone: null,
+      postalCode: "",
+      streetAddress1: "A 1",
+      streetAddress2: "",
+    };
+    const props = renderPage(
+      draft({
+        shippingAddress: address,
+        shippingMethods: [
+          {
+            __typename: "ShippingMethod",
+            id: "sm1",
+            name: "Standard",
+            active: true,
+            price: money(500),
+          },
+        ],
+      }),
+    );
+
+    expect(text()).toContain("Set shipping method");
+    byTestId("add-shipping-carrier")?.click();
+    expect(props.onShippingMethodEdit).toHaveBeenCalled();
   });
 
   it("says when the draft has no lines", () => {

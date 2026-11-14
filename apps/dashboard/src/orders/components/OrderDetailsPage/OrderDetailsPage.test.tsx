@@ -50,6 +50,8 @@ const order = (overrides: Partial<OrderDetailsFragment> = {}): OrderDetailsFragm
   userEmail: "bat@example.com",
   user: null,
   shippingMethodName: "Standard",
+  shippingMethod: null,
+  shippingMethods: [],
   billingAddress: address,
   shippingAddress: address,
   lines: [

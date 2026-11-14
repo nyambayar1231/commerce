@@ -31,6 +31,7 @@ export const orderErrorFragment = gql`
     message
     orderLines
     warehouse
+    addressType
   }
 `;
 
@@ -194,6 +195,22 @@ export const orderLineUpdate = gql`
 export const orderLineDelete = gql`
   mutation OrderLineDelete($id: ID!) {
     orderLineDelete(id: $id) {
+      errors {
+        ...OrderError
+      }
+      order {
+        ...OrderDetails
+      }
+    }
+  }
+  ${orderErrorFragment}
+  ${orderDetailsFragments}
+`;
+
+// Saleor's OrderDraftUpdate: the draft's customer, addresses or shipping method.
+export const orderDraftUpdate = gql`
+  mutation OrderDraftUpdate($id: ID!, $input: DraftOrderInput!) {
+    draftOrderUpdate(id: $id, input: $input) {
       errors {
         ...OrderError
       }

@@ -81,6 +81,9 @@
     "context": "Header row quantity label",
     "string": "Тоо хэмжээ"
   },
+  "129wyQ": {
+    "string": "Харилцагчийн хүргэлтийн хаягийг өөрчлөх"
+  },
   "16iwCI": {
     "context": "section header",
     "string": "Биелүүлсэн"
@@ -338,6 +341,12 @@
     "context": "fulfillment section name",
     "string": "Биелүүлэлт"
   },
+  "9YazHG": {
+    "string": "Байгууллага"
+  },
+  "9Z7LQq": {
+    "string": "Имэйл ашиглах:"
+  },
   "9ZtJhn": {
     "context": "cancel button",
     "string": "Захиалга цуцлах"
@@ -364,6 +373,9 @@
   "AQDJ1d": {
     "string": "Ноорог захиалга үүслээ"
   },
+  "Ai4XSg": {
+    "string": "Хүргэлтийн хаяг алга"
+  },
   "AiurXc": {
     "string": "Үлдэгдэл зөвшөөрөл"
   },
@@ -373,6 +385,12 @@
   "AubJ/S": {
     "context": "button",
     "string": "Нэвтрэх"
+  },
+  "AuwpCm": {
+    "string": "Аймаг / муж"
+  },
+  "B52Em/": {
+    "string": "Хаягийн мөр 1"
   },
   "BC/h4y": {
     "context": "category detail sidebar children card intro",
@@ -435,6 +453,9 @@
     "context": "collapse truncated toast description",
     "string": "Хураах"
   },
+  "D4W/LE": {
+    "string": "Харилцагчийн төлбөрийн хаягийг өөрчлөх"
+  },
   "DGWVA9": {
     "context": "variant created error message",
     "string": "Хувилбар үүсгэж чадсангүй"
@@ -449,6 +470,9 @@
   "DVgMit": {
     "context": "transaction event type, transaction was chargeback by payment provider",
     "string": "Төлбөрийн маргаан"
+  },
+  "Dg4Y2p": {
+    "string": "Хүргэлтийн арга сонгох"
   },
   "E1C9pp": {
     "context": "transaction event type, authorization amount was changed",
@@ -506,6 +530,9 @@
   "FpIcp9": {
     "string": "Харилцагч олдсонгүй"
   },
+  "G+MtyG": {
+    "string": "Тохирох хүргэлтийн арга алга"
+  },
   "G2WJ1J": {
     "context": "order header date, less than an hour ago",
     "string": "{minutes, plural, one {# минутын өмнө захиалсан} other {# минутын өмнө захиалсан}}"
@@ -520,6 +547,9 @@
   "GJAX0z": {
     "context": "order history message",
     "string": "Захиалга хийгдсэн"
+  },
+  "GiS5VI": {
+    "string": "Өөрчлөх"
   },
   "H4Lcuk": {
     "string": "Ангилал шинэчлэгдлээ"
@@ -617,6 +647,10 @@
     "context": "success notification when product media gallery order is saved",
     "string": "Медиагийн дараалал шинэчлэгдлээ"
   },
+  "Ja7gHc": {
+    "context": "button",
+    "string": "Засах"
+  },
   "JjeZEG": {
     "context": "section header",
     "string": "Бүтээгдэхүүнийг ангилах"
@@ -624,6 +658,9 @@
   "Jk8bsM": {
     "context": "badge next to customer name marking this user as staff",
     "string": "Ажилтан"
+  },
+  "Jq1/jJ": {
+    "string": "Ноорог захиалга шинэчлэгдлээ"
   },
   "K8xNLe": {
     "context": "products section name",
@@ -721,6 +758,9 @@
   "NmK6zy": {
     "string": "Төлбөр"
   },
+  "O95R3Z": {
+    "string": "Утас"
+  },
   "OGemtu": {
     "context": "payment status",
     "string": "Хэсэгчлэн буцаан олгосон"
@@ -816,6 +856,9 @@
     "context": "error message",
     "string": "Түр хүлээгээд дахин оролдоно уу."
   },
+  "RzDYi8": {
+    "string": "Төлбөрийн хаягт мөн адил тохируулах"
+  },
   "S2xLxV": {
     "string": "Бүтээгдэхүүний нэрээр хайх..."
   },
@@ -851,6 +894,9 @@
   },
   "TDhHMi": {
     "string": "Энэ утга давхардахгүй байх ёстой"
+  },
+  "TE4fIS": {
+    "string": "Хот"
   },
   "TKmub+": {
     "string": "Энэ талбарыг бөглөх шаардлагатай"
@@ -893,6 +939,9 @@
   "UycVMp": {
     "context": "button",
     "string": "Дэд ангилал үүсгэх"
+  },
+  "V/YxJa": {
+    "string": "Хүргэлтийн арга засах"
   },
   "V21v8h": {
     "string": "{currency} {totalAmount}"
@@ -1236,6 +1285,9 @@
   "hkENym": {
     "string": "Харилцагч"
   },
+  "hkSkNx": {
+    "string": "Харилцагч хайх"
+  },
   "hlj1XE": {
     "context": "category detail cogs menu, navigates to create a child category",
     "string": "Дэд ангилал үүсгэх"
@@ -1278,6 +1330,9 @@
   },
   "kFsTMN": {
     "string": "Харилцагчдыг устгах"
+  },
+  "kKxHG9": {
+    "string": "Харилцагч солих"
   },
   "kVKMLf": {
     "context": "notifier after transfer funds mutation succeeds",
@@ -1388,8 +1443,14 @@
     "context": "order status",
     "string": "Биелүүлээгүй"
   },
+  "oQY0a2": {
+    "string": "Хаягийн мөр 2"
+  },
   "oUWADl": {
     "string": "Үгүй"
+  },
+  "oYGfnY": {
+    "string": "Шуудангийн код"
   },
   "of/+iV": {
     "context": "transaction event type, refund was reversed, funds are back to store account",
@@ -1546,6 +1607,9 @@
     "context": "ordered product quantity",
     "string": "Тоо хэмжээ"
   },
+  "txOXvy": {
+    "string": "Хүргэлтийн хаягт мөн адил тохируулах"
+  },
   "u2QjRn": {
     "context": "create product dialog title",
     "string": "Бүтээгдэхүүн үүсгэх"
@@ -1578,6 +1642,9 @@
   },
   "vEYtiq": {
     "string": "Ангиллын нэр"
+  },
+  "vONi+O": {
+    "string": "Улс"
   },
   "vW3tb6": {
     "context": "name",

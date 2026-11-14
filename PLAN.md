@@ -387,7 +387,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M13.4 | `draftOrderComplete`: Saleor's checks (lines, email, addresses, shipping), stock reserved, prices frozen, `UNFULFILLED`; tests | Done |
 | M13.5 | Dashboard: the Drafts list (`/orders/drafts`, menu item) and "Create order" | Done |
 | M13.6 | Dashboard: the draft page (lines, add products dialog, quantities, remove, Finalize, delete); history messages; Mongolian | Done |
-| M13.7 | Dashboard: the draft's customer, addresses and shipping method (Saleor's dialogs) | Approved |
+| M13.7 | Dashboard: the draft's customer, addresses and shipping method (Saleor's dialogs) | Done |
 | M13.8 | Playwright golden path for create → finalize → fulfill; release | Approved |
 
 - **Acceptance:** a staff member creates an order from the dashboard, finalizes it, fulfils it and
@@ -423,6 +423,15 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   errors are error toasts (Saleor shows some next to the fields); Finalize opens the placed order
   at /orders/:id. No channel alert, metadata, notes or widgets. Saleor's Mongolian for "order
   line" toasts said "order list" and is corrected.
+- **M13.7 left out or different from Saleor, awaiting the owner's OK:** the API gained Saleor's
+  `Shop.countries` (every known country; Saleor lists its shipping zones' countries) for the
+  address form. "Change customer" searches accounts or takes "Use email: …" as Saleor, but without
+  Saleor's customer-change dialog (no address books to copy addresses from). Addresses are edited
+  for any draft, also an email-only one (Saleor: only with an account), with Saleor's "Add new
+  address" form only and its "Set the same for billing / shipping address" checkbox. The shipping
+  dialog lists active methods only (Saleor also shows unavailable ones, disabled). Found, not
+  fixed: the golden path's variant sometimes has an empty name (the line shows "-"); it predates
+  M13.
 - **Out of scope:** discounts, draft-order emails/invoices, channels, editing a finalized order's
   lines (Saleor's unconfirmed orders), bulk draft delete.
 

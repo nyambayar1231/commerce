@@ -5,6 +5,7 @@ import { requirePermission } from "../../graphql/permissions.ts";
 import { Decimal } from "../../graphql/scalars.ts";
 import { toMoney } from "../catalog/index.ts";
 import { OrderType } from "../orders/graphql.ts";
+import { ShopType } from "../shop/graphql.ts";
 import {
   type CheckoutPayload,
   CheckoutType,
@@ -51,6 +52,16 @@ const CountryDisplay = builder.objectRef<CountryCode>("CountryDisplay").implemen
     country: t.string({ description: "Country name.", resolve: (code) => countryName(code) }),
   }),
 });
+
+// Saleor's Shop.countries: the countries an address may use (the dashboard's address form, M13.7).
+// Saleor lists the shop's shipping-zone countries; ours are every known country code.
+builder.objectField(ShopType, "countries", (t) =>
+  t.field({
+    type: [CountryDisplay],
+    description: "List of countries available in the shop.",
+    resolve: () => [...COUNTRY_CODES],
+  }),
+);
 
 // Saleor's Address without `id`, metadata and the default-address flags: a checkout's address is a
 // JSON snapshot, not a row (ARCHITECTURE §3), so there is nothing for an id to point at.

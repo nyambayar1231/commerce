@@ -81,6 +81,9 @@
     "context": "Header row quantity label",
     "string": "Quantity"
   },
+  "129wyQ": {
+    "string": "Change customer shipping address"
+  },
   "16iwCI": {
     "context": "section header",
     "string": "Fulfilled"
@@ -338,6 +341,12 @@
     "context": "fulfillment section name",
     "string": "Fulfillment"
   },
+  "9YazHG": {
+    "string": "Company"
+  },
+  "9Z7LQq": {
+    "string": "Use email:"
+  },
   "9ZtJhn": {
     "context": "cancel button",
     "string": "Cancel order"
@@ -364,6 +373,9 @@
   "AQDJ1d": {
     "string": "Draft order created"
   },
+  "Ai4XSg": {
+    "string": "No shipping address"
+  },
   "AiurXc": {
     "string": "Outstanding authorized"
   },
@@ -373,6 +385,12 @@
   "AubJ/S": {
     "context": "button",
     "string": "Sign in"
+  },
+  "AuwpCm": {
+    "string": "Country area"
+  },
+  "B52Em/": {
+    "string": "Address line 1"
   },
   "BC/h4y": {
     "context": "category detail sidebar children card intro",
@@ -435,6 +453,9 @@
     "context": "collapse truncated toast description",
     "string": "Show less"
   },
+  "D4W/LE": {
+    "string": "Change customer billing address"
+  },
   "DGWVA9": {
     "context": "variant created error message",
     "string": "Variant creation failed"
@@ -449,6 +470,9 @@
   "DVgMit": {
     "context": "transaction event type, transaction was chargeback by payment provider",
     "string": "Chargeback"
+  },
+  "Dg4Y2p": {
+    "string": "Set shipping method"
   },
   "E1C9pp": {
     "context": "transaction event type, authorization amount was changed",
@@ -506,6 +530,9 @@
   "FpIcp9": {
     "string": "No customers found"
   },
+  "G+MtyG": {
+    "string": "No applicable shipping methods"
+  },
   "G2WJ1J": {
     "context": "order header date, less than an hour ago",
     "string": "Placed {minutes, plural, one {# minute} other {# minutes}} ago"
@@ -520,6 +547,9 @@
   "GJAX0z": {
     "context": "order history message",
     "string": "Order was placed"
+  },
+  "GiS5VI": {
+    "string": "Change"
   },
   "H4Lcuk": {
     "string": "Category updated"
@@ -617,6 +647,10 @@
     "context": "success notification when product media gallery order is saved",
     "string": "Media order updated"
   },
+  "Ja7gHc": {
+    "context": "button",
+    "string": "Edit"
+  },
   "JjeZEG": {
     "context": "section header",
     "string": "Organize Product"
@@ -624,6 +658,9 @@
   "Jk8bsM": {
     "context": "badge next to customer name marking this user as staff",
     "string": "Staff"
+  },
+  "Jq1/jJ": {
+    "string": "Draft order updated"
   },
   "K8xNLe": {
     "context": "products section name",
@@ -721,6 +758,9 @@
   "NmK6zy": {
     "string": "Payment"
   },
+  "O95R3Z": {
+    "string": "Phone"
+  },
   "OGemtu": {
     "context": "payment status",
     "string": "Partially refunded"
@@ -816,6 +856,9 @@
     "context": "error message",
     "string": "Please wait a moment before trying again."
   },
+  "RzDYi8": {
+    "string": "Set the same for billing address"
+  },
   "S2xLxV": {
     "string": "Search by product name, attribute, product type etc..."
   },
@@ -851,6 +894,9 @@
   },
   "TDhHMi": {
     "string": "This needs to be unique"
+  },
+  "TE4fIS": {
+    "string": "City"
   },
   "TKmub+": {
     "string": "This field is required"
@@ -893,6 +939,9 @@
   "UycVMp": {
     "context": "button",
     "string": "Create subcategory"
+  },
+  "V/YxJa": {
+    "string": "Edit Shipping Method"
   },
   "V21v8h": {
     "string": "{currency} {totalAmount}"
@@ -1236,6 +1285,9 @@
   "hkENym": {
     "string": "Customer"
   },
+  "hkSkNx": {
+    "string": "Search Customers"
+  },
   "hlj1XE": {
     "context": "category detail cogs menu, navigates to create a child category",
     "string": "Create subcategory"
@@ -1278,6 +1330,9 @@
   },
   "kFsTMN": {
     "string": "Delete customers"
+  },
+  "kKxHG9": {
+    "string": "Change customer"
   },
   "kVKMLf": {
     "context": "notifier after transfer funds mutation succeeds",
@@ -1388,8 +1443,14 @@
     "context": "order status",
     "string": "Unfulfilled"
   },
+  "oQY0a2": {
+    "string": "Address line 2"
+  },
   "oUWADl": {
     "string": "No"
+  },
+  "oYGfnY": {
+    "string": "ZIP / Postal code"
   },
   "of/+iV": {
     "context": "transaction event type, refund was reversed, funds are back to store account",
@@ -1546,6 +1607,9 @@
     "context": "ordered product quantity",
     "string": "Quantity"
   },
+  "txOXvy": {
+    "string": "Set the same for shipping address"
+  },
   "u2QjRn": {
     "context": "create product dialog title",
     "string": "Create product"
@@ -1578,6 +1642,9 @@
   },
   "vEYtiq": {
     "string": "Category Name"
+  },
+  "vONi+O": {
+    "string": "Country"
   },
   "vW3tb6": {
     "context": "name",

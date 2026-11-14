@@ -3059,6 +3059,9 @@ type ShippingPriceUpdate {
 Represents a shop resource containing general shop data and configuration.
 """
 type Shop {
+  """List of countries available in the shop."""
+  countries: [CountryDisplay!]!
+
   """The shop's single currency (ISO 4217). Saleor keeps this per channel."""
   currency: String!
 

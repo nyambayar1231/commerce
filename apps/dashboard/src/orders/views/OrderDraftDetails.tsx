@@ -15,6 +15,7 @@ import {
   type OrderDetailsFragment,
   OrderDraftCancelDocument,
   OrderDraftFinalizeDocument,
+  OrderDraftUpdateDocument,
   type OrderErrorFragment,
   OrderLineDeleteDocument,
   OrderLinesAddDocument,
@@ -22,9 +23,11 @@ import {
 } from "../../graphql/types.generated";
 import { useNotifier } from "../../hooks/useNotifier/useNotifier";
 import { getOrderErrorMessage } from "../../utils/errors";
+import { OrderAddressEditDialog } from "../components/OrderAddressEditDialog/OrderAddressEditDialog";
 import { OrderDraftCancelDialog } from "../components/OrderDraftCancelDialog/OrderDraftCancelDialog";
 import { OrderDraftPage } from "../components/OrderDraftPage/OrderDraftPage";
 import { OrderProductAddDialog } from "../components/OrderProductAddDialog/OrderProductAddDialog";
+import { OrderShippingMethodEditDialog } from "../components/OrderShippingMethodEditDialog/OrderShippingMethodEditDialog";
 import { type OrderUrlQueryParams, orderDraftListUrl, orderDraftUrl, orderUrl } from "../urls";
 
 // Saleor's OrderDetailsMessages toasts (Saleor's Mongolian says "order list" for "order line";
@@ -35,6 +38,7 @@ const messages = defineMessages({
   lineDeleted: { id: "9OtpHt", defaultMessage: "Order line deleted" },
   draftFinalized: { id: "Hwp65F", defaultMessage: "Draft finalized" },
   draftDeleted: { id: "0ix6PR", defaultMessage: "Order cancelled" },
+  draftUpdated: { id: "Jq1/jJ", defaultMessage: "Draft order updated" },
 });
 
 interface OrderDraftDetailsProps {
@@ -86,6 +90,17 @@ export const OrderDraftDetails = ({ id, order, params }: OrderDraftDetailsProps)
       navigate(orderUrl(id), { replace: true });
     },
   });
+  // One mutation for the customer, the addresses and the shipping method (Saleor's
+  // draftOrderUpdate); a dialog closes when it succeeds.
+  const [updateDraft, updateDraftOpts] = useMutation(OrderDraftUpdateDocument, {
+    onCompleted: (result) => {
+      const errors = result.draftOrderUpdate?.errors ?? [];
+      // A dialog shows its own errors; the customer picker has none, so toast them.
+      if (errors.length > 0) return params.action ? undefined : notifyErrors(errors);
+      notify({ status: "success", text: intl.formatMessage(messages.draftUpdated) });
+      if (params.action) closeModal();
+    },
+  });
   const [cancelDraft, cancelDraftOpts] = useMutation(OrderDraftCancelDocument, {
     onCompleted: (result) => {
       if ((result.draftOrderDelete?.errors.length ?? 0) > 0) return;
@@ -107,9 +122,19 @@ export const OrderDraftDetails = ({ id, order, params }: OrderDraftDetailsProps)
   useEffect(() => {
     if (params.action === "add-order-line") addLinesOpts.reset();
     if (params.action === "cancel") cancelDraftOpts.reset();
+    if (params.action?.startsWith("edit-")) updateDraftOpts.reset();
   }, [params.action]);
 
-  const busy = updateLineOpts.loading || deleteLineOpts.loading || finalizeOpts.loading;
+  const busy =
+    updateLineOpts.loading ||
+    deleteLineOpts.loading ||
+    finalizeOpts.loading ||
+    updateDraftOpts.loading;
+  const updateState = getMutationStatus({
+    ...updateDraftOpts,
+    errors: updateDraftOpts.data?.draftOrderUpdate?.errors,
+  });
+  const updateErrors = updateDraftOpts.data?.draftOrderUpdate?.errors ?? [];
 
   return (
     <>
@@ -128,6 +153,43 @@ export const OrderDraftDetails = ({ id, order, params }: OrderDraftDetailsProps)
           void updateLine({ variables: { id: lineId, input: { quantity } } })
         }
         onOrderLineRemove={(lineId) => void deleteLine({ variables: { id: lineId } })}
+        onCustomerChange={(change) => void updateDraft({ variables: { id, input: change } })}
+        onShippingAddressEdit={() => openModal("edit-shipping-address")}
+        onBillingAddressEdit={() => openModal("edit-billing-address")}
+        onShippingMethodEdit={() => openModal("edit-shipping")}
+      />
+      <OrderShippingMethodEditDialog
+        open={params.action === "edit-shipping"}
+        shippingMethods={order.shippingMethods}
+        shippingMethodId={order.shippingMethod?.id ?? null}
+        confirmButtonState={updateState}
+        errors={updateErrors}
+        onClose={closeModal}
+        onSubmit={(shippingMethod) =>
+          void updateDraft({ variables: { id, input: { shippingMethod } } })
+        }
+      />
+      <OrderAddressEditDialog
+        open={params.action === "edit-shipping-address" || params.action === "edit-billing-address"}
+        kind={params.action === "edit-billing-address" ? "BILLING" : "SHIPPING"}
+        address={
+          params.action === "edit-billing-address" ? order.billingAddress : order.shippingAddress
+        }
+        confirmButtonState={updateState}
+        errors={updateErrors}
+        onClose={closeModal}
+        onSubmit={(address, alsoOther) => {
+          const shipping = params.action !== "edit-billing-address";
+          void updateDraft({
+            variables: {
+              id,
+              input: {
+                ...(shipping || alsoOther ? { shippingAddress: address } : {}),
+                ...(!shipping || alsoOther ? { billingAddress: address } : {}),
+              },
+            },
+          });
+        }}
       />
       <OrderProductAddDialog
         open={params.action === "add-order-line"}

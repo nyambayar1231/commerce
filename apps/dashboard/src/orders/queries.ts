@@ -205,3 +205,31 @@ export const searchOrderVariant = gql`
     }
   }
 `;
+
+// Saleor's SearchCustomers (src/searches/useCustomerSearch.ts) for the draft's customer picker.
+export const searchCustomers = gql`
+  query SearchCustomers($first: Int!, $query: String!) {
+    customers(first: $first, search: $query) {
+      edges {
+        node {
+          id
+          email
+          firstName
+          lastName
+        }
+      }
+    }
+  }
+`;
+
+// Saleor's shop countries (the address form's country list).
+export const shopCountries = gql`
+  query ShopCountries {
+    shop {
+      countries {
+        code
+        country
+      }
+    }
+  }
+`;

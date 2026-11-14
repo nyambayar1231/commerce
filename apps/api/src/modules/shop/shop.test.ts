@@ -26,6 +26,15 @@ describe("Query.shop", () => {
     expect(result.body).toEqual({ data: { shop: { name: "Hantesi-Mongolia", currency: "MNT" } } });
   });
 
+  it("lists the countries an address may use (Saleor's Shop.countries)", async () => {
+    const result = await postGraphQL("{ shop { countries { code country } } }");
+    const countries = (result.body as { data: { shop: { countries: { code: string }[] } } }).data
+      .shop.countries;
+
+    expect(countries).toContainEqual({ code: "MN", country: "Mongolia" });
+    expect(countries.length).toBeGreaterThan(200);
+  });
+
   it("rejects a GET without the CSRF header", async () => {
     const query = encodeURIComponent("{ shop { name } }");
     const response = await app.fetch(`http://test/graphql?query=${query}`);

@@ -181,6 +181,18 @@ export const orderDetailsFragment = gql`
       id
     }
     shippingMethodName
+    shippingMethod {
+      id
+    }
+    shippingMethods {
+      id
+      name
+      active
+      price {
+        amount
+        currency
+      }
+    }
     billingAddress {
       ...Address
     }

@@ -4,24 +4,95 @@
 // The read-only "Order value" box: subtotal, shipping (with the method name), the total and
 // Saleor's "Taxes (included)" row for gross prices. Saleor's editing (shipping method, discounts),
 // discount and gift-card rows and the "before discounts" tooltip are left out: our orders have none.
+// A draft (M13.7) passes `editable`: Saleor's editable shipping row ("Shipping · Change" over the
+// method's name, or "Set shipping method", "No shipping address", "No applicable shipping
+// methods").
 import { Box, Text } from "@saleor/macaw-ui";
-import { FormattedMessage, useIntl } from "react-intl";
+import type { ReactNode } from "react";
+import { defineMessages, FormattedMessage, useIntl } from "react-intl";
 
 import type { OrderDetailsFragment } from "../../../graphql/types.generated";
 import { OrderSummaryListAmount, OrderSummaryListItem } from "./OrderSummaryListItem";
 
+export interface EditableShipping {
+  hasShippingAddress: boolean;
+  hasShippingMethods: boolean;
+  onShippingMethodEdit: () => void;
+}
+
 type OrderValueProps = Pick<
   OrderDetailsFragment,
   "subtotal" | "shippingPrice" | "shippingMethodName" | "total"
->;
+> & { editable?: EditableShipping };
+
+const shippingMessages = defineMessages({
+  setShippingMethod: { id: "Dg4Y2p", defaultMessage: "Set shipping method" },
+  change: { id: "GiS5VI", defaultMessage: "Change" },
+  noShippingMethods: { id: "G+MtyG", defaultMessage: "No applicable shipping methods" },
+  noShippingAddress: { id: "Ai4XSg", defaultMessage: "No shipping address" },
+});
+
+/** Saleor's ButtonLink: a text button in the accent color. */
+const LinkButton = ({ onClick, children }: { onClick: () => void; children: ReactNode }) => (
+  <Box
+    as="button"
+    type="button"
+    onClick={onClick}
+    padding={0}
+    borderWidth={0}
+    backgroundColor="transparent"
+    cursor="pointer"
+    data-test-id="add-shipping-carrier"
+  >
+    <Text color="accent1" size={3}>
+      {children}
+    </Text>
+  </Box>
+);
 
 export const OrderValue = ({
   subtotal,
   shippingPrice,
   shippingMethodName,
   total,
+  editable,
 }: OrderValueProps) => {
   const intl = useIntl();
+
+  const shippingLabel = () => {
+    if (!editable) return <FormattedMessage defaultMessage="Shipping" id="glR0om" />;
+    if (shippingMethodName) {
+      return (
+        <Box display="flex" gap={1} alignItems="baseline">
+          <FormattedMessage defaultMessage="Shipping" id="glR0om" />
+          {editable.hasShippingMethods && (
+            <>
+              <Text color="default2">·</Text>
+              <LinkButton onClick={editable.onShippingMethodEdit}>
+                {intl.formatMessage(shippingMessages.change)}
+              </LinkButton>
+            </>
+          )}
+        </Box>
+      );
+    }
+    if (!editable.hasShippingAddress || !editable.hasShippingMethods) {
+      return (
+        <Text as="span" color="default2">
+          {intl.formatMessage(
+            editable.hasShippingAddress
+              ? shippingMessages.noShippingMethods
+              : shippingMessages.noShippingAddress,
+          )}
+        </Text>
+      );
+    }
+    return (
+      <LinkButton onClick={editable.onShippingMethodEdit}>
+        {intl.formatMessage(shippingMessages.setShippingMethod)}
+      </LinkButton>
+    );
+  };
 
   return (
     <Box
@@ -60,7 +131,7 @@ export const OrderValue = ({
           alignItems="start"
         >
           <Box display="flex" flexDirection="column" gap={0.5} __minWidth={0}>
-            <FormattedMessage defaultMessage="Shipping" id="glR0om" />
+            {shippingLabel()}
             {shippingMethodName && (
               <Text size={3} color="default2" title={shippingMethodName}>
                 {shippingMethodName}
