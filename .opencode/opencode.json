@@ -3,10 +3,7 @@
   "mcp": {
     "browse": {
       "type": "local",
-      "command": [
-        "/Users/new_user/.local/bin/browse",
-        "mcp"
-      ],
+      "command": ["/Users/new_user/.local/bin/browse", "mcp"],
       "environment": {
         "OPENCODE_BROWSER_RUNTIME": "auto-update"
       }
