@@ -1357,6 +1357,10 @@
   "mIRBuW": {
     "string": "Нийтлэгдсэн эсэх"
   },
+  "mJMHcO": {
+    "context": "error notification when a variant grid cell holds a value that cannot be saved",
+    "string": "Улаанаар тэмдэглэсэн хувилбарын нүднүүдийг засаад дахин хадгална уу"
+  },
   "mKu838": {
     "context": "customer overview, value tooltip heading for shipping and refund breakdown",
     "string": "Эдгээр захиалгаас"
@@ -1664,6 +1668,10 @@
   "weguIe": {
     "context": "deactivate customer dialog, confirm button label",
     "string": "Идэвхгүй болгох"
+  },
+  "wj5c9k": {
+    "context": "product variants grid, row action that opens the variant page",
+    "string": "Хувилбарыг засах"
   },
   "wmeRVH": {
     "context": "dialog header",

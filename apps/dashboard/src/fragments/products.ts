@@ -42,9 +42,31 @@ export const productMediaFragment = gql`
   }
 `;
 
+// The variants grid's row (Saleor's ProductDetailsVariant fragment, limited to our single channel):
+// the fields the product page's Variants card shows and edits. The grid's own mutations select it
+// too, so Apollo's cache updates the edited row from the payload without a refetch.
+export const productVariantGridRowFragment = gql`
+  fragment ProductVariantGridRow on ProductVariant {
+    id
+    name
+    sku
+    price {
+      amount
+      currency
+    }
+    stocks {
+      id
+      quantity
+      warehouse {
+        id
+      }
+    }
+  }
+`;
+
 // The product detail page's fields: Saleor's ProductDetails fragment limited to what the update
-// page shows (no product type, attributes, SEO or metadata yet). The variants feed the read-only
-// Variants card (their stocks feed its per-warehouse columns); `media` feeds the Media card;
+// page shows (no product type, attributes, SEO or metadata yet). The variants feed the editable
+// Variants grid (their stocks feed its per-warehouse columns); `media` feeds the Media card;
 // `price` is the single channel's price.
 export const productDetailsFragment = gql`
   fragment ProductDetails on Product {
@@ -63,22 +85,10 @@ export const productDetailsFragment = gql`
       ...ProductMedia
     }
     variants {
-      id
-      name
-      sku
-      price {
-        amount
-        currency
-      }
-      stocks {
-        id
-        quantity
-        warehouse {
-          id
-        }
-      }
+      ...ProductVariantGridRow
     }
   }
+  ${productVariantGridRowFragment}
 `;
 
 // The variant detail page's fields: Saleor's ProductVariant fragment limited to the cards the page

@@ -3,8 +3,12 @@
 // See THIRD_PARTY_LICENSES.md
 // Saleor's editable number cell: drawn right-aligned in the UI locale; double-click, Enter or a
 // typed digit opens a number input over the cell (a typed digit replaces the value, Enter/F2
-// selects it, empty stays empty rather than 0), and pasting a number fills it. Saleor's "percent"
-// format comes with its first user.
+// selects it, empty stays empty rather than 0), and pasting a number fills it. A typed digit is
+// applied whenever Glide seeds the overlay, not only when it opens: a key that lands on the canvas
+// re-opens the same mounted overlay with it (M14.3 fix round), and both the input's text and its
+// focus are set in a layout effect, synchronously with that re-open, so the digits typed after it
+// continue the number instead of landing on the stale selected value (M14.3 fix round 2).
+// Saleor's "percent" format comes with its first user.
 import {
   type CustomCell,
   type CustomRenderer,
@@ -12,7 +16,7 @@ import {
   getMiddleCenterBias,
   type ProvideEditorCallback,
 } from "@glideapps/glide-data-grid";
-import { useEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 export const numberCellEmptyValue = Symbol("number-cell-empty-value");
 
@@ -61,19 +65,51 @@ const NumberCellEdit: ReturnType<ProvideEditorCallback<NumberCell>> = ({
         ? ""
         : String(cell.data.value),
   );
+  const hasMounted = useRef(false);
+  const appliedSeed = useRef<string | undefined>(undefined);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: mount-only, the typed key is applied once when the editor opens
-  useEffect(function seedTypedKeyOrSelectExisting() {
-    if (seed.draft !== "") {
+  // Glide mounts the editor once per overlay. When a typed key lands on the canvas instead of the
+  // input, Glide re-opens the *same* mounted overlay with that key as `initialValue` (its
+  // `reselect` replaces the overlay's props, not the component), so a mount-only seed is dropped:
+  // `onChange` never runs, `tempValue` stays unset and Enter closes the overlay without an edit —
+  // the cell keeps its old value and nothing is tinted (found in the M14.3 fix round, from the
+  // stock cells). Apply every new seed. This must be a *layout* effect: Glide calls `reselect` from
+  // its keydown handler, so the render and this commit run synchronously inside that event, before
+  // the browser dispatches the next key. A passive effect runs a task later, after the next
+  // keystroke has already gone to the input, which still selects the old value: with "1000"
+  // selected, `2500` then committed as `500` (M14.3 fix round 2, seen in Chrome). The refs make
+  // this run once per seed, not once per render.
+  useLayoutEffect(function applyTypedKeyAndTakeFocus() {
+    const input = inputRef.current;
+
+    if (!input) {
+      return;
+    }
+
+    const isFirstRun = !hasMounted.current;
+
+    hasMounted.current = true;
+
+    if (seed.draft !== "" && (isFirstRun || appliedSeed.current !== initialValue)) {
+      appliedSeed.current = initialValue;
+      // `autoFocus` alone loses to Glide: the canvas keeps focus and typed keys never reach the
+      // input (found in M14.3), so take focus explicitly.
+      input.focus();
+      setDraft(seed.draft);
+
       commit(seed.numeric === null ? numberCellEmptyValue : seed.numeric);
 
       return;
     }
 
-    if (isHighlighted) {
-      inputRef.current?.select();
+    if (isFirstRun) {
+      input.focus();
+
+      if (isHighlighted) {
+        input.select();
+      }
     }
-  }, []);
+  });
 
   return (
     <input

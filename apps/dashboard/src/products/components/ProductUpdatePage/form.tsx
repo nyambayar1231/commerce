@@ -1,18 +1,28 @@
 // Adapted from saleor-dashboard: src/products/components/ProductUpdatePage/form.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The update page's form state: name, description (plain text), category (global ID) and publish
-// status. Ours keeps the fields in local state (Saleor uses its generic useForm + rich-text
-// context) with the same rules: Save is enabled only with unsaved changes and a non-blank name,
-// and a dirty form registers with the exit-form dialog. Anything except name, category and
-// isPublished is surfaced as a notification by the page, not on an input.
+// status, plus the Variants grid's pending edits. Ours keeps the fields in local state (Saleor uses
+// its generic useForm + rich-text context) with the same rules: Save is enabled only with unsaved
+// changes and a non-blank name, and a dirty form registers with the exit-form dialog. The page owns
+// the grid's change list (Saleor's `datagrid` + DatagridChangeStateContext), so a grid edit makes
+// the page dirty and Save sends the product and the variants together; a variant whose calls
+// succeed has its edits cleared here. Anything except name, category and isPublished is surfaced as
+// a notification by the page, not on an input.
 import type * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { editorJsToPlainText, plainTextToEditorJs } from "../../../categories/description";
+import {
+  type DatagridChange,
+  type OnDatagridChange,
+  type UseDatagridChangeState,
+  useDatagridChangeState,
+} from "../../../components/Datagrid/hooks/useDatagridChange";
 import { useExitFormDialog } from "../../../components/Form/useExitFormDialog";
 import type {
   ProductDetailsFragment,
   ProductErrorFragment,
 } from "../../../graphql/types.generated";
+import type { VariantGridError } from "../ProductVariants/datagrid";
 
 export interface ProductUpdateFormData {
   name: string;
@@ -31,6 +41,22 @@ export interface ProductUpdateData {
   category: string | null;
   isPublished: boolean;
 }
+
+/**
+ * What a save reports back: the product form's errors, the variant grid's rejected cells, and the
+ * variants whose calls all succeeded (their edits can be cleared).
+ */
+export interface ProductUpdateSubmitResult {
+  errors: ProductErrorFragment[];
+  variantErrors: VariantGridError[];
+  savedVariantIds: string[];
+}
+
+/** Saleor's submit handler: the product form plus the grid's pending edits. */
+export type ProductUpdateSubmit = (
+  data: ProductUpdateData,
+  variantChanges: DatagridChange[],
+) => Promise<ProductUpdateSubmitResult>;
 
 export interface ProductSaveComposition {
   hasDetails: boolean;
@@ -94,6 +120,12 @@ export interface UseProductUpdateFormResult {
   change: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   changeCategory: (category: string | null) => void;
   changeIsPublished: (isPublished: boolean) => void;
+  /** The Variants grid's change list (DatagridChangeStateContext's value). */
+  datagrid: UseDatagridChangeState;
+  /** The grid changes not yet saved; a variant's edits leave it once its calls succeed. */
+  variantChanges: DatagridChange[];
+  /** Saleor's grid `onChange`: every edit updates the pending list, which makes the page dirty. */
+  changeVariants: OnDatagridChange;
   submit: () => Promise<unknown>;
   hasUnsavedChanges: boolean;
   isSaveDisabled: boolean;
@@ -111,11 +143,13 @@ const getInitialData = (
 
 export function useProductUpdateForm(
   product: ProductDetailsFragment | undefined | null,
-  onSubmit: (data: ProductUpdateData) => Promise<unknown[]>,
+  onSubmit: ProductUpdateSubmit,
   disabled: boolean,
 ): UseProductUpdateFormResult {
   const initial = useMemo(() => getInitialData(product), [product]);
   const [data, setData] = useState(initial);
+  const datagrid = useDatagridChangeState();
+  const [variantChanges, setVariantChanges] = useState<DatagridChange[]>([]);
   const { setIsDirty, setIsSubmitting } = useExitFormDialog();
 
   useEffect(() => {
@@ -126,7 +160,7 @@ export function useProductUpdateForm(
     (key) => data[key] !== initial[key],
   );
   const saveComposition = buildProductSaveComposition(changedFields);
-  const hasUnsavedChanges = hasProductSaveComposition(saveComposition);
+  const hasUnsavedChanges = hasProductSaveComposition(saveComposition) || variantChanges.length > 0;
   const isSaveDisabled = disabled || !hasUnsavedChanges || !data.name.trim();
 
   useEffect(() => {
@@ -149,6 +183,10 @@ export function useProductUpdateForm(
     setData((current) => ({ ...current, isPublished }));
   };
 
+  const changeVariants: OnDatagridChange = useCallback(({ updates }) => {
+    setVariantChanges(updates);
+  }, []);
+
   const submit = async () => {
     if (isSaveDisabled) {
       return [];
@@ -157,7 +195,21 @@ export function useProductUpdateForm(
     setIsSubmitting(true);
 
     try {
-      return await onSubmit(getProductUpdateData(data));
+      const result = await onSubmit(getProductUpdateData(data), variantChanges);
+
+      if (result.savedVariantIds.length > 0) {
+        const savedIds = new Set(result.savedVariantIds);
+        const remaining = datagrid.changes.current.filter((change) => {
+          const variant = product?.variants[change.row];
+
+          return variant === undefined || !savedIds.has(variant.id);
+        });
+
+        datagrid.changes.current = remaining;
+        setVariantChanges(remaining);
+      }
+
+      return result.errors;
     } finally {
       setIsSubmitting(false);
     }
@@ -168,6 +220,9 @@ export function useProductUpdateForm(
     change,
     changeCategory,
     changeIsPublished,
+    datagrid,
+    variantChanges,
+    changeVariants,
     submit,
     hasUnsavedChanges,
     isSaveDisabled,

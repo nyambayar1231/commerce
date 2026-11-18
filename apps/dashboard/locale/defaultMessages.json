@@ -1360,6 +1360,10 @@
   "mIRBuW": {
     "string": "Is published"
   },
+  "mJMHcO": {
+    "context": "error notification when a variant grid cell holds a value that cannot be saved",
+    "string": "Fix the highlighted variant cells and save again"
+  },
   "mKu838": {
     "context": "customer overview, value tooltip heading for shipping and refund breakdown",
     "string": "From these orders"
@@ -1670,6 +1674,10 @@
   "weguIe": {
     "context": "deactivate customer dialog, confirm button label",
     "string": "Deactivate"
+  },
+  "wj5c9k": {
+    "context": "product variants grid, row action that opens the variant page",
+    "string": "Edit variant"
   },
   "wmeRVH": {
     "context": "dialog header",

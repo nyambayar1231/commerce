@@ -14,6 +14,18 @@ import type { MoneyCell } from "./MoneyCell";
 import { type NumberCell, type NumberCellProps, numberCellEmptyValue } from "./NumberCell";
 import type { PillCell, PillColor } from "./PillCell";
 
+/** Saleor's textCell: editable text, e.g. a variant grid's name and SKU. */
+export function textCell(value: string, opts?: Partial<TextCell>): TextCell {
+  return {
+    allowOverlay: true,
+    readonly: false,
+    data: value,
+    displayData: value,
+    kind: GridCellKind.Text,
+    ...opts,
+  };
+}
+
 export function readonlyTextCell(
   value: string,
   hasCursorPointer = true,

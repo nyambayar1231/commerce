@@ -16,6 +16,11 @@ export const productUpdatePageMessages = defineMessages({
     defaultMessage: "Media order updated",
     description: "success notification when product media gallery order is saved",
   },
+  invalidVariantCells: {
+    id: "mJMHcO",
+    defaultMessage: "Fix the highlighted variant cells and save again",
+    description: "error notification when a variant grid cell holds a value that cannot be saved",
+  },
 });
 
 // Messages with ICU values need their own types (react-intl cannot infer them in defineMessages).

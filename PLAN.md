@@ -422,10 +422,13 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   3. **SKU stays optional and typed**, as in Saleor and Shopify: never generated. Only products and
      categories have slugs.
   4. **Saleor's editable Variants grid on the product page** (reverses M2.4's read-only card):
-     edit name, SKU, price and stock in the cells and add rows with "Add variant"; everything is
-     saved by the page's Save in Saleor's order (product, then `productVariantBulkCreate`, then
-     `productVariantBulkUpdate`), with errors on the cells. No row deletion, search, fullscreen
-     "Bulk edit" or "Generate variants" (no attributes).
+     edit name, SKU, price and stock in the cells, saved by the page's Save, errors on the cells.
+     As in Saleor 3.23, "Add variant" opens the variant create page (rows are added in the grid
+     only in fullscreen "Bulk edit"). No bulk mutations for now (owner, 2026-11-18): one existing
+     mutation per changed row, so a rejected row doesn't stop the others. No row deletion, search,
+     fullscreen or "Generate variants".
+  6. **Variants have their own media, as in Saleor:** chosen from the product's images
+     (`VariantMedia`), not uploaded separately.
   5. **The default variant is named after the product** (Saleor's `createMinimalProduct`), priced
      from the dialog.
 - **Deviation from Saleor:** `ProductCreateInput.price` (Saleor creates variants separately); the
@@ -436,12 +439,21 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M14.1 | API: `productCreate(price)` → default variant + published when it has a category | Done |
 | M14.1b | API: remove the withdrawn size/color fields and SKU generation (forward migration), keep `productCreate(price)` | Done |
 | M14.2 | Create product: price in the dialog, default variant named after the product, published by default | Done |
-| M14.3 | API: Saleor's `productVariantBulkCreate` / `productVariantBulkUpdate` (name, SKU, price, stocks; `errorPolicy`, per-row errors with `index`) | Proposed |
-| M14.4 | Dashboard: editable Variants grid (Saleor's datagrid editing, "Add variant" staged rows, cell errors), saved with the product page's Save | Proposed |
+| M14.3 | Dashboard: Saleor's editable Variants grid (name, SKU, price, stock per warehouse; fill handle; row pencil to the variant page; "Add variant" opens the create page as in Saleor), saved with the page's Save through the existing per-variant mutations | Done |
+| M14.4 | API: variant media — `variant_media` link table, Saleor's `variantMediaAssign`/`variantMediaUnassign`, `ProductVariant.media` (only the product's own images) | Proposed |
+| M14.5 | Dashboard: Saleor's variant Media card and "choose photos" dialog; the variant's image as its thumbnail in the grid and variant list | Proposed |
 
 - **Found in M14.2, not fixed (needs the owner's go):**
   - Locally the golden path fails at "staff adds products to the draft and changes a quantity"
     ("Order line updated" never shows), also on `85d616e` before M14; CI passed that commit.
+- **Found in M14.3, not fixed (needs the owner's go):**
+  - In the dark theme a red error cell's text is hard to read: Macaw's dark `background.critical1`
+    is a light pink under light text. Saleor paints the same colour (`Datagrid.tsx`, `bgCell` only).
+  - Clearing a stock cell sends nothing (it never removes a stock row); removing stock from a
+    warehouse needs an API/UX decision.
+  - Deviation from Saleor's grid: an error cell also overrides Glide's selection accent, so the
+    rejected cell (the current cell after Save) shows red at once; Saleor's stays grey until the
+    selection moves.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.

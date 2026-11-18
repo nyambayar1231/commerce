@@ -5,10 +5,10 @@
 // Cmd/Ctrl/middle-click), checkbox row selection with selection actions, header clicks (sorting),
 // row theme overrides, columns with their own click action (not part of the row link), the
 // header's column-picker slot with resize/reorder support, cell editing with change tracking
-// (`onChange`; edited cells tint until saved, `getCellError` cells turn red) and the per-row
-// action bar (`menuItems` / `renderRowActions`). Not yet (each comes with its first user):
-// fullscreen, tooltips, adding/removing rows in the grid, the trailing "ghost" row,
-// horizontal-swipe history guard.
+// (`onChange`; edited cells tint until saved, `getCellError` cells turn red, `fillHandle` drags a
+// value down a column) and the per-row action bar (`menuItems` / `renderRowActions`). Not yet (each
+// comes with its first user): fullscreen, tooltips, adding/removing rows in the grid, the trailing
+// "ghost" row, horizontal-swipe history guard.
 import "@glideapps/glide-data-grid/dist/index.css";
 
 import DataEditor, {
@@ -105,6 +105,8 @@ export interface DatagridProps {
   onClearRecentlyAddedColumn?: () => void;
   onRowClick?: (item: Item) => void;
   onRowSelectionChange?: (rowsId: number[], clearSelection: () => void) => void;
+  /** Shows Glide's fill handle, so a value can be dragged down a column. */
+  fillHandle?: DataEditorProps["fillHandle"];
   readonly?: boolean;
   hasRowHover?: boolean;
   highlightedRow?: number;
@@ -145,6 +147,7 @@ export const Datagrid = ({
   onClearRecentlyAddedColumn,
   onRowClick,
   onRowSelectionChange,
+  fillHandle,
   readonly = false,
   hasRowHover = false,
   highlightedRow,
@@ -197,7 +200,21 @@ export const Datagrid = ({
       const cell = getCellContent(item, opts);
 
       if (getCellError?.(item, opts)) {
-        return { ...cell, themeOverride: { bgCell: themeValues.colors.background.critical1 } };
+        // Glide's drawCells fills a cell with `bgCell`, then blends `accentLight` over it for the
+        // selected cell, and our accentLight is opaque: an error cell whose only override is
+        // `bgCell` shows the selection grey while it is the current cell (the rejected cell after
+        // Save). The error colour owns every key Glide paints the background with, so it shows
+        // selected or not.
+        const errorBackground = themeValues.colors.background.critical1;
+
+        return {
+          ...cell,
+          themeOverride: {
+            accentLight: errorBackground,
+            bgCell: errorBackground,
+            bgCellMedium: errorBackground,
+          },
+        };
       }
 
       if (changed && areCellsDirty) {
@@ -500,6 +517,7 @@ export const Datagrid = ({
                   getCellContent={handleGetCellContent}
                   onCellEdited={handleOnCellEdited}
                   onPaste
+                  fillHandle={fillHandle}
                   columns={availableColumns}
                   rows={rows}
                   freezeColumns={freezeColumns}

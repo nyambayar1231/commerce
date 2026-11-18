@@ -15,6 +15,7 @@ import {
   productDetailsFragment,
   productMediaFragment,
   productVariantDetailsFragment,
+  productVariantGridRowFragment,
 } from "../fragments/products";
 
 export const productCreateMutation = gql`
@@ -213,6 +214,40 @@ export const variantUpdateMutation = gql`
   ${productErrorFragment}
   ${bulkStockErrorFragment}
   ${productVariantStocksDeleteErrorFragment}
+`;
+
+// The variants grid's two writes, in the product page's save order: one `productVariantUpdate` per
+// changed row (only the changed fields), then its changed stock cells through
+// `productVariantStocksUpdate` (which also creates a missing stock row). The payloads select the
+// grid's row fields, so Apollo updates the card from the response.
+export const variantGridUpdateMutation = gql`
+  mutation VariantGridUpdate($id: ID!, $input: ProductVariantInput!) {
+    productVariantUpdate(id: $id, input: $input) {
+      errors {
+        ...ProductError
+      }
+      productVariant {
+        ...ProductVariantGridRow
+      }
+    }
+  }
+  ${productVariantGridRowFragment}
+  ${productErrorFragment}
+`;
+
+export const variantGridStocksUpdateMutation = gql`
+  mutation VariantGridStocksUpdate($variantId: ID!, $stocks: [StockInput!]!) {
+    productVariantStocksUpdate(variantId: $variantId, stocks: $stocks) {
+      errors {
+        ...BulkStockError
+      }
+      productVariant {
+        ...ProductVariantGridRow
+      }
+    }
+  }
+  ${productVariantGridRowFragment}
+  ${bulkStockErrorFragment}
 `;
 
 export const variantDeleteMutation = gql`

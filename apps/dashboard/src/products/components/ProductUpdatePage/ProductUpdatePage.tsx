@@ -1,11 +1,13 @@
 // Adapted from saleor-dashboard: src/products/components/ProductUpdatePage/ProductUpdatePage.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // Saleor's layout for the product update page: TopNav (all products, the ⋯ menu with Delete
-// product), General Information, the Media card and the read-only Variants card (with one stock
+// product), General Information, the Media card and the Variants grid (editable cells, one stock
 // column per warehouse) in the main column, Organize Product and Availability in the right sidebar,
-// and the Savebar (save-composition hint, Back, Save). Not yet: attributes, variant
-// editing/creation (the variants grid is read-only), SEO/slug editing, product type, collections,
-// taxes, metadata, translations, GraphiQL, extension widgets and the availability diagnostics.
+// and the Savebar (save-composition hint, Back, Save). The page owns the Variants grid's change
+// state (Saleor's DatagridChangeStateContext), so grid edits enable Save and warn on leaving, and
+// they are saved with the product on the same Save. Not yet: attributes, variant creation from the
+// grid, SEO/slug editing, product type, collections, taxes, metadata, translations, GraphiQL,
+// extension widgets and the availability diagnostics.
 import type { FetchResult } from "@apollo/client";
 import { Box } from "@saleor/macaw-ui";
 import { Tag, Trash2 } from "lucide-react";
@@ -16,6 +18,7 @@ import { useNavigate } from "react-router";
 import { TopNav } from "../../../components/AppLayout/TopNav";
 import type { TopNavMenuItem } from "../../../components/AppLayout/TopNav/Menu";
 import type { ConfirmButtonTransitionState } from "../../../components/ConfirmButton/ConfirmButton";
+import { DatagridChangeStateContext } from "../../../components/Datagrid/hooks/useDatagridChange";
 import { DetailPageContent } from "../../../components/DetailPageContent/DetailPageContent";
 import { iconSize, iconStrokeWidthBySize, topNavLucideIconProps } from "../../../components/icons";
 import { DetailPageLayout } from "../../../components/Layouts/Detail";
@@ -36,8 +39,9 @@ import { ProductDetailsForm } from "../ProductDetailsForm/ProductDetailsForm";
 import { type ImagesUploadCompleteResult, ProductMedia } from "../ProductMedia/ProductMedia";
 import type { ReorderEvent } from "../ProductMedia/useProductMediaDrag";
 import { ProductOrganization } from "../ProductOrganization/ProductOrganization";
+import type { VariantGridError } from "../ProductVariants/datagrid";
 import { ProductVariants } from "../ProductVariants/ProductVariants";
-import { type ProductUpdateData, useProductUpdateForm } from "./form";
+import { type ProductUpdateSubmit, useProductUpdateForm } from "./form";
 import { messages } from "./messages";
 import { ProductSaveCompositionHint } from "./ProductSaveCompositionHint";
 
@@ -46,9 +50,11 @@ interface ProductUpdatePageProps {
   /** The warehouses the Variants card turns into stock columns. */
   warehouses: { id: string; name: string }[];
   errors: ProductErrorFragment[];
+  /** The last save's rejected variant cells. */
+  variantErrors: VariantGridError[];
   disabled: boolean;
   saveButtonBarState: ConfirmButtonTransitionState;
-  onSubmit: (data: ProductUpdateData) => Promise<unknown[]>;
+  onSubmit: ProductUpdateSubmit;
   onDelete: () => void;
   onImageUpload: (file: File) => Promise<FetchResult<ProductMediaCreateMutation>>;
   onImagesUploadComplete: (result: ImagesUploadCompleteResult) => void;
@@ -60,6 +66,7 @@ export const ProductUpdatePage = ({
   product,
   warehouses,
   errors,
+  variantErrors,
   disabled,
   saveButtonBarState,
   onSubmit,
@@ -76,6 +83,8 @@ export const ProductUpdatePage = ({
     change,
     changeCategory,
     changeIsPublished,
+    datagrid,
+    changeVariants,
     submit,
     isSaveDisabled,
     saveComposition,
@@ -110,84 +119,93 @@ export const ProductUpdatePage = ({
   }, [intl, onDelete, product?.id]);
 
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        void submit();
-      }}
-    >
-      <DetailPageLayout>
-        <TopNav
-          href={productListPath}
-          hrefIcon={<Tag {...topNavLucideIconProps} />}
-          hrefTitle={intl.formatMessage(messages.allProducts)}
-          title={product?.name ?? "..."}
-          actionsGap={3}
-        >
-          {menuItems.length > 0 && (
-            <TopNav.Menu
-              items={
-                disabled || !product
-                  ? menuItems.map((item) => ({ ...item, disabled: true }))
-                  : menuItems
-              }
-              dataTestId="menu"
-            />
-          )}
-        </TopNav>
-        <DetailPageLayout.Content>
-          <DetailPageContent>
-            <ProductDetailsForm data={data} disabled={disabled} errors={errors} onChange={change} />
-            <ProductMedia
-              media={product?.media}
-              onImageUpload={onImageUpload}
-              onImagesUploadComplete={onImagesUploadComplete}
-              onImageDelete={onImageDelete}
-              getImageEditHref={
-                product ? (mediaId) => productImageUrl(product.id, mediaId) : undefined
-              }
-              onImageReorder={onImageReorder}
-            />
-            {product ? (
-              <ProductVariants
-                variants={product.variants}
-                warehouses={warehouses}
-                onAddVariant={() => navigate(productVariantAddUrl(product.id))}
-                onRowClick={(variantId) => navigate(productVariantEditUrl(variantId))}
+    <DatagridChangeStateContext.Provider value={datagrid}>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submit();
+        }}
+      >
+        <DetailPageLayout>
+          <TopNav
+            href={productListPath}
+            hrefIcon={<Tag {...topNavLucideIconProps} />}
+            hrefTitle={intl.formatMessage(messages.allProducts)}
+            title={product?.name ?? "..."}
+            actionsGap={3}
+          >
+            {menuItems.length > 0 && (
+              <TopNav.Menu
+                items={
+                  disabled || !product
+                    ? menuItems.map((item) => ({ ...item, disabled: true }))
+                    : menuItems
+                }
+                dataTestId="menu"
               />
-            ) : null}
-          </DetailPageContent>
-        </DetailPageLayout.Content>
-        <DetailPageLayout.RightSidebar paddingTop={6}>
-          <Box display="flex" flexDirection="column" gap={4} paddingX={6}>
-            <ProductOrganization
-              category={data.category}
-              categoryName={categoryName}
-              disabled={disabled}
-              errors={errors}
-              onCategoryChange={handleCategoryChange}
+            )}
+          </TopNav>
+          <DetailPageLayout.Content>
+            <DetailPageContent>
+              <ProductDetailsForm
+                data={data}
+                disabled={disabled}
+                errors={errors}
+                onChange={change}
+              />
+              <ProductMedia
+                media={product?.media}
+                onImageUpload={onImageUpload}
+                onImagesUploadComplete={onImagesUploadComplete}
+                onImageDelete={onImageDelete}
+                getImageEditHref={
+                  product ? (mediaId) => productImageUrl(product.id, mediaId) : undefined
+                }
+                onImageReorder={onImageReorder}
+              />
+              {product ? (
+                <ProductVariants
+                  variants={product.variants}
+                  warehouses={warehouses}
+                  errors={variantErrors}
+                  onChange={changeVariants}
+                  onAddVariant={() => navigate(productVariantAddUrl(product.id))}
+                  onRowClick={(variantId) => navigate(productVariantEditUrl(variantId))}
+                />
+              ) : null}
+            </DetailPageContent>
+          </DetailPageLayout.Content>
+          <DetailPageLayout.RightSidebar paddingTop={6}>
+            <Box display="flex" flexDirection="column" gap={4} paddingX={6}>
+              <ProductOrganization
+                category={data.category}
+                categoryName={categoryName}
+                disabled={disabled}
+                errors={errors}
+                onCategoryChange={handleCategoryChange}
+              />
+              <ProductAvailabilityCard
+                isPublished={data.isPublished}
+                publishedAt={product?.publishedAt}
+                disabled={disabled}
+                errors={errors}
+                onChange={changeIsPublished}
+              />
+            </Box>
+          </DetailPageLayout.RightSidebar>
+          <Savebar>
+            <Savebar.Spacer />
+            <ProductSaveCompositionHint composition={saveComposition} />
+            <Savebar.CancelButton onClick={() => navigate(productListPath)} />
+            <Savebar.ConfirmButton
+              transitionState={saveButtonBarState}
+              onClick={() => void submit()}
+              disabled={isSaveDisabled}
             />
-            <ProductAvailabilityCard
-              isPublished={data.isPublished}
-              publishedAt={product?.publishedAt}
-              disabled={disabled}
-              errors={errors}
-              onChange={changeIsPublished}
-            />
-          </Box>
-        </DetailPageLayout.RightSidebar>
-        <Savebar>
-          <Savebar.Spacer />
-          <ProductSaveCompositionHint composition={saveComposition} />
-          <Savebar.CancelButton onClick={() => navigate(productListPath)} />
-          <Savebar.ConfirmButton
-            transitionState={saveButtonBarState}
-            onClick={() => void submit()}
-            disabled={isSaveDisabled}
-          />
-        </Savebar>
-      </DetailPageLayout>
-    </form>
+          </Savebar>
+        </DetailPageLayout>
+      </form>
+    </DatagridChangeStateContext.Provider>
   );
 };
 

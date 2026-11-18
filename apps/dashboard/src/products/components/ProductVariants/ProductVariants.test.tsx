@@ -12,6 +12,7 @@ afterEach(cleanup);
 const renderCard = () => {
   const onAddVariant = vi.fn();
   const onRowClick = vi.fn();
+  const onChange = vi.fn();
 
   render(
     <ThemeProvider>
@@ -20,15 +21,17 @@ const renderCard = () => {
           <ProductVariants
             variants={[]}
             warehouses={[]}
+            errors={[]}
             onAddVariant={onAddVariant}
             onRowClick={onRowClick}
+            onChange={onChange}
           />
         </MemoryRouter>
       </LocaleProvider>
     </ThemeProvider>,
   );
 
-  return { onAddVariant, onRowClick };
+  return { onAddVariant, onRowClick, onChange };
 };
 
 describe("ProductVariants", () => {
