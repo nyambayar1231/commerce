@@ -97,3 +97,9 @@ export {
   THUMBNAIL_SIZES,
   thumbnailUrlFormat,
 } from "./thumbnails.ts";
+export type {
+  VariantMediaError,
+  VariantMediaErrorCode,
+  VariantMediaResult,
+} from "./variantMedia.ts";
+export { assignVariantMedia, unassignVariantMedia } from "./variantMedia.ts";

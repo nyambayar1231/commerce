@@ -1720,6 +1720,32 @@ type Mutation {
     """The token of the transaction. One of field id or token is required."""
     token: UUID
   ): TransactionRequestAction
+
+  """
+  Assign an media to a product variant.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  variantMediaAssign(
+    """ID of a product media to assign to a variant."""
+    mediaId: ID!
+
+    """ID of a product variant."""
+    variantId: ID!
+  ): VariantMediaAssign!
+
+  """
+  Unassign an media from a product variant.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  variantMediaUnassign(
+    """ID of a product media to unassign from a variant."""
+    mediaId: ID!
+
+    """ID of a product variant."""
+    variantId: ID!
+  ): VariantMediaUnassign!
 }
 
 interface Node {
@@ -2429,6 +2455,7 @@ enum ProductErrorCode {
   GRAPHQL_ERROR
   INVALID
   INVALID_FILE_TYPE
+  MEDIA_ALREADY_ASSIGNED
   NOT_FOUND
   NOT_PRODUCTS_IMAGE
   PRODUCT_WITHOUT_CATEGORY
@@ -2610,6 +2637,9 @@ type ProductUpdate {
 type ProductVariant implements Node {
   """The ID of the product variant."""
   id: ID!
+
+  """List of media for the product variant."""
+  media: [ProductMedia!]!
 
   """The name of the product variant."""
   name: String!
@@ -3538,6 +3568,28 @@ input UserSortingInput {
 
   """Sort users by the selected field."""
   field: UserSortField!
+}
+
+"""
+Assign an media to a product variant.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type VariantMediaAssign {
+  errors: [ProductError!]!
+  media: ProductMedia
+  productVariant: ProductVariant
+}
+
+"""
+Unassign an media from a product variant.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type VariantMediaUnassign {
+  errors: [ProductError!]!
+  media: ProductMedia
+  productVariant: ProductVariant
 }
 
 """Represents warehouse."""

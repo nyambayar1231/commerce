@@ -1,6 +1,6 @@
 import { type Executor, schema } from "@commerce/db";
 import DataLoader from "dataloader";
-import { asc, inArray } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import type { ThumbnailFormat } from "../../storage/index.ts";
 import type { CategoryRow } from "./categories.ts";
 import type { ProductMediaRow, ProductMediaThumbnailRow } from "./media.ts";
@@ -27,6 +27,8 @@ export interface CatalogLoaders {
   variantsByProductId: DataLoader<string, ProductVariantRow[]>;
   /** `Product.media`. */
   mediaByProductId: DataLoader<string, ProductMediaRow[]>;
+  /** `ProductVariant.media`: the variant's assigned media, in the product's media order. */
+  mediaByVariantId: DataLoader<string, ProductMediaRow[]>;
   /** `ProductMedia.url` and `Product.thumbnail`: the stored thumbnail of a media, if generated. */
   thumbnailByMediaIdSizeFormat: DataLoader<ThumbnailLoaderKey, ProductMediaThumbnailRow | null>;
 }
@@ -84,6 +86,22 @@ export function createCatalogLoaders(db: Executor): CatalogLoaders {
         else byProduct.set(row.productId, [row]);
       }
       return productIds.map((productId) => byProduct.get(productId) ?? []);
+    }),
+
+    mediaByVariantId: new DataLoader(async (variantIds) => {
+      const rows = await db
+        .select({ variantId: schema.variantMedia.variantId, media: schema.productMedia })
+        .from(schema.variantMedia)
+        .innerJoin(schema.productMedia, eq(schema.variantMedia.mediaId, schema.productMedia.id))
+        .where(inArray(schema.variantMedia.variantId, [...variantIds]))
+        .orderBy(asc(schema.productMedia.sortOrder), asc(schema.productMedia.id));
+      const byVariant = new Map<string, ProductMediaRow[]>();
+      for (const row of rows) {
+        const media = byVariant.get(row.variantId);
+        if (media) media.push(row.media);
+        else byVariant.set(row.variantId, [row.media]);
+      }
+      return variantIds.map((variantId) => byVariant.get(variantId) ?? []);
     }),
 
     thumbnailByMediaIdSizeFormat: new DataLoader<

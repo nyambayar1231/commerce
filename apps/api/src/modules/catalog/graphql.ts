@@ -21,6 +21,7 @@ import {
   type ProductError,
   type ProductMediaError,
   updateCategory,
+  type VariantMediaError,
 } from "./index.ts";
 
 const RICH_CONTENT = "\n\nRich text format. For reference see https://editorjs.io/";
@@ -230,6 +231,7 @@ export const ProductErrorCode = builder.enumType("ProductErrorCode", {
     "GRAPHQL_ERROR",
     "INVALID",
     "INVALID_FILE_TYPE",
+    "MEDIA_ALREADY_ASSIGNED",
     "NOT_FOUND",
     "NOT_PRODUCTS_IMAGE",
     "PRODUCT_WITHOUT_CATEGORY",
@@ -241,7 +243,7 @@ export const ProductErrorCode = builder.enumType("ProductErrorCode", {
 });
 
 export const ProductErrorType = builder
-  .objectRef<CategoryError | ProductError | ProductMediaError>("ProductError")
+  .objectRef<CategoryError | ProductError | ProductMediaError | VariantMediaError>("ProductError")
   .implement({
     description: "Represents an error in the input of a mutation.",
     fields: (t) => ({

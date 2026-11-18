@@ -386,6 +386,13 @@ builder.node(ProductVariantType, {
       description: "The price of the product variant.",
       resolve: (variant) => toMoney(variant.priceAmount, variant.currency),
     }),
+    // Saleor's resolve_media (MediaByProductVariantIdLoader). The media follow the variant's own
+    // visibility: catalog lookups already hide invisible variants, so no second product check.
+    media: t.field({
+      type: [ProductMediaType],
+      description: "List of media for the product variant.",
+      resolve: (variant, _args, ctx) => ctx.loaders.mediaByVariantId.load(variant.id),
+    }),
   }),
 });
 

@@ -159,3 +159,22 @@ export const productVariant = pgTable(
     index("product_variant_product_id_price_amount_idx").on(table.productId, table.priceAmount),
   ],
 );
+
+// Saleor's `product.VariantMedia`: a variant's chosen images, always from its product's media.
+// Nothing is uploaded here; a row only links an existing `product_media` to a variant.
+export const variantMedia = pgTable(
+  "variant_media",
+  {
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    variantId: uuid("variant_id")
+      .notNull()
+      .references(() => productVariant.id, { onDelete: "cascade" }),
+    mediaId: uuid("media_id")
+      .notNull()
+      .references(() => productMedia.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    unique("variant_media_variant_id_media_id_unique").on(table.variantId, table.mediaId),
+    index("variant_media_media_id_idx").on(table.mediaId),
+  ],
+);

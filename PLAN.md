@@ -440,7 +440,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M14.1b | API: remove the withdrawn size/color fields and SKU generation (forward migration), keep `productCreate(price)` | Done |
 | M14.2 | Create product: price in the dialog, default variant named after the product, published by default | Done |
 | M14.3 | Dashboard: Saleor's editable Variants grid (name, SKU, price, stock per warehouse; fill handle; row pencil to the variant page; "Add variant" opens the create page as in Saleor), saved with the page's Save through the existing per-variant mutations | Done |
-| M14.4 | API: variant media — `variant_media` link table, Saleor's `variantMediaAssign`/`variantMediaUnassign`, `ProductVariant.media` (only the product's own images) | Proposed |
+| M14.4 | API: variant media — `variant_media` link table, Saleor's `variantMediaAssign`/`variantMediaUnassign`, `ProductVariant.media` (only the product's own images) | Done |
 | M14.5 | Dashboard: Saleor's variant Media card and "choose photos" dialog; the variant's image as its thumbnail in the grid and variant list | Proposed |
 
 - **Found in M14.2, not fixed (needs the owner's go):**
