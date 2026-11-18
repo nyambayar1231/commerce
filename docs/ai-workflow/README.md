@@ -61,9 +61,11 @@ Runtime files live in `.ai/` (gitignored): `briefs/`, `evidence/`, the worker's 
 
 ## Browser checks
 
-There is no browser agent any more. When a step needs a look at the running dashboard, the lead
-uses Claude in Chrome briefly, or asks you. `browse` (OpenCode's Chrome driver) stays installed
-in your global OpenCode config but no project agent may use it.
+The implementer may check its own UI work with `browse` (OpenCode's Chrome driver, through its
+paired extension in your Chrome) since 2026-11-18: the server is declared in `.opencode/opencode.json`
+(workers don't read the global config) and `browse_*` is allowed in the agent's permissions, while
+OpenCode's `execute` stays denied. The rules are in AGENTS.md ("Browser checks"). The lead still
+checks every UI step in Claude in Chrome before committing.
 
 ## Development phases (owner priority)
 

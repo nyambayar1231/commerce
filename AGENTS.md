@@ -34,6 +34,20 @@ The team layout, roles and lifecycle are documented in `docs/ai-workflow/README.
 10. API tests share one `commerce_test` database. Run them only when the brief says so, and
     through `scripts/ai/verify.sh`, which serializes test runs between workers.
 
+## Browser checks
+
+You may use the `browse` tools to check dashboard UI you changed (owner, 2026-11-18). They drive
+the owner's own Chrome through a paired extension, so you see the dashboard already signed in.
+
+- Only `http://localhost:5173` (the dashboard dev server, if it's running) and, for comparison, the
+  real Saleor dashboard at `http://localhost:9000/dashboard/`. No other sites.
+- Never type passwords, tokens or payment data. If a page asks you to sign in, stop and report it.
+- Prefer reading pages over changing data. Make test data only when the check needs it: name it
+  `ZZ <purpose> QA`, delete it before you finish, and list it in your report. Never edit or delete
+  existing data.
+- Keep it short (a few checks of what you changed) and close the tabs you open. The lead still
+  checks every UI step before committing; your browser results go in the report as evidence.
+
 ## Evidence, not claims
 
 Your report is checked against the real `git diff` and re-run commands. Write it to

@@ -72,12 +72,13 @@ if [[ -z "$agents" ]]; then
 else
   mode="$(echo "$agents" | "$JQ" -r --arg r "$ROLE" '.[] | select(.id == $r) | .mode')"
   if [[ "$mode" == primary ]]; then
-    # Rules are last-match-wins: the secrets and browser denies must not be overridden.
+    # Rules are last-match-wins: the secrets and execute denies must not be overridden; browse_* is
+    # allowed for UI checks (owner, 2026-11-18).
     rule() { echo "$agents" | "$JQ" -r --arg r "$ROLE" --arg a "$1" --arg res "$2" '[.[] | select(.id == $r) | .permissions[] | select(.action == $a and .resource == $res)] | last | .effect // "none"'; }
-    if [[ "$(rule read '*.env')" == deny && "$(rule browse_* '*')" == deny && "$(rule execute '*')" == deny ]]; then
-      pass "agent $ROLE loads (primary; .env, browse and execute denied)"
+    if [[ "$(rule read '*.env')" == deny && "$(rule browse_* '*')" == allow && "$(rule execute '*')" == deny ]]; then
+      pass "agent $ROLE loads (primary; .env and execute denied, browse allowed)"
     else
-      fail "agent $ROLE: expected deny for read *.env, browse_* and execute"
+      fail "agent $ROLE: expected deny for read *.env and execute, allow for browse_*"
     fi
   else
     fail "agent $ROLE: not loaded or mode '$mode' (must be primary)"

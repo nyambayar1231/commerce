@@ -71,9 +71,10 @@ permissions:
   - { action: shell, resource: "npm *", effect: deny }
   - { action: shell, resource: "npx *", effect: deny }
   - { action: shell, resource: "yarn *", effect: deny }
-  # No browser: browse (MCP) tools, and OpenCode's execute, which can call them from code.
+  # Browser (owner, 2026-11-18): the browse MCP tools may check the local dashboard (AGENTS.md
+  # "Browser checks"). OpenCode's execute, which could call tools from code, stays denied.
   - { action: browser, resource: "*", effect: deny }
-  - { action: browse_*, resource: "*", effect: deny }
+  - { action: browse_*, resource: "*", effect: allow }
   - { action: execute, resource: "*", effect: deny }
   # Secrets: always last.
   - { action: edit, resource: ".env*", effect: deny }
