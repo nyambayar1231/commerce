@@ -8,7 +8,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | Milestone | Title | Status |
 |---|---|---|
 | M11 | Dashboard in Mongolian and English | In progress |
-| M14 | Simpler product creation: price on create, size/color variants, generated SKUs | In progress |
+| M14 | Simpler product creation: price on create, published by default | In progress |
 | M4 | Storefront catalog (Phase 4: gated, see M4) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
@@ -410,26 +410,34 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   polyfill defaults to UTC). Checked in Chrome: "2026 оны 11-р сарын 12 14:03 (GMT+8)".
 
 ## M14 — Simpler product creation
-- **Objective:** staff create a sellable, published product in one dialog, and add variants by
-  choosing only a size and/or color and a price (the owner's request, 2026-11-18; modelled on
-  `../shop-38` `apps/admin/src/features/product/` and `apps/api/src/features/product/product.service.ts`).
+- **Objective:** staff create a sellable, published product in one dialog (the owner's request,
+  2026-11-18).
 - **Owner decisions (2026-11-18):**
   1. **Create = name + category + price.** `productCreate` takes a `price`; with it the product gets
      one default variant at that price and is published (the M2.4 rule still holds: category + a
      variant). Without a price (API callers) nothing changes.
-  2. **Size and color are two fixed, optional fields on the variant**, unique per product as a pair;
-     the variant name is derived ("M / Хар"; the option-less default variant shows "Үндсэн").
-  3. **No mixing:** a product's variants either all have no options (only the default) or all have
-     some. Adding the first size/color variant asks size/color for the default one too (shop-38).
-  4. **SKU generated, editable:** a variant created without a SKU gets one derived from the product
-     slug and its size/color (`BOOTS-M-KHAR`, `-2`, `-3`… when taken); staff may type their own.
-- **Deviation from Saleor:** Saleor varies variants through product types and attributes; we use two
-  fixed fields (ARCHITECTURE §4 when built).
+  2. **Variants stay free-text named** ("26cm soup pot", "M / Хар", as 1688 shows): no size/color
+     fields, no product types yet. The size/color fields built first in M14.1 were withdrawn the same
+     day and dropped by a forward migration.
+  3. **SKU stays optional and typed**, as in Saleor and Shopify: never generated. Only products and
+     categories have slugs.
+  4. **Saleor's editable Variants grid on the product page** (reverses M2.4's read-only card):
+     edit name, SKU, price and stock in the cells and add rows with "Add variant"; everything is
+     saved by the page's Save in Saleor's order (product, then `productVariantBulkCreate`, then
+     `productVariantBulkUpdate`), with errors on the cells. No row deletion, search, fullscreen
+     "Bulk edit" or "Generate variants" (no attributes).
+  5. **The default variant is named after the product** (Saleor's `createMinimalProduct`), priced
+     from the dialog.
+- **Deviation from Saleor:** `ProductCreateInput.price` (Saleor creates variants separately); the
+  bulk mutations take one `price` per variant instead of channel listings.
 
 | Step | What | Status |
 |---|---|---|
-| M14.1 | API: `size`/`color` columns + unique pair; `productCreate(price)` → default variant + published; variant create/update with `size`/`color`, derived name, no-mixing rule, generated SKUs | Done |
-| M14.2 | Dashboard: price in Create product (published by default); variant create page = size, color, price (+ the default variant's options when needed); size/color on the variant page and Variants card; SKU optional with a "generated" hint; Mongolian strings | Proposed |
+| M14.1 | API: `productCreate(price)` → default variant + published when it has a category | Done |
+| M14.1b | API: remove the withdrawn size/color fields and SKU generation (forward migration), keep `productCreate(price)` | Done |
+| M14.2 | Create product: price in the dialog, default variant named after the product, published by default | Proposed |
+| M14.3 | API: Saleor's `productVariantBulkCreate` / `productVariantBulkUpdate` (name, SKU, price, stocks; `errorPolicy`, per-row errors with `index`) | Proposed |
+| M14.4 | Dashboard: editable Variants grid (Saleor's datagrid editing, "Add variant" staged rows, cell errors), saved with the product page's Save | Proposed |
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.

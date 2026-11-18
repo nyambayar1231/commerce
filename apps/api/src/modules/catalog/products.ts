@@ -6,7 +6,7 @@ import { getCategory, NotFoundError } from "./categories.ts";
 import { parseDescription } from "./description.ts";
 import { deleteObjectsQuietly, getProductObjectKeys } from "./media.ts";
 import { SHOP_CURRENCY } from "./productWhere.ts";
-import { generateUniqueSlug, slugify, slugTaken } from "./slug.ts";
+import { generateUniqueSlug, slugTaken } from "./slug.ts";
 
 // Product and variant reads (ARCHITECTURE.md §3 "Catalog"). Products are single-channel (ADR-0005):
 // publication lives on the product and the price on each variant (ADR-0013).
@@ -156,9 +156,6 @@ export type ProductVariantCreateInput = {
   trackInventory?: boolean;
   /** The GraphQL Decimal input, as typed (parsed and checked here). */
   price?: string | null;
-  /** The variant's two fixed options (PLAN M14 decision 2); blank means none. */
-  size?: string | null;
-  color?: string | null;
 };
 
 export type ProductVariantUpdateInput = {
@@ -166,9 +163,6 @@ export type ProductVariantUpdateInput = {
   name?: string | null;
   trackInventory?: boolean;
   price?: string | null;
-  /** `undefined` leaves an option unchanged; `null` or blank clears it. */
-  size?: string | null;
-  color?: string | null;
 };
 
 const MESSAGES = {
@@ -182,11 +176,6 @@ const MESSAGES = {
   lastVariant: "Cannot delete the last variant of a published product. Unpublish it first.",
   skuTaken: "Product variant with this SKU already exists.",
   priceRequired: "This field is required.",
-  optionTooLong: "Ensure this value has at most 50 characters.",
-  optionsTaken: "A variant with this size and color already exists.",
-  optionsMixed:
-    "Give the product's other variants a size or color first: a product's variants all have options or none do.",
-  optionsRequired: "Choose a size or color: the product's other variants have them.",
   negativePrice: "Price cannot be negative.",
   tooManyDecimals: "Value cannot have more than 0 decimal places.",
   invalidPrice: "Invalid price.",
@@ -261,92 +250,6 @@ function normalizeSku(sku: string | null): string | null {
   if (sku === null) return null;
   const trimmed = sku.trim();
   return trimmed === "" ? null : trimmed;
-}
-
-/** A variant option as stored: trimmed, blank stored as NULL. */
-function normalizeOption(value: string | null | undefined): string | null {
-  const trimmed = value?.trim() ?? "";
-  return trimmed === "" ? null : trimmed;
-}
-
-const MAX_OPTION_LENGTH = 50;
-const MAX_SKU_LENGTH = 64;
-
-/** "M / Хар": the name a variant with options gets; option-less variants keep their own. */
-function optionsName(size: string | null, color: string | null): string | null {
-  const parts = [size, color].filter((part): part is string => part !== null);
-  return parts.length > 0 ? parts.join(" / ") : null;
-}
-
-/**
- * Size/color checks for a variant of `productId` (PLAN M14 decisions 2–3): lengths, no other
- * variant with the same pair, and no mixing of option-less and optioned variants. `exceptId` is the
- * variant being updated. The product row is locked by the caller.
- */
-async function optionErrors(
-  db: Executor,
-  productId: string,
-  size: string | null,
-  color: string | null,
-  exceptId?: string,
-): Promise<ProductError[]> {
-  const errors: ProductError[] = [];
-  for (const [field, value] of [
-    ["size", size],
-    ["color", color],
-  ] as const) {
-    if (value !== null && value.length > MAX_OPTION_LENGTH) {
-      errors.push({ field, code: "INVALID", message: MESSAGES.optionTooLong });
-    }
-  }
-
-  const others = await db
-    .select({ size: schema.productVariant.size, color: schema.productVariant.color })
-    .from(schema.productVariant)
-    .where(
-      exceptId
-        ? and(
-            eq(schema.productVariant.productId, productId),
-            ne(schema.productVariant.id, exceptId),
-          )
-        : eq(schema.productVariant.productId, productId),
-    );
-  const hasOptions = size !== null || color !== null;
-  const plain = others.filter((other) => other.size === null && other.color === null).length;
-  const optioned = others.length - plain;
-
-  if (hasOptions && plain > 0) {
-    errors.push({ field: "size", code: "INVALID", message: MESSAGES.optionsMixed });
-  } else if (!hasOptions && optioned > 0) {
-    errors.push({ field: "size", code: "REQUIRED", message: MESSAGES.optionsRequired });
-  } else if (hasOptions && others.some((other) => other.size === size && other.color === color)) {
-    errors.push({ field: "size", code: "UNIQUE", message: MESSAGES.optionsTaken });
-  }
-  return errors;
-}
-
-/**
- * PLAN M14 decision 4 (shop-38's derived SKU): the product slug, then the variant's size and color,
- * upper-cased — `BOOTS-M-KHAR` — with `-2`, `-3`… appended while taken. Two saves racing for the
- * same candidate hit the unique constraint (a server error); saving again picks the next one.
- */
-async function generateSku(
-  db: Executor,
-  productSlug: string,
-  size: string | null,
-  color: string | null,
-): Promise<string> {
-  const parts = [productSlug, size, color]
-    .filter((part): part is string => part !== null)
-    .map((part) => slugify(part).slice(0, 24))
-    .filter(Boolean);
-  const base = (parts.join("-") || "VARIANT").toUpperCase().slice(0, MAX_SKU_LENGTH);
-  let candidate = base;
-  for (let n = 2; await variantSkuTaken(db, candidate); n++) {
-    const suffix = `-${n}`;
-    candidate = base.slice(0, MAX_SKU_LENGTH - suffix.length) + suffix;
-  }
-  return candidate;
 }
 
 /** The GraphQL Decimal input as minor units of the shop currency, or its INVALID error. */
@@ -668,17 +571,13 @@ export async function createProductVariant(
   input: ProductVariantCreateInput,
 ): Promise<ProductVariantResult> {
   return db.transaction(async (tx) => {
-    const product = await lockProduct(tx, input.productId);
+    await lockProduct(tx, input.productId);
     const errors: ProductError[] = [];
 
     const sku = input.sku === undefined || input.sku === null ? null : normalizeSku(input.sku);
     if (sku !== null && (await variantSkuTaken(tx, sku))) {
       errors.push({ field: "sku", code: "UNIQUE", message: MESSAGES.skuTaken });
     }
-
-    const size = normalizeOption(input.size);
-    const color = normalizeOption(input.color);
-    errors.push(...(await optionErrors(tx, input.productId, size, color)));
 
     let priceAmount: number | null = null;
     if (input.price === undefined || input.price === null) {
@@ -702,11 +601,8 @@ export async function createProductVariant(
       .insert(schema.productVariant)
       .values({
         productId: input.productId,
-        // A variant created without a SKU gets a generated one (PLAN M14 decision 4).
-        sku: sku ?? (await generateSku(tx, product.slug, size, color)),
-        name: optionsName(size, color) ?? input.name ?? "",
-        size,
-        color,
+        sku,
+        name: input.name ?? "",
         priceAmount,
         currency: SHOP_CURRENCY,
         position,
@@ -727,20 +623,10 @@ export async function updateProductVariant(
   return db.transaction(async (tx) => {
     // The product row is locked before the variant, in the same order as deleteProductVariant,
     // so the two can't deadlock (bumpProduct below writes the product row).
-    const current = await lockProductVariant(tx, id);
+    await lockProductVariant(tx, id);
 
     const errors: ProductError[] = [];
     const values: Partial<typeof schema.productVariant.$inferInsert> = {};
-
-    if (input.size !== undefined || input.color !== undefined) {
-      const size = input.size === undefined ? current.size : normalizeOption(input.size);
-      const color = input.color === undefined ? current.color : normalizeOption(input.color);
-      errors.push(...(await optionErrors(tx, current.productId, size, color, id)));
-      values.size = size;
-      values.color = color;
-      const derived = optionsName(size, color);
-      if (derived !== null) values.name = derived;
-    }
 
     if (input.sku !== undefined) {
       const sku = normalizeSku(input.sku);
@@ -757,11 +643,7 @@ export async function updateProductVariant(
       else values.priceAmount = parsed.amountMinor;
     }
 
-    // A variant with options is named after them; only an option-less one takes a typed name.
-    const size = "size" in values ? values.size : current.size;
-    const color = "color" in values ? values.color : current.color;
-    const hasOptions = (size ?? null) !== null || (color ?? null) !== null;
-    if (input.name !== undefined && input.name !== null && !hasOptions) values.name = input.name;
+    if (input.name !== undefined && input.name !== null) values.name = input.name;
     if (input.trackInventory !== undefined) values.trackInventory = input.trackInventory;
 
     if (errors.length > 0) return { ok: false, errors };

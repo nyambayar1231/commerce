@@ -80,8 +80,6 @@ const ProductVariantInput = builder.inputType("ProductVariantInput", {
   fields: (t) => ({
     name: t.string({ description: "Variant name." }),
     price: t.field({ type: Decimal, description: "The price of the product variant." }),
-    size: t.string({ description: "The variant's size (ours; Saleor uses attributes)." }),
-    color: t.string({ description: "The variant's color (ours; Saleor uses attributes)." }),
     sku: t.string({ description: "Stock keeping unit." }),
     trackInventory: t.boolean({
       description:
@@ -105,8 +103,6 @@ const ProductVariantCreateInput = builder.inputType("ProductVariantCreateInput",
   fields: (t) => ({
     name: t.string({ description: "Variant name." }),
     price: t.field({ type: Decimal, description: "The price of the product variant." }),
-    size: t.string({ description: "The variant's size (ours; Saleor uses attributes)." }),
-    color: t.string({ description: "The variant's color (ours; Saleor uses attributes)." }),
     sku: t.string({ description: "Stock keeping unit." }),
     trackInventory: t.boolean({
       description:
@@ -338,8 +334,6 @@ builder.mutationField("productVariantCreate", (t) =>
               name: input.name ?? undefined,
               trackInventory: input.trackInventory ?? undefined,
               price: input.price,
-              size: input.size,
-              color: input.color,
             },
             stocks,
           ),
@@ -374,8 +368,6 @@ builder.mutationField("productVariantUpdate", (t) =>
           name: input.name,
           trackInventory: input.trackInventory ?? undefined,
           price: input.price,
-          size: input.size,
-          color: input.color,
         }),
       );
       return variantPayload(result);
