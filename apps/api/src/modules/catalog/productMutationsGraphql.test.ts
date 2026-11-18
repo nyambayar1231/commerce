@@ -503,3 +503,59 @@ describe("product variant mutations", () => {
     expect(await db.select().from(schema.productVariant)).toEqual([]);
   });
 });
+
+describe("simpler product creation through GraphQL (PLAN M14)", () => {
+  it("creates a published product with a default variant, then size/color variants", async () => {
+    const staff = await createStaff(db, ["MANAGE_PRODUCTS"]);
+    const category = await createCategory(db, { name: "Shoes" });
+    if (!category.ok) throw new Error("no category");
+
+    const created = await client.gql(
+      `mutation ($input: ProductCreateInput!) {
+        productCreate(input: $input) {
+          product { isPublished variants { size color name sku price { amount } } }
+          ${ERRORS}
+        }
+      }`,
+      {
+        input: {
+          name: "Boots",
+          category: toGlobalId("Category", category.category.id),
+          price: "15000",
+        },
+      },
+      staff.token,
+    );
+    expect(created.body.errors).toBeUndefined();
+    expect(created.body.data?.productCreate).toEqual({
+      product: {
+        isPublished: true,
+        variants: [{ size: null, color: null, name: "", sku: "BOOTS", price: { amount: 15000 } }],
+      },
+      errors: [],
+    });
+
+    const [product] = await db.select().from(schema.product);
+    const [defaultVariant] = await db.select().from(schema.productVariant);
+    const sized = await client.gql(
+      `mutation ($id: ID!, $product: ID!) {
+        update: productVariantUpdate(id: $id, input: { size: "S" }) { productVariant { name } ${ERRORS} }
+        create: productVariantCreate(input: { product: $product, size: "M", color: "Хар", price: "16000" }) {
+          productVariant { size color name sku } ${ERRORS}
+        }
+      }`,
+      {
+        id: toGlobalId("ProductVariant", defaultVariant?.id ?? ""),
+        product: toGlobalId("Product", product?.id ?? ""),
+      },
+      staff.token,
+    );
+    expect(sized.body.data).toEqual({
+      update: { productVariant: { name: "S" }, errors: [] },
+      create: {
+        productVariant: { size: "M", color: "Хар", name: "M / Хар", sku: "BOOTS-M-KHAR" },
+        errors: [],
+      },
+    });
+  });
+});

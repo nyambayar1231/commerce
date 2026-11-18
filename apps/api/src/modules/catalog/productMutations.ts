@@ -50,16 +50,38 @@ const productInput = (name: "ProductInput" | "ProductCreateInput", description: 
   });
 
 const ProductInput = productInput("ProductInput", "Fields required to update a product.");
-const ProductCreateInput = productInput(
-  "ProductCreateInput",
-  "Fields required to create a product.",
-);
+const ProductCreateInput = builder.inputType("ProductCreateInput", {
+  description: "Fields required to create a product.",
+  fields: (t) => ({
+    category: t.id({ description: "ID of the product's category." }),
+    description: t.field({
+      type: JSONString,
+      description: `Product description.${RICH_CONTENT}`,
+    }),
+    isPublished: t.boolean({
+      description:
+        "Determines if object is visible to customers. Defaults to true when `price` and " +
+        "`category` are given.",
+    }),
+    name: t.string({ description: "Product name." }),
+    slug: t.string({ description: "Product slug." }),
+    // Ours (PLAN M14 decision 1): Saleor creates variants separately.
+    price: t.field({
+      type: Decimal,
+      description:
+        "The price of the product's default variant. When given, the product is created with " +
+        "one variant at this price, so it can be published at once.",
+    }),
+  }),
+});
 
 const ProductVariantInput = builder.inputType("ProductVariantInput", {
   description: "Fields required to update a product variant.",
   fields: (t) => ({
     name: t.string({ description: "Variant name." }),
     price: t.field({ type: Decimal, description: "The price of the product variant." }),
+    size: t.string({ description: "The variant's size (ours; Saleor uses attributes)." }),
+    color: t.string({ description: "The variant's color (ours; Saleor uses attributes)." }),
     sku: t.string({ description: "Stock keeping unit." }),
     trackInventory: t.boolean({
       description:
@@ -83,6 +105,8 @@ const ProductVariantCreateInput = builder.inputType("ProductVariantCreateInput",
   fields: (t) => ({
     name: t.string({ description: "Variant name." }),
     price: t.field({ type: Decimal, description: "The price of the product variant." }),
+    size: t.string({ description: "The variant's size (ours; Saleor uses attributes)." }),
+    color: t.string({ description: "The variant's color (ours; Saleor uses attributes)." }),
     sku: t.string({ description: "Stock keeping unit." }),
     trackInventory: t.boolean({
       description:
@@ -194,6 +218,7 @@ builder.mutationField("productCreate", (t) =>
           description: input.description,
           categoryId: categoryId(input.category) ?? undefined,
           isPublished: input.isPublished ?? undefined,
+          price: input.price,
         }),
       );
       return productPayload(result);
@@ -313,6 +338,8 @@ builder.mutationField("productVariantCreate", (t) =>
               name: input.name ?? undefined,
               trackInventory: input.trackInventory ?? undefined,
               price: input.price,
+              size: input.size,
+              color: input.color,
             },
             stocks,
           ),
@@ -347,6 +374,8 @@ builder.mutationField("productVariantUpdate", (t) =>
           name: input.name,
           trackInventory: input.trackInventory ?? undefined,
           price: input.price,
+          size: input.size,
+          color: input.color,
         }),
       );
       return variantPayload(result);

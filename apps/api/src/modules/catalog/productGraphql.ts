@@ -361,6 +361,14 @@ builder.node(ProductVariantType, {
   description: "Represents a version of a product such as different size or color.",
   fields: (t) => ({
     name: t.exposeString("name", { description: "The name of the product variant." }),
+    size: t.exposeString("size", {
+      nullable: true,
+      description: "The variant's size (ours; Saleor uses attributes).",
+    }),
+    color: t.exposeString("color", {
+      nullable: true,
+      description: "The variant's color (ours; Saleor uses attributes).",
+    }),
     sku: t.exposeString("sku", {
       nullable: true,
       description: "The SKU (stock keeping unit) of the product variant.",

@@ -428,7 +428,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 
 | Step | What | Status |
 |---|---|---|
-| M14.1 | API: `size`/`color` columns + unique pair; `productCreate(price)` → default variant + published; variant create/update with `size`/`color`, derived name, no-mixing rule, generated SKUs | In progress |
+| M14.1 | API: `size`/`color` columns + unique pair; `productCreate(price)` → default variant + published; variant create/update with `size`/`color`, derived name, no-mixing rule, generated SKUs | Done |
 | M14.2 | Dashboard: price in Create product (published by default); variant create page = size, color, price (+ the default variant's options when needed); size/color on the variant page and Variants card; SKU optional with a "generated" hint; Mongolian strings | Proposed |
 
 ## M4 — Storefront catalog

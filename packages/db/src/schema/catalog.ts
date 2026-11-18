@@ -12,6 +12,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -136,6 +137,10 @@ export const productVariant = pgTable(
     // Optional, unique when set (Postgres allows several NULLs).
     sku: text("sku"),
     name: text("name").notNull().default(""),
+    // The two fixed variant options (PLAN M14 decision 2; Saleor uses attributes instead). Both
+    // NULL for a product's single default variant; the name is derived from them when set.
+    size: text("size"),
+    color: text("color"),
     priceAmount: bigint("price_amount", { mode: "number" }).notNull(),
     currency: text("currency").notNull(),
     trackInventory: boolean("track_inventory").notNull().default(true),
@@ -157,5 +162,12 @@ export const productVariant = pgTable(
     // `price` / `minimalPrice` filters: min(price_amount) per product and the EXISTS check. Its
     // leading `product_id` also covers plain lookups by product, so there is no separate index.
     index("product_variant_product_id_price_amount_idx").on(table.productId, table.priceAmount),
+    check("product_variant_size_not_empty", sql`${table.size} IS NULL OR ${table.size} <> ''`),
+    check("product_variant_color_not_empty", sql`${table.color} IS NULL OR ${table.color} <> ''`),
+    // One variant per size/color pair. Partial: older products may hold several option-less
+    // variants, and the "no mixing" rule (M14 decision 3) lives in the catalog module.
+    uniqueIndex("product_variant_product_id_size_color_unique")
+      .on(table.productId, sql`coalesce(${table.size}, '')`, sql`coalesce(${table.color}, '')`)
+      .where(sql`${table.size} IS NOT NULL OR ${table.color} IS NOT NULL`),
   ],
 );

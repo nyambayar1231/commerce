@@ -169,6 +169,13 @@
       "when": 1794659416755,
       "tag": "0023_order_billing_optional",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794991560150,
+      "tag": "0024_variant_size_color",
+      "breakpoints": true
     }
   ]
 }

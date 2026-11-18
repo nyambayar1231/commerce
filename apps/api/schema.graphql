@@ -2383,11 +2383,18 @@ input ProductCreateInput {
   """
   description: JSONString
 
-  """Determines if object is visible to customers."""
+  """
+  Determines if object is visible to customers. Defaults to true when `price` and `category` are given.
+  """
   isPublished: Boolean
 
   """Product name."""
   name: String
+
+  """
+  The price of the product's default variant. When given, the product is created with one variant at this price, so it can be published at once.
+  """
+  price: Decimal
 
   """Product slug."""
   slug: String
@@ -2601,6 +2608,9 @@ type ProductUpdate {
 
 """Represents a version of a product such as different size or color."""
 type ProductVariant implements Node {
+  """The variant's color (ours; Saleor uses attributes)."""
+  color: String
+
   """The ID of the product variant."""
   id: ID!
 
@@ -2617,6 +2627,9 @@ type ProductVariant implements Node {
   Quantity of a product available for sale in one checkout. Field value will be `null` when `productVariant` stocks are not tracked.
   """
   quantityAvailable: Int
+
+  """The variant's size (ours; Saleor uses attributes)."""
+  size: String
 
   """The SKU (stock keeping unit) of the product variant."""
   sku: String
@@ -2646,6 +2659,9 @@ type ProductVariantCreate {
 
 """Fields required to create a product variant."""
 input ProductVariantCreateInput {
+  """The variant's color (ours; Saleor uses attributes)."""
+  color: String
+
   """Variant name."""
   name: String
 
@@ -2654,6 +2670,9 @@ input ProductVariantCreateInput {
 
   """Product ID of which type is the variant."""
   product: ID!
+
+  """The variant's size (ours; Saleor uses attributes)."""
+  size: String
 
   """Stock keeping unit."""
   sku: String
@@ -2679,11 +2698,17 @@ type ProductVariantDelete {
 
 """Fields required to update a product variant."""
 input ProductVariantInput {
+  """The variant's color (ours; Saleor uses attributes)."""
+  color: String
+
   """Variant name."""
   name: String
 
   """The price of the product variant."""
   price: Decimal
+
+  """The variant's size (ours; Saleor uses attributes)."""
+  size: String
 
   """Stock keeping unit."""
   sku: String

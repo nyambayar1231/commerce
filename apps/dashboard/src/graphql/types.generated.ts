@@ -572,10 +572,12 @@ export type ProductCreateInput = {
    * Rich text format. For reference see https://editorjs.io/
    */
   description?: unknown;
-  /** Determines if object is visible to customers. */
+  /** Determines if object is visible to customers. Defaults to true when `price` and `category` are given. */
   isPublished?: boolean | null | undefined;
   /** Product name. */
   name?: string | null | undefined;
+  /** The price of the product's default variant. When given, the product is created with one variant at this price, so it can be published at once. */
+  price?: unknown;
   /** Product slug. */
   slug?: string | null | undefined;
 };
@@ -638,12 +640,16 @@ export type ProductOrderField =
 
 /** Fields required to create a product variant. */
 export type ProductVariantCreateInput = {
+  /** The variant's color (ours; Saleor uses attributes). */
+  color?: string | null | undefined;
   /** Variant name. */
   name?: string | null | undefined;
   /** The price of the product variant. */
   price?: unknown;
   /** Product ID of which type is the variant. */
   product: string | number;
+  /** The variant's size (ours; Saleor uses attributes). */
+  size?: string | null | undefined;
   /** Stock keeping unit. */
   sku?: string | null | undefined;
   /** Stocks of a product available for sale. */
@@ -654,10 +660,14 @@ export type ProductVariantCreateInput = {
 
 /** Fields required to update a product variant. */
 export type ProductVariantInput = {
+  /** The variant's color (ours; Saleor uses attributes). */
+  color?: string | null | undefined;
   /** Variant name. */
   name?: string | null | undefined;
   /** The price of the product variant. */
   price?: unknown;
+  /** The variant's size (ours; Saleor uses attributes). */
+  size?: string | null | undefined;
   /** Stock keeping unit. */
   sku?: string | null | undefined;
   /** Determines if the inventory of this variant should be tracked. If false, the quantity won't change when customers buy this item. */

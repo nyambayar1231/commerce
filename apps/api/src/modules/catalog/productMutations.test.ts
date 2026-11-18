@@ -324,7 +324,7 @@ describe("updateProduct", () => {
 });
 
 describe("createProductVariant", () => {
-  it("stores trimmed SKUs, defaults the name and appends positions", async () => {
+  it("stores trimmed SKUs, generates missing ones, defaults the name and appends positions", async () => {
     const product = await mustCreateProduct({ name: "Boots" });
 
     const first = await mustCreateVariant({
@@ -349,8 +349,9 @@ describe("createProductVariant", () => {
       trackInventory: true,
       position: 0,
     });
-    expect(second).toMatchObject({ sku: null, name: "", position: 1 });
-    expect(third).toMatchObject({ position: 2 });
+    // A blank SKU is generated from the product slug (PLAN M14 decision 4), with -2 when taken.
+    expect(second).toMatchObject({ sku: "BOOTS", name: "", position: 1 });
+    expect(third).toMatchObject({ sku: "BOOTS-2", position: 2 });
   });
 
   it("reports a missing, negative or over-precise price", async () => {
@@ -566,5 +567,112 @@ describe("deleteProductVariant", () => {
     const remaining = await getProductVariants(db, product.id);
     expect(remaining).toHaveLength(1);
     expect([first.id, second.id]).toContain(remaining[0]?.id);
+  });
+});
+
+describe("simpler product creation (PLAN M14)", () => {
+  it("creates a published product with one default variant when a price and category are given", async () => {
+    const category = await mustCreateCategory();
+    const product = await mustCreateProduct({
+      name: "Boots",
+      categoryId: category.id,
+      price: "15000",
+    });
+
+    expect(product).toMatchObject({ isPublished: true, categoryId: category.id });
+    expect(product.publishedAt).not.toBeNull();
+    const variants = await getProductVariants(db, product.id);
+    expect(variants).toHaveLength(1);
+    expect(variants[0]).toMatchObject({
+      priceAmount: 15000,
+      size: null,
+      color: null,
+      name: "",
+      sku: "BOOTS",
+    });
+  });
+
+  it("keeps a product without a category, or asked not to publish, hidden", async () => {
+    const uncategorized = await mustCreateProduct({ name: "Socks", price: "500" });
+    expect(uncategorized.isPublished).toBe(false);
+    expect(await getProductVariants(db, uncategorized.id)).toHaveLength(1);
+
+    const category = await mustCreateCategory();
+    const hidden = await mustCreateProduct({
+      name: "Hat",
+      categoryId: category.id,
+      price: "500",
+      isPublished: false,
+    });
+    expect(hidden.isPublished).toBe(false);
+  });
+
+  it("rejects an invalid price without creating anything", async () => {
+    const result = await createProduct(db, { name: "Boots", price: "-1" });
+    expect(expectFailure(result)).toMatchObject([{ field: "price", code: "INVALID" }]);
+    expect(await db.select().from(schema.product)).toHaveLength(0);
+  });
+
+  it("names variants after their size and color and generates their SKUs", async () => {
+    const product = await mustCreateProduct({ name: "Boots" });
+    const variant = await mustCreateVariant({
+      productId: product.id,
+      price: "15000",
+      size: " M ",
+      color: "Хар",
+      name: "ignored",
+    });
+    expect(variant).toMatchObject({
+      size: "M",
+      color: "Хар",
+      name: "M / Хар",
+      sku: "BOOTS-M-KHAR",
+    });
+
+    const duplicate = await createProductVariant(db, {
+      productId: product.id,
+      price: "1",
+      size: "M",
+      color: "Хар",
+    });
+    expect(expectFailure(duplicate)).toMatchObject([{ field: "size", code: "UNIQUE" }]);
+  });
+
+  it("never mixes an option-less variant with optioned ones", async () => {
+    const category = await mustCreateCategory();
+    const product = await mustCreateProduct({
+      name: "Boots",
+      categoryId: category.id,
+      price: "15000",
+    });
+    const [defaultVariant] = await getProductVariants(db, product.id);
+    if (!defaultVariant) throw new Error("no default variant");
+
+    const mixed = await createProductVariant(db, { productId: product.id, price: "1", size: "M" });
+    expect(expectFailure(mixed)).toMatchObject([{ field: "size", code: "INVALID" }]);
+
+    // The dashboard's order: the default variant takes options first, then the new one is added.
+    const named = await updateProductVariant(db, defaultVariant.id, { size: "S" });
+    expect(named).toMatchObject({ ok: true, variant: { size: "S", name: "S" } });
+    await mustCreateVariant({ productId: product.id, price: "16000", size: "M" });
+
+    const plain = await createProductVariant(db, { productId: product.id, price: "1" });
+    expect(expectFailure(plain)).toMatchObject([{ field: "size", code: "REQUIRED" }]);
+    const cleared = await updateProductVariant(db, defaultVariant.id, { size: null });
+    expect(expectFailure(cleared)).toMatchObject([{ field: "size", code: "REQUIRED" }]);
+  });
+
+  it("lets a single variant clear its options, and only option-less variants take a typed name", async () => {
+    const product = await mustCreateProduct({ name: "Boots" });
+    const variant = await mustCreateVariant({ productId: product.id, price: "1", color: "Улаан" });
+
+    const renamed = await updateProductVariant(db, variant.id, { name: "Red" });
+    expect(renamed).toMatchObject({ ok: true, variant: { name: "Улаан" } });
+
+    const cleared = await updateProductVariant(db, variant.id, { color: "", name: "Plain" });
+    expect(cleared).toMatchObject({ ok: true, variant: { color: null, name: "Plain" } });
+
+    const tooLong = await updateProductVariant(db, variant.id, { size: "x".repeat(51) });
+    expect(expectFailure(tooLong)).toMatchObject([{ field: "size", code: "INVALID" }]);
   });
 });
