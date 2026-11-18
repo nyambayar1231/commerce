@@ -44,7 +44,7 @@ else
   fail "OpenCode Go not authenticated: run opencode auth login (choose OpenCode Go)"
 fi
 
-# --- model (one implementer; the lead reviews on Claude)
+# --- models (the implementer agent runs OC_MODEL_IMPLEMENT or OC_MODEL_UI; the lead reviews on Claude)
 if [[ -f "$REPO_ROOT/.opencode/team.env" ]]; then
   # shellcheck disable=SC1091
   set -a; source "$REPO_ROOT/.opencode/team.env"; set +a
@@ -59,6 +59,19 @@ if [[ -f "$REPO_ROOT/.opencode/team.env" ]]; then
     if [[ "$live" == 1 ]]; then
       reply="$(cd "${TMPDIR:-/tmp}" && "$OC" --standalone run -m "$val" "Reply with exactly the word OK and nothing else." 2>&1 | tail -3)"
       if grep -q 'OK' <<<"$reply" && ! grep -qi 'error' <<<"$reply"; then pass "model answers live"; else fail "$val does not answer: $(tr '\n' ' ' <<<"$reply" | cut -c1-160)"; fi
+    fi
+  fi
+  # Storefront UI model (spawn.sh --model ui); optional: without it, UI briefs go to Sonnet.
+  ui="${OC_MODEL_UI:-}"
+  if [[ -z "$ui" ]]; then
+    warn "OC_MODEL_UI is empty (storefront UI briefs cannot use --model ui)"
+  elif ! grep -qxF "$ui" <<<"$("$OC" models 2>/dev/null)"; then
+    fail "OC_MODEL_UI=$ui is not in opencode models"
+  else
+    pass "OC_MODEL_UI=$ui"
+    if [[ "$live" == 1 ]]; then
+      reply="$(cd "${TMPDIR:-/tmp}" && "$OC" --standalone run -m "$ui" "Reply with exactly the word OK and nothing else." 2>&1 | tail -3)"
+      if grep -q 'OK' <<<"$reply" && ! grep -qi 'error' <<<"$reply"; then pass "UI model answers live"; else fail "$ui does not answer: $(tr '\n' ' ' <<<"$reply" | cut -c1-160)"; fi
     fi
   fi
 else

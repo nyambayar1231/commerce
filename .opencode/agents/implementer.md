@@ -9,8 +9,6 @@ permissions:
   # Edits only inside the working directory.
   - { action: edit, resource: "../*", effect: deny }
   - { action: edit, resource: "/*", effect: deny }
-  # Storefront is gated (Phase 4).
-  - { action: edit, resource: "apps/storefront/**", effect: deny }
   # Governance and generated files: never hand-edited.
   - { action: edit, resource: "CLAUDE.md", effect: deny }
   - { action: edit, resource: "AGENTS.md", effect: deny }
@@ -89,7 +87,8 @@ the lead: it writes your brief, reviews your diff and commits. You implement exa
 
 Areas: `apps/api` (GraphQL Yoga + Pothos, code-first), `packages/db` (Drizzle + postgres.js),
 `packages/contracts` (dependency-free shared code), `apps/dashboard` (React + Vite + Saleor
-Macaw UI + Apollo). Never `apps/storefront`.
+Macaw UI + Apollo), `apps/storefront` (Next.js 16 + Tailwind, ADR-0015; only when the brief names
+it).
 
 Before writing code:
 1. Read `AGENTS.md`, `CLAUDE.md` ("Repository conventions"), the brief, and the files and reference
@@ -106,8 +105,11 @@ Binding conventions:
   read the SQL. Never edit an applied migration, never `drizzle-kit push`. GraphQL uses Saleor's
   names; run `pnpm schema:print` after schema changes and `pnpm codegen` after GraphQL documents.
 - Dashboard: match `../saleor-dashboard` (read-only) in layout and behaviour, wired to our real API.
-  Copied or closely adapted files start with the BSD-3-Clause header from `CLAUDE.md`. Never copy
-  from `../saleor-storefront`. Any simplification of Saleor's UI must already be in the brief.
+  Copied or closely adapted files start with the BSD-3-Clause header from `CLAUDE.md`. Any
+  simplification of Saleor's UI must already be in the brief.
+- Storefront: adapt the UI of `../saleor-storefront` (read-only) closely; each adapted file starts
+  with the FSL header from `CLAUDE.md`. Data, auth, cart and checkout logic follow ADR-0015 and the
+  brief, never Paper's Saleor-specific code. The storefront calls the API only from server code.
 - Tests with Vitest; API tests on the real `commerce_test` database (no DB mocks for domain
   logic). Never weaken or skip a test to make it pass.
 - Small, explicit code. No new abstraction, package or dependency unless the brief names it.

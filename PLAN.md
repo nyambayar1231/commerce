@@ -8,14 +8,13 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | Milestone | Title | Status |
 |---|---|---|
 | M11 | Dashboard in Mongolian and English | In progress |
-| M4.0 | Storefront programme setup (ADRs, AI team) | In progress |
 | M15 | API and dashboard for the storefront | Approved |
 | M4 | Storefront (Paper-like, production ready) | Approved |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
 (foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11), M5 (checkout API, 2026-11-11), M6 (orders, 2026-11-11), M7 (customer accounts, 2026-11-12), M8 (background jobs and email, 2026-11-12), M9 (hardening &
-deployability, 2026-11-12), M10 (deploy to AWS, 2026-11-13), M12 (continuous deployment, 2026-11-14), M13 (draft orders and order printing, 2026-11-14), M14 (simpler product creation, 2026-11-19).
+deployability, 2026-11-12), M10 (deploy to AWS, 2026-11-13), M12 (continuous deployment, 2026-11-14), M13 (draft orders and order printing, 2026-11-14), M14 (simpler product creation, 2026-11-19), M4.0 (storefront programme setup: ADR-0008 amended, ADR-0015, multi-model AI team, 2026-11-19).
 
 ## Open items from finished milestones
 
@@ -424,7 +423,7 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   the golden time zones, ~180 kB gzip as lazy chunks; the browser's own time zone is kept (the
   polyfill defaults to UTC). Checked in Chrome: "2026 оны 11-р сарын 12 14:03 (GMT+8)".
 
-## Storefront programme (M4.0, M15, M4): overview
+## Storefront programme (M15, M4): overview
 
 Goal: a production-ready storefront that looks and behaves like Saleor's official storefront
 ("Paper", `../saleor-storefront`), running on our API. Requested by the owner on 2026-11-19, which
@@ -491,14 +490,6 @@ The lead (Claude Code, Opus) owns architecture, ADRs, dependencies, briefs, the 
 - **Guardrails:** the OpenCode implementer rule that denies `apps/storefront/**` is lifted.
   `spawn.sh` gets `--model` so it can start GLM-5.3 or DeepSeek. Claude subagents get the same
   `AGENTS.md` rules in their brief, and the lead checks their diff exactly like an OpenCode diff.
-
-## M4.0 — Storefront programme setup (lead only)
-
-| Step | What | Status |
-|---|---|---|
-| M4.0.1 | Amend ADR-0008 (adapt Paper UI under FSL with attribution); FSL text in `THIRD_PARTY_LICENSES.md`; header template for adapted files | Done |
-| M4.0.2 | ADR-0015 storefront architecture (BFF, session and checkout cookies, `/{locale}` routing, caching, images); update ARCHITECTURE §10 | Done |
-| M4.0.3 | AI team: model routing table in `docs/ai-workflow/`, `spawn.sh --model`, lift the storefront deny rule, Claude-subagent brief template, update CLAUDE.md's "one implementer" text | Draft |
 
 ## M15 — API and dashboard for the storefront (DeepSeek V4.1 Flash)
 

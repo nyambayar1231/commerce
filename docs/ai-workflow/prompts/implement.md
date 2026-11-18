@@ -4,7 +4,7 @@
      fill every section. Delete these comments. A worker gets nothing but this brief, AGENTS.md
      and CLAUDE.md, so write what it needs. -->
 
-- **Role:** implementer
+- **Role:** implementer (<DeepSeek | GLM-5.3 | Sonnet | Haiku>, routing in docs/ai-workflow/README.md)
 - **PLAN step:** <e.g. M1.1, approved by the owner on YYYY-MM-DD>
 - **Working directory:** <../commerce-wt/<name> or repo root>
 
@@ -32,7 +32,8 @@ Generated files you may regenerate (never hand-edit): <e.g. apps/api/schema.grap
 - `ARCHITECTURE.md` §<n>: <why>
 - `docs/adr/<file>`: <why>
 - `<our file>:<lines>`: <the pattern to follow>
-- Reference: `../saleor-core/<path>` or `../saleor-dashboard/src/<path>`: <what to match>
+- Reference: `../saleor-core/<path>`, `../saleor-dashboard/src/<path>` or (UI only, FSL header)
+  `../saleor-storefront/src/<path>`: <what to match>
 
 ## Decisions already made
 

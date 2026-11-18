@@ -52,11 +52,13 @@ When explaining a pattern, cite the reference file path, e.g.
 7. Report verification faithfully. Failing tests or skipped checks are stated as such.
 8. Prefer small, explicit code over clever abstractions. Every abstraction must earn its place.
 
-## AI workflow: Claude Code leads and reviews, one OpenCode implementer writes the code
+## AI workflow: Claude Code leads and reviews, implementers write the code
 
-Claude Code is the lead and reviewer; all commerce code is written by the single OpenCode Go
-implementer (`.opencode/agents/implementer.md`, DeepSeek V4.1 Flash) started with
-`scripts/ai/spawn.sh`. For every development task follow `docs/ai-workflow/orchestrator.md`; setup
+Claude Code is the lead and reviewer; commerce code is written by implementers chosen per brief
+(owner, 2026-11-19): the OpenCode Go implementer agent (`.opencode/agents/implementer.md`) on
+DeepSeek V4.1 Flash for API/DB/dashboard or GLM-5.3 for storefront UI (`scripts/ai/spawn.sh
+[--model ui]`), and Claude Sonnet (critical storefront logic, e2e, deploy) or Haiku (mechanical
+work) subagents in their own worktree. Routing table: `docs/ai-workflow/README.md`. For every development task follow `docs/ai-workflow/orchestrator.md`; setup
 and commands are in `docs/ai-workflow/README.md`; the implementer's rules are in `AGENTS.md`.
 In short:
 
@@ -66,12 +68,13 @@ In short:
 - Review the diff lightly on Opus: correctness, security, scope. Skip nitpicks. No reviewer agents.
 - Architecture decisions stay with the lead and the owner, never with the worker.
 - One implementer per working directory; use a worktree (`scripts/ai/worktree.sh`) for isolation.
+  At most two implementers at a time. A brief that fails review twice moves up a tier.
 - Be token-efficient on both sides: OpenCode Go has a limited balance (it ran out on 2026-11-09);
-  limits are not increased when they run out. While OpenCode is out of funds, Claude Code writes
-  the code itself (same brief, checks and commits; `orchestrator.md` step 3 fallback).
+  limits are not increased when they run out. While OpenCode is out of funds, its briefs go to a
+  Sonnet subagent, then to the lead (`orchestrator.md` step 3 fallback).
 - Phase order: API → Admin dashboard (matching Saleor, wired to the real API) → QA →
-  Storefront. Storefront work starts only after the owner explicitly confirms API and Admin are
-  complete.
+  Storefront. The owner confirmed API and Admin complete and approved the storefront on
+  2026-11-19 (PLAN M4.0, M15, M4).
 
 ## Repository conventions
 
@@ -149,5 +152,6 @@ scripts/ai/stop.sh <name>|--all                       # end the implementer (wor
 
 ## Current state
 
-M0 (foundations), M1 (identity), M2 (catalog: categories, products, variants, filtering, media), M3 (inventory: warehouse, stock, stock editing), M5 (checkout API: cart, shipping, addresses, dummy payments, completion into orders) and M6 (orders: list, detail page, fulfil, cancel, mark as paid, refund), M7 (customer accounts: register, customer orders and checkouts, staff customer API and pages) and M8 (background jobs: pg-boss outbox, worker, order and account confirmation emails) and M9 (hardening: config checks, logs/health, login throttling, Docker images, Playwright golden path, CI) M10 (deployed to AWS at https://admin.dino-craft.lol, ap-northeast-2: docs/deploy.md) M12 (every green push to `main` deploys itself), M13 (draft orders: "Create order", and order printing) and M14 (simpler product creation: price in the create dialog, Saleor's editable Variants grid, variant media) done; M11 (dashboard in Mongolian and English) waits on the owner's review of the translations; next is M4 (storefront, Phase 4 — gated on the owner confirming API and Admin are complete).
-The AI team setup (`docs/ai-workflow/`) is in place. See `PLAN.md`.
+M0 (foundations), M1 (identity), M2 (catalog: categories, products, variants, filtering, media), M3 (inventory: warehouse, stock, stock editing), M5 (checkout API: cart, shipping, addresses, dummy payments, completion into orders) and M6 (orders: list, detail page, fulfil, cancel, mark as paid, refund), M7 (customer accounts: register, customer orders and checkouts, staff customer API and pages) and M8 (background jobs: pg-boss outbox, worker, order and account confirmation emails) and M9 (hardening: config checks, logs/health, login throttling, Docker images, Playwright golden path, CI) M10 (deployed to AWS at https://admin.dino-craft.lol, ap-northeast-2: docs/deploy.md) M12 (every green push to `main` deploys itself), M13 (draft orders: "Create order", and order printing) and M14 (simpler product creation: price in the create dialog, Saleor's editable Variants grid, variant media) done; M11 (dashboard in Mongolian and English) waits on the owner's review of the translations; the storefront programme is approved (2026-11-19): M4.0 (ADRs and AI team) done, next M15 (API and
+dashboard gaps for the storefront), then M4 (Paper-like storefront on `dino-craft.lol`).
+The multi-model AI team (`docs/ai-workflow/`) is in place. See `PLAN.md`.

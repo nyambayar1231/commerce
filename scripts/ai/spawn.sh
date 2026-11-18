@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Starts the OpenCode implementer in a persistent Herdr (hc) terminal and hands it a brief.
 #
-#   scripts/ai/spawn.sh <name> <brief.md> [--cwd <dir>]
+#   scripts/ai/spawn.sh <name> <brief.md> [--cwd <dir>] [--model implement|ui|<provider/model>]
 #
 #   name   Herdr terminal name, 1-32 chars of a-z 0-9 - _ (also used for the evidence files)
 #   brief  Markdown task brief (template: docs/ai-workflow/prompts/). It is copied to
 #          .ai/briefs/<name>.md and the worker is told to read it.
 #   --cwd  where the worker runs. Default: the worktree ../commerce-wt/<name> if it exists,
 #          otherwise this repo. Writers should normally get their own worktree.
+#   --model which model runs the implementer agent (docs/ai-workflow/README.md, "The team"):
+#          implement = OC_MODEL_IMPLEMENT (API, DB, dashboard; the default),
+#          ui        = OC_MODEL_UI (storefront UI), or an explicit provider/model.
 #
 # Run it from the orchestrator's terminal inside Herdr: the worker becomes its child, reports
 # with `hc send <orchestrator>`, and `hc wait --children any` returns when it finishes.
@@ -16,16 +19,17 @@
 #   - the implementer agent loads in the target directory (otherwise OpenCode silently falls back
 #     to its full-permission "build" agent, verified during setup);
 #   - no other live implementer works in the same directory;
-#   - OC_MODEL_IMPLEMENT is configured in .opencode/team.env.
+#   - the chosen model is configured in .opencode/team.env and listed by opencode models.
 source "$(dirname "$0")/lib.sh"
 
 role="$ROLE"; name="${1:-}"; brief="${2:-}"
 [[ -n "$name" && -n "$brief" ]] || { sed -n '2,20p' "$0"; exit 2; }
 shift 2
-cwd=""
+cwd=""; model_choice="implement"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --cwd) cwd="${2:-}"; shift 2 ;;
+    --model) model_choice="${2:-}"; shift 2 ;;
     *) die "unknown option: $1" ;;
   esac
 done
@@ -68,8 +72,14 @@ if true; then
 fi
 
 load_team_env
-model="${OC_MODEL_IMPLEMENT:-}"
-[[ -n "$model" ]] || die "OC_MODEL_IMPLEMENT is empty in .opencode/team.env (pick one: scripts/ai/models.sh)"
+case "$model_choice" in
+  implement) model="${OC_MODEL_IMPLEMENT:-}"; var=OC_MODEL_IMPLEMENT ;;
+  ui) model="${OC_MODEL_UI:-}"; var=OC_MODEL_UI ;;
+  */*) model="$model_choice"; var="--model" ;;
+  *) die "--model must be implement, ui or provider/model" ;;
+esac
+[[ -n "$model" ]] || die "$var is empty in .opencode/team.env (pick one: scripts/ai/models.sh)"
+grep -qxF "$model" <<<"$("$OC" models 2>/dev/null)" || die "model $model is not in opencode models"
 
 # The agent must load in that directory with the main repo's definitions.
 agents_json="$(cd "$cwd" && env "$(opencode_env)" "$OC" --standalone debug agents 2>/dev/null)" \

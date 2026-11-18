@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Rules for AI coding agents working in this repository (OpenCode reads this file; Claude Code
-reads `CLAUDE.md`). The repository conventions in `CLAUDE.md` → "Repository conventions" apply
+reads `CLAUDE.md`, and Claude implementer subagents read both). The repository conventions in `CLAUDE.md` → "Repository conventions" apply
 to every agent: read that section before changing code.
 
 The team layout, roles and lifecycle are documented in `docs/ai-workflow/README.md`.
@@ -10,10 +10,11 @@ The team layout, roles and lifecycle are documented in `docs/ai-workflow/README.
 
 - **Claude Code (the lead)** owns planning, scoping, architecture, review, commits and the final
   report. It works only inside the milestone/step the owner approved in `PLAN.md`.
-- **The OpenCode implementer** (`.opencode/agents/implementer.md`) does exactly the task in its
-  brief, nothing more. It never widens its own scope, never starts other agents, and never
-  decides architecture. When the brief is ambiguous or wrong, stop and report `blocked` with the
-  question.
+- **Implementers** do exactly the task in their brief, nothing more: the OpenCode implementer
+  (`.opencode/agents/implementer.md`, running DeepSeek V4.1 Flash or GLM-5.3) and Claude Sonnet or
+  Haiku subagents started by the lead. The same rules apply to all of them. An implementer
+  never widens its own scope, never starts other agents, and never decides architecture. When
+  the brief is ambiguous or wrong, stop and report `blocked` with the question.
 
 ## Hard rules for every worker
 
@@ -27,10 +28,12 @@ The team layout, roles and lifecycle are documented in `docs/ai-workflow/README.
 6. Never add, remove or upgrade a dependency unless the brief names it explicitly.
 7. Never edit project governance: `CLAUDE.md`, `AGENTS.md`, `PLAN.md`, `ARCHITECTURE.md`,
    `docs/**`, `.opencode/**`, `.claude/**`, `scripts/ai/**`.
-8. The sibling repos `../saleor-*` are read-only references. Never copy code from
-   `../saleor-storefront` (ADR-0008). Code adapted from `../saleor-dashboard` or
-   `../saleor-core` carries the license header from `CLAUDE.md`.
-9. Do not touch `apps/storefront` (Phase 4 is gated on the owner's explicit approval).
+8. The sibling repos `../saleor-*` are read-only references. Code adapted from
+   `../saleor-dashboard` or `../saleor-core` carries the BSD-3-Clause header from `CLAUDE.md`.
+   From `../saleor-storefront` only UI may be adapted, with the FSL header (ADR-0008); never its
+   data, auth, cart or checkout logic, and never Paper's name or logo.
+9. Touch `apps/storefront` only when the brief names it (Phase 4 approved 2026-11-19). It follows
+   ADR-0015: only server code calls the API; tokens stay in HttpOnly cookies.
 10. API tests share one `commerce_test` database. Run them only when the brief says so, and
     through `scripts/ai/verify.sh`, which serializes test runs between workers.
 
