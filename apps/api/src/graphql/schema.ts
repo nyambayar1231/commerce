@@ -12,6 +12,7 @@ import "../modules/checkout/completeGraphql.ts";
 import "../modules/payments/graphql.ts";
 import "../modules/identity/graphql.ts";
 import "../modules/identity/customerGraphql.ts";
+import "../modules/identity/addressGraphql.ts";
 import "../modules/inventory/graphql.ts";
 import "../modules/orders/graphql.ts";
 import "../modules/orders/orderListGraphql.ts";

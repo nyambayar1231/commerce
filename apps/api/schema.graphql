@@ -1,3 +1,36 @@
+"""
+Create a new address for the customer.
+
+Requires one of the following permissions: AUTHENTICATED_USER.
+"""
+type AccountAddressCreate {
+  address: Address
+  errors: [AccountError!]!
+  user: User
+}
+
+"""
+Deletes an address of the logged-in user.
+
+Requires one of the following permissions: MANAGE_USERS, IS_OWNER.
+"""
+type AccountAddressDelete {
+  address: Address
+  errors: [AccountError!]!
+  user: User
+}
+
+"""
+Updates an address of the logged-in user.
+
+Requires one of the following permissions: MANAGE_USERS, IS_OWNER.
+"""
+type AccountAddressUpdate {
+  address: Address
+  errors: [AccountError!]!
+  user: User
+}
+
 """Represents errors in account mutations."""
 type AccountError {
   code: AccountErrorCode!
@@ -20,6 +53,7 @@ enum AccountErrorCode {
   INVALID
   INVALID_CREDENTIALS
   LOGIN_ATTEMPT_DELAYED
+  NOT_FOUND
   OUT_OF_SCOPE_GROUP
   PASSWORD_TOO_SHORT
   REQUIRED
@@ -55,6 +89,16 @@ input AccountRegisterInput {
   redirectUrl: String
 }
 
+"""
+Sets a default address for the authenticated user.
+
+Requires one of the following permissions: AUTHENTICATED_USER.
+"""
+type AccountSetDefaultAddress {
+  errors: [AccountError!]!
+  user: User
+}
+
 """Represents user address data."""
 type Address {
   """The city of the address."""
@@ -74,6 +118,15 @@ type Address {
 
   """The given name of the address."""
   firstName: String!
+
+  """The ID of the address."""
+  id: ID
+
+  """Address is user's default billing address."""
+  isDefaultBillingAddress: Boolean
+
+  """Address is user's default shipping address."""
+  isDefaultShippingAddress: Boolean
 
   """The family name of the address."""
   lastName: String!
@@ -1116,12 +1169,59 @@ type Money {
 
 type Mutation {
   """
+  Create a new address for the customer.
+  
+  Requires one of the following permissions: AUTHENTICATED_USER.
+  """
+  accountAddressCreate(
+    """Fields required to create address."""
+    input: AddressInput!
+
+    """
+    A type of address. If provided, the new address will be automatically assigned as the customer's default address of that type.
+    """
+    type: AddressTypeEnum
+  ): AccountAddressCreate!
+
+  """
+  Deletes an address of the logged-in user. Requires one of the following permissions: MANAGE_USERS, IS_OWNER.
+  """
+  accountAddressDelete(
+    """ID of the address to delete."""
+    id: ID!
+  ): AccountAddressDelete!
+
+  """
+  Updates an address of the logged-in user. Requires one of the following permissions: MANAGE_USERS, IS_OWNER.
+  """
+  accountAddressUpdate(
+    """ID of the address to update."""
+    id: ID!
+
+    """Fields required to update the address."""
+    input: AddressInput!
+  ): AccountAddressUpdate!
+
+  """
   Register a new user. The answer is the same whether or not the email is already registered; a new account receives a confirmation email and can log in once confirmed.
   """
   accountRegister(
     """Fields required to create a user."""
     input: AccountRegisterInput!
   ): AccountRegister!
+
+  """
+  Sets a default address for the authenticated user.
+  
+  Requires one of the following permissions: AUTHENTICATED_USER.
+  """
+  accountSetDefaultAddress(
+    """ID of the address to set as default."""
+    id: ID!
+
+    """The type of address."""
+    type: AddressTypeEnum!
+  ): AccountSetDefaultAddress!
 
   """
   Deletes categories.
@@ -3500,12 +3600,25 @@ scalar Upload
 """Represents user data."""
 type User implements Node {
   """
+  List of all user's addresses.
+  
+  Requires one of the following permissions: OWNER, MANAGE_USERS.
+  """
+  addresses: [Address!]!
+
+  """
   Returns checkouts assigned to this user. Requires one of the following permissions: MANAGE_CHECKOUTS, OWNER.
   """
   checkouts(after: String, before: String, first: Int, last: Int): CheckoutCountableConnection
 
   """The date when the user joined."""
   dateJoined: DateTime!
+
+  """The default billing address of the user."""
+  defaultBillingAddress: Address
+
+  """The default shipping address of the user."""
+  defaultShippingAddress: Address
   email: String!
   firstName: String!
 

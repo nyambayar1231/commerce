@@ -12,6 +12,7 @@ export type AccountErrorCode =
   | 'INVALID'
   | 'INVALID_CREDENTIALS'
   | 'LOGIN_ATTEMPT_DELAYED'
+  | 'NOT_FOUND'
   | 'OUT_OF_SCOPE_GROUP'
   | 'PASSWORD_TOO_SHORT'
   | 'REQUIRED'

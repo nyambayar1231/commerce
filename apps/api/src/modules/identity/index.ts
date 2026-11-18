@@ -13,6 +13,25 @@ export {
   registerCustomer,
   validateNewPassword,
 } from "./accounts.ts";
+export type {
+  AddressBookDefaultResult,
+  AddressBookEntry,
+  AddressBookError,
+  AddressBookResult,
+  AddressRow,
+} from "./addresses.ts";
+export {
+  addressNotFoundError,
+  countUserAddresses,
+  createUserAddress,
+  deleteUserAddress,
+  getUserAddresses,
+  getUserDefaultAddress,
+  MAX_USER_ADDRESSES,
+  setDefaultUserAddress,
+  storeUserAddresses,
+  updateUserAddress,
+} from "./addresses.ts";
 export {
   accountConfirmationHandler,
   accountConfirmationQueue,

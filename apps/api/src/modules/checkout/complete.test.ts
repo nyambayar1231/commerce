@@ -24,7 +24,7 @@ let shippingMethodId: string;
 
 beforeEach(async () => {
   await db.$client.unsafe(
-    'TRUNCATE "order", checkout, product, shipping_method, allocation, payment_transaction CASCADE',
+    'TRUNCATE "user", "order", checkout, product, shipping_method, allocation, payment_transaction CASCADE',
   );
   const [warehouse] = await db.select().from(schema.warehouse);
   if (!warehouse) throw new Error("the migration did not seed a warehouse");
@@ -73,8 +73,12 @@ async function seedVariant(price: number, stock?: number) {
 }
 
 /** A checkout with every detail completion needs, paid in full unless `pay` is false. */
-async function readyCheckout(lines: { variantId: string; quantity: number }[], pay = true) {
-  const created = await createCheckout(db, { lines, email: "buyer@example.com" });
+async function readyCheckout(
+  lines: { variantId: string; quantity: number }[],
+  pay = true,
+  owner?: { id: string; email: string },
+) {
+  const created = await createCheckout(db, { lines, email: "buyer@example.com", user: owner });
   if (!created.ok) throw new Error(JSON.stringify(created.errors));
   const id = created.checkout.id;
   await updateCheckoutAddress(db, id, "SHIPPING", ADDRESS);
@@ -214,6 +218,64 @@ describe("completeCheckout", () => {
       ok: false,
       errors: [{ field: "id", code: "INVALID" }],
     });
+  });
+
+  it("stores a logged-in user's addresses once, and sets the defaults", async () => {
+    const boots = await seedVariant(1000);
+    const [user] = await db
+      .insert(schema.user)
+      .values({ email: "buyer@example.com" })
+      .returning({ id: schema.user.id });
+    if (!user) throw new Error("no user");
+    const owner = { id: user.id, email: "buyer@example.com" };
+
+    for (let completion = 0; completion < 2; completion++) {
+      const id = await readyCheckout([{ variantId: boots.id, quantity: 1 }], true, owner);
+      const result = await completeCheckout(db, id);
+      if (!result.ok) throw new Error(JSON.stringify(result.errors));
+    }
+
+    const addresses = await db
+      .select()
+      .from(schema.address)
+      .where(eq(schema.address.userId, user.id));
+    expect(addresses).toHaveLength(1);
+    const address = addresses[0];
+    expect(address).toMatchObject({
+      firstName: "Bat",
+      lastName: "Dorj",
+      streetAddress1: "Peace Avenue 1",
+      city: "Ulaanbaatar",
+      country: "MN",
+    });
+
+    const [defaults] = await db
+      .select({
+        shipping: schema.user.defaultShippingAddressId,
+        billing: schema.user.defaultBillingAddressId,
+      })
+      .from(schema.user)
+      .where(eq(schema.user.id, user.id));
+    expect(defaults).toEqual({ shipping: address?.id, billing: address?.id });
+  });
+
+  it("stores nothing for a guest checkout whose email matches an account", async () => {
+    const boots = await seedVariant(1000);
+    const [user] = await db
+      .insert(schema.user)
+      .values({ email: "buyer@example.com" })
+      .returning({ id: schema.user.id });
+    if (!user) throw new Error("no user");
+
+    const id = await readyCheckout([{ variantId: boots.id, quantity: 1 }]);
+    const result = await completeCheckout(db, id);
+    if (!result.ok) throw new Error(JSON.stringify(result.errors));
+    // The order still goes to the account found by email (Saleor's assign_checkout_user)…
+    expect(result.order.userId).toBe(user.id);
+    // …but its addresses do not.
+    expect(
+      await db.select().from(schema.address).where(eq(schema.address.userId, user.id)),
+    ).toEqual([]);
   });
 });
 

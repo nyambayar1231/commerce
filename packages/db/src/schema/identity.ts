@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   check,
   customType,
@@ -44,6 +45,17 @@ export const user = pgTable(
     // Saleor's User.last_password_reset_request (M15.1): the last time a reset email was asked
     // for, so another one is sent at most every RESET_PASSWORD_LOCK_TIME (15 minutes).
     lastPasswordResetRequest: timestamp("last_password_reset_request", { withTimezone: true }),
+    // The address book's defaults (M15.2). Saleor's User.default_shipping_address /
+    // default_billing_address: always one of this user's own `address` rows, enforced by the
+    // identity module's domain functions. Deleting that address clears the default (SET NULL).
+    defaultShippingAddressId: uuid("default_shipping_address_id").references(
+      (): AnyPgColumn => address.id,
+      { onDelete: "set null" },
+    ),
+    defaultBillingAddressId: uuid("default_billing_address_id").references(
+      (): AnyPgColumn => address.id,
+      { onDelete: "set null" },
+    ),
   },
   (table) => [
     unique("user_email_unique").on(table.email),
@@ -51,6 +63,34 @@ export const user = pgTable(
     // Every superuser has staff powers too (Django/Saleor semantics).
     check("user_superuser_is_staff", sql`NOT ${table.isSuperuser} OR ${table.isStaff}`),
   ],
+);
+
+// Saleor's `account.Address`, but one user owns each row (Saleor shares rows through a M2M; we
+// never do), so deleting the user deletes their book (ARCHITECTURE.md §3 "Identity", M15.2).
+// The columns are Saleor's model fields in snake_case.
+export const address = pgTable(
+  "address",
+  {
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    firstName: text("first_name").notNull().default(""),
+    lastName: text("last_name").notNull().default(""),
+    companyName: text("company_name").notNull().default(""),
+    streetAddress1: text("street_address_1").notNull().default(""),
+    streetAddress2: text("street_address_2").notNull().default(""),
+    city: text("city").notNull().default(""),
+    cityArea: text("city_area").notNull().default(""),
+    postalCode: text("postal_code").notNull().default(""),
+    // Validated against COUNTRY_CODES by @commerce/contracts' cleanAddress before it is stored.
+    country: text("country").notNull(),
+    countryArea: text("country_area").notNull().default(""),
+    phone: text("phone").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("address_user_id_idx").on(table.userId)],
 );
 
 // Login sessions (ADR-0006, ARCHITECTURE.md §7). The client holds a random token; only its SHA-256

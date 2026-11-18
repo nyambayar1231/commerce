@@ -1,8 +1,8 @@
-import type { CurrencyCode } from "@commerce/contracts";
+import { type CurrencyCode, parseStoredAddress } from "@commerce/contracts";
 import { type Executor, schema } from "@commerce/db";
 import { eq, sql } from "drizzle-orm";
 import { lockVariantsForKeyShare } from "../catalog/index.ts";
-import { getActiveUserIdByEmail } from "../identity/index.ts";
+import { getActiveUserIdByEmail, storeUserAddresses } from "../identity/index.ts";
 import {
   allocateStocks,
   findInsufficientStock,
@@ -188,6 +188,15 @@ export async function completeCheckout(
         };
       }),
     });
+
+    // The owner's address book learns the checkout's addresses (Saleor's store_user_address). A
+    // guest checkout only got the account by email, and stores nothing there.
+    if (checkout.userId !== null) {
+      await storeUserAddresses(tx, checkout.userId, {
+        shipping: parseStoredAddress(checkout.shippingAddress),
+        billing: parseStoredAddress(checkout.billingAddress),
+      });
+    }
 
     // 7. Allocate the tracked lines from the stocks locked in step 5.
     const trackedVariants = new Set(tracked.map((line) => line.variantId));
