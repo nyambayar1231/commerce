@@ -550,14 +550,20 @@ state lives in the URL (`before`/`after`).
 
 ## 10. Storefront architecture
 
-- Next.js App Router *(ADR-0008)*. Pages: home/category listing, product detail, cart, checkout
-  (single page with sections), order confirmation, and later account/login.
-- Catalog pages are Server Components that `fetch` the API using generated typed documents, with
-  short revalidation windows.
-- **Cart and checkout:** Server Actions call the API. The checkout `token` is stored in an
-  HttpOnly cookie on the storefront's domain, so it is never exposed to client JavaScript.
+Details and reasons are in ADR-0015 (architecture) and ADR-0008 (UI adapted from Paper under FSL).
+
+- Next.js 16 App Router (`cacheComponents`), Tailwind 3.4, next-intl. URLs are `/{locale}/…`, with
+  `mn` (default) and `en`. Deployed on `dino-craft.lol`.
+- **BFF:** only the Next.js server calls the API, through `src/lib/api/` (server-only, typed
+  documents generated from `apps/api/schema.graphql`). Server Components read; Server Actions and
+  route handlers write. There is no GraphQL client in the browser.
+- **Sessions:** the customer's API session token sits in the storefront's own HttpOnly `session`
+  cookie and is sent to the API as `Authorization: Bearer`. The checkout token sits in the
+  HttpOnly `checkout` cookie. Neither is readable by JavaScript.
+- **Caching:** catalog reads use `"use cache"` with a `catalog` profile (revalidate 2 minutes)
+  and entity tags; cart, checkout and account pages are dynamic.
 - The storefront uses only public and customer-scoped API operations. It never uses staff
-  credentials.
+  credentials; guests read their order by its token.
 
 ---
 

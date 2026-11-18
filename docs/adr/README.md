@@ -19,3 +19,4 @@ Alternatives → Consequences. Status is one of: Proposed, Accepted, Superseded 
 | 0012 | Shared domain contracts in `packages/contracts` | Accepted |
 | 0013 | Money = integer `number` of minor units; MNT has 0 decimal places | Accepted |
 | 0014 | Product media in S3-compatible storage, thumbnails on demand with sharp | Accepted |
+| 0015 | Storefront architecture: BFF on Next.js 16, sessions in our own cookies | Accepted |
