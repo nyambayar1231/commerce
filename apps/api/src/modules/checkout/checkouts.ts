@@ -1,4 +1,9 @@
-import type { CurrencyCode } from "@commerce/contracts";
+import {
+  type AddressInput,
+  type AddressType,
+  type CurrencyCode,
+  cleanAddress,
+} from "@commerce/contracts";
 import { type Executor, schema } from "@commerce/db";
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import {
@@ -9,7 +14,6 @@ import {
   type ProductVariantRow,
 } from "../catalog/index.ts";
 import { availableQuantity, getStocksByVariantIds, type StockRow } from "../inventory/index.ts";
-import { type AddressInput, type AddressType, cleanAddress } from "./addresses.ts";
 import { getShippingMethod } from "./shippingMethods.ts";
 
 // Checkout reads and writes (ARCHITECTURE.md §3 "Checkout", §5.2–5.3): Saleor's checkout

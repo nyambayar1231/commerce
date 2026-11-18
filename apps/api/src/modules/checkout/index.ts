@@ -1,8 +1,5 @@
 // Public surface of the `checkout` module (ARCHITECTURE.md §2).
 
-export type { Address, AddressError, AddressInput, AddressType } from "./addresses.ts";
-export { cleanAddress, parseStoredAddress } from "./addresses.ts";
-
 export type {
   CheckoutError,
   CheckoutErrorCode,
@@ -32,8 +29,6 @@ export {
 } from "./checkouts.ts";
 export type { CheckoutCompleteResult } from "./complete.ts";
 export { completeCheckout } from "./complete.ts";
-export type { CountryCode } from "./countries.ts";
-export { COUNTRY_CODES, countryName, isCountryCode } from "./countries.ts";
 export type { CheckoutLoaders } from "./loaders.ts";
 export { createCheckoutLoaders } from "./loaders.ts";
 export type {

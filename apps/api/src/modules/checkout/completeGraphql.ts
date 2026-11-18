@@ -1,3 +1,5 @@
+import { parseStoredAddress } from "@commerce/contracts";
+import { AddressType } from "../../graphql/address.ts";
 import { builder } from "../../graphql/builder.ts";
 import { fromGlobalId, nodesNotFound, toGlobalId } from "../../graphql/globalId.ts";
 import { JSONString } from "../../graphql/scalars.ts";
@@ -5,8 +7,7 @@ import { OrderType } from "../orders/graphql.ts";
 import type { OrderRow } from "../orders/index.ts";
 import { completeCheckout } from "./complete.ts";
 import { type CheckoutErrorData, CheckoutErrorType, toGraphqlError } from "./graphql.ts";
-import { CheckoutNotFoundError, getCheckout, parseStoredAddress } from "./index.ts";
-import { AddressType } from "./shippingGraphql.ts";
+import { CheckoutNotFoundError, getCheckout } from "./index.ts";
 
 // Saleor's checkoutComplete (saleor/graphql/checkout/mutations/checkout_complete.py) over
 // completeCheckout (ARCHITECTURE §5.4). The checkout module also adds the order's addresses (it

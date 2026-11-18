@@ -1,14 +1,14 @@
-import { builder } from "../../graphql/builder.ts";
-import type { Context } from "../../graphql/context.ts";
-import { fromGlobalId } from "../../graphql/globalId.ts";
-import { requirePermission } from "../../graphql/permissions.ts";
 import {
   type AddressInput as AddressInputData,
   type AddressType,
   cleanAddress,
-  getShippingMethod,
-} from "../checkout/index.ts";
-import { AddressInput } from "../checkout/shippingGraphql.ts";
+} from "@commerce/contracts";
+import { AddressInput } from "../../graphql/address.ts";
+import { builder } from "../../graphql/builder.ts";
+import type { Context } from "../../graphql/context.ts";
+import { fromGlobalId } from "../../graphql/globalId.ts";
+import { requirePermission } from "../../graphql/permissions.ts";
+import { getShippingMethod } from "../checkout/index.ts";
 import { getActiveUserIdByEmail, getUsersByIds } from "../identity/index.ts";
 import { OrderEventType, OrderLineType, OrderType } from "./graphql.ts";
 import {

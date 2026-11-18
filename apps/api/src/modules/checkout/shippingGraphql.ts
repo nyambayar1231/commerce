@@ -1,3 +1,9 @@
+import {
+  type AddressInput as AddressInputData,
+  COUNTRY_CODES,
+  parseStoredAddress,
+} from "@commerce/contracts";
+import { AddressInput, AddressType, CountryDisplay } from "../../graphql/address.ts";
 import { builder } from "../../graphql/builder.ts";
 import { decodeGlobalId, fromGlobalId, nodesNotFound, toGlobalId } from "../../graphql/globalId.ts";
 import { MoneyType, TaxedMoneyType } from "../../graphql/money.ts";
@@ -13,18 +19,12 @@ import {
   runCheckoutWrite,
 } from "./graphql.ts";
 import {
-  type Address,
-  type AddressInput as AddressInputData,
-  COUNTRY_CODES,
-  type CountryCode,
-  countryName,
   createShippingMethod,
   deleteShippingMethod,
   getCheckoutShippingMethod,
   getShippingMethod,
   listActiveShippingMethods,
   listShippingMethods,
-  parseStoredAddress,
   type ShippingError,
   ShippingMethodNotFoundError,
   type ShippingMethodResult,
@@ -43,16 +43,6 @@ const MANAGE_SHIPPING = "Requires one of the following permissions: MANAGE_SHIPP
 // ---------------------------------------------------------------------------------------------
 // Addresses
 
-const CountryCodeEnum = builder.enumType("CountryCode", { values: COUNTRY_CODES });
-
-const CountryDisplay = builder.objectRef<CountryCode>("CountryDisplay").implement({
-  description: "Represents country.",
-  fields: (t) => ({
-    code: t.string({ description: "Country code.", resolve: (code) => code }),
-    country: t.string({ description: "Country name.", resolve: (code) => countryName(code) }),
-  }),
-});
-
 // Saleor's Shop.countries: the countries an address may use (the dashboard's address form, M13.7).
 // Saleor lists the shop's shipping-zone countries; ours are every known country code.
 builder.objectField(ShopType, "countries", (t) =>
@@ -62,55 +52,6 @@ builder.objectField(ShopType, "countries", (t) =>
     resolve: () => [...COUNTRY_CODES],
   }),
 );
-
-// Saleor's Address without `id`, metadata and the default-address flags: a checkout's address is a
-// JSON snapshot, not a row (ARCHITECTURE §3), so there is nothing for an id to point at.
-export const AddressType = builder.objectRef<Address>("Address").implement({
-  description: "Represents user address data.",
-  fields: (t) => ({
-    firstName: t.exposeString("firstName", { description: "The given name of the address." }),
-    lastName: t.exposeString("lastName", { description: "The family name of the address." }),
-    companyName: t.exposeString("companyName", { description: "Company or organization name." }),
-    streetAddress1: t.exposeString("streetAddress1", {
-      description: "The first line of the address.",
-    }),
-    streetAddress2: t.exposeString("streetAddress2", {
-      description: "The second line of the address.",
-    }),
-    city: t.exposeString("city", { description: "The city of the address." }),
-    cityArea: t.exposeString("cityArea", { description: "The district of the address." }),
-    postalCode: t.exposeString("postalCode", { description: "The postal code of the address." }),
-    country: t.field({
-      type: CountryDisplay,
-      description: "The country of the address.",
-      resolve: (address) => address.country,
-    }),
-    countryArea: t.exposeString("countryArea", {
-      description: "The country area of the address.",
-    }),
-    phone: t.string({
-      nullable: true,
-      description: "The phone number assigned the address.",
-      resolve: (address) => address.phone || null,
-    }),
-  }),
-});
-
-export const AddressInput = builder.inputType("AddressInput", {
-  fields: (t) => ({
-    firstName: t.string({ description: "Given name." }),
-    lastName: t.string({ description: "Family name." }),
-    companyName: t.string({ description: "Company or organization." }),
-    streetAddress1: t.string({ description: "Address." }),
-    streetAddress2: t.string({ description: "Address." }),
-    city: t.string({ description: "City." }),
-    cityArea: t.string({ description: "District." }),
-    postalCode: t.string({ description: "Postal code." }),
-    country: t.field({ type: CountryCodeEnum, description: "Country." }),
-    countryArea: t.string({ description: "State or province." }),
-    phone: t.string({ description: "Phone number." }),
-  }),
-});
 
 // ---------------------------------------------------------------------------------------------
 // Shipping methods

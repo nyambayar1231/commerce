@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanAddress, parseStoredAddress } from "./addresses.ts";
+import { cleanAddress, parseStoredAddress } from "./address.ts";
 
 // Address cleaning without a database (PLAN M5 decision 3: required fields + a known country).
 const VALID = {
