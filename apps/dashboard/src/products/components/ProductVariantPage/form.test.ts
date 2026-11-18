@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { act, renderHook } from "@testing-library/react";
+import { act, render, renderHook } from "@testing-library/react";
+import { type ChangeEvent, createElement, useLayoutEffect, useRef } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import type {
@@ -66,6 +67,34 @@ const renderForm = (stocks: ProductVariantStock[] = []) => {
   const hook = renderHook(() => useProductVariantForm(initial, onSubmit, false, true));
 
   return { ...hook, onSubmit };
+};
+
+/** Just enough of an input event for the form's `change` handler. */
+const inputEvent = (name: string, value: string): ChangeEvent<HTMLInputElement> =>
+  ({ target: { name, value } }) as unknown as ChangeEvent<HTMLInputElement>;
+
+/**
+ * Mounts the hook and types into it from a layout effect, which runs before the mount's passive
+ * effects: a keystroke arriving right after the page's first paint. It renders the typed name.
+ */
+const TypeOnMount = ({
+  initial,
+  onSubmit,
+  value,
+}: {
+  initial: ProductVariantFormData;
+  onSubmit: (data: ProductVariantFormData) => Promise<unknown[]>;
+  value: string;
+}) => {
+  const form = useProductVariantForm(initial, onSubmit, false, true);
+  const change = useRef(form.change);
+
+  change.current = form.change;
+  useLayoutEffect(() => {
+    change.current(inputEvent("name", value));
+  }, [value]);
+
+  return createElement("span", null, form.data.name);
 };
 
 describe("product variant form → mutation input", () => {
@@ -225,6 +254,38 @@ describe("stock diff", () => {
     const diff = getStockDiff(variantWithStocks(["w1"]), [stock({ quantity: "" })]);
 
     expect(diff.updateStocks).toEqual([{ warehouse: "w1", quantity: 0 }]);
+  });
+});
+
+describe("variant form syncs with the variant's values", () => {
+  it("keeps a value typed right after mount", () => {
+    const onSubmit = vi.fn(async () => []);
+    const initial = formData({ name: "", stocks: [] });
+
+    // Nothing typed before the mount's passive effects flush may be overwritten: the hook is
+    // re-synced while rendering, not from an effect.
+    const { container } = render(
+      createElement(TypeOnMount, { initial, onSubmit, value: "One size" }),
+    );
+
+    expect(container.textContent).toBe("One size");
+  });
+
+  it("replaces the data when the initial data changes", () => {
+    const onSubmit = vi.fn(async () => []);
+    const { result, rerender } = renderHook(
+      ({ initial }: { initial: ProductVariantFormData }) =>
+        useProductVariantForm(initial, onSubmit, false, true),
+      { initialProps: { initial: formData({ name: "" }) } },
+    );
+
+    act(() => result.current.change(inputEvent("name", "Typed")));
+    expect(result.current.data.name).toBe("Typed");
+
+    rerender({ initial: formData({ name: "Size 39" }) });
+
+    expect(result.current.data.name).toBe("Size 39");
+    expect(result.current.hasUnsavedChanges).toBe(false);
   });
 });
 

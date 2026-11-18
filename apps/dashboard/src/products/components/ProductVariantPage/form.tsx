@@ -187,11 +187,16 @@ export function useProductVariantForm(
   requireChanges: boolean,
 ): UseProductVariantFormResult {
   const [data, setData] = useState(initialData);
+  const [syncedInitial, setSyncedInitial] = useState(initialData);
   const { setIsDirty, setIsSubmitting } = useExitFormDialog();
 
-  useEffect(() => {
+  // Re-sync while rendering, not from an effect: a passive effect runs after the first paint, so
+  // anything typed between the paint and the effect would be overwritten. This pattern only resets
+  // when `initialData` actually changes (the edit page after a save or a refetch).
+  if (syncedInitial !== initialData) {
+    setSyncedInitial(initialData);
     setData(initialData);
-  }, [initialData]);
+  }
 
   const hasUnsavedChanges =
     data.name !== initialData.name ||

@@ -64,7 +64,9 @@ test("staff creates a product with a category", async () => {
 test("staff adds a variant with a price and stock", async () => {
   await page.getByTestId("button-add-variant").click();
   await expect(page).toHaveURL(/\/variant\/add/);
-  await page.getByRole("textbox", { name: "Name" }).fill("One size");
+  // The URL changes before the variant page renders, and until then the product page's own "Name"
+  // field is still there: target the variant page's input so the name can't land in the old form.
+  await page.getByTestId("variant-name-input").fill("One size");
   await page.getByRole("textbox", { name: "Price MNT" }).fill(String(PRICE));
   await page.getByRole("textbox", { name: "SKU (Stock Keeping Unit)" }).fill(SKU);
   await page.getByRole("button", { name: "Assign Warehouses" }).click();
@@ -226,9 +228,9 @@ test("staff adds products to the draft and changes a quantity", async () => {
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Search products").fill(PRODUCT);
   // The product has two variants since M14 (its default one from the create dialog, and the one
-  // with stock added above): add only the latter, so the draft has one line. Its checkbox is
-  // labelled by SKU: the "One size" name is not saved (PLAN open item, found in M14.2).
-  await dialog.getByRole("checkbox", { name: `${PRODUCT} ${SKU}`, exact: true }).check();
+  // with stock added above): the draft gets only the stocked "One size" variant, so it has one
+  // line.
+  await dialog.getByRole("checkbox", { name: `${PRODUCT} One size`, exact: true }).check();
   await dialog.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByText("Order line added")).toBeVisible();
   const summary = page.getByTestId("OrderSummary");

@@ -440,10 +440,6 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
 | M14.4 | Dashboard: editable Variants grid (Saleor's datagrid editing, "Add variant" staged rows, cell errors), saved with the product page's Save | Proposed |
 
 - **Found in M14.2, not fixed (needs the owner's go):**
-  - The golden path creates a variant named "One size" on the variant create page, but it is saved
-    with an empty name (`commerce_e2e` showed `name = ''`, SKU and price saved). The dashboard and API
-    code pass the name through; cause unverified (a remount or reset of the create form is the
-    next thing to check). The test now picks that variant by SKU.
   - Locally the golden path fails at "staff adds products to the draft and changes a quantity"
     ("Order line updated" never shows), also on `85d616e` before M14; CI passed that commit.
 
