@@ -1626,6 +1626,31 @@ type Mutation {
     input: ProductVariantInput!
   ): ProductVariantUpdate!
 
+  """Sends an email with the account password modification link."""
+  requestPasswordReset(
+    """Email of the user that will be used for password recovery."""
+    email: String!
+
+    """
+    URL of a view where users should be redirected to reset the password. URL in RFC 1808 format.
+    """
+    redirectUrl: String!
+  ): RequestPasswordReset!
+
+  """
+  Sets the user's password from the token sent by email using the RequestPasswordReset mutation.
+  """
+  setPassword(
+    """Email of a user."""
+    email: String!
+
+    """Password of a user."""
+    password: String!
+
+    """A one-time token required to set the password."""
+    token: String!
+  ): SetPassword!
+
   """
   Creates a new shipping price.
   
@@ -2993,6 +3018,21 @@ type Query {
   Requires one of the following permissions: MANAGE_PRODUCTS, MANAGE_ORDERS, MANAGE_SHIPPING.
   """
   warehouses(after: String, before: String, first: Int, last: Int): WarehouseCountableConnection
+}
+
+"""Sends an email with the account password modification link."""
+type RequestPasswordReset {
+  errors: [AccountError!]!
+}
+
+"""
+Sets the user's password from the token sent by email using the RequestPasswordReset mutation.
+"""
+type SetPassword {
+  errors: [AccountError!]!
+
+  """A user instance."""
+  user: User
 }
 
 type ShippingError {

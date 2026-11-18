@@ -17,6 +17,8 @@ const EPOCH_MS = Date.UTC(2001, 0, 1);
 
 export const ACCOUNT_CONFIRM_SALT = "commerce.identity.tokens.account_confirm_token_generator";
 
+export const PASSWORD_RESET_SALT = "commerce.identity.tokens.password_reset_token_generator";
+
 export interface TokenUser {
   id: string;
   email: string;

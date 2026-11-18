@@ -26,12 +26,15 @@ import {
   readAllowedClientHosts,
   readSecretKey,
   registerCustomer,
+  requestPasswordReset,
   revokeSession,
   SESSION_USER_COLUMNS,
   type SessionUser,
   type StaffError,
   type StaffResult,
+  setPassword,
   updatePermissionGroup,
+  validateRedirectUrl,
 } from "./index.ts";
 
 // Login, logout and the current user. Names and shapes follow Saleor
@@ -315,6 +318,104 @@ builder.mutationField("confirmAccount", (t) =>
         };
       }
       const [user] = await getUsersByIds(ctx.db, [confirmed.id]);
+      return { user: user ?? null, errors: [] };
+    },
+  }),
+);
+
+// --- Password reset (M15.1): Saleor's requestPasswordReset and setPassword, adapted to our stack.
+// The email's link opens the storefront, which calls setPassword. No `channel` argument (one
+// channel, ADR-0005) and none of Saleor's token/refreshToken/csrfToken fields: like tokenCreate,
+// setPassword logs the user in through the HttpOnly session cookie.
+
+type RequestPasswordResetPayload = { errors: AccountError[] };
+
+const RequestPasswordResetType = builder
+  .objectRef<RequestPasswordResetPayload>("RequestPasswordReset")
+  .implement({
+    description: "Sends an email with the account password modification link.",
+    fields: (t) => ({
+      errors: t.field({ type: [AccountErrorType], resolve: (p) => p.errors }),
+    }),
+  });
+
+builder.mutationField("requestPasswordReset", (t) =>
+  t.field({
+    type: RequestPasswordResetType,
+    description: "Sends an email with the account password modification link.",
+    args: {
+      email: t.arg.string({
+        required: true,
+        description: "Email of the user that will be used for password recovery.",
+      }),
+      redirectUrl: t.arg.string({
+        required: true,
+        description:
+          "URL of a view where users should be redirected to reset the password. URL in RFC " +
+          "1808 format.",
+      }),
+    },
+    resolve: async (_parent, { email, redirectUrl }, ctx) => {
+      const url = redirectUrl.trim();
+      // Saleor's clean_user: a bad redirect URL is the only error this mutation reports.
+      const invalid = validateRedirectUrl(url, readAllowedClientHosts());
+      if (invalid) {
+        return { errors: [{ field: "redirectUrl", code: "INVALID" as const, message: invalid }] };
+      }
+      // Always the same answer, so it never says whether the email exists.
+      await ctx.db.transaction((tx) => requestPasswordReset(tx, email, url));
+      return { errors: [] };
+    },
+  }),
+);
+
+type SetPasswordPayload = { user: SessionUser | null; errors: AccountError[] };
+
+const SetPasswordType = builder.objectRef<SetPasswordPayload>("SetPassword").implement({
+  description:
+    "Sets the user's password from the token sent by email using the RequestPasswordReset " +
+    "mutation.",
+  fields: (t) => ({
+    user: t.field({
+      type: UserType,
+      nullable: true,
+      description: "A user instance.",
+      resolve: (p) => p.user,
+    }),
+    errors: t.field({ type: [AccountErrorType], resolve: (p) => p.errors }),
+  }),
+});
+
+builder.mutationField("setPassword", (t) =>
+  t.field({
+    type: SetPasswordType,
+    description:
+      "Sets the user's password from the token sent by email using the RequestPasswordReset " +
+      "mutation.",
+    args: {
+      email: t.arg.string({ required: true, description: "Email of a user." }),
+      token: t.arg.string({
+        required: true,
+        description: "A one-time token required to set the password.",
+      }),
+      password: t.arg.string({ required: true, description: "Password of a user." }),
+    },
+    resolve: async (_parent, { email, token, password }, ctx) => {
+      const secret = readSecretKey();
+      const result = await ctx.db.transaction((tx) =>
+        setPassword(tx, { email, token, password }, secret),
+      );
+      if (!result.ok) {
+        return {
+          user: null,
+          errors: [{ field: result.field, code: result.code, message: result.message }],
+        };
+      }
+      // A reset replaces the session the request came with, as tokenCreate does; the transaction
+      // already ended every one of the user's sessions.
+      if (ctx.sessionToken !== null) await revokeSession(ctx.db, ctx.sessionToken);
+      ctx.setCookie(sessionCookie(result.session.token, result.session.expiresAt));
+      const [user] = await getUsersByIds(ctx.db, [result.userId]);
       return { user: user ?? null, errors: [] };
     },
   }),

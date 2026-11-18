@@ -118,3 +118,9 @@ export async function revokeSession(db: Executor, token: string): Promise<void> 
   if (!TOKEN_PATTERN.test(token)) return;
   await db.delete(schema.session).where(eq(schema.session.tokenHash, hashToken(token)));
 }
+
+// Ends every session of a user (password reset, M15.1). A reset usually means someone else may
+// know the old password, so all devices are signed out.
+export async function revokeUserSessions(db: Executor, userId: string): Promise<void> {
+  await db.delete(schema.session).where(eq(schema.session.userId, userId));
+}

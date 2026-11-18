@@ -5,11 +5,13 @@ export type {
   AccountRegisterError,
   AccountRegisterErrorCode,
   AccountRegisterInput,
+  PasswordError,
 } from "./accounts.ts";
 export {
   cleanAccountRegisterInput,
   hashRegistrationPassword,
   registerCustomer,
+  validateNewPassword,
 } from "./accounts.ts";
 export {
   accountConfirmationHandler,
@@ -40,6 +42,15 @@ export {
 } from "./customers.ts";
 export type { LoginResult } from "./login.ts";
 export { authenticate } from "./login.ts";
+export type { SetPasswordResult } from "./passwordReset.ts";
+export {
+  passwordResetHandler,
+  passwordResetQueue,
+  RESET_PASSWORD_LOCK_TIME_SECONDS,
+  renderPasswordReset,
+  requestPasswordReset,
+  setPassword,
+} from "./passwordReset.ts";
 export type { Permission } from "./permissions.ts";
 export { getEffectivePermissions, PERMISSION_NAMES, PERMISSIONS } from "./permissions.ts";
 export type { CreatedSession, SessionUser } from "./sessions.ts";
@@ -47,6 +58,7 @@ export {
   createSession,
   getSessionUser,
   revokeSession,
+  revokeUserSessions,
   SESSION_USER_COLUMNS,
 } from "./sessions.ts";
 export type {
@@ -65,7 +77,13 @@ export {
   updatePermissionGroup,
 } from "./staff.ts";
 export type { TokenUser } from "./tokens.ts";
-export { ACCOUNT_CONFIRM_SALT, checkToken, makeToken, readSecretKey } from "./tokens.ts";
+export {
+  ACCOUNT_CONFIRM_SALT,
+  checkToken,
+  makeToken,
+  PASSWORD_RESET_SALT,
+  readSecretKey,
+} from "./tokens.ts";
 export type { CreateSuperuserInput } from "./users.ts";
 export {
   CreateSuperuserError,

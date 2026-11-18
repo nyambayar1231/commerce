@@ -8,7 +8,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | Milestone | Title | Status |
 |---|---|---|
 | M11 | Dashboard in Mongolian and English | In progress |
-| M15 | API and dashboard for the storefront | Approved |
+| M15 | API and dashboard for the storefront | In progress |
 | M4 | Storefront (Paper-like, production ready) | Approved |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
@@ -497,7 +497,7 @@ Saleor names throughout. Deviations go in ARCHITECTURE §4.
 
 | Step | What | Status |
 |---|---|---|
-| M15.1 | Password reset: `requestPasswordReset` (an email through the outbox, `redirectUrl` checked against `ALLOWED_CLIENT_HOSTS`, throttled, no account enumeration) and `setPassword` (single-use, expiring token; ends other sessions) | Draft |
+| M15.1 | Password reset: `requestPasswordReset` (an email through the outbox, `redirectUrl` checked against `ALLOWED_CLIENT_HOSTS`, throttled, no account enumeration) and `setPassword` (single-use, expiring token; ends other sessions) | Done |
 | M15.2 | Account self-service: `accountUpdate` (name), `passwordChange`, the `address` table for the user's address book, `accountAddressCreate/Update/Delete`, `accountSetDefaultAddress`, `me.addresses`, `defaultShippingAddress` / `defaultBillingAddress`; checkout prefills from the defaults | Draft |
 | M15.3 | Guest order lookup: an unguessable `Order.token`, set at completion and returned by `checkoutComplete`, plus a public query to read one order by token (Saleor's `orderByToken`; deprecated in Saleor, a logged deviation) | Draft |
 | M15.4 | Collections API: tables, `collectionCreate/Update/Delete`, `collectionAddProducts/RemoveProducts`, public `collections` / `collection(slug)` (published only), `Product.collections`, a `products` filter by collection and price range | Draft |

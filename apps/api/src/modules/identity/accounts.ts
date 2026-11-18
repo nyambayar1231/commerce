@@ -36,6 +36,12 @@ export type AccountRegisterError = {
   message: string;
 };
 
+export type PasswordError = {
+  field: "password";
+  code: "INVALID" | "PASSWORD_TOO_SHORT";
+  message: string;
+};
+
 // Django's messages for these validators.
 const MESSAGES = {
   required: "This field is required.",
@@ -43,6 +49,21 @@ const MESSAGES = {
   passwordTooShort: `This password is too short. It must contain at least ${MIN_PASSWORD_LENGTH} characters.`,
   passwordTooLong: `Ensure this value has at most ${MAX_PASSWORD_LENGTH} characters.`,
 } as const;
+
+/**
+ * Saleor's password validators as registration applies them: Django's MinimumLengthValidator
+ * (8 characters) and our 128-character cap. Returns the error, or null when the password is fine.
+ * Shared with the password reset (M15.1).
+ */
+export function validateNewPassword(password: string): PasswordError | null {
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return { field: "password", code: "PASSWORD_TOO_SHORT", message: MESSAGES.passwordTooShort };
+  }
+  if (password.length > MAX_PASSWORD_LENGTH) {
+    return { field: "password", code: "INVALID", message: MESSAGES.passwordTooLong };
+  }
+  return null;
+}
 
 /**
  * Checks the input; the email is trimmed and lower-cased as Saleor does. `redirectUrl` is required
@@ -68,15 +89,8 @@ export function cleanAccountRegisterInput(
   } else if (!EMAIL_PATTERN.test(email)) {
     errors.push({ field: "email", code: "INVALID", message: MESSAGES.invalidEmail });
   }
-  if (input.password.length < MIN_PASSWORD_LENGTH) {
-    errors.push({
-      field: "password",
-      code: "PASSWORD_TOO_SHORT",
-      message: MESSAGES.passwordTooShort,
-    });
-  } else if (input.password.length > MAX_PASSWORD_LENGTH) {
-    errors.push({ field: "password", code: "INVALID", message: MESSAGES.passwordTooLong });
-  }
+  const passwordError = validateNewPassword(input.password);
+  if (passwordError) errors.push(passwordError);
   return errors.length > 0 ? { ok: false, errors } : { ok: true, email, redirectUrl };
 }
 

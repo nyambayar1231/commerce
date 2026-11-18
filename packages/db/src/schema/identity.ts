@@ -41,6 +41,9 @@ export const user = pgTable(
     // Saleor's User.updated_at and last_login (M7.3): set by profile updates and by tokenCreate.
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     lastLogin: timestamp("last_login", { withTimezone: true }),
+    // Saleor's User.last_password_reset_request (M15.1): the last time a reset email was asked
+    // for, so another one is sent at most every RESET_PASSWORD_LOCK_TIME (15 minutes).
+    lastPasswordResetRequest: timestamp("last_password_reset_request", { withTimezone: true }),
   },
   (table) => [
     unique("user_email_unique").on(table.email),

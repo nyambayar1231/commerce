@@ -278,6 +278,7 @@ Saleor stays obvious:
 | `Shop.countries` lists every known country code | the countries of the shop's shipping zones | We have no shipping zones (PLAN M5 decision 1). |
 | `tokenCreate` throttling takes the client IP from the socket, or (with `TRUST_PROXY=true`) the last `X-Forwarded-For` entry; `LOGIN_ATTEMPT_DELAYED`'s time is ISO 8601 | the first valid `X-Forwarded-For` entry, always; Python's datetime text | A client sets the first entry, so trusting it lets anyone pick a fresh IP per guess (PLAN M9.3). |
 | `ProductCreateInput.price` creates the default variant and publishes the product when it has a category | variants are created separately | The owner's simpler product creation (PLAN M14). |
+| `requestPasswordReset(email, redirectUrl)` without `channel`; `setPassword` returns `user` and `errors` (session cookie, no `token`/`refreshToken`/`csrfToken`), ends **all** the user's sessions, and refuses an inactive user with the same `INVALID` token error | `channel` argument; `SetPassword` extends `CreateToken`; existing JWTs stay valid; an inactive user's password is set, then the login fails `INACTIVE` | One channel (ADR-0005), cookie sessions (ADR-0006). A reset usually means someone else may know the password, so every old session ends (PLAN M15.1). |
 
 **The database** handles:
 - Invariants that must hold under concurrency: unique, foreign-key and `CHECK` constraints.

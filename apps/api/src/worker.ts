@@ -1,7 +1,7 @@
 import { closeDb, getDb } from "@commerce/db";
 import { assertConfig } from "./config.ts";
 import { logger } from "./logger.ts";
-import { accountConfirmationHandler } from "./modules/identity/index.ts";
+import { accountConfirmationHandler, passwordResetHandler } from "./modules/identity/index.ts";
 import {
   createSmtpMailer,
   type JobHandler,
@@ -17,7 +17,11 @@ import { orderConfirmationHandler } from "./modules/orders/index.ts";
 // workers may run at once (pg-boss claims each job once with SKIP LOCKED).
 
 // Every job type the worker runs; each feature adds its handler here (M8.2, M8.3).
-const HANDLERS: JobHandler[] = [orderConfirmationHandler, accountConfirmationHandler];
+const HANDLERS: JobHandler[] = [
+  orderConfirmationHandler,
+  accountConfirmationHandler,
+  passwordResetHandler,
+];
 
 // Fail at start with every configuration problem listed (PLAN M9.1).
 assertConfig("worker");
