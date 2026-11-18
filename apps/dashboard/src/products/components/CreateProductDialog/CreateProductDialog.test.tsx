@@ -48,7 +48,14 @@ const byTestId = <T extends Element>(id: string): T => {
 };
 const nameInput = () => byTestId<HTMLInputElement>("product-name-input");
 const categoryInput = () => byTestId<HTMLInputElement>("product-category");
+const priceInput = () => byTestId<HTMLInputElement>("product-price-input");
 const createButton = () => byTestId<HTMLButtonElement>("submit");
+
+const selectCategory = async () => {
+  fireEvent.focus(categoryInput());
+  fireEvent.click(categoryInput());
+  fireEvent.click(await screen.findByText("Shoes"));
+};
 
 describe("CreateProductDialog", () => {
   it("shows the title, description and fields", () => {
@@ -57,31 +64,37 @@ describe("CreateProductDialog", () => {
     expect(screen.getByText("Create product")).toBeTruthy();
     expect(
       screen.getByText(
-        "Add a product. You can set a price, inventory, and availability after creating it.",
+        "New products are published at once, with one variant at this price. You can add more variants after creating it.",
       ),
     ).toBeTruthy();
     expect(screen.getByText("Name")).toBeTruthy();
     expect(screen.getByText("Category")).toBeTruthy();
+    expect(screen.getByText("Price")).toBeTruthy();
+    expect(screen.getByText("MNT")).toBeTruthy();
   });
 
-  it("keeps Create disabled until the name has text", () => {
+  it("keeps Create disabled until name, category and price are set", async () => {
     renderDialog();
 
     expect(createButton().disabled).toBe(true);
     fireEvent.change(nameInput(), { target: { value: "   " } });
     expect(createButton().disabled).toBe(true);
     fireEvent.change(nameInput(), { target: { value: "Boots" } });
+    expect(createButton().disabled).toBe(true);
+    fireEvent.change(priceInput(), { target: { value: "15000" } });
+    expect(createButton().disabled).toBe(true);
+    await selectCategory();
     expect(createButton().disabled).toBe(false);
+    fireEvent.change(priceInput(), { target: { value: "  " } });
+    expect(createButton().disabled).toBe(true);
   });
 
-  it("submits the trimmed name and the selected category", async () => {
+  it("submits the trimmed name, the selected category and the price", async () => {
     const onSubmit = renderDialog();
 
     fireEvent.change(nameInput(), { target: { value: "  Winter boots  " } });
-
-    fireEvent.focus(categoryInput());
-    fireEvent.click(categoryInput());
-    fireEvent.click(await screen.findByText("Shoes"));
+    fireEvent.change(priceInput(), { target: { value: " 15000 " } });
+    await selectCategory();
 
     fireEvent.click(createButton());
 
@@ -89,16 +102,8 @@ describe("CreateProductDialog", () => {
     expect(onSubmit).toHaveBeenCalledWith({
       name: "Winter boots",
       category: "Q2F0ZWdvcnk6MQ==",
+      price: "15000",
     });
-  });
-
-  it("submits without a category when none is selected", async () => {
-    const onSubmit = renderDialog();
-
-    fireEvent.change(nameInput(), { target: { value: "Boots" } });
-    fireEvent.click(createButton());
-
-    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ name: "Boots", category: null }));
   });
 
   it("shows the API's name error on the name input", async () => {
@@ -116,6 +121,30 @@ describe("CreateProductDialog", () => {
     );
 
     fireEvent.change(nameInput(), { target: { value: "Boots" } });
+    fireEvent.change(priceInput(), { target: { value: "15000" } });
+    await selectCategory();
+    fireEvent.click(createButton());
+
+    expect(await screen.findByText("This field is required")).toBeTruthy();
+  });
+
+  it("shows the API's price error on the price input", async () => {
+    const errors: ProductErrorFragment[] = [
+      {
+        __typename: "ProductError",
+        code: "REQUIRED",
+        field: "price",
+        message: "This field is required.",
+      },
+    ];
+    renderDialog(
+      {},
+      vi.fn(async () => errors),
+    );
+
+    fireEvent.change(nameInput(), { target: { value: "Boots" } });
+    fireEvent.change(priceInput(), { target: { value: "15000" } });
+    await selectCategory();
     fireEvent.click(createButton());
 
     expect(await screen.findByText("This field is required")).toBeTruthy();

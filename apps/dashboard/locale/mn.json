@@ -148,6 +148,10 @@
     "context": "Dialog title",
     "string": "Гүйлгээ: {actionType}"
   },
+  "471aPf": {
+    "context": "create product dialog description",
+    "string": "Шинэ бүтээгдэхүүн энэ үнэтэй нэг хувилбартайгаар шууд нийтлэгдэнэ. Үүсгэсний дараа өөр хувилбаруудыг нэмж болно."
+  },
   "4IVdnm": {
     "context": "Empty state when the filter panel has no conditions",
     "string": "Шүүлтүүр алга"
@@ -315,10 +319,6 @@
   "95oJ5d": {
     "context": "button",
     "string": "Удирдах самбар руу буцах"
-  },
-  "99q9UB": {
-    "context": "create product dialog description",
-    "string": "Бүтээгдэхүүн нэмнэ. Үүсгэсний дараа үнэ, нөөц, нийтлэх эсэхийг тохируулж болно."
   },
   "9KzuFr": {
     "context": "Product availability status when not visible in a channel",

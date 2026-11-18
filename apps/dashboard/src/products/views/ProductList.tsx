@@ -4,8 +4,8 @@
 // The product list with filters, search, sort and cursor pagination, all from the URL as Saleor;
 // a URL without a sort is redirected to Saleor's default (name, ascending). The conditional
 // filters in the URL become the query's `where`; the filter panel edits a copy and applies it back
-// to the URL. The URL's `action=create-product` opens Saleor's CreateProductDialog (name and
-// category only); on success a toast and a jump to the new product. Selected rows open Saleor's
+// to the URL. The URL's `action=create-product` opens Saleor's CreateProductDialog (name, category
+// and price); on success a toast and a jump to the new product. Selected rows open Saleor's
 // bulk delete dialog on `action=delete`; confirming deletes them, clears the selection, toasts and
 // refetches the list. Not yet: the other bulk actions, export, filter presets.
 import { useMutation, useQuery } from "@apollo/client";
@@ -118,9 +118,10 @@ const ProductListContent = () => {
       const errors = result.productCreate.errors;
 
       if (errors.length > 0) {
-        // `name` and `category` stay on their inputs; anything else is a notification.
+        // `name`, `category` and `price` stay on their inputs; anything else is a notification.
         for (const error of errors.filter(
-          (error) => error.field !== "name" && error.field !== "category",
+          (error) =>
+            error.field !== "name" && error.field !== "category" && error.field !== "price",
         )) {
           notify({
             status: "error",
@@ -211,13 +212,15 @@ const ProductListContent = () => {
         })}
         disabled={createProductOpts.loading}
         errors={createProductOpts.data?.productCreate.errors ?? []}
-        onSubmit={async ({ name, category }) => {
+        onSubmit={async ({ name, category, price }) => {
           const result = await createProduct({
             variables: {
               input: {
                 name,
-                // No `isPublished`: a product without variants can't be published.
+                // With a price the API creates one default variant and, having a category,
+                // publishes the product at once (PLAN M14 decision 1); `isPublished` stays unset.
                 category,
+                price,
               },
             },
           });

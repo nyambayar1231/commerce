@@ -530,7 +530,7 @@ describe("simpler product creation through GraphQL (PLAN M14)", () => {
     expect(created.body.data?.productCreate).toEqual({
       product: {
         isPublished: true,
-        variants: [{ name: "", sku: null, price: { amount: 15000 } }],
+        variants: [{ name: "Boots", sku: null, price: { amount: 15000 } }],
       },
       errors: [],
     });

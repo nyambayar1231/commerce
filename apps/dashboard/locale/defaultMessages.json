@@ -149,6 +149,10 @@
     "context": "Dialog title",
     "string": "Transaction {actionType}"
   },
+  "471aPf": {
+    "context": "create product dialog description",
+    "string": "New products are published at once, with one variant at this price. You can add more variants after creating it."
+  },
   "4IVdnm": {
     "context": "Empty state when the filter panel has no conditions",
     "string": "No filters"
@@ -316,10 +320,6 @@
   "95oJ5d": {
     "context": "button",
     "string": "Go back to dashboard"
-  },
-  "99q9UB": {
-    "context": "create product dialog description",
-    "string": "Add a product. You can set a price, inventory, and availability after creating it."
   },
   "9KzuFr": {
     "context": "Product availability status when not visible in a channel",

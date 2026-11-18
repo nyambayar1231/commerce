@@ -411,7 +411,11 @@ export async function createProduct(
     if (!product) throw new Error("product insert returned no row");
 
     if (withVariant) {
-      const variant = await createProductVariant(tx, { productId: product.id, price: input.price });
+      const variant = await createProductVariant(tx, {
+        productId: product.id,
+        name: product.name,
+        price: input.price,
+      });
       // The price was checked above and a new product has no other variants.
       if (!variant.ok)
         throw new Error(`default variant rejected: ${JSON.stringify(variant.errors)}`);

@@ -584,7 +584,7 @@ describe("simpler product creation (PLAN M14)", () => {
     expect(variants).toHaveLength(1);
     expect(variants[0]).toMatchObject({
       priceAmount: 15000,
-      name: "",
+      name: "Boots",
       sku: null,
     });
   });

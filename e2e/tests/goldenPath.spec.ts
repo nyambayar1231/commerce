@@ -54,6 +54,7 @@ test("staff creates a product with a category", async () => {
   await dialog.getByTestId("product-name-input").fill(PRODUCT);
   await dialog.getByRole("combobox", { name: "Category" }).fill("Гутал");
   await page.getByRole("option", { name: "Гутал", exact: true }).click();
+  await dialog.getByTestId("product-price-input").fill(String(PRICE));
   await page.getByRole("button", { name: "Create" }).click();
   await expect(page).toHaveURL(/\/products\/[^/?]+/);
   await expect(page.getByTestId("product-variants")).toBeVisible();
@@ -82,11 +83,13 @@ test("staff adds a variant with a price and stock", async () => {
   expect(variantId).not.toBe("");
 });
 
-test("staff publishes the product", async () => {
+test("staff sees the product is already published", async () => {
   await page.goto(productUrl);
-  await page.getByRole("button", { name: "Published" }).click();
-  await page.getByRole("button", { name: "Save" }).click();
-  await expect(page.getByText("Saved changes")).toBeVisible();
+  // Creating it with a category and a price published it; toggling Published here would unpublish.
+  const availability = page.getByTestId("availability-card");
+  await expect(availability).toContainText("Published");
+  await expect(availability).toContainText("since");
+  await expect(availability).not.toContainText("Hidden from public API.");
 });
 
 test("a customer buys it through the API", async ({ request }) => {
@@ -222,7 +225,10 @@ test("staff adds products to the draft and changes a quantity", async () => {
   await page.getByRole("button", { name: "Add products" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Search products").fill(PRODUCT);
-  await dialog.getByRole("checkbox", { name: PRODUCT, exact: true }).check();
+  // The product has two variants since M14 (its default one from the create dialog, and the one
+  // with stock added above): add only the latter, so the draft has one line. Its checkbox is
+  // labelled by SKU: the "One size" name is not saved (PLAN open item, found in M14.2).
+  await dialog.getByRole("checkbox", { name: `${PRODUCT} ${SKU}`, exact: true }).check();
   await dialog.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByText("Order line added")).toBeVisible();
   const summary = page.getByTestId("OrderSummary");

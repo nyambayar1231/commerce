@@ -1,9 +1,10 @@
 // Adapted from saleor-dashboard: src/products/components/CreateProductDialog/CreateProductDialog.tsx (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // Saleor's dialog shell: title, Back / Confirm, field errors on their inputs. Its product-type
-// picker and the "create a product type" empty state are replaced by a name and an optional
-// category (M2 decision 5); Saleor's separate variant creation is out of scope.
-import { Box, Input } from "@saleor/macaw-ui";
+// picker and the "create a product type" empty state are replaced by a name, a category and a
+// price (M2 decision 5, PLAN M14): the price creates one default variant so the product can be
+// published at once. Saleor's separate variant creation is out of scope.
+import { Box, Input, Text } from "@saleor/macaw-ui";
 import { useState } from "react";
 import { FormattedMessage, useIntl } from "react-intl";
 
@@ -23,11 +24,13 @@ import { messages } from "./messages";
 
 interface CreateProductFields {
   name: string;
+  price: string;
 }
 
 export interface CreateProductFormData {
   name: string;
   category: string | null;
+  price: string;
 }
 
 interface CreateProductDialogProps {
@@ -55,7 +58,7 @@ export const CreateProductDialog = ({
   const [showApiErrors, setShowApiErrors] = useState(false);
   // null = not synced yet, so the first open (including mount-with-open) still resets.
   const [prevOpen, setPrevOpen] = useState<boolean | null>(null);
-  const initialForm: CreateProductFields = { name: "" };
+  const initialForm: CreateProductFields = { name: "", price: "" };
 
   // Clear the dialog's own state while rendering when `open` changes — the same pattern as
   // CreateCategoryDialog (resetting from an effect flashes the modal for a frame).
@@ -68,7 +71,7 @@ export const CreateProductDialog = ({
   }
 
   const formErrors = getFormErrors(
-    ["name", "category"],
+    ["name", "category", "price"],
     [...(showApiErrors ? apiErrors : []), ...submitErrors],
   );
 
@@ -83,6 +86,7 @@ export const CreateProductDialog = ({
             const errors = await onSubmit({
               name: data.name.trim(),
               category,
+              price: data.price.trim(),
             });
 
             setSubmitErrors(errors ?? []);
@@ -123,6 +127,23 @@ export const CreateProductDialog = ({
                         setCategoryName(name);
                       }}
                     />
+                    <Input
+                      name="price"
+                      type="text"
+                      inputMode="decimal"
+                      label={intl.formatMessage(messages.price)}
+                      value={data.price}
+                      onChange={change}
+                      disabled={disabled}
+                      error={!!formErrors.price}
+                      helperText={getProductErrorMessage(formErrors.price, intl)}
+                      endAdornment={
+                        <Text size={2} color="default2">
+                          MNT
+                        </Text>
+                      }
+                      data-test-id="product-price-input"
+                    />
                   </Box>
                 </DashboardModal.Inset>
               </DashboardModal.Body>
@@ -132,7 +153,9 @@ export const CreateProductDialog = ({
                 <ConfirmButton
                   transitionState={confirmButtonState}
                   onClick={submit}
-                  disabled={disabled || !data.name.trim()}
+                  disabled={
+                    disabled || !data.name.trim() || category === null || !data.price.trim()
+                  }
                   data-test-id="submit"
                 >
                   <FormattedMessage {...buttonMessages.create} />
