@@ -15,7 +15,7 @@ understood by its owner. Correctness and inspectability beat feature count.
 |---|---|---|---|
 | `../saleor-core` | Saleor API (Python/Django), shallow clone of 3.23 | BSD-3-Clause | Read & cite domain logic; translate, don't port wholesale |
 | `../saleor-dashboard` | Saleor Dashboard (React, Macaw UI, Glide) | BSD-3-Clause | Adapt components closely; keep license notice on copied code |
-| `../saleor-storefront` | Saleor Storefront (Next.js) | FSL-1.1 (Functional Source License) | Patterns only; write our own code (see ADR-0008) |
+| `../saleor-storefront` | Saleor Storefront (Next.js) | FSL-1.1-ALv2 (Functional Source License) | Adapt UI (markup, Tailwind, tokens) with the FSL header; data/auth/cart/checkout logic is ours (ADR-0008) |
 | `../saleor-platform` | docker-compose for running real Saleor | BSD-3-Clause | Run real Saleor side-by-side for UX comparison |
 
 When explaining a pattern, cite the reference file path, e.g.
@@ -29,7 +29,10 @@ When explaining a pattern, cite the reference file path, e.g.
   // See THIRD_PARTY_LICENSES.md
   ```
 - Keep `THIRD_PARTY_LICENSES.md` with the full BSD-3-Clause text of each source repo.
-- Never copy code from `saleor-storefront`.
+- Files adapted from `saleor-storefront` start with
+  `// Adapted from saleor-storefront: src/<path> (FSL-1.1-ALv2, Copyright 2026 Saleor Commerce)`
+  and `// See THIRD_PARTY_LICENSES.md`. Only UI is adapted (ADR-0008); never Paper's name, logo or
+  "Paper sign", and never offer this storefront to others as a template or service.
 
 ## Agent working agreement
 

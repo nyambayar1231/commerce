@@ -496,7 +496,7 @@ The lead (Claude Code, Opus) owns architecture, ADRs, dependencies, briefs, the 
 
 | Step | What | Status |
 |---|---|---|
-| M4.0.1 | Amend ADR-0008 (adapt Paper UI under FSL with attribution); FSL text in `THIRD_PARTY_LICENSES.md`; header template for adapted files | Draft |
+| M4.0.1 | Amend ADR-0008 (adapt Paper UI under FSL with attribution); FSL text in `THIRD_PARTY_LICENSES.md`; header template for adapted files | Done |
 | M4.0.2 | ADR-0015 storefront architecture (BFF, session and checkout cookies, `/{locale}` routing, caching, images); update ARCHITECTURE §10 | Draft |
 | M4.0.3 | AI team: model routing table in `docs/ai-workflow/`, `spawn.sh --model`, lift the storefront deny rule, Claude-subagent brief template, update CLAUDE.md's "one implementer" text | Draft |
 
