@@ -2,12 +2,14 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // The variant edit page's container: loads the variant and the warehouses, saves it through
-// Saleor's composite `VariantUpdate` (stock delete/create/update, then `productVariantUpdate`),
-// deletes it through Saleor's dialog (URL `action=remove`) and reports errors. Field errors stay on
-// the form; every other error (stock errors included) becomes an error notification. Not yet:
-// attributes, media, channel listings, metadata, translations, set-default and reordering.
+// Saleor's media diff (`variantMediaAssign` for added ids, `variantMediaUnassign` for removed
+// ones) and Saleor's composite `VariantUpdate` (stock delete/create/update, then
+// `productVariantUpdate`), deletes it through Saleor's dialog (URL `action=remove`) and reports
+// errors. Field errors stay on the form; every other error (media and stock errors included)
+// becomes an error notification. Not yet: attributes, channel listings, metadata, translations,
+// set-default and reordering.
 import { useMutation, useQuery } from "@apollo/client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { type IntlShape, useIntl } from "react-intl";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 
@@ -18,6 +20,8 @@ import {
   ProductVariantDetailsDocument,
   type ProductVariantStocksDeleteErrorFragment,
   VariantDeleteDocument,
+  VariantMediaAssignDocument,
+  VariantMediaUnassignDocument,
   VariantUpdateDocument,
   type WarehouseFragment,
   WarehouseListDocument,
@@ -34,6 +38,7 @@ import {
 } from "../../components/ProductVariantPage/form";
 import { ProductVariantPage } from "../../components/ProductVariantPage/ProductVariantPage";
 import { type ProductVariantUrlDialog, productUrl, productVariantEditUrl } from "../../urls";
+import { getMediaDiff } from "../../utils/media";
 import { productVariantPageMessages as messages } from "./messages";
 
 /** `getProductErrorMessage` is typed for ProductErrorCode; the stock delete payload's StockError
@@ -57,6 +62,8 @@ export const ProductVariant = () => {
   const { resetFormsState } = useExitFormDialog();
   const [errors, setErrors] = useState<ProductErrorFragment[]>([]);
   const [errorsFor, setErrorsFor] = useState(variantId);
+  // The media mutations run before `productVariantUpdate`, whose onCompleted reports them.
+  const mediaErrorsRef = useRef<ProductErrorFragment[]>([]);
 
   // The previous variant's errors must not leak into the next one (state reset during render,
   // the same pattern as CreateProductDialog; an effect would flash the old errors first).
@@ -75,8 +82,13 @@ export const ProductVariant = () => {
   const warehouses: WarehouseFragment[] =
     warehousesData?.warehouses?.edges.map((edge) => edge.node) ?? [];
 
+  const [assignMedia, assignMediaResult] = useMutation(VariantMediaAssignDocument);
+  const [unassignMedia, unassignMediaResult] = useMutation(VariantMediaUnassignDocument);
+
   const [updateVariant, updateResult] = useMutation(VariantUpdateDocument, {
     onCompleted: (result) => {
+      const mediaErrors = mediaErrorsRef.current;
+      mediaErrorsRef.current = [];
       const deleteErrors = result.productVariantStocksDelete?.errors ?? [];
       const createErrors = result.productVariantStocksCreate?.errors ?? [];
       const stocksUpdateErrors = result.productVariantStocksUpdate?.errors ?? [];
@@ -87,7 +99,8 @@ export const ProductVariant = () => {
         deleteErrors.length === 0 &&
         createErrors.length === 0 &&
         stocksUpdateErrors.length === 0 &&
-        updateErrors.length === 0
+        updateErrors.length === 0 &&
+        mediaErrors.length === 0
       ) {
         notify({
           status: "success",
@@ -111,7 +124,7 @@ export const ProductVariant = () => {
         });
       }
 
-      for (const error of getProductVariantFormErrors(updateErrors).other) {
+      for (const error of [...mediaErrors, ...getProductVariantFormErrors(updateErrors).other]) {
         notify({
           status: "error",
           text: getProductErrorMessage(error, intl),
@@ -151,6 +164,25 @@ export const ProductVariant = () => {
   const closeModal = () => navigate(productVariantEditUrl(variantId), { replace: true });
 
   const handleUpdate = async (formData: ProductVariantFormData) => {
+    mediaErrorsRef.current = [];
+
+    // Saleor's handleAssignMedia diff, applied one call at a time: assign the newly chosen ids,
+    // then unassign the dropped ones.
+    const { added, removed } = getMediaDiff(
+      variant?.media.map((mediaObject) => mediaObject.id) ?? [],
+      formData.media,
+    );
+
+    for (const mediaId of added) {
+      const result = await assignMedia({ variables: { mediaId, variantId } });
+      mediaErrorsRef.current.push(...(result.data?.variantMediaAssign?.errors ?? []));
+    }
+
+    for (const mediaId of removed) {
+      const result = await unassignMedia({ variables: { mediaId, variantId } });
+      mediaErrorsRef.current.push(...(result.data?.variantMediaUnassign?.errors ?? []));
+    }
+
     const { addStocks, updateStocks, removeStocks } = getStockDiff(variant, formData.stocks);
     const result = await updateVariant({
       variables: {
@@ -163,6 +195,7 @@ export const ProductVariant = () => {
     });
 
     return [
+      ...mediaErrorsRef.current,
       ...(result.data?.productVariantStocksDelete?.errors ?? []),
       ...(result.data?.productVariantStocksCreate?.errors ?? []),
       ...(result.data?.productVariantStocksUpdate?.errors ?? []),
@@ -182,7 +215,11 @@ export const ProductVariant = () => {
         warehouses={warehouses}
         disabled={loading}
         errors={errors}
-        saveButtonBarState={getMutationStatus({ ...updateResult, errors })}
+        saveButtonBarState={getMutationStatus({
+          ...updateResult,
+          loading: updateResult.loading || assignMediaResult.loading || unassignMediaResult.loading,
+          errors,
+        })}
         onSubmit={handleUpdate}
         onDelete={() => openModal("remove")}
       />

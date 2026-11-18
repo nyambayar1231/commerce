@@ -312,6 +312,20 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   thumbnails; the title names the shop ("Add product from {shop}"). Still the first 20 matches (no
   infinite scroll, backfill or "load more variants").
 - **M13.1 (print):** our own print view (Saleor has none), approved by the owner (2026-11-14).
+- **M14 (simpler product creation, owner 2026-11-18/19):** create = name + category + price
+  (default variant named after the product, published); free-text variant names, optional typed
+  SKU; Saleor's editable Variants grid saved per changed row (no bulk mutations, no row deletion,
+  fullscreen or generator); variant media chosen from the product's images (Saleor's VariantMedia),
+  thumbnails in the variant navigation only, as in Saleor. Not fixed, needs the owner's go:
+  - Locally the golden path fails at "staff adds products to the draft and changes a quantity"
+    ("Order line updated" never shows), also on `85d616e` before M14; CI passes.
+  - Dark theme: a red error cell's text is hard to read (Macaw's dark `background.critical1` is a
+    light pink under light text); Saleor paints the same colour.
+  - Clearing a stock cell sends nothing (never removes a stock row); needs an API/UX decision.
+  - Deviation: an error cell also overrides Glide's selection accent, so a rejected cell is red at
+    once (Saleor's stays grey until the selection moves).
+  - `variantMediaAssign` on a media deleted at the same moment returns a server error, not
+    `NOT_FOUND` (rare race).
 
 ## M11 — Dashboard in Mongolian and English
 - **Objective:** every dashboard screen reads in Mongolian or English; a staff member picks the
@@ -408,52 +422,6 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   in Mongolian and only where the browser lacks the data (`polyfillDateTimeFormat.ts`): `mn` data +
   the golden time zones, ~180 kB gzip as lazy chunks; the browser's own time zone is kept (the
   polyfill defaults to UTC). Checked in Chrome: "2026 оны 11-р сарын 12 14:03 (GMT+8)".
-
-## M14 — Simpler product creation
-- **Objective:** staff create a sellable, published product in one dialog (the owner's request,
-  2026-11-18).
-- **Owner decisions (2026-11-18):**
-  1. **Create = name + category + price.** `productCreate` takes a `price`; with it the product gets
-     one default variant at that price and is published (the M2.4 rule still holds: category + a
-     variant). Without a price (API callers) nothing changes.
-  2. **Variants stay free-text named** ("26cm soup pot", "M / Хар", as 1688 shows): no size/color
-     fields, no product types yet. The size/color fields built first in M14.1 were withdrawn the same
-     day and dropped by a forward migration.
-  3. **SKU stays optional and typed**, as in Saleor and Shopify: never generated. Only products and
-     categories have slugs.
-  4. **Saleor's editable Variants grid on the product page** (reverses M2.4's read-only card):
-     edit name, SKU, price and stock in the cells, saved by the page's Save, errors on the cells.
-     As in Saleor 3.23, "Add variant" opens the variant create page (rows are added in the grid
-     only in fullscreen "Bulk edit"). No bulk mutations for now (owner, 2026-11-18): one existing
-     mutation per changed row, so a rejected row doesn't stop the others. No row deletion, search,
-     fullscreen or "Generate variants".
-  6. **Variants have their own media, as in Saleor:** chosen from the product's images
-     (`VariantMedia`), not uploaded separately.
-  5. **The default variant is named after the product** (Saleor's `createMinimalProduct`), priced
-     from the dialog.
-- **Deviation from Saleor:** `ProductCreateInput.price` (Saleor creates variants separately); the
-  bulk mutations take one `price` per variant instead of channel listings.
-
-| Step | What | Status |
-|---|---|---|
-| M14.1 | API: `productCreate(price)` → default variant + published when it has a category | Done |
-| M14.1b | API: remove the withdrawn size/color fields and SKU generation (forward migration), keep `productCreate(price)` | Done |
-| M14.2 | Create product: price in the dialog, default variant named after the product, published by default | Done |
-| M14.3 | Dashboard: Saleor's editable Variants grid (name, SKU, price, stock per warehouse; fill handle; row pencil to the variant page; "Add variant" opens the create page as in Saleor), saved with the page's Save through the existing per-variant mutations | Done |
-| M14.4 | API: variant media — `variant_media` link table, Saleor's `variantMediaAssign`/`variantMediaUnassign`, `ProductVariant.media` (only the product's own images) | Done |
-| M14.5 | Dashboard: Saleor's variant Media card and "choose photos" dialog; the variant's image as its thumbnail in the grid and variant list | Proposed |
-
-- **Found in M14.2, not fixed (needs the owner's go):**
-  - Locally the golden path fails at "staff adds products to the draft and changes a quantity"
-    ("Order line updated" never shows), also on `85d616e` before M14; CI passed that commit.
-- **Found in M14.3, not fixed (needs the owner's go):**
-  - In the dark theme a red error cell's text is hard to read: Macaw's dark `background.critical1`
-    is a light pink under light text. Saleor paints the same colour (`Datagrid.tsx`, `bgCell` only).
-  - Clearing a stock cell sends nothing (it never removes a stock row); removing stock from a
-    warehouse needs an API/UX decision.
-  - Deviation from Saleor's grid: an error cell also overrides Glide's selection accent, so the
-    rejected cell (the current cell after Save) shows red at once; Saleor's stays grey until the
-    selection moves.
 
 ## M4 — Storefront catalog
 - **Scope:** Next.js app, category listing, PDP, published-only visibility, typed fetch, Tailwind.

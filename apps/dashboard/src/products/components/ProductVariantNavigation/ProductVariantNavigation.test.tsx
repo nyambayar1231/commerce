@@ -9,8 +9,13 @@ import { ProductVariantNavigation } from "./ProductVariantNavigation";
 afterEach(cleanup);
 
 const variants = [
-  { id: "variant-1", name: "Size 39", sku: "BT-39" },
-  { id: "variant-2", name: "", sku: "BT-40" },
+  {
+    id: "variant-1",
+    name: "Size 39",
+    sku: "BT-39",
+    media: [{ id: "media-1", url: "https://example.com/size-39.png" }],
+  },
+  { id: "variant-2", name: "", sku: "BT-40", media: [] },
   { id: "variant-3", name: "Size 41", sku: null },
 ];
 
@@ -49,6 +54,26 @@ describe("ProductVariantNavigation", () => {
 
     const link = row("variant-1").closest("a");
     expect(link?.getAttribute("href")).toBe("/products/variant/variant-1");
+  });
+
+  it("shows each variant's first image, or a placeholder when it has none", () => {
+    renderNavigation();
+
+    const thumbnail = row("variant-1").querySelector<HTMLImageElement>(
+      '[data-test-id="variant-thumbnail"]',
+    );
+    expect(thumbnail?.getAttribute("src")).toBe("https://example.com/size-39.png");
+    expect(thumbnail?.getAttribute("alt")).toBe("Size 39");
+
+    expect(
+      row("variant-2").querySelector('[data-test-id="variant-thumbnail-placeholder"]'),
+    ).not.toBeNull();
+    expect(row("variant-2").querySelector('[data-test-id="variant-thumbnail"]')).toBeNull();
+
+    // The create page's siblings come from a query without media: a placeholder, not a crash.
+    expect(
+      row("variant-3").querySelector('[data-test-id="variant-thumbnail-placeholder"]'),
+    ).not.toBeNull();
   });
 
   it("links to the add page and hides it on the create page", () => {

@@ -214,6 +214,10 @@
     "context": "Filter and element text",
     "string": "ба"
   },
+  "5nQ6yG": {
+    "context": "empty state in variant media selection dialog",
+    "string": "Бүтээгдэхүүний медиа байхгүй байна. Эхлээд бүтээгдэхүүний хуудаснаас зураг оруулна уу."
+  },
   "5o84YO": {
     "context": "Filter where element text",
     "string": "Нөхцөл:"
@@ -361,6 +365,10 @@
     "context": "Product category",
     "string": "Ангилал"
   },
+  "9qL+iN": {
+    "context": "button",
+    "string": "Зураг сонгох"
+  },
   "9wjl6Q": {
     "context": "bulk action button label with selected count",
     "string": "{action} ({count})"
@@ -453,6 +461,10 @@
   "DI2hRC": {
     "context": "error message",
     "string": "API холбогдохгүй байна. Сүлжээний холболтоо шалгаад дахин оролдоно уу."
+  },
+  "DJFPzq": {
+    "context": "button",
+    "string": "Батлах"
   },
   "DO8+uV": {
     "string": "Бүтээгдэхүүн үүсгэгдлээ"
@@ -810,6 +822,10 @@
   "QDxJib": {
     "string": "Биелүүлэх"
   },
+  "QGmiKZ": {
+    "context": "variant media empty state",
+    "string": "Энэ хувилбарт зураг сонгоогүй байна."
+  },
   "QHDtwH": {
     "string": "Ангилалтай"
   },
@@ -972,6 +988,10 @@
   },
   "XBfvKN": {
     "string": "Захиалгын түүх"
+  },
+  "XCWhKP": {
+    "context": "dialog header",
+    "string": "Хувилбарын зураг сонгох"
   },
   "XJSRDK": {
     "context": "payment status",
@@ -1288,6 +1308,10 @@
   "jGvclB": {
     "string": "Гүйлгээний лавлагаа"
   },
+  "jWTXmC": {
+    "context": "selected media count badge in variant media selection dialog",
+    "string": "{count, plural, one {# сонгосон} other {# сонгосон}}"
+  },
   "jvlQkk": {
     "context": "aria-label, button expanding or collapsing a sidebar menu group",
     "string": "{section} дэд цэс"
@@ -1589,6 +1613,10 @@
   "u2QjRn": {
     "context": "create product dialog title",
     "string": "Бүтээгдэхүүн үүсгэх"
+  },
+  "u30A+K": {
+    "context": "variant media selection dialog subtitle",
+    "string": "Энэ хувилбарт оноох бүтээгдэхүүний зургуудыг сонгоно уу."
   },
   "uCn/rd": {
     "context": "dialog header",

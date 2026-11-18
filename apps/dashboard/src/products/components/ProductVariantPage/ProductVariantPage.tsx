@@ -2,13 +2,15 @@
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 // Saleor's layout for the variant page: TopNav with the variant name and a link back to the product,
-// the variants navigation on the left, Variant Name / Pricing / Inventory (with its per-warehouse
-// stock table) in the main column, and the Savebar (Delete on the edit page, Back, Save). Not yet:
-// attributes, media, channels, shipping/weight, checkout settings, metadata, translations,
-// set-default and the sticky navigation.
+// the variants navigation on the left, Variant Name / Pricing / Media / Inventory (with its
+// per-warehouse stock table) in the main column, and the Savebar (Delete on the edit page, Back,
+// Save). The Media card's "Choose photos" button opens the selection dialog; its confirmed ids join
+// the form so Save is enabled and the exit warning appears. Not yet: attributes, channels,
+// shipping/weight, checkout settings, metadata, translations, set-default and the sticky
+// navigation.
 import { Box } from "@saleor/macaw-ui";
 import { Tag } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useIntl } from "react-intl";
 import { useNavigate } from "react-router";
 
@@ -24,7 +26,10 @@ import type {
   WarehouseFragment,
 } from "../../../graphql/types.generated";
 import { productListPath, productUrl } from "../../urls";
+import { getSelectedMedia } from "../../utils/media";
 import { ProductStocks } from "../ProductStocks/ProductStocks";
+import { ProductVariantMedia } from "../ProductVariantMedia/ProductVariantMedia";
+import { ProductVariantMediaSelectDialog } from "../ProductVariantMediaSelectDialog/ProductVariantMediaSelectDialog";
 import { ProductVariantName } from "../ProductVariantName/ProductVariantName";
 import { ProductVariantNavigation } from "../ProductVariantNavigation/ProductVariantNavigation";
 import { ProductVariantPrice } from "../ProductVariantPrice/ProductVariantPrice";
@@ -60,7 +65,15 @@ export const ProductVariantPage = ({
 }: ProductVariantPageProps) => {
   const intl = useIntl();
   const navigate = useNavigate();
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const initial = useMemo(() => getProductVariantFormData(variant), [variant]);
+  const productMedia = useMemo(
+    () =>
+      [...(variant?.product.media ?? [])].sort(
+        (previous, next) => (previous.sortOrder ?? 0) - (next.sortOrder ?? 0),
+      ),
+    [variant],
+  );
   const {
     data,
     change,
@@ -68,9 +81,12 @@ export const ProductVariantPage = ({
     changeStock,
     addStock,
     removeStock,
+    changeMedia,
     submit,
     isSaveDisabled,
   } = useProductVariantForm(initial, onSubmit, disabled, true);
+
+  const selectedMedia = getSelectedMedia(productMedia, data.media);
 
   const backHref = productId ? productUrl(productId) : productListPath;
 
@@ -112,6 +128,11 @@ export const ProductVariantPage = ({
                   errors={errors}
                   onChange={change}
                 />
+                <ProductVariantMedia
+                  media={selectedMedia}
+                  disabled={disabled || productMedia.length === 0}
+                  onImageAdd={() => setIsMediaDialogOpen(true)}
+                />
                 <ProductStocks
                   data={{ sku: data.sku, trackInventory: data.trackInventory }}
                   stocks={data.stocks}
@@ -139,6 +160,15 @@ export const ProductVariantPage = ({
           />
         </Savebar>
       </DetailPageLayout>
+      {variant ? (
+        <ProductVariantMediaSelectDialog
+          media={productMedia}
+          selectedMedia={data.media}
+          open={isMediaDialogOpen}
+          onClose={() => setIsMediaDialogOpen(false)}
+          onConfirm={changeMedia}
+        />
+      ) : null}
     </form>
   );
 };

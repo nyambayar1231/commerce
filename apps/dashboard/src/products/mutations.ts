@@ -260,3 +260,54 @@ export const variantDeleteMutation = gql`
   }
   ${productErrorFragment}
 `;
+
+// Saleor's variantMediaAssign/Unassign: the variant page's save sends one per added/removed media
+// id. The payload returns the variant's media (and the product's, for the card) so Apollo's cache
+// already shows the new selection.
+export const variantMediaAssignMutation = gql`
+  mutation VariantMediaAssign($variantId: ID!, $mediaId: ID!) {
+    variantMediaAssign(variantId: $variantId, mediaId: $mediaId) {
+      errors {
+        ...ProductError
+      }
+      productVariant {
+        id
+        media {
+          ...ProductMedia
+        }
+        product {
+          id
+          media {
+            ...ProductMedia
+          }
+        }
+      }
+    }
+  }
+  ${productMediaFragment}
+  ${productErrorFragment}
+`;
+
+export const variantMediaUnassignMutation = gql`
+  mutation VariantMediaUnassign($variantId: ID!, $mediaId: ID!) {
+    variantMediaUnassign(variantId: $variantId, mediaId: $mediaId) {
+      errors {
+        ...ProductError
+      }
+      productVariant {
+        id
+        media {
+          ...ProductMedia
+        }
+        product {
+          id
+          media {
+            ...ProductMedia
+          }
+        }
+      }
+    }
+  }
+  ${productMediaFragment}
+  ${productErrorFragment}
+`;

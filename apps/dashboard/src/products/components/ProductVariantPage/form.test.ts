@@ -32,6 +32,7 @@ const formData = (overrides: Partial<ProductVariantFormData> = {}): ProductVaria
   trackInventory: false,
   price: "15000",
   stocks: [],
+  media: [],
   ...overrides,
 });
 
@@ -50,6 +51,7 @@ const variantWithStocks = (warehouseIds: string[]): ProductVariantDetailsFragmen
   sku: "BT-39",
   trackInventory: true,
   price: { __typename: "Money", amount: 15000, currency: "MNT" },
+  media: [],
   stocks: warehouseIds.map((warehouseId, index) => ({
     __typename: "Stock",
     id: `stock-${index}`,
@@ -57,7 +59,7 @@ const variantWithStocks = (warehouseIds: string[]): ProductVariantDetailsFragmen
     quantityAllocated: 2,
     warehouse: { __typename: "Warehouse", id: warehouseId, name: `Warehouse ${warehouseId}` },
   })),
-  product: { __typename: "Product", id: "p1", name: "Boot", variants: [] },
+  product: { __typename: "Product", id: "p1", name: "Boot", media: [], variants: [] },
 });
 
 const renderForm = (stocks: ProductVariantStock[] = []) => {
@@ -350,5 +352,52 @@ describe("variant form stock handlers and unsaved changes", () => {
 
     act(() => result.current.removeStock("w1"));
     expect(result.current.hasUnsavedChanges).toBe(true);
+  });
+});
+
+describe("variant form media", () => {
+  it("starts from the variant's chosen media ids", () => {
+    const variant = variantWithStocks([]);
+    variant.media = [
+      {
+        __typename: "ProductMedia",
+        id: "media-2",
+        alt: "",
+        sortOrder: 1,
+        url: "u2",
+        type: "IMAGE",
+        oembedData: {},
+      },
+      {
+        __typename: "ProductMedia",
+        id: "media-1",
+        alt: "",
+        sortOrder: 0,
+        url: "u1",
+        type: "IMAGE",
+        oembedData: {},
+      },
+    ];
+
+    expect(getProductVariantFormData(variant).media).toEqual(["media-2", "media-1"]);
+    expect(getProductVariantFormData(null).media).toEqual([]);
+  });
+
+  it("counts a media selection change as an unsaved change, in any order", () => {
+    const onSubmit = vi.fn(async () => []);
+    const initial = formData({ media: ["media-1"] });
+    const { result } = renderHook(() => useProductVariantForm(initial, onSubmit, false, true));
+
+    expect(result.current.hasUnsavedChanges).toBe(false);
+
+    act(() => result.current.changeMedia(["media-1"]));
+    expect(result.current.hasUnsavedChanges).toBe(false);
+
+    act(() => result.current.changeMedia(["media-1", "media-2"]));
+    expect(result.current.data.media).toEqual(["media-1", "media-2"]);
+    expect(result.current.hasUnsavedChanges).toBe(true);
+
+    act(() => result.current.changeMedia(["media-1"]));
+    expect(result.current.hasUnsavedChanges).toBe(false);
   });
 });

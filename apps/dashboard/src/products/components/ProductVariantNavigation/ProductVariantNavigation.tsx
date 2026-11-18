@@ -1,14 +1,17 @@
 // Adapted from saleor-dashboard: src/products/components/ProductVariantNavigation/ProductVariantNavigation.tsx
 // and its messages (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The variant page's navigation card: the product's variants in display order, the open one
-// highlighted, and the "Add variant" link at the bottom. Dropped: drag-to-reorder, sibling search,
-// infinite scrolling, thumbnails, the "Default" caption and the create page's "New variant" row.
+// The variant page's navigation card: the product's variants in display order with their first
+// image as a thumbnail (an image placeholder when a variant has none), the open one highlighted,
+// and the "Add variant" link at the bottom. Dropped: drag-to-reorder, sibling search, infinite
+// scrolling, the "Default" caption and the create page's "New variant" row.
 import { Box, Text } from "@saleor/macaw-ui";
+import { Image } from "lucide-react";
 import { defineMessages, FormattedMessage, useIntl } from "react-intl";
 import { Link } from "react-router";
 
 import { DetailSettingsCard } from "../../../components/DetailSettingsCard/DetailSettingsCard";
+import { iconSize, iconStrokeWidthBySize } from "../../../components/icons";
 import { productVariantAddUrl, productVariantEditUrl } from "../../urls";
 
 const messages = defineMessages({
@@ -24,10 +27,17 @@ const messages = defineMessages({
   },
 });
 
+interface ProductVariantSiblingImage {
+  id: string;
+  url: string;
+}
+
 interface ProductVariantSibling {
   id: string;
   name: string;
   sku: string | null;
+  /** The variant's images; the first one is the row's thumbnail. Missing on the create page. */
+  media?: ReadonlyArray<ProductVariantSiblingImage>;
 }
 
 interface ProductVariantNavigationProps {
@@ -38,6 +48,50 @@ interface ProductVariantNavigationProps {
   /** The create page has no current variant and no "Add variant" link. */
   isCreate?: boolean;
 }
+
+/** Saleor's row thumbnail: 40px, cover, inside the default border; a placeholder without one. */
+const VariantThumbnail = ({ variant }: { variant: ProductVariantSibling }) => {
+  const thumbnail = variant.media?.[0];
+
+  if (thumbnail) {
+    return (
+      <Box
+        as="img"
+        width={10}
+        height={10}
+        objectFit="cover"
+        borderRadius={2}
+        borderColor="default1"
+        borderStyle="solid"
+        borderWidth={1}
+        padding={1}
+        flexShrink="0"
+        src={thumbnail.url}
+        alt={variant.name || variant.sku || ""}
+        data-test-id="variant-thumbnail"
+      />
+    );
+  }
+
+  return (
+    <Box
+      width={10}
+      height={10}
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      borderRadius={2}
+      borderColor="default1"
+      borderStyle="solid"
+      borderWidth={1}
+      flexShrink="0"
+      color="default2"
+      data-test-id="variant-thumbnail-placeholder"
+    >
+      <Image size={iconSize.small} strokeWidth={iconStrokeWidthBySize.small} />
+    </Box>
+  );
+};
 
 export const ProductVariantNavigation = ({
   productId,
@@ -65,6 +119,7 @@ export const ProductVariantNavigation = ({
             <Box
               display="flex"
               alignItems="center"
+              gap={3}
               paddingX={4}
               paddingY={3}
               borderLeftStyle="solid"
@@ -77,6 +132,7 @@ export const ProductVariantNavigation = ({
               data-variant-id={variant.id}
               aria-current={isActive ? "page" : undefined}
             >
+              <VariantThumbnail variant={variant} />
               <Text size={2} fontWeight={isActive ? "medium" : "regular"} ellipsis display="block">
                 {variant.name || variant.sku || ""}
               </Text>

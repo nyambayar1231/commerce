@@ -215,6 +215,10 @@
     "context": "Filter and element text",
     "string": "And"
   },
+  "5nQ6yG": {
+    "context": "empty state in variant media selection dialog",
+    "string": "No product media available. Upload images on the product page first."
+  },
   "5o84YO": {
     "context": "Filter where element text",
     "string": "Where"
@@ -362,6 +366,10 @@
     "context": "Product category",
     "string": "Category"
   },
+  "9qL+iN": {
+    "context": "button",
+    "string": "Choose photos"
+  },
   "9wjl6Q": {
     "context": "bulk action button label with selected count",
     "string": "{action} ({count})"
@@ -454,6 +462,10 @@
   "DI2hRC": {
     "context": "error message",
     "string": "The API is unavailable, please check your network connection and try again."
+  },
+  "DJFPzq": {
+    "context": "button",
+    "string": "Confirm"
   },
   "DO8+uV": {
     "string": "Product created"
@@ -811,6 +823,10 @@
   "QDxJib": {
     "string": "Fulfill"
   },
+  "QGmiKZ": {
+    "context": "variant media empty state",
+    "string": "No photos chosen for this variant."
+  },
   "QHDtwH": {
     "string": "Has category"
   },
@@ -974,6 +990,10 @@
   },
   "XBfvKN": {
     "string": "Order History"
+  },
+  "XCWhKP": {
+    "context": "dialog header",
+    "string": "Choose variant photos"
   },
   "XJSRDK": {
     "context": "payment status",
@@ -1290,6 +1310,10 @@
   "jGvclB": {
     "string": "Transaction Reference"
   },
+  "jWTXmC": {
+    "context": "selected media count badge in variant media selection dialog",
+    "string": "{count, plural, one {# selected} other {# selected}}"
+  },
   "jvlQkk": {
     "context": "aria-label, button expanding or collapsing a sidebar menu group",
     "string": "{section} submenu"
@@ -1595,6 +1619,10 @@
   "u2QjRn": {
     "context": "create product dialog title",
     "string": "Create product"
+  },
+  "u30A+K": {
+    "context": "variant media selection dialog subtitle",
+    "string": "Choose product images to assign to this variant."
   },
   "uCn/rd": {
     "context": "dialog header",

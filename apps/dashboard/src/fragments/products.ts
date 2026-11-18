@@ -92,8 +92,10 @@ export const productDetailsFragment = gql`
 `;
 
 // The variant detail page's fields: Saleor's ProductVariant fragment limited to the cards the page
-// shows — its per-warehouse stocks feed the Inventory card — plus the product's variants for the
-// navigation (no attributes, media, weight or channel listings yet).
+// shows — its chosen media feed the Media card, its per-warehouse stocks the Inventory card — plus
+// the product's media (the card and the selection dialog offer them in gallery order) and its
+// variants for the navigation (their first image as a thumbnail; no attributes, weight or channel
+// listings yet).
 export const productVariantDetailsFragment = gql`
   fragment ProductVariantDetails on ProductVariant {
     id
@@ -107,15 +109,26 @@ export const productVariantDetailsFragment = gql`
     stocks {
       ...Stock
     }
+    media {
+      ...ProductMedia
+    }
     product {
       id
       name
+      media {
+        ...ProductMedia
+      }
       variants {
         id
         name
         sku
+        media {
+          id
+          url(size: 128, format: WEBP)
+        }
       }
     }
   }
   ${stockFragment}
+  ${productMediaFragment}
 `;

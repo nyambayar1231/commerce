@@ -2,13 +2,14 @@
 // src/products/components/ProductVariantCreatePage/form.tsx
 // (BSD-3-Clause, Copyright (c) 2020-2021, Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
-// The variant pages' form state: name, SKU, track inventory, the single channel's price and the
-// per-warehouse stock rows. Ours keeps the fields in local state (Saleor uses its generic useForm,
-// attributes, media and channel listings); the stocks follow Saleor's formset: rows are added by
-// warehouse, quantity is typed as text, and a save diffs them into add/update/remove stock inputs.
-// Save is disabled while loading, without a price, and (on the edit page) with no unsaved changes;
-// a dirty form registers with the exit-form dialog. Anything except name, SKU and price is surfaced
-// as a notification by the page, not on an input.
+// The variant pages' form state: name, SKU, track inventory, the single channel's price, the
+// variant's chosen product media (Saleor's `media` id list) and the per-warehouse stock rows. Ours
+// keeps the fields in local state (Saleor uses its generic useForm, attributes, media and channel
+// listings); the media flows through the page's dialog, and the stocks follow Saleor's formset:
+// rows are added by warehouse, quantity is typed as text, and a save diffs them into
+// add/update/remove stock inputs. Save is disabled while loading, without a price, and (on the
+// edit page) with no unsaved changes; a dirty form registers with the exit-form dialog. Anything
+// except name, SKU and price is surfaced as a notification by the page, not on an input.
 import type * as React from "react";
 import { useEffect, useState } from "react";
 
@@ -17,6 +18,7 @@ import type {
   ProductErrorFragment,
   ProductVariantDetailsFragment,
 } from "../../../graphql/types.generated";
+import { areMediaSelectionsEqual } from "../../utils/media";
 
 /** One warehouse's stock in the Inventory card; the quantity is kept as typed. */
 export interface ProductVariantStock {
@@ -46,6 +48,8 @@ export interface ProductVariantFormData {
   /** The price as typed; an empty value never leaves the form (Save is disabled). */
   price: string;
   stocks: ProductVariantStock[];
+  /** The product media ids chosen for the variant (Saleor's `media`). */
+  media: string[];
 }
 
 export interface ProductVariantUpdateData {
@@ -108,6 +112,7 @@ export const getProductVariantFormData = (
       quantityAllocated: stock.quantityAllocated,
       quantity: String(stock.quantity),
     })),
+  media: variant?.media.map((mediaObject) => mediaObject.id) ?? [],
 });
 
 /** The form data → `productVariantUpdate` input mapping. A blank SKU is sent as "". */
@@ -174,6 +179,8 @@ export interface UseProductVariantFormResult {
   changeStock: (warehouseId: string, value: string) => void;
   addStock: (warehouseId: string, warehouseName: string) => void;
   removeStock: (warehouseId: string) => void;
+  /** Saleor's handlers.changeMedia: the dialog's confirmed selection. */
+  changeMedia: (ids: string[]) => void;
   submit: () => Promise<unknown>;
   hasUnsavedChanges: boolean;
   isSaveDisabled: boolean;
@@ -203,7 +210,8 @@ export function useProductVariantForm(
     data.sku !== initialData.sku ||
     data.trackInventory !== initialData.trackInventory ||
     data.price !== initialData.price ||
-    !areStocksEqual(data.stocks, initialData.stocks);
+    !areStocksEqual(data.stocks, initialData.stocks) ||
+    !areMediaSelectionsEqual(data.media, initialData.media);
   const isSaveDisabled = disabled || !data.price.trim() || (requireChanges && !hasUnsavedChanges);
 
   useEffect(() => {
@@ -269,6 +277,13 @@ export function useProductVariantForm(
     }));
   };
 
+  /** Saleor's createMediaChangeHandler: a dialog confirmation that changes nothing is not a change. */
+  const changeMedia: UseProductVariantFormResult["changeMedia"] = (ids) => {
+    setData((current) =>
+      areMediaSelectionsEqual(current.media, ids) ? current : { ...current, media: ids },
+    );
+  };
+
   const submit = async () => {
     if (isSaveDisabled) {
       return [];
@@ -290,6 +305,7 @@ export function useProductVariantForm(
     changeStock,
     addStock,
     removeStock,
+    changeMedia,
     submit,
     hasUnsavedChanges,
     isSaveDisabled,
