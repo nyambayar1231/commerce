@@ -675,6 +675,8 @@ export type ProductWhereInput = {
   OR?: Array<ProductWhereInput> | null | undefined;
   /** Filter by product category. */
   category?: GlobalIdFilterInput | null | undefined;
+  /** Filter by collection. */
+  collection?: GlobalIdFilterInput | null | undefined;
   /** Filter by product with category assigned. */
   hasCategory?: boolean | null | undefined;
   ids?: Array<string | number> | null | undefined;

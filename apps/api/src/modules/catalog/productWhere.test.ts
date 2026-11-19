@@ -15,12 +15,18 @@ const ID = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")
 const BOOTS = ID(101);
 const WINTER = ID(102);
 const SNEAKERS = ID(103);
+const FEATURED = ID(111);
+const SALE = ID(112);
+const HIDDEN = ID(113);
 const name = (n: number) => `Prod ${String(n).padStart(2, "0")}`;
 const updatedAt = (n: number) => new Date(Date.UTC(2024, 5, n, 12));
 
 // Categories: Boots > Winter, plus Sneakers. P01 is in Boots, P02 and P07 in Winter, P03 in
 // Sneakers, P04/P05 have none. P06 is unpublished and P07 is published in the future, so the
 // public never sees them; staff with MANAGE_PRODUCTS do.
+//
+// Collections: Featured holds P01, P02, P04, P06 and P07; Sale holds P01 and P03; the unpublished
+// Hidden holds P04. A collection's publication does not change which products match it.
 interface Fixture {
   n: number;
   categoryId: string | null;
@@ -112,10 +118,30 @@ async function seed(): Promise<void> {
       quantityAllocated,
     });
   }
+
+  const collections = [
+    {
+      id: FEATURED,
+      name: "Featured",
+      slug: "featured",
+      isPublished: true,
+      products: [1, 2, 4, 6, 7],
+    },
+    { id: SALE, name: "Sale", slug: "sale", isPublished: true, products: [1, 3] },
+    { id: HIDDEN, name: "Hidden", slug: "hidden", isPublished: false, products: [4] },
+  ];
+  for (const { products, ...collection } of collections) {
+    await db.insert(schema.collection).values(collection);
+    await db
+      .insert(schema.collectionProduct)
+      .values(products.map((n) => ({ collectionId: collection.id, productId: ID(n) })));
+  }
 }
 
 beforeEach(async () => {
-  await db.$client.unsafe('TRUNCATE "user", permission_group, category, product CASCADE');
+  await db.$client.unsafe(
+    'TRUNCATE "user", permission_group, category, collection, product CASCADE',
+  );
   await db.delete(schema.warehouse).where(ne(schema.warehouse.slug, "default-warehouse"));
   await seed();
 });
@@ -204,6 +230,51 @@ describe("products(where: ProductWhereInput)", () => {
   it("filters by hasCategory", async () => {
     expect(await names({ hasCategory: false })).toEqual(namesOf([4, 5]));
     expect(await names({ hasCategory: true })).toEqual(namesOf([1, 2, 3]));
+  });
+
+  it("filters by collection with eq and oneOf, an empty oneOf matching nothing", async () => {
+    expect(await names({ collection: { eq: toGlobalId("Collection", FEATURED) } })).toEqual(
+      namesOf([1, 2, 4]),
+    );
+    expect(
+      await names({
+        collection: { oneOf: [toGlobalId("Collection", FEATURED), toGlobalId("Collection", SALE)] },
+      }),
+    ).toEqual(namesOf([1, 2, 3, 4]));
+    // An unpublished collection still matches: its products' visibility is a separate rule.
+    expect(await names({ collection: { eq: toGlobalId("Collection", HIDDEN) } })).toEqual(
+      namesOf([4]),
+    );
+    expect(await names({ collection: { oneOf: [] } })).toEqual([]);
+    expect(await names({ collection: { eq: toGlobalId("Collection", ID(999)) } })).toEqual([]);
+
+    // P06 is unpublished and P07 is published in the future: staff see them in Featured.
+    const admin = await createStaff(db, ["MANAGE_PRODUCTS"]);
+    expect(
+      await names({ collection: { eq: toGlobalId("Collection", FEATURED) } }, admin.token),
+    ).toEqual(namesOf([1, 2, 4, 6, 7]));
+  });
+
+  it("combines the collection filter with price and category", async () => {
+    const featured = toGlobalId("Collection", FEATURED);
+    expect(
+      await names({
+        collection: { eq: featured },
+        price: { range: { lte: 2500 } },
+      }),
+    ).toEqual(namesOf([2]));
+    expect(
+      await names({
+        collection: { eq: featured },
+        category: { eq: toGlobalId("Category", BOOTS) },
+      }),
+    ).toEqual(namesOf([1, 2]));
+    expect(
+      await names({
+        collection: { oneOf: [toGlobalId("Collection", SALE)] },
+        category: { oneOf: [toGlobalId("Category", WINTER)] },
+      }),
+    ).toEqual([]);
   });
 
   it("keeps the visibility rule on top of isPublished", async () => {
@@ -348,6 +419,9 @@ describe("products(where: ProductWhereInput)", () => {
     const asProduct = toGlobalId("Product", ID(1));
     expect(await errorOf({ category: { eq: asProduct } })).toBe(
       `Invalid ID: ${asProduct}. Expected: Category, received: Product.`,
+    );
+    expect(await errorOf({ collection: { eq: asProduct } })).toBe(
+      `Invalid ID: ${asProduct}. Expected: Collection, received: Product.`,
     );
     const asCategory = toGlobalId("Category", BOOTS);
     expect(await errorOf({ ids: [asCategory] })).toBe(

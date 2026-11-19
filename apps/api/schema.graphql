@@ -258,6 +258,12 @@ type Category implements Node {
 
     """Search products."""
     search: String
+
+    """Sort products."""
+    sortBy: ProductOrder
+
+    """Where filtering options for products."""
+    where: ProductWhereInput
   ): ProductCountableConnection
 
   """Slug of the category."""
@@ -644,6 +650,25 @@ type Collection implements Node {
 
   """Name of the collection."""
   name: String!
+
+  """
+  List of products in this collection. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
+  """
+  products(
+    after: String
+    before: String
+    first: Int
+    last: Int
+
+    """Search products."""
+    search: String
+
+    """Sort products."""
+    sortBy: ProductOrder
+
+    """Where filtering options for products."""
+    where: ProductWhereInput
+  ): ProductCountableConnection
 
   """The collection publication date time."""
   publishedAt: DateTime
@@ -2744,6 +2769,11 @@ type Product implements Node {
   """Category of the product."""
   category: Category
 
+  """
+  List of collections for the product. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
+  """
+  collections: [Collection!]
+
   """The date and time when the product was created."""
   created: DateTime!
 
@@ -3234,6 +3264,9 @@ input ProductWhereInput {
 
   """Filter by product category."""
   category: GlobalIDFilterInput
+
+  """Filter by collection."""
+  collection: GlobalIDFilterInput
 
   """Filter by product with category assigned."""
   hasCategory: Boolean

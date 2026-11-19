@@ -23,10 +23,19 @@ import {
   InvalidCursorError,
   isCollectionPublished,
   listCollections,
+  type ProductSortField,
   removeCollectionProducts,
   updateCollection,
 } from "./index.ts";
-import { seesUnpublished } from "./productGraphql.ts";
+import {
+  ProductConnection,
+  ProductOrder,
+  ProductType,
+  ProductWhereInput,
+  productConnection,
+  seesUnpublished,
+  toProductWhere,
+} from "./productGraphql.ts";
 
 // Saleor's Collection type, queries and mutations
 // (saleor/graphql/product/types/collections.py, saleor/graphql/product/mutations/collection/),
@@ -79,6 +88,62 @@ builder.node(CollectionType, {
     }),
   }),
 });
+
+// Saleor's `Collection.products` (saleor/graphql/product/types/collections.py, resolve_products):
+// the products linked to the collection, visible like the `products` query. The manual
+// `CollectionProduct.sort_order` is not modelled, so only the product sorts apply.
+builder.objectField(CollectionType, "products", (t) =>
+  t.connection(
+    {
+      type: ProductType,
+      nullable: true,
+      description: `List of products in this collection. ${UNPUBLISHED_NOTE}`,
+      args: {
+        search: t.arg.string({ description: "Search products." }),
+        where: t.arg({
+          type: ProductWhereInput,
+          description: "Where filtering options for products.",
+        }),
+        sortBy: t.arg({ type: ProductOrder, description: "Sort products." }),
+      },
+      resolve: (collection, { search, where, sortBy, ...page }, ctx, info) =>
+        productConnection(
+          ctx,
+          "products",
+          {
+            ...page,
+            search,
+            where: where == null ? null : toProductWhere(where),
+            sort: sortBy
+              ? {
+                  direction: sortBy.direction,
+                  field: (sortBy.field ?? "NAME") as ProductSortField,
+                }
+              : null,
+            collectionId: collection.id,
+          },
+          isEdgesRequested(info),
+        ),
+    },
+    ProductConnection,
+  ),
+);
+
+// Saleor's `Product.collections` (saleor/graphql/product/types/products.py, resolve_collections):
+// the collections the product is in, batched per request. The public sees only the visible ones;
+// staff with MANAGE_PRODUCTS see them all.
+builder.objectField(ProductType, "collections", (t) =>
+  t.field({
+    type: [CollectionType],
+    nullable: { list: true, items: false },
+    description: `List of collections for the product. ${UNPUBLISHED_NOTE}`,
+    resolve: async (product, _args, ctx) => {
+      const collections = await ctx.loaders.collectionsByProductId.load(product.id);
+      if (await seesUnpublished(ctx)) return collections;
+      return collections.filter(isCollectionPublished);
+    },
+  }),
+);
 
 /** One page of collections in the connection shape, with Saleor's cursor errors. */
 async function collectionConnection(

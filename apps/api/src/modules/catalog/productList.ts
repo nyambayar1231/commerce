@@ -19,6 +19,8 @@ export interface ProductListArgs {
   where?: ProductWhere | null;
   /** Restrict to this category and all its descendants, as Saleor does for `Category.products`. */
   categoryId?: string | null;
+  /** Restrict to the products linked to this collection, as Saleor does for `Collection.products`. */
+  collectionId?: string | null;
   sort?: { field?: ProductSortField | null; direction: OrderDirection } | null;
   /** Staff with MANAGE_PRODUCTS see unpublished and future-dated products too. */
   includeUnpublished?: boolean;
@@ -126,6 +128,11 @@ export async function listProducts(db: Executor, args: ProductListArgs): Promise
   }
   if (args.categoryId != null) {
     filters.push(sql`p.category_id IN (SELECT id FROM subtree)`);
+  }
+  if (args.collectionId != null) {
+    filters.push(
+      sql`EXISTS (SELECT 1 FROM collection_product AS cp WHERE cp.product_id = p.id AND cp.collection_id = ${args.collectionId})`,
+    );
   }
   if (args.search?.trim()) {
     const pattern = `%${args.search.trim().replace(/[\\%_]/g, "\\$&")}%`;

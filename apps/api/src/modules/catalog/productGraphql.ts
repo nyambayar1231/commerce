@@ -156,7 +156,7 @@ function minimalPriceOf(variants: ProductVariantRow[]): Money | null {
 }
 
 // Saleor's ProductCountableConnection / ProductCountableEdge.
-const ProductConnection = builder.connectionObject(
+export const ProductConnection = builder.connectionObject(
   {
     type: ProductType,
     name: "ProductCountableConnection",
@@ -172,7 +172,7 @@ const ProductConnection = builder.connectionObject(
 );
 
 /** One page of products in the connection shape, with Saleor's cursor errors. */
-async function productConnection(
+export async function productConnection(
   ctx: Context,
   fieldName: string,
   args: ProductListArgs,
@@ -213,15 +213,27 @@ builder.objectField(CategoryType, "products", (t) =>
       description: `List of products in the category. ${UNPUBLISHED_NOTE}`,
       args: {
         search: t.arg.string({ description: "Search products." }),
+        where: t.arg({
+          type: ProductWhereInput,
+          description: "Where filtering options for products.",
+        }),
+        sortBy: t.arg({ type: ProductOrder, description: "Sort products." }),
       },
-      resolve: async (category, { search, ...page }, ctx, info) => {
+      resolve: async (category, { search, where, sortBy, ...page }, ctx, info) => {
         const edgesRequested = isEdgesRequested(info);
         const includeUnpublished = await seesUnpublished(ctx);
 
         // A categories list row already knows the subtree's full product count. It counts
         // unpublished products too, so only callers that see them may use it (the mirror of the
-        // `subcategoryCount` shortcut in `Category.children`).
-        if (!edgesRequested && includeUnpublished && category.productCount !== undefined) {
+        // `subcategoryCount` shortcut in `Category.children`), and only the unfiltered count is
+        // known without a query.
+        if (
+          !edgesRequested &&
+          includeUnpublished &&
+          category.productCount !== undefined &&
+          !search?.trim() &&
+          where == null
+        ) {
           return {
             totalCount: category.productCount,
             edges: [],
@@ -237,7 +249,18 @@ builder.objectField(CategoryType, "products", (t) =>
         return productConnection(
           ctx,
           "products",
-          { ...page, search, categoryId: category.id },
+          {
+            ...page,
+            search,
+            where: where == null ? null : toProductWhere(where),
+            sort: sortBy
+              ? {
+                  direction: sortBy.direction,
+                  field: (sortBy.field ?? "NAME") as ProductSortField,
+                }
+              : null,
+            categoryId: category.id,
+          },
           edgesRequested,
         );
       },
@@ -460,7 +483,7 @@ const ProductOrderField = builder.enumType("ProductOrderField", {
   } as const,
 });
 
-const ProductOrder = builder.inputType("ProductOrder", {
+export const ProductOrder = builder.inputType("ProductOrder", {
   fields: (t) => ({
     direction: t.field({
       type: OrderDirection,
@@ -534,6 +557,7 @@ interface ProductWhereData {
   name?: { eq?: string | null; oneOf?: readonly string[] | null } | null;
   slug?: { eq?: string | null; oneOf?: readonly string[] | null } | null;
   category?: { eq?: string | null; oneOf?: readonly string[] | null } | null;
+  collection?: { eq?: string | null; oneOf?: readonly string[] | null } | null;
   hasCategory?: boolean | null;
   isPublished?: boolean | null;
   price?: DecimalFilterData | null;
@@ -558,13 +582,14 @@ interface DateTimeFilterData {
 
 // Saleor's ProductWhereInput, with the subset of fields we can answer (saleor/graphql/schema.graphql).
 // An explicit shape lets `AND`/`OR` refer to the input type inside its own definition.
-const ProductWhereInput = builder.inputRef<ProductWhereData>("ProductWhereInput");
+export const ProductWhereInput = builder.inputRef<ProductWhereData>("ProductWhereInput");
 ProductWhereInput.implement({
   fields: (t) => ({
     ids: t.idList(),
     name: t.field({ type: StringFilterInput, description: "Filter by product name." }),
     slug: t.field({ type: StringFilterInput, description: "Filter by product slug." }),
     category: t.field({ type: GlobalIDFilterInput, description: "Filter by product category." }),
+    collection: t.field({ type: GlobalIDFilterInput, description: "Filter by collection." }),
     hasCategory: t.boolean({ description: "Filter by product with category assigned." }),
     isPublished: t.boolean({ description: "Filter by public visibility." }),
     price: t.field({ type: DecimalFilterInput, description: "Filter by product variant price." }),
@@ -629,7 +654,7 @@ function toDecimalFilter(filter: DecimalFilterData): ConditionFilter<number> {
 }
 
 /** The GraphQL `where` input as the catalog module's typed where model. */
-function toProductWhere(where: ProductWhereData): ProductWhere {
+export function toProductWhere(where: ProductWhereData): ProductWhere {
   const result: ProductWhere = {};
   if (where.ids !== undefined) {
     result.ids = where.ids === null ? null : where.ids.map((id) => fromGlobalId("Product", id));
@@ -638,6 +663,10 @@ function toProductWhere(where: ProductWhereData): ProductWhere {
   if (where.slug !== undefined) result.slug = where.slug;
   if (where.category !== undefined) {
     result.category = where.category === null ? null : toIdFilter(where.category, "Category");
+  }
+  if (where.collection !== undefined) {
+    result.collection =
+      where.collection === null ? null : toIdFilter(where.collection, "Collection");
   }
   if (where.hasCategory !== undefined) result.hasCategory = where.hasCategory;
   if (where.isPublished !== undefined) result.isPublished = where.isPublished;

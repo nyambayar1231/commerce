@@ -3,6 +3,7 @@ import DataLoader from "dataloader";
 import { asc, eq, inArray } from "drizzle-orm";
 import type { ThumbnailFormat } from "../../storage/index.ts";
 import type { CategoryRow } from "./categories.ts";
+import type { CollectionRow } from "./collections.ts";
 import type { ProductMediaRow, ProductMediaThumbnailRow } from "./media.ts";
 import type { ProductRow, ProductVariantRow } from "./products.ts";
 
@@ -31,6 +32,8 @@ export interface CatalogLoaders {
   mediaByVariantId: DataLoader<string, ProductMediaRow[]>;
   /** `ProductMedia.url` and `Product.thumbnail`: the stored thumbnail of a media, if generated. */
   thumbnailByMediaIdSizeFormat: DataLoader<ThumbnailLoaderKey, ProductMediaThumbnailRow | null>;
+  /** `Product.collections`: the collections a product is linked to, sorted by name. */
+  collectionsByProductId: DataLoader<string, CollectionRow[]>;
 }
 
 /** The DataLoader cache key of a thumbnail lookup. */
@@ -127,5 +130,27 @@ export function createCatalogLoaders(db: Executor): CatalogLoaders {
       },
       { cacheKeyFn: (key) => thumbnailKeyOf(key.mediaId, key.size, key.format) },
     ),
+
+    collectionsByProductId: new DataLoader(async (productIds) => {
+      const rows = await db
+        .select({
+          productId: schema.collectionProduct.productId,
+          collection: schema.collection,
+        })
+        .from(schema.collectionProduct)
+        .innerJoin(
+          schema.collection,
+          eq(schema.collectionProduct.collectionId, schema.collection.id),
+        )
+        .where(inArray(schema.collectionProduct.productId, [...productIds]))
+        .orderBy(asc(schema.collection.name), asc(schema.collection.id));
+      const byProduct = new Map<string, CollectionRow[]>();
+      for (const row of rows) {
+        const collections = byProduct.get(row.productId);
+        if (collections) collections.push(row.collection);
+        else byProduct.set(row.productId, [row.collection]);
+      }
+      return productIds.map((productId) => byProduct.get(productId) ?? []);
+    }),
   };
 }

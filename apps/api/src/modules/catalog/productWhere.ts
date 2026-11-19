@@ -46,6 +46,8 @@ export interface ProductWhere {
   slug?: ValueFilter | null;
   /** Category primary keys; a product matches its own category and all its descendants. */
   category?: ValueFilter | null;
+  /** Collection primary keys; a product matches when it is linked to any of them. */
+  collection?: ValueFilter | null;
   hasCategory?: boolean | null;
   isPublished?: boolean | null;
   /** Matches when any variant's price satisfies the condition. */
@@ -134,6 +136,19 @@ const variantPrice = (filter: ConditionFilter<number>): SQL =>
     WHERE v.product_id = p.id AND ${conditionFilter(sql`v.price_amount`, filter)}
   )`;
 
+/**
+ * Saleor's where_filter_by_collections (saleor/graphql/product/filters/product.py,
+ * ProductWhere.filter_collection): the product links to at least one of the collections.
+ */
+function collectionFilter(filter: ValueFilter): SQL {
+  const ids = filter.eq !== undefined ? (filter.eq === null ? [] : [filter.eq]) : filter.oneOf;
+  if (!ids || ids.length === 0) return NONE;
+  return sql`EXISTS (
+    SELECT 1 FROM collection_product AS cp
+    WHERE cp.product_id = p.id AND cp.collection_id IN ${inList(ids)}
+  )`;
+}
+
 /** `minimalPrice`: the lowest variant price matches; no variants means NULL, which never matches. */
 const minimalPrice = (filter: ConditionFilter<number>): SQL =>
   conditionFilter(
@@ -178,6 +193,7 @@ export function productWhereToSql(where: ProductWhere, depth = 1): SQL {
   if (where.name != null) conditions.push(valueFilter(sql`p.name`, where.name));
   if (where.slug != null) conditions.push(valueFilter(sql`p.slug`, where.slug));
   if (where.category != null) conditions.push(categoryFilter(where.category));
+  if (where.collection != null) conditions.push(collectionFilter(where.collection));
   if (where.hasCategory != null) {
     conditions.push(
       where.hasCategory ? sql`p.category_id IS NOT NULL` : sql`p.category_id IS NULL`,
