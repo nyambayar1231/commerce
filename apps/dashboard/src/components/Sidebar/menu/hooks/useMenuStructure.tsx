@@ -55,6 +55,13 @@ export function useMenuStructure(): SidebarMenuItem[] {
           permissions: ["MANAGE_PRODUCTS"],
           type: "item",
         },
+        {
+          label: intl.formatMessage(sectionNames.collections),
+          id: "collections",
+          url: "/collections/",
+          permissions: ["MANAGE_PRODUCTS"],
+          type: "item",
+        },
       ],
       icon: renderIcon(<ProductsIcon />),
       url: "/products/",

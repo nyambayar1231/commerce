@@ -244,6 +244,9 @@
   "6Jgwpc": {
     "string": "Төлбөр хүлээн аваагүй"
   },
+  "6LqbaB": {
+    "string": "Коллекц үүслээ"
+  },
   "6a075o": {
     "context": "activate customer dialog, content",
     "string": "{email}-г идэвхжүүлэх үү? Тэр нэвтэрч, шинэ захиалга хийх боломжтой болно."
@@ -376,6 +379,10 @@
   "AA0eYf": {
     "context": "staff details sidebar card title for dashboard locale",
     "string": "Удирдах самбарын хэл"
+  },
+  "ACZg1z": {
+    "context": "create collection dialog description",
+    "string": "Коллекц нэмнэ үү. Үүсгэсний дараа суваг, SEO, медиа болон мета өгөгдлийг засах боломжтой."
   },
   "AHOQr2": {
     "string": "Бүтээгдэхүүн хайх..."
@@ -520,6 +527,9 @@
     "context": "button",
     "string": "Шүүлтүүр"
   },
+  "FTYkgw": {
+    "string": "Коллекц устгах"
+  },
   "FiO/W/": {
     "string": "Ангиллуудыг устгах"
   },
@@ -537,6 +547,10 @@
     "context": "order header date, less than an hour ago",
     "string": "{minutes, plural, one {# минутын өмнө захиалсан} other {# минутын өмнө захиалсан}}"
   },
+  "G4g5Ii": {
+    "context": "tab name",
+    "string": "Бүх коллекц"
+  },
   "G5ETO0": {
     "string": "Ангиллууд устгагдлаа"
   },
@@ -551,6 +565,10 @@
   "GrMiRT": {
     "context": "fallback product name in remove product confirmation dialog",
     "string": "энэ бүтээгдэхүүн"
+  },
+  "GzbSQk": {
+    "context": "Status label when object is scheduled to publish in a channel",
+    "string": "Нийтлэхээр товлосон"
   },
   "H4Lcuk": {
     "string": "Ангилал шинэчлэгдлээ"
@@ -743,6 +761,10 @@
     "context": "no warehouses info",
     "string": "Энэ хувилбарт агуулах тохируулаагүй байна. Хувилбарын нөөц нэмэхийн тулд агуулах тохируулах эсвэл доорх товчийг дарж байгаа агуулахаас сонгоно уу."
   },
+  "NNT3Lp": {
+    "context": "collections section name",
+    "string": "Коллекцууд"
+  },
   "NQgbYA": {
     "string": "Бүртгэлийн тохиргоо"
   },
@@ -926,6 +948,10 @@
     "context": "order header date, yesterday",
     "string": "Өчигдөр {time}-д захиалсан"
   },
+  "UxdBmI": {
+    "context": "collection availability",
+    "string": "Боломжтой эсэх"
+  },
   "UycVMp": {
     "context": "button",
     "string": "Дэд ангилал үүсгэх"
@@ -950,6 +976,9 @@
   },
   "VYK2nN": {
     "string": "Бүтээгдэхүүний дэлгэрэнгүй"
+  },
+  "VZsE96": {
+    "string": "Коллекцын нэр"
   },
   "VyKl39": {
     "context": "Dialog warning text",
@@ -1020,6 +1049,10 @@
     "context": "dialog header",
     "string": "Ноорог захиалга устгах"
   },
+  "Ykw8k5": {
+    "context": "dialog title",
+    "string": "Коллекц устгах"
+  },
   "YmHxaH": {
     "context": "button and tooltip, restores the full main nav from the icon rail",
     "string": "Цэсийг дэлгэх"
@@ -1029,6 +1062,9 @@
   },
   "Yo2kC+": {
     "string": "Зургийг боловсруулж чадсангүй"
+  },
+  "Yw+9F7": {
+    "string": "Коллекц олдсонгүй"
   },
   "Yxoq3Y": {
     "context": "success notification when one or more product images finish uploading",
@@ -1191,6 +1227,9 @@
     "context": "print order button",
     "string": "Хэвлэх"
   },
+  "eRqx44": {
+    "string": "Коллекц хайх..."
+  },
   "ey0lZj": {
     "context": "dialog header",
     "string": "Харилцагч устгах"
@@ -1316,6 +1355,10 @@
     "context": "aria-label, button expanding or collapsing a sidebar menu group",
     "string": "{section} дэд цэс"
   },
+  "jyaAlB": {
+    "context": "button",
+    "string": "Коллекц үүсгэх"
+  },
   "k4brJy": {
     "string": "SKU"
   },
@@ -1392,6 +1435,9 @@
   "mMEpFC": {
     "context": "customer overview, refunded row label in value tooltip",
     "string": "Буцаан олгосон"
+  },
+  "mWQt3s": {
+    "string": "Бүтээгдэхүүний тоо"
   },
   "mWYRZY": {
     "context": "order history message",
@@ -1591,6 +1637,9 @@
     "context": "customer overview, recent net sales tooltip",
     "string": "Энэ сувагт энэ харилцагчийн сүүлийн {windowSize} захиалгын бүтээгдэхүүний орлогын нийлбэр. Хүргэлт, татварыг оруулаагүй. Хөнгөлөлтийг хассан."
   },
+  "tV5QlB": {
+    "string": "Коллекцууд устгагдлаа"
+  },
   "tZnV8L": {
     "context": "Header row stock label",
     "string": "Нөөц"
@@ -1602,6 +1651,10 @@
   "toDL5R": {
     "context": "order status",
     "string": "Ноорог"
+  },
+  "ttMauu": {
+    "context": "window title",
+    "string": "Коллекц үүсгэх"
   },
   "tvpAXl": {
     "context": "ordered product quantity",
@@ -1759,6 +1812,9 @@
     "context": "ExitFormPrompt keep editing button",
     "string": "Үргэлжлүүлэн засах"
   },
+  "yT5zvU": {
+    "string": "{counter,plural,one{Та энэ коллекцийг устгахдаа итгэлтэй байна уу?} other{Та {displayQuantity} коллекцийг устгахдаа итгэлтэй байна уу?}}"
+  },
   "ychKsb": {
     "context": "error message",
     "string": "Энэ захиалгад хүргэлтийн арга сонгох шаардлагатай"
@@ -1785,6 +1841,10 @@
   "zdyqBq": {
     "context": "account settings profile card title when viewing yourself",
     "string": "Миний профайл"
+  },
+  "zepg6k": {
+    "context": "collection availability status when not published",
+    "string": "Нийтлээгүй"
   },
   "zhDXGJ": {
     "context": "TopNav destination link tooltip to parent product",

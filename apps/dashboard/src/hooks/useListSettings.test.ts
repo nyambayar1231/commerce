@@ -41,6 +41,7 @@ describe("useListSettings", () => {
     expect(result.current.settings.rowNumber).toBe(50);
     expect(JSON.parse(localStorage.getItem(listSettingsStorageKey) ?? "{}")).toEqual({
       CATEGORY_LIST: { rowNumber: 50 },
+      COLLECTION_LIST: { rowNumber: PAGINATE_BY },
       COLLECTION_PRODUCTS_LIST: { rowNumber: PAGINATE_BY },
       CUSTOMER_LIST: { columns: CUSTOMER_LIST_DEFAULT_COLUMNS, rowNumber: PAGINATE_BY },
       ORDER_DRAFT_DETAILS_LIST: {

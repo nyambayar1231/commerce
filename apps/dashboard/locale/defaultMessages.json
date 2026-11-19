@@ -245,6 +245,9 @@
   "6Jgwpc": {
     "string": "No payment received"
   },
+  "6LqbaB": {
+    "string": "Collection created"
+  },
   "6a075o": {
     "context": "activate customer dialog, content",
     "string": "Are you sure you want to activate {email}? They will be able to sign in and place new orders."
@@ -377,6 +380,10 @@
   "AA0eYf": {
     "context": "staff details sidebar card title for dashboard locale",
     "string": "Dashboard language"
+  },
+  "ACZg1z": {
+    "context": "create collection dialog description",
+    "string": "Add a collection. You can edit channels, SEO, media, and metadata after creating it."
   },
   "AHOQr2": {
     "string": "Search products..."
@@ -521,6 +528,9 @@
     "context": "button",
     "string": "Filters"
   },
+  "FTYkgw": {
+    "string": "Delete collections"
+  },
   "FiO/W/": {
     "string": "Delete categories"
   },
@@ -538,6 +548,10 @@
     "context": "order header date, less than an hour ago",
     "string": "Placed {minutes, plural, one {# minute} other {# minutes}} ago"
   },
+  "G4g5Ii": {
+    "context": "tab name",
+    "string": "All Collections"
+  },
   "G5ETO0": {
     "string": "Categories deleted"
   },
@@ -552,6 +566,10 @@
   "GrMiRT": {
     "context": "fallback product name in remove product confirmation dialog",
     "string": "this product"
+  },
+  "GzbSQk": {
+    "context": "Status label when object is scheduled to publish in a channel",
+    "string": "Scheduled to publish"
   },
   "H4Lcuk": {
     "string": "Category updated"
@@ -744,6 +762,10 @@
     "context": "no warehouses info",
     "string": "There are no warehouses set up for this variant. To add stock quantity to the variant configure a warehouse or use existing one by clicking button below."
   },
+  "NNT3Lp": {
+    "context": "collections section name",
+    "string": "Collections"
+  },
   "NQgbYA": {
     "string": "Account Settings"
   },
@@ -928,6 +950,10 @@
     "context": "order header date, yesterday",
     "string": "Placed yesterday at {time}"
   },
+  "UxdBmI": {
+    "context": "collection availability",
+    "string": "Availability"
+  },
   "UycVMp": {
     "context": "button",
     "string": "Create subcategory"
@@ -952,6 +978,9 @@
   },
   "VYK2nN": {
     "string": "Product details"
+  },
+  "VZsE96": {
+    "string": "Collection Name"
   },
   "VyKl39": {
     "context": "Dialog warning text",
@@ -1022,6 +1051,10 @@
     "context": "dialog header",
     "string": "Delete Draft Order"
   },
+  "Ykw8k5": {
+    "context": "dialog title",
+    "string": "Delete collections"
+  },
   "YmHxaH": {
     "context": "button and tooltip, restores the full main nav from the icon rail",
     "string": "Expand navigation"
@@ -1031,6 +1064,9 @@
   },
   "Yo2kC+": {
     "string": "Couldn't process image"
+  },
+  "Yw+9F7": {
+    "string": "No collections found"
   },
   "Yxoq3Y": {
     "context": "success notification when one or more product images finish uploading",
@@ -1193,6 +1229,9 @@
     "context": "print order button",
     "string": "Print"
   },
+  "eRqx44": {
+    "string": "Search collections..."
+  },
   "ey0lZj": {
     "context": "dialog header",
     "string": "Delete Customer"
@@ -1318,6 +1357,10 @@
     "context": "aria-label, button expanding or collapsing a sidebar menu group",
     "string": "{section} submenu"
   },
+  "jyaAlB": {
+    "context": "button",
+    "string": "Create collection"
+  },
   "k4brJy": {
     "string": "SKU"
   },
@@ -1395,6 +1438,9 @@
   "mMEpFC": {
     "context": "customer overview, refunded row label in value tooltip",
     "string": "Refunded"
+  },
+  "mWQt3s": {
+    "string": "No. of Products"
   },
   "mWYRZY": {
     "context": "order history message",
@@ -1597,6 +1643,9 @@
     "context": "customer overview, recent net sales tooltip",
     "string": "Sum of product revenue from this customer's last {windowSize} orders in this channel. Excludes shipping and tax. Discounts are already applied."
   },
+  "tV5QlB": {
+    "string": "Collections deleted"
+  },
   "tZnV8L": {
     "context": "Header row stock label",
     "string": "Stock"
@@ -1608,6 +1657,10 @@
   "toDL5R": {
     "context": "order status",
     "string": "Draft"
+  },
+  "ttMauu": {
+    "context": "window title",
+    "string": "Create collection"
   },
   "tvpAXl": {
     "context": "ordered product quantity",
@@ -1765,6 +1818,9 @@
     "context": "ExitFormPrompt keep editing button",
     "string": "Keep editing"
   },
+  "yT5zvU": {
+    "string": "{counter,plural,one{Are you sure you want to delete this collection?} other{Are you sure you want to delete {displayQuantity} collections?}}"
+  },
   "ychKsb": {
     "context": "error message",
     "string": "Shipping method is required for this order"
@@ -1791,6 +1847,10 @@
   "zdyqBq": {
     "context": "account settings profile card title when viewing yourself",
     "string": "My profile"
+  },
+  "zepg6k": {
+    "context": "collection availability status when not published",
+    "string": "Not published"
   },
   "zhDXGJ": {
     "context": "TopNav destination link tooltip to parent product",

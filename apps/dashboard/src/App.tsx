@@ -5,6 +5,7 @@ import { useUser } from "./auth/AuthProvider";
 import { LoginLoading } from "./auth/components/LoginLoading/LoginLoading";
 import SectionRoute from "./auth/components/SectionRoute";
 import { CategorySection } from "./categories";
+import { CollectionSection } from "./collections";
 import { AppLayout } from "./components/AppLayout/AppLayout";
 import ExitFormDialogProvider from "./components/Form/ExitFormDialogProvider";
 import { PlaceholderPage } from "./components/PlaceholderPage/PlaceholderPage";
@@ -56,6 +57,14 @@ function Dashboard() {
             element={
               <SectionRoute permissions={["MANAGE_PRODUCTS"]}>
                 <CategorySection />
+              </SectionRoute>
+            }
+          />
+          <Route
+            path="/collections/*"
+            element={
+              <SectionRoute permissions={["MANAGE_PRODUCTS"]}>
+                <CollectionSection />
               </SectionRoute>
             }
           />

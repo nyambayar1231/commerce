@@ -96,6 +96,11 @@ export const sectionNames = defineMessages({
     defaultMessage: "Categories",
     description: "categories section name",
   },
+  collections: {
+    id: "NNT3Lp",
+    defaultMessage: "Collections",
+    description: "collections section name",
+  },
   configuration: {
     id: "xfGZsi",
     defaultMessage: "Configuration",

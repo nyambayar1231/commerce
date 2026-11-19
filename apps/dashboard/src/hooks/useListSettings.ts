@@ -52,6 +52,7 @@ export const ORDER_DRAFT_DETAILS_DEFAULT_COLUMNS = [
 
 export type ListViews =
   | "CATEGORY_LIST"
+  | "COLLECTION_LIST"
   | "COLLECTION_PRODUCTS_LIST"
   | "CUSTOMER_LIST"
   | "ORDER_DRAFT_DETAILS_LIST"
@@ -73,6 +74,9 @@ type AppListViewSettings = Record<ListViews, ListSettings>;
 
 const defaultListSettings: AppListViewSettings = {
   CATEGORY_LIST: { rowNumber: PAGINATE_BY },
+  // Saleor's COLLECTION_LIST default columns minus the channel-dependent ones; we have no column
+  // picker, so only the page size is stored.
+  COLLECTION_LIST: { rowNumber: PAGINATE_BY },
   // Saleor's CategoryProducts uses ListViews.COLLECTION_PRODUCTS_LIST for the card's row count.
   COLLECTION_PRODUCTS_LIST: { rowNumber: PAGINATE_BY },
   CUSTOMER_LIST: {
