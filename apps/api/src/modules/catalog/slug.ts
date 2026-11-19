@@ -60,7 +60,7 @@ export function slugify(value: string): string {
 }
 
 /** The tables whose `slug` column is unique and gets a generated suffix (categories, products). */
-type SlugTable = typeof schema.category | typeof schema.product;
+type SlugTable = typeof schema.category | typeof schema.product | typeof schema.collection;
 
 export async function slugTaken(
   db: Executor,

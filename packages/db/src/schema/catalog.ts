@@ -9,6 +9,7 @@ import {
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -65,6 +66,51 @@ export const product = pgTable(
     index("product_category_id_idx").on(table.categoryId),
     // `products(where: {updatedAt: ...})` and the LAST_MODIFIED_AT sort.
     index("product_updated_at_idx").on(table.updatedAt),
+  ],
+);
+
+// Saleor's `product.Collection` (saleor/product/models.py), single channel like products
+// (ADR-0005): publication lives on the collection instead of a channel listing. Storefronts show
+// a collection at /collections/{slug}; the manual product order of Saleor's CollectionProduct is
+// not modelled (PRODUCT_COUNT sorting only needs the links).
+export const collection = pgTable(
+  "collection",
+  {
+    id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    // EditorJS: { time?, blocks: [...], version? }, as category.description.
+    description: jsonb("description"),
+    descriptionPlaintext: text("description_plaintext").notNull().default(""),
+    isPublished: boolean("is_published").notNull().default(false),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    unique("collection_slug_unique").on(table.slug),
+    check("collection_name_not_empty", sql`${table.name} <> ''`),
+    check("collection_slug_not_empty", sql`${table.slug} <> ''`),
+  ],
+);
+
+// Saleor's `product.CollectionProduct`: the products in a collection. Deleting either side removes
+// the link; the product itself outlives the collection.
+export const collectionProduct = pgTable(
+  "collection_product",
+  {
+    collectionId: uuid("collection_id")
+      .notNull()
+      .references(() => collection.id, { onDelete: "cascade" }),
+    productId: uuid("product_id")
+      .notNull()
+      .references(() => product.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.collectionId, table.productId] }),
+    // The primary key already serves "a collection's products".
+    index("collection_product_product_id_idx").on(table.productId),
   ],
 );
 

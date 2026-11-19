@@ -1,6 +1,7 @@
 import { builder } from "./builder.ts";
 
 // Importing a module's graphql.ts registers its types and fields on the builder.
+import "../modules/catalog/collectionGraphql.ts";
 import "../modules/catalog/graphql.ts";
 import "../modules/catalog/mediaMutations.ts";
 import "../modules/catalog/productGraphql.ts";

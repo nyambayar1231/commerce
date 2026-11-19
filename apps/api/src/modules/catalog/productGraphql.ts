@@ -125,7 +125,7 @@ const ProductMediaKind = builder.enumType("ProductMediaType", {
 });
 
 /** Staff with MANAGE_PRODUCTS see unpublished and future-dated products (ARCHITECTURE.md §8). */
-async function seesUnpublished(ctx: Context): Promise<boolean> {
+export async function seesUnpublished(ctx: Context): Promise<boolean> {
   return Boolean(ctx.user?.isStaff) && (await ctx.permissions()).includes("MANAGE_PRODUCTS");
 }
 

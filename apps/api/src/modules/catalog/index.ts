@@ -24,6 +24,32 @@ export type {
   OrderDirection,
 } from "./categoryList.ts";
 export { InvalidCursorError, listCategories } from "./categoryList.ts";
+export type {
+  CollectionCreateInput,
+  CollectionError,
+  CollectionErrorCode,
+  CollectionListArgs,
+  CollectionListRow,
+  CollectionPage,
+  CollectionProductsResult,
+  CollectionPublished,
+  CollectionResult,
+  CollectionRow,
+  CollectionSortField,
+  CollectionUpdateInput,
+} from "./collections.ts";
+export {
+  addCollectionProducts,
+  CollectionNotFoundError,
+  createCollection,
+  deleteCollection,
+  deleteCollections,
+  getCollection,
+  isCollectionPublished,
+  listCollections,
+  removeCollectionProducts,
+  updateCollection,
+} from "./collections.ts";
 export { DEMO_CATEGORIES, seedDemoCatalog } from "./demoCatalog.ts";
 export type { CatalogLoaders, ThumbnailLoaderKey } from "./loaders.ts";
 export { createCatalogLoaders } from "./loaders.ts";

@@ -627,6 +627,199 @@ type CheckoutShippingAddressUpdate {
   errors: [CheckoutError!]!
 }
 
+"""Represents a collection of products."""
+type Collection implements Node {
+  """
+  Description of the collection.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+
+  """The ID of the collection."""
+  id: ID!
+
+  """Informs whether a collection is published."""
+  isPublished: Boolean!
+
+  """Name of the collection."""
+  name: String!
+
+  """The collection publication date time."""
+  publishedAt: DateTime
+
+  """Slug of the collection."""
+  slug: String!
+}
+
+"""
+Adds products to a collection.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type CollectionAddProducts {
+  """Collection to which products will be added."""
+  collection: Collection
+  errors: [CollectionError!]!
+}
+
+"""
+Deletes collections.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type CollectionBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  errors: [CollectionError!]!
+}
+
+type CollectionCountableConnection {
+  edges: [CollectionCountableEdge!]!
+  pageInfo: PageInfo!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type CollectionCountableEdge {
+  cursor: String!
+  node: Collection!
+}
+
+"""
+Creates a new collection.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type CollectionCreate {
+  collection: Collection
+  errors: [CollectionError!]!
+}
+
+input CollectionCreateInput {
+  """
+  Description of the collection.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+
+  """Informs whether a collection is published."""
+  isPublished: Boolean
+
+  """Name of the collection."""
+  name: String
+
+  """List of products to be added to the collection."""
+  products: [ID!]
+
+  """Slug of the collection."""
+  slug: String
+}
+
+"""
+Deletes a collection.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type CollectionDelete {
+  collection: Collection
+  errors: [CollectionError!]!
+}
+
+"""Represents an error in the input of a mutation."""
+type CollectionError {
+  """The error code."""
+  code: CollectionErrorCode!
+
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String!
+}
+
+enum CollectionErrorCode {
+  DUPLICATED_INPUT_ITEM
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  REQUIRED
+  UNIQUE
+}
+
+input CollectionFilterInput {
+  ids: [ID!]
+  published: CollectionPublished
+  search: String
+}
+
+input CollectionInput {
+  """
+  Description of the collection.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  description: JSONString
+
+  """Informs whether a collection is published."""
+  isPublished: Boolean
+
+  """Name of the collection."""
+  name: String
+
+  """Slug of the collection."""
+  slug: String
+}
+
+enum CollectionPublished {
+  HIDDEN
+  PUBLISHED
+}
+
+"""
+Remove products from a collection.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type CollectionRemoveProducts {
+  """Collection from which products will be removed."""
+  collection: Collection
+  errors: [CollectionError!]!
+}
+
+enum CollectionSortField {
+  """Sort collections by availability."""
+  AVAILABILITY
+
+  """Sort collections by name."""
+  NAME
+
+  """Sort collections by product count."""
+  PRODUCT_COUNT
+}
+
+input CollectionSortingInput {
+  """Specifies the direction in which to sort collections."""
+  direction: OrderDirection!
+
+  """Sort collections by the selected field."""
+  field: CollectionSortField!
+}
+
+"""
+Updates a collection.
+
+Requires one of the following permissions: MANAGE_PRODUCTS.
+"""
+type CollectionUpdate {
+  collection: Collection
+  errors: [CollectionError!]!
+}
+
 """Confirm user account with token sent by email during registration."""
 type ConfirmAccount {
   errors: [AccountError!]!
@@ -1400,6 +1593,75 @@ type Mutation {
     """The mailing address to where the checkout will be shipped."""
     shippingAddress: AddressInput!
   ): CheckoutShippingAddressUpdate
+
+  """
+  Adds products to a collection.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  collectionAddProducts(
+    """ID of a collection."""
+    collectionId: ID!
+
+    """List of product IDs."""
+    products: [ID!]!
+  ): CollectionAddProducts!
+
+  """
+  Deletes collections.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  collectionBulkDelete(
+    """List of collection IDs to delete."""
+    ids: [ID!]!
+  ): CollectionBulkDelete
+
+  """
+  Creates a new collection.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  collectionCreate(
+    """Fields required to create a collection."""
+    input: CollectionCreateInput!
+  ): CollectionCreate!
+
+  """
+  Deletes a collection.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  collectionDelete(
+    """ID of a collection to delete."""
+    id: ID!
+  ): CollectionDelete!
+
+  """
+  Remove products from a collection.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  collectionRemoveProducts(
+    """ID of a collection."""
+    collectionId: ID!
+
+    """List of product IDs."""
+    products: [ID!]!
+  ): CollectionRemoveProducts!
+
+  """
+  Updates a collection.
+  
+  Requires one of the following permissions: MANAGE_PRODUCTS.
+  """
+  collectionUpdate(
+    """ID of a collection to update."""
+    id: ID!
+
+    """Fields required to update a collection."""
+    input: CollectionInput!
+  ): CollectionUpdate!
 
   """Confirm user account with token sent by email during registration."""
   confirmAccount(
@@ -3031,6 +3293,33 @@ type Query {
     """The checkout's ID."""
     id: ID
   ): Checkout
+
+  """
+  Look up a collection by ID or slug. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
+  """
+  collection(
+    """ID of the collection."""
+    id: ID
+
+    """Slug of the collection."""
+    slug: String
+  ): Collection
+
+  """
+  List of the shop's collections. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
+  """
+  collections(
+    after: String
+    before: String
+
+    """Filtering options for collections."""
+    filter: CollectionFilterInput
+    first: Int
+    last: Int
+
+    """Sort collections."""
+    sortBy: CollectionSortingInput
+  ): CollectionCountableConnection
 
   """
   List of the shop's customers. This list includes all users who registered through the accountRegister mutation. Additionally, staff users who have placed an order using their account will also appear in this list.
