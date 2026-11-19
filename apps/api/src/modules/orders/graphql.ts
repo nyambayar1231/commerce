@@ -3,10 +3,16 @@ import { builder } from "../../graphql/builder.ts";
 import { fromGlobalId } from "../../graphql/globalId.ts";
 import { TaxedMoneyType } from "../../graphql/money.ts";
 import { requirePermission } from "../../graphql/permissions.ts";
-import { DateTime } from "../../graphql/scalars.ts";
+import { DateTime, UUID } from "../../graphql/scalars.ts";
 import { ProductVariantType } from "../catalog/productGraphql.ts";
 import { TransactionItemType } from "../payments/graphql.ts";
-import { getOrder, type OrderEventRow, type OrderLineRow, type OrderRow } from "./index.ts";
+import {
+  getOrder,
+  getOrderByToken,
+  type OrderEventRow,
+  type OrderLineRow,
+  type OrderRow,
+} from "./index.ts";
 
 // Saleor's Order, OrderLine and OrderEvent (saleor/graphql/order/types.py), read-only and reduced
 // to what M5.4 creates. The buyer receives the order in checkoutComplete's payload; looking one up
@@ -117,6 +123,9 @@ builder.node(OrderType, {
   id: { resolve: (order) => order.id, description: "ID of the order." },
   description: "Represents an order in the shop.",
   fields: (t) => ({
+    token: t.exposeString("token", {
+      description: "Unique token of the order. Use it to look the order up with `orderByToken`.",
+    }),
     number: t.string({
       description: "User-friendly number of an order.",
       resolve: (order) => String(order.number),
@@ -188,6 +197,19 @@ builder.objectField(TransactionItemType, "order", (t) =>
     description: "The related order.",
     resolve: (transaction, _args, ctx) =>
       transaction.orderId === null ? null : getOrder(ctx.db, transaction.orderId),
+  }),
+);
+
+// Saleor's orderByToken (saleor/graphql/order/schema.py, deprecated there in favour of the random
+// order id): the guest's own way back to the order a checkout just placed (M15.3). No permission
+// and no account: the unguessable token is the credential, and drafts are never returned.
+builder.queryField("orderByToken", (t) =>
+  t.field({
+    type: OrderType,
+    nullable: true,
+    description: "Look up an order by its token. Drafts are never returned.",
+    args: { token: t.arg({ type: UUID, required: true, description: "The token of the order." }) },
+    resolve: (_parent, { token }, ctx) => getOrderByToken(ctx.db, token),
   }),
 );
 

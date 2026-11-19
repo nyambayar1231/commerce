@@ -73,6 +73,7 @@ export type {
 export {
   createOrderFromCheckout,
   getOrder,
+  getOrderByToken,
   getOrderEventsByOrderIds,
   getOrderLinesByOrderIds,
   matchOrdersWithNewUser,

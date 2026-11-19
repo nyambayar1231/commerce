@@ -113,6 +113,16 @@ export async function getOrder(db: Executor, id: string): Promise<OrderRow | nul
   return order ?? null;
 }
 
+/**
+ * Saleor's `orderByToken` (M15.3): the confirmed order the secret token belongs to, or null.
+ * Drafts are never returned: staff are still building them. The token is the only credential, so
+ * whoever holds it reads the order (Saleor 3.x does the same through the random order id).
+ */
+export async function getOrderByToken(db: Executor, token: string): Promise<OrderRow | null> {
+  const [order] = await db.select().from(schema.order).where(eq(schema.order.token, token));
+  return order && order.status !== "DRAFT" ? order : null;
+}
+
 /** The lines of the given orders, in creation order. One query for any number of ids. */
 export async function getOrderLinesByOrderIds(
   db: Executor,

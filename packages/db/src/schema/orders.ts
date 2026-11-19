@@ -57,6 +57,10 @@ export const order = pgTable(
   "order",
   {
     id: uuid("id").primaryKey().default(sql`uuidv7()`),
+    // Saleor's Order.token (saleor/order/models.py): an unguessable secret that lets a guest who
+    // placed the order read it without signing in (`orderByToken`, M15.3). Unlike Saleor 3.x we
+    // keep it out of the id (ours are time-ordered uuidv7, PLAN M7 decision 6); drafts get one too.
+    token: uuid("token").notNull().unique().default(sql`gen_random_uuid()`),
     // Saleor's human-facing order number: 1, 2, 3… (gaps are possible after a rollback).
     number: bigint("number", { mode: "number" }).notNull().unique().generatedAlwaysAsIdentity(),
     status: text("status").notNull(),

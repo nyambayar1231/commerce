@@ -204,6 +204,13 @@
       "when": 1795032998737,
       "tag": "0028_address_book",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1795070795091,
+      "tag": "0029_order_token",
+      "breakpoints": true
     }
   ]
 }

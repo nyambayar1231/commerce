@@ -1984,6 +1984,11 @@ type Order implements Node {
   """The sum of line prices not including shipping."""
   subtotal: TaxedMoney!
 
+  """
+  Unique token of the order. Use it to look the order up with `orderByToken`.
+  """
+  token: String!
+
   """Total amount of the order."""
   total: TaxedMoney!
 
@@ -3074,6 +3079,12 @@ type Query {
   order(
     """ID of an order."""
     id: ID!
+  ): Order
+
+  """Look up an order by its token. Drafts are never returned."""
+  orderByToken(
+    """The token of the order."""
+    token: UUID!
   ): Order
 
   """

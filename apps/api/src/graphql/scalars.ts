@@ -25,8 +25,19 @@ export const DateTime = builder.scalarType("DateTime", {
   parseLiteral: (node) => parseDateTime(stringLiteral(node, "DateTime")),
 });
 
-// Saleor's UUID scalar (saleor/graphql/core/scalars.py): a string in canonical form. Checkout's
-// `token` is the only user; the format check lives in graphql/globalId.ts when an ID is decoded.
+// Canonical form, case-insensitive: 8-4-4-4-12 hexadecimal digits.
+const CANONICAL_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Saleor's UUID scalar (saleor/graphql/core/scalars.py): a string in canonical form, returned
+// lower-cased. The format is checked here (M15.3), so a malformed value such as
+// `orderByToken(token: "garbage")` is a GraphQL validation error before any SQL runs, instead of
+// reaching Postgres and logging an unexpected error.
+function parseUUID(value: unknown): string {
+  if (typeof value !== "string") throw new GraphQLError("UUID must be a string.");
+  if (!CANONICAL_UUID.test(value)) throw new GraphQLError(`${value} is not a valid UUID.`);
+  return value.toLowerCase();
+}
+
 export const UUID = builder.scalarType("UUID", {
   description:
     "Represents a Universally Unique Identifier (UUID) string, for example " +
@@ -35,13 +46,10 @@ export const UUID = builder.scalarType("UUID", {
     if (typeof value !== "string") throw new GraphQLError("UUID must be a string.");
     return value;
   },
-  parseValue: (value) => {
-    if (typeof value !== "string") throw new GraphQLError("UUID must be a string.");
-    return value;
-  },
+  parseValue: parseUUID,
   parseLiteral: (node) => {
     if (node.kind !== Kind.STRING) throw new GraphQLError("UUID must be a string.");
-    return node.value;
+    return parseUUID(node.value);
   },
 });
 
