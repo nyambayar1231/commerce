@@ -239,11 +239,18 @@ test("staff adds products to the draft and changes a quantity", async () => {
   // The lines are Saleor's canvas grid (no cell text in the DOM): select the first cell, move to
   // Quantity with the arrow keys and type over it, as in a spreadsheet.
   // Glide's scroll layer lies over the canvas and takes the pointer, as for a real mouse.
+  // Right after the line arrives the grid may still be laying out and ignore the click (the arrow
+  // keys then only scroll it), so retry until the typed digit has opened the quantity editor.
   const grid = page.getByTestId("draft-order-lines-grid").locator(".dvn-scroller");
-  await grid.click({ position: { x: 60, y: 60 } });
-  // Product → status → SKU → variant → quantity.
-  for (let step = 0; step < 4; step++) await page.keyboard.press("ArrowRight");
-  await page.keyboard.type("2");
+  const editor = page.locator('[data-test-id="number-cell-input"]');
+  await expect(async () => {
+    await page.keyboard.press("Escape");
+    await grid.click({ position: { x: 60, y: 60 } });
+    // Product → status → SKU → variant → quantity.
+    for (let step = 0; step < 4; step++) await page.keyboard.press("ArrowRight");
+    await page.keyboard.type("2");
+    await expect(editor).toHaveValue("2", { timeout: 1_000 });
+  }).toPass({ timeout: 10_000 });
   await page.keyboard.press("Enter");
   await expect(page.getByText("Order line updated")).toBeVisible();
   await expect(summary).toContainText("90,000");
