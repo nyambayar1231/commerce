@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { type Executor, schema } from "@commerce/db";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 
 // Opaque, DB-backed login sessions (ADR-0006, ARCHITECTURE.md §7). The client gets a random
 // 256-bit token; the table stores only its SHA-256 hash. A session ends when it has been idle for
@@ -123,4 +123,20 @@ export async function revokeSession(db: Executor, token: string): Promise<void> 
 // know the old password, so all devices are signed out.
 export async function revokeUserSessions(db: Executor, userId: string): Promise<void> {
   await db.delete(schema.session).where(eq(schema.session.userId, userId));
+}
+
+// Ends every session of a user except the one holding `keepToken` (password change, M15.2): the
+// caller stays logged in where they are, every other device is signed out. A malformed token
+// matches no session row, so nothing is kept and all of them end.
+export async function revokeOtherUserSessions(
+  db: Executor,
+  userId: string,
+  keepToken: string,
+): Promise<void> {
+  if (!TOKEN_PATTERN.test(keepToken)) return revokeUserSessions(db, userId);
+  await db
+    .delete(schema.session)
+    .where(
+      and(eq(schema.session.userId, userId), ne(schema.session.tokenHash, hashToken(keepToken))),
+    );
 }

@@ -500,7 +500,7 @@ Saleor names throughout. Deviations go in ARCHITECTURE §4.
 | M15.1 | Password reset: `requestPasswordReset` (an email through the outbox, `redirectUrl` checked against `ALLOWED_CLIENT_HOSTS`, throttled, no account enumeration) and `setPassword` (single-use, expiring token; ends other sessions) | Done |
 | M15.2a | Address validation and the `Address` GraphQL types moved to `@commerce/contracts` and `apps/api/src/graphql/address.ts` (pure refactor, no schema change), so identity can use them without an import cycle [Haiku] | Done |
 | M15.2b | Address book: `address` table, `accountAddressCreate/Update/Delete`, `accountSetDefaultAddress`, `User.addresses`/`defaultShippingAddress`/`defaultBillingAddress`; completing a logged-in user's checkout stores its addresses, as Saleor's `store_user_address` (Saleor doesn't prefill checkout from the defaults) | Done |
-| M15.2c | Account settings: `accountUpdate` (names), `passwordChange` (ends the user's other sessions) | Draft |
+| M15.2c | Account settings: `accountUpdate` (names), `passwordChange` (ends the user's other sessions) | Done |
 | M15.3 | Guest order lookup: an unguessable `Order.token`, set at completion and returned by `checkoutComplete`, plus a public query to read one order by token (Saleor's `orderByToken`; deprecated in Saleor, a logged deviation) | Draft |
 | M15.4 | Collections API: tables, `collectionCreate/Update/Delete`, `collectionAddProducts/RemoveProducts`, public `collections` / `collection(slug)` (published only), `Product.collections`, a `products` filter by collection and price range | Draft |
 | M15.5 | Collections in the dashboard: list, detail and assigned products, matching `../saleor-dashboard/src/collections/` | Draft |

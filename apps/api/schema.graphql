@@ -61,6 +61,15 @@ enum AccountErrorCode {
   UNKNOWN_IP_ADDRESS
 }
 
+"""Fields required to update the user."""
+input AccountInput {
+  """Given name."""
+  firstName: String
+
+  """Family name."""
+  lastName: String
+}
+
 """Register a new user."""
 type AccountRegister {
   errors: [AccountError!]!
@@ -96,6 +105,18 @@ Requires one of the following permissions: AUTHENTICATED_USER.
 """
 type AccountSetDefaultAddress {
   errors: [AccountError!]!
+  user: User
+}
+
+"""
+Updates the account of the logged-in user.
+
+Requires one of the following permissions: AUTHENTICATED_USER.
+"""
+type AccountUpdate {
+  errors: [AccountError!]!
+
+  """A user instance."""
   user: User
 }
 
@@ -1224,6 +1245,16 @@ type Mutation {
   ): AccountSetDefaultAddress!
 
   """
+  Updates the account of the logged-in user.
+  
+  Requires one of the following permissions: AUTHENTICATED_USER.
+  """
+  accountUpdate(
+    """Fields required to update the account of the logged-in user."""
+    input: AccountInput!
+  ): AccountUpdate!
+
+  """
   Deletes categories.
   
   Requires one of the following permissions: MANAGE_PRODUCTS.
@@ -1539,6 +1570,19 @@ type Mutation {
     """The external transaction reference."""
     transactionReference: String
   ): OrderMarkAsPaid
+
+  """
+  Change the password of the logged in user.
+  
+  Requires one of the following permissions: AUTHENTICATED_USER.
+  """
+  passwordChange(
+    """New user password."""
+    newPassword: String!
+
+    """Current user password."""
+    oldPassword: String
+  ): PasswordChange!
 
   """
   Create new permission group. Requires one of the following permissions: MANAGE_STAFF.
@@ -2312,6 +2356,18 @@ type PageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   startCursor: String
+}
+
+"""
+Change the password of the logged in user.
+
+Requires one of the following permissions: AUTHENTICATED_USER.
+"""
+type PasswordChange {
+  errors: [AccountError!]!
+
+  """A user instance with a new password."""
+  user: User
 }
 
 input PaymentGatewayToInitialize {

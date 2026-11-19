@@ -2,6 +2,12 @@
 // only. `password.ts` stays internal until a second module needs it.
 
 export type {
+  AccountSettingsError,
+  AccountUpdateResult,
+  PasswordChangeResult,
+} from "./accountSettings.ts";
+export { changePassword, MAX_NAME_LENGTH, updateAccount } from "./accountSettings.ts";
+export type {
   AccountRegisterError,
   AccountRegisterErrorCode,
   AccountRegisterInput,
@@ -76,6 +82,7 @@ export type { CreatedSession, SessionUser } from "./sessions.ts";
 export {
   createSession,
   getSessionUser,
+  revokeOtherUserSessions,
   revokeSession,
   revokeUserSessions,
   SESSION_USER_COLUMNS,
