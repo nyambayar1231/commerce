@@ -26,5 +26,13 @@ export const categoryDetailsFragment = gql`
     parent {
       id
     }
+    ancestors(first: 100) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
   }
 `;

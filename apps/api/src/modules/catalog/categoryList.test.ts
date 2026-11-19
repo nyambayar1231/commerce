@@ -281,6 +281,27 @@ describe("Category.children", () => {
   });
 });
 
+describe("Category.ancestors", () => {
+  const ANCESTORS = `query ($id: ID!) {
+    category(id: $id) {
+      ancestors(first: 100) { totalCount edges { node { name } } }
+    }
+  }`;
+
+  it("lists the ancestors root first, and none for a top-level category", async () => {
+    const ancestorsOf = async (name: string) => {
+      const id = toGlobalId("Category", ids.get(name) ?? "");
+      const result = await client.gql(ANCESTORS, { id });
+      expect(result.body.errors).toBeUndefined();
+      return (result.body.data as { category: { ancestors: Page } }).category.ancestors;
+    };
+    const deep = await ancestorsOf("Grandchild");
+    expect(deep.totalCount).toBe(2);
+    expect(names(deep)).toEqual(["Cat 03", "Child E"]);
+    expect(names(await ancestorsOf("Cat 03"))).toEqual([]);
+  });
+});
+
 describe("first/last only when edges are selected (as Saleor)", () => {
   it("answers totalCount without first or last", async () => {
     const result = await client.gql(`{

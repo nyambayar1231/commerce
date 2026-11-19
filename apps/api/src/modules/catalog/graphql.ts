@@ -1,3 +1,4 @@
+import { resolveArrayConnection } from "@pothos/plugin-relay";
 import { GraphQLError } from "graphql";
 import { builder } from "../../graphql/builder.ts";
 import { fromGlobalId, nodesNotFound, toGlobalId } from "../../graphql/globalId.ts";
@@ -14,6 +15,7 @@ import {
   deleteCategories,
   deleteCategory,
   getCategory,
+  getCategoryAncestors,
   getCategoryLevel,
   InvalidCursorError,
   listCategories,
@@ -143,6 +145,23 @@ builder.node(CategoryType, {
             { ...args, parentId: category.id, sort: { field: "NAME", direction: "ASC" } },
             edgesRequested,
           );
+        },
+      },
+      CategoryConnection,
+    ),
+    // Saleor's Category.ancestors: root first, without the category itself.
+    ancestors: t.connection(
+      {
+        type: CategoryType,
+        nullable: true,
+        description: "List of ancestors of the category.",
+        resolve: async (category, args, ctx, info) => {
+          const page = validatePagination("ancestors", args, isEdgesRequested(info));
+          const ancestors = await getCategoryAncestors(ctx.db, category.id);
+          return {
+            ...resolveArrayConnection({ args: { ...args, ...page } }, ancestors),
+            totalCount: ancestors.length,
+          };
         },
       },
       CategoryConnection,

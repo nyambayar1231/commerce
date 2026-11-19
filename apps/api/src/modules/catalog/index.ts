@@ -12,6 +12,7 @@ export {
   deleteCategories,
   deleteCategory,
   getCategory,
+  getCategoryAncestors,
   getCategoryLevel,
   NotFoundError,
   updateCategory,

@@ -103,6 +103,40 @@ export async function getCategoryLevel(db: Executor, id: string): Promise<number
   return rows[0]?.level ?? 0;
 }
 
+/**
+ * The category's ancestors, root first, without the category itself (Saleor's MPTT
+ * `get_ancestors()`, ordered by tree level).
+ */
+export async function getCategoryAncestors(db: Executor, id: string): Promise<CategoryRow[]> {
+  const path = await db.execute<{ id: string; depth: number }>(sql`
+    WITH RECURSIVE ancestor AS (
+      SELECT parent.id, parent.parent_id, 1 AS depth
+      FROM category
+      INNER JOIN category AS parent ON parent.id = category.parent_id
+      WHERE category.id = ${id}
+      UNION ALL
+      SELECT parent.id, parent.parent_id, ancestor.depth + 1
+      FROM category AS parent
+      INNER JOIN ancestor ON parent.id = ancestor.parent_id
+    )
+    SELECT id, depth FROM ancestor
+  `);
+  if (path.length === 0) {
+    return [];
+  }
+  const rows = await db
+    .select()
+    .from(schema.category)
+    .where(
+      inArray(
+        schema.category.id,
+        path.map((row) => row.id),
+      ),
+    );
+  const depthById = new Map(path.map((row) => [row.id, Number(row.depth)]));
+  return rows.sort((a, b) => (depthById.get(b.id) ?? 0) - (depthById.get(a.id) ?? 0));
+}
+
 export async function createCategory(
   db: Executor,
   input: CategoryCreateInput,

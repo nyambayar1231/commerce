@@ -225,6 +225,9 @@ type BulkStockError {
 Represents a single category of products. Categories allow to organize products in a tree-hierarchies which can be used for navigation in the storefront.
 """
 type Category implements Node {
+  """List of ancestors of the category."""
+  ancestors(after: String, before: String, first: Int, last: Int): CategoryCountableConnection
+
   """List of children of the category."""
   children(after: String, before: String, first: Int, last: Int): CategoryCountableConnection
 

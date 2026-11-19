@@ -9,6 +9,7 @@ import {
   createCategory,
   deleteCategory,
   getCategory,
+  getCategoryAncestors,
   getCategoryLevel,
   NotFoundError,
   updateCategory,
@@ -60,6 +61,16 @@ describe("category reads", () => {
     await expect(getCategoryLevel(db, parent.id)).resolves.toBe(0);
     await expect(getCategoryLevel(db, child.id)).resolves.toBe(1);
     await expect(getCategoryLevel(db, grandchild.id)).resolves.toBe(2);
+  });
+
+  it("lists ancestors root first, without the category itself", async () => {
+    const root = await mustCreate({ name: "Root" });
+    const child = await mustCreate({ name: "Child", parentId: root.id });
+    const grandchild = await mustCreate({ name: "Grandchild", parentId: child.id });
+
+    await expect(getCategoryAncestors(db, root.id)).resolves.toEqual([]);
+    const ancestors = await getCategoryAncestors(db, grandchild.id);
+    expect(ancestors.map((row) => row.name)).toEqual(["Root", "Child"]);
   });
 });
 

@@ -2,14 +2,15 @@
 // See THIRD_PARTY_LICENSES.md
 // Saleor's layout: TopNav (back to the parent or the list, the ⋯ menu with Create subcategory and
 // Delete category), General Information, the Products card under it, the Subcategories card in the
-// right column, and the Savebar (save-composition hint, Back, Save). Not yet: the ancestors
-// breadcrumb (needs `ancestors`, M2.1.6), SEO card with the slug, background image (M2.5),
-// metadata, translations, GraphiQL and extension menu items.
+// right column, the Savebar (save-composition hint, Back, Save) and the ancestors breadcrumb above
+// the title. Not yet: SEO card with the slug, background image (M2.5), metadata, translations,
+// GraphiQL and extension menu items.
+import { Box, Text } from "@saleor/macaw-ui";
 import { FolderPlus, Trash2 } from "lucide-react";
 import type { ComponentProps } from "react";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { useIntl } from "react-intl";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   TopNav,
   TopNavDestinationIcon,
@@ -25,6 +26,7 @@ import type {
   CategoryDetailsFragment,
   ProductErrorFragment,
 } from "../../../graphql/types.generated";
+import { mapEdgesToItems } from "../../../utils/maps";
 import { categoryListPath, categoryUrl } from "../../urls";
 import { CategoryDetailsForm } from "../CategoryDetailsForm/CategoryDetailsForm";
 import { CategoryProducts } from "../CategoryProducts/CategoryProducts";
@@ -91,6 +93,33 @@ export const CategoryUpdatePage = ({
     ];
   }, [category?.id, intl, onCreateSubcategory, onDelete]);
 
+  const ancestors = mapEdgesToItems(category?.ancestors);
+  const breadcrumb =
+    ancestors && ancestors.length > 0 ? (
+      <Box display="flex" alignItems="center" gap={1} overflow="hidden" __lineHeight={1.15}>
+        {ancestors.map((ancestor, index) => (
+          <Fragment key={ancestor.id}>
+            {index > 0 && (
+              <Text size={2} color="default2" flexShrink="0" __lineHeight={1.15}>
+                /
+              </Text>
+            )}
+            <Link to={categoryUrl(ancestor.id)} style={{ textDecoration: "none", minWidth: 0 }}>
+              <Text
+                size={2}
+                color="default2"
+                ellipsis
+                textDecoration={{ hover: "underline" }}
+                __lineHeight={1.15}
+              >
+                {ancestor.name}
+              </Text>
+            </Link>
+          </Fragment>
+        ))}
+      </Box>
+    ) : undefined;
+
   return (
     <form
       onSubmit={(event) => {
@@ -104,6 +133,7 @@ export const CategoryUpdatePage = ({
           hrefIcon={<TopNavDestinationIcon.categories />}
           hrefTitle={intl.formatMessage(topNavDestinationMessages.allCategories)}
           title={category?.name}
+          subtitleTop={breadcrumb}
           actionsGap={3}
         >
           {menuItems.length > 0 && (

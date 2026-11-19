@@ -31,9 +31,9 @@ Accepted by the owner as documented (2026-11-11); each is revisited when a miles
   MANAGE_SHIPPING` (our planned configuration pages); Saleor's menu filter moved into a pure
   `filterMenuItemsByPermissions` for unit tests.
 - **M2.1 (categories) left out or different from Saleor:**
-  - API: no background image, SEO, metadata, translations, `ancestors`, `products`; categories can't
+  - API: no background image, SEO, metadata, translations, `products`; categories can't
     be re-parented (as Saleor). `PRODUCT_COUNT` sort and the products column arrive with M2.2.
-  - Dashboard: description edited as plain text (stored as EditorJS, decision 4); no breadcrumb,
+  - Dashboard: description edited as plain text (stored as EditorJS, decision 4); no
     SEO card (so no slug editing), Products card, background image, metadata, translations or
     GraphiQL buttons; "All Categories" is plain text (no saved filter presets); search has no
     syntax tooltip.
