@@ -58,7 +58,11 @@ export function parseEnv(source: Source): Env {
   const trust = source.TRUST_PROXY?.trim() || "false";
   if (trust !== "true" && trust !== "false") problems.push('TRUST_PROXY must be "true" or "false"');
 
-  const imageOrigins = list(source.IMAGE_ORIGINS);
+  // Development defaults to the dev API (thumbnail URLs) and the local S3 server they redirect
+  // to; CSP checks both. Production lists its own origins.
+  const imageOrigins = list(
+    source.IMAGE_ORIGINS ?? (production ? "" : "http://localhost:4000,http://localhost:8333"),
+  );
   for (const origin of imageOrigins) {
     const url = isHttpUrl(origin);
     if (!url || url.origin !== origin) {

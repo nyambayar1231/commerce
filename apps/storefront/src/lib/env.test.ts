@@ -13,10 +13,15 @@ describe("parseEnv", () => {
       apiUrl: "http://localhost:4000",
       storefrontUrl: "http://localhost:3000",
       trustProxy: false,
-      imageOrigins: [],
+      imageOrigins: ["http://localhost:4000", "http://localhost:8333"],
       paymentProviders: ["dummy"],
       production: false,
     });
+  });
+
+  it("has no image origins by default in production, and an empty value means none", () => {
+    expect(parseEnv(production).imageOrigins).toEqual([]);
+    expect(parseEnv({ NODE_ENV: "development", IMAGE_ORIGINS: "" }).imageOrigins).toEqual([]);
   });
 
   it("accepts a complete production configuration", () => {

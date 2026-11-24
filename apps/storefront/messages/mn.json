@@ -26,6 +26,36 @@
     "title": "{shopName}-д тавтай морил",
     "intro": "Дэлгүүрийг бэлтгэж байна. Бүтээгдэхүүн удахгүй энд гарна."
   },
+  "plp": {
+    "title": "Бүх бүтээгдэхүүн",
+    "productCount": "{count} бүтээгдэхүүн",
+    "filters": "Шүүлтүүр",
+    "filterCategory": "Ангилал",
+    "filterCollection": "Коллекц",
+    "filterPriceMin": "Хамгийн бага үнэ",
+    "filterPriceMax": "Хамгийн их үнэ",
+    "sortLabel": "Эрэмблэх",
+    "sortOptions": {
+      "newest": "Шинэ нь эхэнд",
+      "price-asc": "Үнэ: багаас их",
+      "price-desc": "Үнэ: ихээс бага",
+      "name-asc": "Нэр: А-Я"
+    },
+    "allCategories": "Бүх ангилал",
+    "allCollections": "Бүх коллекц",
+    "apply": "Шүүх",
+    "clearFilters": "Шүүлтүүрийг арилгах",
+    "priceFrom": "Эхлэх үнэ: {price}",
+    "soldOut": "Дууссан",
+    "emptyCatalog": "Дэлгүүрт одоогоор бүтээгдэхүүн байхгүй байна.",
+    "noMatchingFilters": "Таны шүүлтүүрт тохирох бүтээгдэхүүн олдсонгүй.",
+    "childCategories": "Дэд ангилалууд"
+  },
+  "pagination": {
+    "label": "Хуудаслах",
+    "previous": "Өмнөх",
+    "next": "Дараах"
+  },
   "errors": {
     "required": "Энэ талбарыг заавал бөглөнө үү.",
     "invalid": "Оруулсан утга буруу байна.",

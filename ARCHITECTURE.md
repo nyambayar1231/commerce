@@ -849,7 +849,9 @@ Mutations end with `refresh()`.
 - **Secrets**: the storefront container gets only `API_URL`, `STOREFRONT_URL`, `TRUST_PROXY`,
   `IMAGE_ORIGINS`, `PAYMENT_PROVIDERS` and `NODE_ENV`, never the API's `.env.prod` (database
   password, S3 keys, `SECRET_KEY`). `src/lib/env.ts` (server-only) validates them at boot and the
-  server refuses to start on a bad value.
+  server refuses to start on a bad value. `IMAGE_ORIGINS` must list the API's public origin (image
+  URLs point at its `/thumbnail/` endpoint until a size exists) and the media origin it redirects
+  to: CSP checks every hop. Development defaults to `http://localhost:4000,http://localhost:8333`.
 - **Headers**, set at runtime in `proxy.ts` on every document: a Content-Security-Policy
   (`default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';
   img-src 'self' data: <IMAGE_ORIGINS>; font-src 'self'; connect-src 'self'; frame-ancestors 'none';
@@ -876,6 +878,13 @@ Open Graph (`og:locale` `mn_MN`) with the product's
 MNT, availability) and `BreadcrumbList` on the PDP, `Organization` on home. `sitemap.ts` lists
 products, categories, collections and pages; `robots.ts` disallows cart, checkout,
 account, order, search and `/api/`.
+
+**Unknown slugs are soft 404s** (lead, 2026-11-24, M4.2): a product, category, collection or page
+slug is resolved in a data island after the prerendered shell has been sent, so the response is
+HTTP 200 with the Mongolian 404 page and `noindex` (Next's documented behaviour for a streamed
+`notFound()`; Googlebot gets the same). Search engines drop such pages; only the sitemap's URLs are
+canonical. A hard 404 would need the slug known before streaming (a proxy-level check); revisit
+in M4.10 if Search Console reports soft 404s.
 
 ### 10.15 Operations
 

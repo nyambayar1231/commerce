@@ -1,0 +1,106 @@
+# The storefront's catalog documents (ARCHITECTURE §10.6): the product card fragment used by
+# every listing, the listing query itself, and the slug/option lookups. Images request the
+# API's stored WebP thumbnails at the two sizes the card grid needs (§10.12).
+
+fragment ProductCard on Product {
+  id
+  name
+  slug
+  category {
+    name
+  }
+  small: thumbnail(size: 256, format: WEBP) {
+    url
+    alt
+  }
+  large: thumbnail(size: 512, format: WEBP) {
+    url
+  }
+  minimalVariantPrice {
+    amount
+    currency
+  }
+  variants {
+    id
+    price {
+      amount
+    }
+    quantityAvailable
+  }
+}
+
+query ProductListing(
+  $first: Int
+  $after: String
+  $last: Int
+  $before: String
+  $sortBy: ProductOrder
+  $where: ProductWhereInput
+) {
+  products(
+    first: $first
+    after: $after
+    last: $last
+    before: $before
+    sortBy: $sortBy
+    where: $where
+  ) {
+    totalCount
+    edges {
+      cursor
+      node {
+        ...ProductCard
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+
+query CategoryBySlug($slug: String!) {
+  category(slug: $slug) {
+    id
+    name
+    slug
+    children(first: 50) {
+      edges {
+        node {
+          name
+          slug
+        }
+      }
+    }
+  }
+}
+
+query CollectionBySlug($slug: String!) {
+  collection(slug: $slug) {
+    id
+    name
+    slug
+  }
+}
+
+query FilterOptions {
+  categories(first: 100) {
+    edges {
+      node {
+        name
+        slug
+        level
+      }
+    }
+  }
+  collections(first: 100) {
+    edges {
+      node {
+        name
+        slug
+      }
+    }
+  }
+}
