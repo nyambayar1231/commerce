@@ -81,11 +81,31 @@ export const parseCollectionListUrl = (search: URLSearchParams): CollectionListU
 
 export const collectionPath = (id: string): string => `${collectionSectionUrl}${id}`;
 
-export type CollectionUrlDialog = "remove";
+// Saleor's CollectionUrlDialog for the detail page: delete the collection, assign products from the
+// picker, or unassign the selected rows.
+export type CollectionUrlDialog = "assign" | "remove" | "unassign";
 
 export interface CollectionUrlQueryParams {
   action?: CollectionUrlDialog;
+  /** The rows the unassign dialog acts on (Saleor's `ids`). */
+  ids?: string[];
 }
 
 export const collectionUrl = (id: string, params?: CollectionUrlQueryParams): string =>
   `${collectionPath(encodeURIComponent(id))}?${query({ ...params })}`;
+
+const DETAIL_DIALOGS: CollectionUrlDialog[] = ["assign", "remove", "unassign"];
+
+/** The detail page's URL params, ignoring values that aren't valid (a hand-edited URL). */
+export const parseCollectionUrl = (search: URLSearchParams): CollectionUrlQueryParams => {
+  const params: CollectionUrlQueryParams = {};
+  const action = search.get("action");
+  const ids = search.get("ids");
+
+  if (action && (DETAIL_DIALOGS as string[]).includes(action)) {
+    params.action = action as CollectionUrlDialog;
+  }
+  if (ids) params.ids = ids.split(",").filter(Boolean);
+
+  return params;
+};

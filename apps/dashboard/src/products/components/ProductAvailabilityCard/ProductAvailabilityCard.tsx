@@ -3,14 +3,20 @@
 // See THIRD_PARTY_LICENSES.md
 // The publish card, reduced to our single channel: the Published toggle, the "since <date>" line
 // and the hidden-from-the-API note. No channel list, Manage button, availability-for-purchase,
-// listings visibility, scheduling or diagnostics.
+// listings visibility, scheduling or diagnostics. The collection page reuses it: it accepts any
+// entity's API errors (structurally) and can name that entity in the hidden note.
 import { Box, Text, Toggle } from "@saleor/macaw-ui";
 import { Eye, EyeOff, Info } from "lucide-react";
-import { defineMessage, defineMessages, type IntlShape, useIntl } from "react-intl";
+import {
+  defineMessage,
+  defineMessages,
+  type IntlShape,
+  type MessageDescriptor,
+  useIntl,
+} from "react-intl";
 
 import { DetailSettingsCard } from "../../../components/DetailSettingsCard/DetailSettingsCard";
 import { iconSize, iconStrokeWidthBySize } from "../../../components/icons";
-import type { ProductErrorFragment } from "../../../graphql/types.generated";
 import { getFormErrors, getProductErrorMessage } from "../../../utils/errors";
 
 const sinceDateMessage = defineMessage<{ date: string }>({
@@ -47,12 +53,24 @@ const messages = defineMessages({
   },
 });
 
+/** Any entity's API errors the card can show: a product's or a collection's. */
+export interface AvailabilityError {
+  field: string | null;
+  message: string;
+  code: string;
+}
+
 interface ProductAvailabilityCardProps {
   isPublished: boolean;
   publishedAt: unknown;
   disabled: boolean;
-  errors: ProductErrorFragment[];
+  errors: AvailabilityError[];
   onChange: (isPublished: boolean) => void;
+  /**
+   * The hidden note's last sentence; the collection page names the collection instead of a product
+   * (its own message, so the product page's text stays as it is).
+   */
+  hiddenDescription?: MessageDescriptor;
 }
 
 const formatPublishedAt = (intl: IntlShape, publishedAt: unknown): string | null => {
@@ -71,6 +89,7 @@ export const ProductAvailabilityCard = ({
   disabled,
   errors,
   onChange,
+  hiddenDescription = messages.publicApiReturnsNull,
 }: ProductAvailabilityCardProps) => {
   const intl = useIntl();
   const formErrors = getFormErrors(["isPublished"], errors);
@@ -116,7 +135,7 @@ export const ProductAvailabilityCard = ({
               <Text size={2} fontWeight="medium">
                 {intl.formatMessage(messages.notVisibleToCustomers)}
               </Text>{" "}
-              {intl.formatMessage(messages.publicApiReturnsNull)}
+              {intl.formatMessage(hiddenDescription)}
             </Text>
           </Box>
         )}

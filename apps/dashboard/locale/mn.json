@@ -31,6 +31,10 @@
     "context": "section header",
     "string": "Харилцагчийн мэдээлэл"
   },
+  "+wpvnk": {
+    "context": "dialog title",
+    "string": "Коллекц устгах"
+  },
   "/C//FB": {
     "context": "header, allocated product quantity",
     "string": "Хуваарилсан"
@@ -38,6 +42,14 @@
   "/Mcvt4": {
     "context": "section header",
     "string": "Медиа"
+  },
+  "/WXs6H": {
+    "context": "collection name",
+    "string": "Нэр"
+  },
+  "/dnWE8": {
+    "context": "products in collection",
+    "string": "{name} доторх бүтээгдэхүүнүүд"
   },
   "/jEC3m": {
     "context": "product media gallery dropzone hint",
@@ -144,9 +156,17 @@
   "3SVI5p": {
     "string": "Анхааруулга"
   },
+  "3TAa8s": {
+    "context": "TopNav destination link tooltip to collections list",
+    "string": "Бүх коллекц"
+  },
   "3zdm8A": {
     "context": "Dialog title",
     "string": "Гүйлгээ: {actionType}"
+  },
+  "45e+O4": {
+    "context": "Status label when object is scheduled to publish in a channel",
+    "string": "Товлогдсон"
   },
   "471aPf": {
     "context": "create product dialog description",
@@ -196,9 +216,16 @@
     "context": "product stock, section header",
     "string": "Нөөц"
   },
+  "515D7B": {
+    "context": "search placeholder",
+    "string": "Бүтээгдэхүүний нэрээр хайх..."
+  },
   "527G9G": {
     "context": "printed order",
     "string": "Хүргэлтийн арга"
+  },
+  "56vUeQ": {
+    "string": "Коллекцид бүтээгдэхүүнийг нэмсэн"
   },
   "577R2r": {
     "string": "Буруу утга"
@@ -209,6 +236,10 @@
   },
   "5ObBlW": {
     "string": "Бараан горим"
+  },
+  "5OtU+V": {
+    "context": "dialog title",
+    "string": "Коллекцоос бүтээгдэхүүн хасах"
   },
   "5ZYUn5": {
     "context": "Filter and element text",
@@ -232,6 +263,10 @@
   "65MiSm": {
     "context": "Save composition segment for customer name, email, and note",
     "string": "мэдээлэл"
+  },
+  "67V0c0": {
+    "context": "unassign product from collection, button",
+    "string": "Хасах"
   },
   "6AMFki": {
     "context": "product name",
@@ -400,6 +435,9 @@
     "context": "button",
     "string": "Нэвтрэх"
   },
+  "AulH/n": {
+    "string": "{counter,plural,one{Энэ бүтээгдэхүүнийг хасахдаа итгэлтэй байна уу?} other{{displayQuantity} бүтээгдэхүүнийг хасахдаа итгэлтэй байна уу?}}"
+  },
   "BC/h4y": {
     "context": "category detail sidebar children card intro",
     "string": "Дэд ангиллыг засахын тулд нээх, эсвэл энэ ангилалд шинэ дэд ангилал үүсгэнэ үү."
@@ -487,6 +525,9 @@
   "E1C9pp": {
     "context": "transaction event type, authorization amount was changed",
     "string": "Зөвшөөрлийн дүн өөрчлөгдсөн"
+  },
+  "E2uiWk": {
+    "string": "Коллекц шинэчлэгдлээ"
   },
   "EHRXv4": {
     "context": "product media detail page header",
@@ -841,6 +882,9 @@
   "Q8Qw5B": {
     "string": "Тайлбар"
   },
+  "Q8wHwJ": {
+    "string": "Коллекц устгагдлаа"
+  },
   "QDxJib": {
     "string": "Биелүүлэх"
   },
@@ -995,6 +1039,9 @@
   "WVbUh7": {
     "context": "printed order",
     "string": "Төлөв: {status}"
+  },
+  "WW+Ruy": {
+    "string": "Коллекцоос бүтээгдэхүүнийг устгасан"
   },
   "Wlc67M": {
     "context": "error message",
@@ -1340,6 +1387,10 @@
     "context": "Transaction event status - unknown status, info without event data",
     "string": "Мэдээлэл"
   },
+  "ijAoJZ": {
+    "context": "Save composition segment for collection name, slug, description, SEO",
+    "string": "ерөнхий"
+  },
   "j6dFO1": {
     "context": "product detail cogs menu, opens the delete-confirmation dialog",
     "string": "Бүтээгдэхүүн устгах"
@@ -1350,6 +1401,10 @@
   "jWTXmC": {
     "context": "selected media count badge in variant media selection dialog",
     "string": "{count, plural, one {# сонгосон} other {# сонгосон}}"
+  },
+  "juxCV3": {
+    "context": "dialog header",
+    "string": "Бүтээгдэхүүн нэмэх"
   },
   "jvlQkk": {
     "context": "aria-label, button expanding or collapsing a sidebar menu group",
@@ -1381,6 +1436,10 @@
   },
   "kgVqk1": {
     "string": "Ангиллын нэр"
+  },
+  "l+GuSi": {
+    "context": "assign product dialog, button",
+    "string": "Нэмэх"
   },
   "l1pZJx": {
     "string": "Бүрэн зөвшөөрөгдөөгүй"
@@ -1494,6 +1553,10 @@
   "oUWADl": {
     "string": "Үгүй"
   },
+  "oY/diq": {
+    "context": "Save composition segment for the collection's publish status",
+    "string": "боломжтой эсэх"
+  },
   "of/+iV": {
     "context": "transaction event type, refund was reversed, funds are back to store account",
     "string": "Буцаан олголт буцаагдсан"
@@ -1505,6 +1568,9 @@
   "p6ugX0": {
     "context": "button to keep order",
     "string": "Захиалгыг хэвээр үлдээх"
+  },
+  "pVFoOk": {
+    "string": "Та {collectionName} устгахдаа итгэлтэй байна уу?"
   },
   "phIGQ1": {
     "context": "Canceled transaction amount, data display header",
@@ -1563,6 +1629,9 @@
     "context": "transaction event type, amount was authorized, but not captured",
     "string": "Зөвшөөрөл"
   },
+  "qu/hXD": {
+    "string": "Сонгосон {number} зүйл"
+  },
   "r+8q4B": {
     "context": "error message",
     "string": "Зөвхөн ноорог захиалгыг засах боломжтой"
@@ -1610,6 +1679,10 @@
   "sK1FPw": {
     "context": "categories section name",
     "string": "Ангиллууд"
+  },
+  "scHVdW": {
+    "context": "button",
+    "string": "Бүтээгдэхүүн нэмэх"
   },
   "sdA14A": {
     "context": "Status label when object is published in a channel",
@@ -1694,6 +1767,10 @@
     "context": "column picker section header",
     "string": "Багана"
   },
+  "uvVmpA": {
+    "context": "collection detail cogs menu, opens the delete-confirmation dialog",
+    "string": "Коллекц устгах"
+  },
   "uwk5e9": {
     "context": "bulk delete button",
     "string": "Бүтээгдэхүүнүүдийг устгах"
@@ -1743,6 +1820,10 @@
   "wVjyOX": {
     "string": "Бүрэн зөвшөөрөгдсөн"
   },
+  "wWELJW": {
+    "context": "search results",
+    "string": "Бүтээгдэхүүн олдсонгүй"
+  },
   "we4Lby": {
     "string": "Мэдээлэл"
   },
@@ -1764,6 +1845,10 @@
   "x1k81A": {
     "context": "order history message",
     "string": "Бараа биелүүлэгдсэн"
+  },
+  "x44H53": {
+    "context": "unassign a product from the collection, row button tooltip",
+    "string": "Бүтээгдэхүүн хасах"
   },
   "xEyXOV": {
     "context": "pagination next page button aria label",
@@ -1800,6 +1885,10 @@
   "xzqW+K": {
     "context": "Add condition button on the list filter panel",
     "string": "Нөхцөл нэмэх"
+  },
+  "yAIhgA": {
+    "context": "Info box description for unpublished collections",
+    "string": "Харилцагчид энэ коллекцийг хайж олох, харах боломжгүй."
   },
   "yDkmX7": {
     "context": "dialog content",

@@ -31,6 +31,10 @@
     "context": "section header",
     "string": "Customer details"
   },
+  "+wpvnk": {
+    "context": "dialog title",
+    "string": "Delete Collection"
+  },
   "/C//FB": {
     "context": "header, allocated product quantity",
     "string": "Allocated"
@@ -38,6 +42,14 @@
   "/Mcvt4": {
     "context": "section header",
     "string": "Media"
+  },
+  "/WXs6H": {
+    "context": "collection name",
+    "string": "Name"
+  },
+  "/dnWE8": {
+    "context": "products in collection",
+    "string": "Products in {name}"
   },
   "/jEC3m": {
     "context": "product media gallery dropzone hint",
@@ -145,9 +157,17 @@
   "3SVI5p": {
     "string": "Warning"
   },
+  "3TAa8s": {
+    "context": "TopNav destination link tooltip to collections list",
+    "string": "All collections"
+  },
   "3zdm8A": {
     "context": "Dialog title",
     "string": "Transaction {actionType}"
+  },
+  "45e+O4": {
+    "context": "Status label when object is scheduled to publish in a channel",
+    "string": "Scheduled"
   },
   "471aPf": {
     "context": "create product dialog description",
@@ -197,9 +217,16 @@
     "context": "product stock, section header",
     "string": "Inventory"
   },
+  "515D7B": {
+    "context": "search placeholder",
+    "string": "Search by product name..."
+  },
   "527G9G": {
     "context": "printed order",
     "string": "Shipping method"
+  },
+  "56vUeQ": {
+    "string": "Added product to collection"
   },
   "577R2r": {
     "string": "Invalid value"
@@ -210,6 +237,10 @@
   },
   "5ObBlW": {
     "string": "Dark Mode"
+  },
+  "5OtU+V": {
+    "context": "dialog title",
+    "string": "Unassign products from collection"
   },
   "5ZYUn5": {
     "context": "Filter and element text",
@@ -233,6 +264,10 @@
   "65MiSm": {
     "context": "Save composition segment for customer name, email, and note",
     "string": "details"
+  },
+  "67V0c0": {
+    "context": "unassign product from collection, button",
+    "string": "Unassign"
   },
   "6AMFki": {
     "context": "product name",
@@ -401,6 +436,9 @@
     "context": "button",
     "string": "Sign in"
   },
+  "AulH/n": {
+    "string": "{counter,plural,one{Are you sure you want to unassign this product?} other{Are you sure you want to unassign {displayQuantity} products?}}"
+  },
   "BC/h4y": {
     "context": "category detail sidebar children card intro",
     "string": "Open a child to edit it, or create a new subcategory under this one."
@@ -488,6 +526,9 @@
   "E1C9pp": {
     "context": "transaction event type, authorization amount was changed",
     "string": "Authorization amount adjusted"
+  },
+  "E2uiWk": {
+    "string": "Collection updated"
   },
   "EHRXv4": {
     "context": "product media detail page header",
@@ -842,6 +883,9 @@
   "Q8Qw5B": {
     "string": "Description"
   },
+  "Q8wHwJ": {
+    "string": "Deleted collection"
+  },
   "QDxJib": {
     "string": "Fulfill"
   },
@@ -997,6 +1041,9 @@
   "WVbUh7": {
     "context": "printed order",
     "string": "Status: {status}"
+  },
+  "WW+Ruy": {
+    "string": "Deleted product from collection"
   },
   "Wlc67M": {
     "context": "error message",
@@ -1342,6 +1389,10 @@
     "context": "Transaction event status - unknown status, info without event data",
     "string": "Info"
   },
+  "ijAoJZ": {
+    "context": "Save composition segment for collection name, slug, description, SEO",
+    "string": "general"
+  },
   "j6dFO1": {
     "context": "product detail cogs menu, opens the delete-confirmation dialog",
     "string": "Delete product"
@@ -1352,6 +1403,10 @@
   "jWTXmC": {
     "context": "selected media count badge in variant media selection dialog",
     "string": "{count, plural, one {# selected} other {# selected}}"
+  },
+  "juxCV3": {
+    "context": "dialog header",
+    "string": "Assign product"
   },
   "jvlQkk": {
     "context": "aria-label, button expanding or collapsing a sidebar menu group",
@@ -1383,6 +1438,10 @@
   },
   "kgVqk1": {
     "string": "Category name"
+  },
+  "l+GuSi": {
+    "context": "assign product dialog, button",
+    "string": "Assign"
   },
   "l1pZJx": {
     "string": "Not fully authorised"
@@ -1498,6 +1557,10 @@
   "oUWADl": {
     "string": "No"
   },
+  "oY/diq": {
+    "context": "Save composition segment for the collection's publish status",
+    "string": "availability"
+  },
   "of/+iV": {
     "context": "transaction event type, refund was reversed, funds are back to store account",
     "string": "Refund reversed"
@@ -1509,6 +1572,9 @@
   "p6ugX0": {
     "context": "button to keep order",
     "string": "Keep order"
+  },
+  "pVFoOk": {
+    "string": "Are you sure you want to delete {collectionName}?"
   },
   "phIGQ1": {
     "context": "Canceled transaction amount, data display header",
@@ -1567,6 +1633,9 @@
     "context": "transaction event type, amount was authorized, but not captured",
     "string": "Authorization"
   },
+  "qu/hXD": {
+    "string": "Selected {number} items"
+  },
   "r+8q4B": {
     "context": "error message",
     "string": "Only draft orders can be edited"
@@ -1615,6 +1684,10 @@
   "sK1FPw": {
     "context": "categories section name",
     "string": "Categories"
+  },
+  "scHVdW": {
+    "context": "button",
+    "string": "Assign product"
   },
   "sdA14A": {
     "context": "Status label when object is published in a channel",
@@ -1700,6 +1773,10 @@
     "context": "column picker section header",
     "string": "Columns"
   },
+  "uvVmpA": {
+    "context": "collection detail cogs menu, opens the delete-confirmation dialog",
+    "string": "Delete collection"
+  },
   "uwk5e9": {
     "context": "bulk delete button",
     "string": "Delete products"
@@ -1749,6 +1826,10 @@
   "wVjyOX": {
     "string": "Fully authorised"
   },
+  "wWELJW": {
+    "context": "search results",
+    "string": "No products found"
+  },
   "we4Lby": {
     "string": "Info"
   },
@@ -1770,6 +1851,10 @@
   "x1k81A": {
     "context": "order history message",
     "string": "Items were fulfilled"
+  },
+  "x44H53": {
+    "context": "unassign a product from the collection, row button tooltip",
+    "string": "Unassign product"
   },
   "xEyXOV": {
     "context": "pagination next page button aria label",
@@ -1806,6 +1891,10 @@
   "xzqW+K": {
     "context": "Add condition button on the list filter panel",
     "string": "Add condition"
+  },
+  "yAIhgA": {
+    "context": "Info box description for unpublished collections",
+    "string": "Customers cannot find or view this collection."
   },
   "yDkmX7": {
     "context": "dialog content",

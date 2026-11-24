@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { collectionListUrl, collectionPath, collectionUrl, parseCollectionListUrl } from "./urls";
+import {
+  collectionListUrl,
+  collectionPath,
+  collectionUrl,
+  parseCollectionListUrl,
+  parseCollectionUrl,
+} from "./urls";
 
 describe("collection urls", () => {
   it("builds the list URL with Saleor's trailing '?' and its params", () => {
@@ -52,5 +58,25 @@ describe("collection urls", () => {
         new URLSearchParams("sort=price&asc=maybe&action=nuke&status=all&after=a&before=b&query="),
       ),
     ).toEqual({ after: "a" });
+  });
+});
+
+describe("collection detail urls", () => {
+  it("builds the detail URL with the open dialog and the selected rows", () => {
+    expect(collectionUrl("a", { action: "assign" })).toBe("/collections/a?action=assign");
+    expect(collectionUrl("a", { action: "unassign", ids: ["b", "c"] })).toBe(
+      "/collections/a?action=unassign&ids=b%2Cc",
+    );
+  });
+
+  it("parses the detail params, round-tripping what it builds", () => {
+    const url = new URL(collectionUrl("a", { action: "unassign", ids: ["b", "c"] }), "http://x");
+
+    expect(parseCollectionUrl(url.searchParams)).toEqual({ action: "unassign", ids: ["b", "c"] });
+  });
+
+  it("drops a dialog the page doesn't know", () => {
+    expect(parseCollectionUrl(new URLSearchParams("action=nuke"))).toEqual({});
+    expect(parseCollectionUrl(new URLSearchParams(""))).toEqual({});
   });
 });
