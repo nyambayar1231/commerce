@@ -112,5 +112,11 @@ replaces the matching sentence above.
 8. **Runtime configuration only.** No `NEXT_PUBLIC_*` variables; security headers (CSP) are set
    in `proxy.ts` at request time. One image runs in every environment, and the storefront container
    gets only its own five variables, never the API's secrets.
-9. **Checkout path.** The checkout is `/{locale}/checkout?step=…` in its own route group with
-   minimal chrome (Paper's separate checkout surface, but localized), next to `/{locale}/order/{token}`.
+9. **Checkout path.** The checkout is `/checkout?step=…` in its own route group with minimal
+   chrome (Paper's separate checkout surface), next to `/order/{token}`.
+10. **Mongolian only** (owner decision, 2026-11-24, made during M4.1a). It replaces the owner's
+    2026-11-19 decision on URLs and locales and the "Routing and strings" paragraph above: no
+    `/{locale}` segment and no language switcher; URLs are `/`, `/products/…`, `/checkout`. UI
+    strings stay in one file, `messages/mn.json`, read through next-intl without i18n routing, so
+    components never hold text and another language could be added later. `<html lang="mn">`, no
+    `hreflang` alternates, money and dates formatted for `mn-MN`.

@@ -606,16 +606,17 @@ Mirrors Paper's folders so an adapted file sits where its source sits.
 
 ```
 apps/storefront/
-  messages/{mn,en}.json          UI strings (next-intl); en is the key reference
+  messages/mn.json               UI strings (next-intl, one locale)
   codegen.ts                     client preset, documentMode "string" → src/gql/ (generated, committed)
   next.config.ts                 cacheComponents, cacheLife profiles, standalone output, root .env
   src/
-    proxy.ts                     next-intl locale routing + security headers (Next 16's middleware)
+    proxy.ts                     security headers (Next 16's middleware)
     instrumentation.ts           validates env at boot; onRequestError → log
     app/
-      [locale]/layout.tsx        <html lang>, fonts, NextIntlClientProvider
-      [locale]/(main)/…          browse, cart, auth, account: header + footer chrome
-      [locale]/(checkout)/…      checkout and order pages: minimal chrome (Paper's checkout surface)
+      layout.tsx                 <html lang="mn">, fonts, NextIntlClientProvider
+      (main)/…                   browse, cart, auth, account: header + footer chrome
+      (checkout)/…               checkout and order pages: minimal chrome (Paper's checkout surface)
+      not-found.tsx              unmatched URLs: the 404 inside the browse chrome
       api/health/route.ts        liveness for the container health check
       robots.ts, sitemap.ts, global-error.tsx
     graphql/*.graphql            every document the storefront sends
@@ -627,7 +628,7 @@ apps/storefront/
       env.ts client-ip.ts format.ts log.ts seo.ts safe-redirect.ts
     checkout/                    step flow, Server Actions, payment provider registry, step sections
     ui/atoms/ ui/components/{ui,shared,nav,plp,pdp,cart,auth,account}   presentational (Paper)
-    i18n/{routing,request,navigation}.ts
+    i18n/{config,request}.ts
     styles/brand.css             Paper's design tokens
 ```
 
@@ -644,8 +645,7 @@ Rules (Biome `noRestrictedImports` where it can express them, review otherwise):
 
 ### 10.4 Routes
 
-All pages live under `/{locale}` (`mn` default, `en`). `/` redirects to `/mn`; an unknown locale
-is a 404. Rendering: **S** = prerendered shell with cached data, **S+I** = shell plus dynamic islands
+The storefront is in Mongolian only (owner, 2026-11-24), so URLs have no locale segment. Rendering: **S** = prerendered shell with cached data, **S+I** = shell plus dynamic islands
 (Suspense), **D** = dynamic (cookies or per-request data), `noindex` where marked.
 
 | URL | Data | Rendering |
@@ -663,7 +663,7 @@ is a 404. Rendering: **S** = prerendered shell with cached data, **S+I** = shell
 
 Header and footer (menus `navbar` and `footer`, shop name) are cached; the user menu and the cart
 button are dynamic islands inside them. Every route has a `loading` state sized like its content, and
-`[locale]/not-found.tsx` and `error.tsx` are translated.
+`not-found.tsx` (unmatched URLs and `notFound()`) and `error.tsx` are in Mongolian.
 
 ### 10.5 Data kernel (`src/lib/api/`)
 
@@ -703,7 +703,7 @@ Every API call goes through one of three functions. Paper has the same kernel
 - `cacheComponents: true` (Partial Prerendering). Pages are synchronous shells; anything that
   reads `cookies()`, `headers()` or `searchParams` lives in its own `<Suspense>` island with a
   sized skeleton (Paper's `data-caching.md` page-boundary model). `"use cache"` functions never
-  read request data: they take explicit, normalized arguments, including `locale`.
+  read request data: they take explicit, normalized arguments.
 - **Profile** (`next.config.ts` `cacheLife`): `catalog` = stale 60 s, revalidate 120 s, expire
   1 day (ADR-0015). Staff edits appear within about two minutes.
 - **Tags** (one builder in `src/lib/api/cache.ts`): `products`, `product:<slug>`,
@@ -742,9 +742,9 @@ against the host, which is our CSRF protection):
   becomes the cookie's checkout. A checkout that can't be attached is dropped.
 - **Logout**: `logout` mutation, then clear both cookies (the cart stays on the account for the next
   login, and the next person on a shared device starts empty). Hard navigation to home.
-- **Register** → `accountRegister` with `redirectUrl = STOREFRONT_URL/{locale}/confirm-account`;
-  **reset** → `requestPasswordReset` with `…/{locale}/set-password`; the email links land in the
-  shopper's language. Uniform success messages (the API does not reveal whether an email exists).
+- **Register** → `accountRegister` with `redirectUrl = STOREFRONT_URL/confirm-account`;
+  **reset** → `requestPasswordReset` with `STOREFRONT_URL/set-password`. Uniform success messages
+  (the API does not reveal whether an email exists).
   `confirm-account` and `set-password` read `email` and `token` from the link and call
   `confirmAccount` / `setPassword`; a successful `setPassword` signs the customer in.
 - **Who is signed in**: `getCurrentUser()` (React `cache`, `sessionQuery` `me`) returns
@@ -752,7 +752,7 @@ against the host, which is our CSRF protection):
   user were logged out. A cookie whose session the API no longer knows reads as `guest`; the next
   action that notices clears it.
 - **Redirect safety** (`src/lib/safe-redirect.ts`, Paper's `data-redirect-security.md`): `next`
-  must be a relative path that starts with `/{locale}/`; `//…`, `/\…`, schemes and anything else
+  must be a relative path that starts with a single `/`; `//…`, `/\…`, schemes and anything else
   fall back to the account page. URLs sent to the API are built only from `STOREFRONT_URL`, never
   from `Host`, `Origin` or `X-Forwarded-*`.
 - The account area uses Paper's layout-shell gate: `account/layout.tsx` → Suspense →
@@ -788,7 +788,7 @@ against the host, which is our CSRF protection):
   `transactionInitialize` with `idempotencyKey` = the attempt id rendered into the form (a
   double-submit or retry reuses it, and the API returns the first result) and gateway data built on
   the server → `checkoutComplete` (idempotent in the API) → clear the checkout cookie → redirect to
-  `/{locale}/order/{order.token}`. `INSUFFICIENT_STOCK` and price changes are shown on the payment
+  `/order/{order.token}`. `INSUFFICIENT_STOCK` and price changes are shown on the payment
   step with a link back to the cart (§13).
 - **Order page** `/order/[token]`: `orderByToken`, uncached and `noindex`; the random token is the
   credential (ARCHITECTURE §4, M15.3). Paper's order-confirmation view.
@@ -802,19 +802,19 @@ order detail at `/account/orders/[id]` through `order(id)` with the OWNER permis
 timeline is derived from the order's dates, fulfillments and status, not from staff-only events.
 Mutations end with `refresh()`.
 
-### 10.11 Locales, strings and formatting
+### 10.11 Language, strings and formatting
 
-- next-intl 4: `src/i18n/routing.ts` (`locales: ["mn", "en"]`, `defaultLocale: "mn"`,
-  `localePrefix: "always"`, no Accept-Language detection, as ADR-0015), `navigation.ts` (locale-aware
-  `Link`, `redirect`, `useRouter`), `request.ts`. Layouts and pages call `setRequestLocale`; cached
-  functions get `locale` as an argument.
-- Every UI string is a key in `messages/en.json` and `messages/mn.json`, namespaced by area. Each
-  step adds its keys to both files (Mongolian may be a first draft, reviewed in M4.9). Message keys
-  are type-checked against `en.json`, and a unit test fails if the two files' keys differ.
+- **Mongolian only** (owner, 2026-11-24; replaces the `mn`/`en` URLs of 2026-11-19): no locale
+  segment, no language switcher, `<html lang="mn">`. next-intl 4 runs without i18n routing:
+  `src/i18n/config.ts` (`LOCALE = "mn"`, `TIME_ZONE = "Asia/Ulaanbaatar"`) and `request.ts`. Links
+  are plain `next/link`.
+- Every UI string is a key in `messages/mn.json`, namespaced by area; no component has hard-coded
+  text, so another language could be added later without touching components. Keys are
+  type-checked against `mn.json`. M4.9 is the owner's review of the Mongolian copy.
 - Catalog content (names, descriptions, pages, menus) is shown as entered; the API has no
   translations.
-- `src/lib/format.ts`: `formatMoney(money, locale)` with `Intl.NumberFormat` (`mn-MN` / `en-US`,
-  `currencyDisplay: "narrowSymbol"` so both show ₮, currency digits from `CURRENCIES`), dates with
+- `src/lib/format.ts`: `formatMoney(money)` with `Intl.NumberFormat("mn-MN")` (`currencyDisplay:
+  "narrowSymbol"`, so ₮, currency digits from `CURRENCIES`), dates with
   time zone `Asia/Ulaanbaatar`. Nowhere else formats. Formatting runs on the server only; client
   components get formatted strings, so a browser's ICU data can't cause a hydration mismatch.
 
@@ -863,10 +863,10 @@ Mutations end with `refresh()`.
 
 `generateMetadata` on every route: title template `%s | <shop name>`, a description (plain text
 from the first EditorJS paragraph, 160 characters), canonical URL from `STOREFRONT_URL`,
-`alternates.languages` for `mn`, `en` and `x-default` (→ `mn`), Open Graph with the product's
+Open Graph (`og:locale` `mn_MN`) with the product's
 1024 px thumbnail (a static default elsewhere; no generated OG images). JSON-LD `Product` (offers in
 MNT, availability) and `BreadcrumbList` on the PDP, `Organization` on home. `sitemap.ts` lists
-products, categories, collections and pages in both locales; `robots.ts` disallows cart, checkout,
+products, categories, collections and pages; `robots.ts` disallows cart, checkout,
 account, order, search and `/api/`.
 
 ### 10.15 Operations
@@ -874,7 +874,7 @@ account, order, search and `/api/`.
 - **Health**: `GET /api/health` → 200 (liveness only; the API has its own readiness).
 - **Logs**: JSON lines on stdout (`src/lib/log.ts`, no dependency): API failures from the kernel,
   Server Action failures with their request id, and Next's `onRequestError`. No PII, no variables.
-- **Errors**: `[locale]/error.tsx` (retry button), `global-error.tsx`, translated 404s; error
+- **Errors**: `error.tsx` (retry button), `global-error.tsx`, Mongolian 404s; error
   pages never show stack traces or API messages.
 - **Deployment** (M4.12): `output: "standalone"` image (`Dockerfile` target `storefront`, built for
   the instance's arm64), a `storefront` Compose service on the existing t4g.small with a memory
@@ -886,10 +886,10 @@ account, order, search and `/api/`.
 
 | Layer | What |
 |---|---|
-| Unit (Vitest, node) | kernel results and errors, `Set-Cookie` parsing, client IP, safe redirects, checkout flow, listing param normalization, money and date formatting, EditorJS rendering and sanitizing, message key parity |
+| Unit (Vitest, node) | kernel results and errors, `Set-Cookie` parsing, client IP, safe redirects, checkout flow, listing param normalization, money and date formatting, EditorJS rendering and sanitizing |
 | Components (Vitest + Testing Library, jsdom) | forms' error states, cart quantity control, buy box variant selection |
 | Contract | `pnpm codegen` validates every document against the schema (CI drift check); the cookie parser's test uses the exact format of the API's `sessionCookie()` |
-| End-to-end (Playwright, `e2e/`, M4.11) | a guest buys; a customer registers, confirms by the Mailpit email, buys and sees the order; locale switch; axe on each page of those paths |
+| End-to-end (Playwright, `e2e/`, M4.11) | a guest buys; a customer registers, confirms by the Mailpit email, buys and sees the order; axe on each page of those paths |
 | Performance (M4.10) | Lighthouse on mobile: ≥ 90 performance and accessibility on PLP and PDP against a production build |
 
 ### 10.17 Performance budget
@@ -902,8 +902,8 @@ catalog pages; fonts preloaded with `display: swap`.
 
 | Paper | Here | Why |
 |---|---|---|
-| `/{locale}/{channel}/…`, channel picker | `/{locale}/…` | One channel (ADR-0005) |
-| `/checkout` and `/order/{hmac}` outside the locale, own checkout i18n | `/{locale}/checkout`, `/{locale}/order/{token}`, one next-intl catalog | Checkout in Mongolian with one string system; the order token is already random (M15.3) |
+| `/{locale}/{channel}/…`, channel and language pickers | `/…`, Mongolian only | One channel (ADR-0005), one language (owner, 2026-11-24) |
+| `/checkout` and `/order/{hmac}`, own checkout i18n | `/checkout`, `/order/{token}`, one message file | One string system; the order token is already random (M15.3) |
 | `/api/auth/*` route handlers, JWT cookies, refresh tokens | Server Actions, one opaque session token | ADR-0006 sessions; actions get Next's Origin check for free |
 | Kernel with operation registry, app token, data lock files | three functions, no app token | We have no app token; the boundary rule and review replace the lock files |
 | `next/image` over Saleor thumbnails | `<img srcset>` of the API's stored thumbnails | No optimizer CPU or cache on a 2 GB host; thumbnails are already resized and stored |

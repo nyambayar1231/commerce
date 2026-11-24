@@ -1,8 +1,9 @@
-# Production images (PLAN M9.6). Two targets, built from the repository root:
+# Production images (PLAN M9.6, M4.1a). Three targets, built from the repository root:
 #   docker build --target api -t commerce-api .   # the API; the worker is the same image with
 #                                                  # `node apps/api/src/worker.ts` as its command
 #   docker build --target web -t commerce-web .   # nginx: the built dashboard + a proxy to the API
-# docker-compose.prod.yml builds and runs both; docs/deploy.md explains the setup.
+#   docker build --target storefront -t commerce-storefront .   # the Next.js storefront (standalone)
+# docker-compose.prod.yml builds and runs the first two; docs/deploy.md explains the setup.
 
 # Node runs our TypeScript sources directly (type stripping, Node 22.18+), as in development, so the
 # API has no build step. The sources must stay outside node_modules (Node refuses to strip types
@@ -54,3 +55,24 @@ EXPOSE 4000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||4000)+'/health/live').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
 CMD ["node", "apps/api/src/server.ts"]
+
+# --- storefront: built with Next.js (standalone output), runs on plain Node ----------------------
+# No NEXT_PUBLIC_* values: the image reads API_URL, STOREFRONT_URL, ... at runtime (ARCHITECTURE §10).
+FROM manifests AS storefront-build
+RUN pnpm install --frozen-lockfile --filter "@commerce/storefront..."
+COPY packages/tsconfig packages/tsconfig
+COPY packages/contracts packages/contracts
+COPY apps/storefront apps/storefront
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN pnpm --filter @commerce/storefront build
+
+FROM base AS storefront
+ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1
+# The standalone tree keeps the monorepo layout (outputFileTracingRoot), hence apps/storefront/.
+COPY --from=storefront-build /app/apps/storefront/.next/standalone ./
+COPY --from=storefront-build /app/apps/storefront/.next/static apps/storefront/.next/static
+USER node
+EXPOSE 3000
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+CMD ["node", "apps/storefront/server.js"]

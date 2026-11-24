@@ -1,0 +1,73 @@
+/* Adapted from saleor-storefront: src/app/globals.css (FSL-1.1-ALv2, Copyright 2026 Saleor Commerce) */
+/* See THIRD_PARTY_LICENSES.md */
+/* Tokens (src/styles/brand.css) are imported by the root layout, before this file. */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    /* Tokens are bare channels — wrap in oklch() to use as a color (see brand.css). */
+    border-color: oklch(var(--border));
+  }
+  body {
+    background-color: oklch(var(--background));
+    color: oklch(var(--foreground));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Canonical page-width containers — bundle centering + responsive gutters + a width token,
+ * so the `mx-auto max-w-7xl px-4 sm:px-6 lg:px-8` incantation lives in ONE place.
+ * Optional and additive: plain Tailwind (`mx-auto max-w-7xl px-4 …`) still works everywhere.
+ * Width is a design choice — `container-full` is a first-class option, not a hack. */
+@layer components {
+  .container-prose,
+  .container-content,
+  .container-wide,
+  .container-super-wide,
+  .container-full,
+  .container-nav {
+    @apply mx-auto w-full px-4 sm:px-6 lg:px-8;
+  }
+  .container-prose {
+    max-width: var(--container-prose);
+  }
+  .container-content {
+    max-width: var(--container-content);
+  }
+  .container-wide {
+    max-width: var(--container-wide);
+  }
+  .container-super-wide {
+    max-width: var(--container-super-wide);
+  }
+  .container-full {
+    max-width: var(--container-full);
+  }
+  /* Header/nav column — width driven by --container-nav (see brand.css). */
+  .container-nav {
+    max-width: var(--container-nav);
+  }
+
+  /* Merchandising badge — explicit class so color survives global border reset + JIT cache.
+	 * Tokens are bare channels, so wrap in oklch() (see brand.css). */
+  .badge-bestseller {
+    color: oklch(var(--bestseller));
+    border-color: oklch(var(--bestseller));
+  }
+}
+
+/* Semantic heading tokens use --font-display (Geist). */
+@layer utilities {
+  .text-display,
+  .text-h1,
+  .text-h2,
+  .text-h3 {
+    font-family: var(--font-display);
+  }
+}

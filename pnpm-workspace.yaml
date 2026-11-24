@@ -7,8 +7,12 @@ packages:
   - "infra/aws"
 
 # pnpm blocks dependency install scripts by default. esbuild (used by drizzle-kit) needs its
-# script to install the native binary for this platform.
+# script to install the native binary for this platform. next-intl (storefront) brings @swc/core and
+# @parcel/watcher for its message extractor, which we don't use; both ship prebuilt binaries as
+# optional dependencies, so their scripts stay blocked.
 allowBuilds:
+  "@parcel/watcher": false
+  "@swc/core": false
   esbuild: true
 
 # packages/db lists `pg` and `@opentelemetry/api` as devDependencies only so that its drizzle-orm

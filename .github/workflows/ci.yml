@@ -77,3 +77,4 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build --target api -t commerce-api .
       - run: docker build --target web -t commerce-web .
+      - run: docker build --target storefront -t commerce-storefront .

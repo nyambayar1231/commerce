@@ -33,6 +33,13 @@
       "quoteStyle": "double"
     }
   },
+  "overrides": [
+    {
+      "includes": ["apps/storefront/**/*.css"],
+      "css": { "parser": { "tailwindDirectives": true } },
+      "linter": { "rules": { "suspicious": { "noUnknownAtRules": "off" } } }
+    }
+  ],
   "assist": {
     "enabled": true,
     "actions": {

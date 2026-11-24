@@ -442,6 +442,7 @@ not block). **Plan approved by the owner on 2026-11-19**, including the AI team 
    menus and pages. **Not built:** attributes. The PDP uses Paper's non-matrix buy box (a variant
    list), and listing filters are category, collection, price and sort.
 3. **URLs and locales:** `/{locale}/…` with `mn` (default) and `en`; no channel segment
+   (**changed by the owner on 2026-11-24: Mongolian only, no locale segment**, ADR-0015 amendment 10)
    (ADR-0005). UI strings use next-intl (`messages/{mn,en}.json`); catalog content is not
    translated.
 4. **Payments:** the dummy gateway now, behind a small payment-provider registry like Paper's.
@@ -477,12 +478,12 @@ The lead (Claude Code, Opus) owns architecture, ADRs, dependencies, briefs, the 
 
 Architecture: ARCHITECTURE §10 and ADR-0015 with its 2026-11-24 amendment, approved by the owner on
 2026-11-24. Each step adapts the named Paper files and adds its own
-strings to `messages/en.json` and `messages/mn.json`, its route metadata (title, description,
+strings to `messages/mn.json` (the storefront is Mongolian only, owner 2026-11-24), its route metadata (title, description,
 canonical, `noindex` where §10.4 says) and its tests. The implementer is in brackets.
 
 | Step | What | Needs | Status |
 |---|---|---|---|
-| M4.1a | App skeleton [Sonnet]: Next 16 + React 19, Paper's `brand.css`, Tailwind config and fonts (Mongolian Cyrillic checked), next-intl routing in `proxy.ts` with the security headers, `[locale]` root layout and the `(main)` / `(checkout)` group layouts with header and footer frames, translated 404 and error pages, `global-error`, `env.ts` + `instrumentation.ts`, `/api/health`, `log.ts`, Vitest, root-`.env` loading, Turbo/CI wiring, `Dockerfile` target `storefront` | — | In progress |
+| M4.1a | App skeleton [Sonnet]: Next 16 + React 19, Paper's `brand.css`, Tailwind config and fonts (Mongolian Cyrillic checked), next-intl with one locale (`mn`), security headers in `proxy.ts`, root layout and the `(main)` / `(checkout)` group layouts with header and footer frames, Mongolian 404 and error pages, `global-error`, `env.ts` + `instrumentation.ts`, `/api/health`, `log.ts`, Vitest, root-`.env` loading, Turbo/CI wiring, `Dockerfile` target `storefront` | — | Done |
 | M4.1b | Data kernel and codegen [Sonnet]: `src/lib/api` (`cachedQuery`, `sessionQuery`, `mutate`, `mutateWithResponse`; errors, timeout, retry, client IP, request id, logging), `cacheLife`/tag builder, codegen to `src/gql`, `format.ts` (money, dates), the shop name in the header as the first cached query, Biome import boundaries | M4.1a | Draft |
 | M4.2 | Catalog listing [GLM-5.3]: `ProductImage` atom, price, product card and grid, `/products`, `/categories/[slug]`, `/collections/[slug]`, filter bar (category, collection, price, sort), cursor pagination, skeletons (`src/ui/components/plp/`) | M4.1b | Draft |
 | M4.3 | Product page [GLM-5.3]: gallery and viewer, non-matrix buy box (`?variant=`), stock state, breadcrumbs, EditorJS renderer with sanitizer, JSON-LD (`src/ui/components/pdp/`); add-to-cart button present but not wired | M4.2 | Draft |
@@ -491,9 +492,9 @@ canonical, `noindex` where §10.4 says) and its tests. The implementer is in bra
 | M4.6 | Checkout [Sonnet logic, GLM-5.3 sections]: `flow.ts`, contact / shipping (Mongolian address form, saved addresses, delivery method) / payment (billing, provider registry with `dummy`), `placeOrder` with idempotency, `/order/[token]` (`src/checkout/`) | M4.5, M4.7 | Draft |
 | M4.7 | Auth [Sonnet]: session cookie, login (staff refused, cart merge), logout, sign-up, confirm account, reset and set password, `getCurrentUser`, safe redirects, user menu, client-IP forwarding proven against the API (`src/lib/auth/`, `src/ui/components/auth/`) | M4.1b | Draft |
 | M4.8 | Account [GLM-5.3]: auth-gated layout, overview, orders list and detail with timeline, addresses, settings (name, password) (`src/ui/components/account/`) | M4.7 | Draft |
-| M4.9 | Translations [Haiku]: audit for hard-coded strings, complete the Mongolian drafts, list them for the owner's review, `hreflang` alternates checked on every route | M4.2–M4.8 | Draft |
+| M4.9 | Mongolian copy [Haiku]: audit for hard-coded strings, consistent terms across `messages/mn.json`, a list of every string for the owner's review | M4.2–M4.8 | Draft |
 | M4.10 | SEO and performance [Haiku, Sonnet if it needs code changes]: `sitemap.ts`, `robots.ts`, metadata and JSON-LD audit, Lighthouse on mobile ≥ 90 performance and accessibility on PLP and PDP | M4.2–M4.4 | Draft |
-| M4.11 | QA [Sonnet]: Playwright golden paths (a guest buys; a customer registers, confirms by email, buys and sees the order; locale switch), axe on those pages, CI job; the lead compares screenshots side by side with Paper | M4.6, M4.8 | Draft |
+| M4.11 | QA [Sonnet]: Playwright golden paths (a guest buys; a customer registers, confirms by email, buys and sees the order), axe on those pages, CI job; the lead compares screenshots side by side with Paper | M4.6, M4.8 | Draft |
 | M4.12 | Deploy [Sonnet + lead]: arm64 standalone image, `storefront` Compose service (own env only, memory limit, health check), Caddy site block for `dino-craft.lol` and `www.`, Route 53 records (CDK), `ALLOWED_CLIENT_HOSTS`, deploy workflow, `docs/deploy.md` | M4.11 | Draft |
 
 **Order and parallel lanes** (at most two implementers, file lists that don't overlap):
@@ -509,9 +510,9 @@ M4.1a → M4.1b, then a UI lane (GLM: M4.2 → M4.3 → M4.4 → M4.8 → M4.6 s
 
 **API follow-ups found while designing M4** (not in M4; each is a small API step if approved):
 throttle `requestPasswordReset` and `accountRegister` per client IP (email flooding); put the
-`/{locale}/order/{token}` link in the order confirmation email so guests can return to their order.
+`/order/{token}` link in the order confirmation email so guests can return to their order.
 
-**Done means:** every page above works against the real API in Mongolian and English; e2e is
+**Done means:** every page above works against the real API, in Mongolian; e2e is
 green in CI; the storefront never holds staff credentials; it is deployed and reachable on its
 domain.
 

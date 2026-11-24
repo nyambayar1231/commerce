@@ -1,4 +1,15 @@
 {
   "extends": "@commerce/tsconfig/react.json",
+  "compilerOptions": {
+    // The monorepo has two React type versions (dashboard 18, storefront 19). Libraries that
+    // import "react" without depending on @types/react (react-router, lucide-react, Apollo…) would
+    // otherwise get whichever version pnpm hoists; these paths pin them to the dashboard's own.
+    "paths": {
+      "react": ["./node_modules/@types/react"],
+      "react/*": ["./node_modules/@types/react/*"],
+      "react-dom": ["./node_modules/@types/react-dom"],
+      "react-dom/*": ["./node_modules/@types/react-dom/*"]
+    }
+  },
   "include": ["src", "vite.config.ts", "codegen.ts"]
 }
