@@ -557,20 +557,360 @@ state lives in the URL (`before`/`after`).
 
 ## 10. Storefront architecture
 
-Details and reasons are in ADR-0015 (architecture) and ADR-0008 (UI adapted from Paper under FSL).
+`apps/storefront`, PLAN M4; approved by the owner on 2026-11-24. Reasons are in ADR-0015 (architecture, amended 2026-11-24) and
+ADR-0008 (UI adapted from Paper under FSL). Paper (`../saleor-storefront`) is the reference for
+every screen and for its architecture rules (`skills/saleor-paper-storefront/rules/*.md`); where
+this section differs, it says so in §10.18.
 
-- Next.js 16 App Router (`cacheComponents`), Tailwind 3.4, next-intl. URLs are `/{locale}/…`, with
-  `mn` (default) and `en`. Deployed on `dino-craft.lol`.
-- **BFF:** only the Next.js server calls the API, through `src/lib/api/` (server-only, typed
-  documents generated from `apps/api/schema.graphql`). Server Components read; Server Actions and
-  route handlers write. There is no GraphQL client in the browser.
-- **Sessions:** the customer's API session token sits in the storefront's own HttpOnly `session`
-  cookie and is sent to the API as `Authorization: Bearer`. The checkout token sits in the
-  HttpOnly `checkout` cookie. Neither is readable by JavaScript.
-- **Caching:** catalog reads use `"use cache"` with a `catalog` profile (revalidate 2 minutes)
-  and entity tags; cart, checkout and account pages are dynamic.
-- The storefront uses only public and customer-scoped API operations. It never uses staff
-  credentials; guests read their order by its token.
+### 10.1 Principles
+
+1. **The API is the only source of truth.** The storefront stores nothing except two HttpOnly
+   cookies (session token, checkout token). Prices, stock, totals and order state always come from
+   the API; the browser never sends a price, an amount or a gateway outcome.
+2. **Backend for frontend.** Only the Next.js server talks to the API. There is no GraphQL client,
+   API URL or token in the browser bundle.
+3. **Server Components by default.** `"use client"` only for state, effects, event handlers or
+   browser APIs. Every write is a Server Action.
+4. **Cached browse, live commerce.** Catalog pages are prerendered shells with cached data; cart,
+   checkout, account and anything that reads a cookie are dynamic islands that are never shared.
+5. **Fail closed, fail visibly.** An API failure is never cached and never shown as "not found";
+   every expected error has a translated message; every unexpected one is logged with its request id.
+6. **One image, any environment.** No `NEXT_PUBLIC_*` variables: all configuration is read at
+   runtime on the server, so the same Docker image runs locally, in CI and in production.
+
+### 10.2 Topology and request path
+
+```
+ shopper ──HTTPS──▶ Caddy (dino-craft.lol) ──▶ storefront:3000 (Next.js, standalone)
+                     sets X-Forwarded-For            │ server-only fetch, internal network
+                                                     ▼
+ staff ───HTTPS──▶ Caddy (admin.dino-craft.lol) ──▶ api:4000 ──▶ Postgres
+ images ─────────────────────────────────────────▶ S3 media bucket (thumbnails, direct)
+```
+
+- The storefront calls the API at `API_URL` (`http://api:4000` in Compose), never through the
+  public edge. The API port is not published outside the Docker network.
+- **Client IP** (login throttling, ARCHITECTURE §7): Caddy replaces any client-sent
+  `X-Forwarded-For` with the shopper's address. With `TRUST_PROXY=true`, the storefront takes the
+  last entry of that header (`src/lib/client-ip.ts`, the same rule as the API's `clientIp.ts`) and
+  sends it to the API as `X-Forwarded-For: <ip>`; the API (`TRUST_PROXY=true`) reads that last
+  entry. Without it every shopper would share the storefront's address, and one attacker could lock
+  everyone out of login. A test pins the parsing; M4.7 proves two forwarded addresses are
+  throttled separately.
+- Every API request carries `x-graphql-yoga-csrf: 1` (the API's CSRF plugin), `content-type:
+  application/json` and a fresh `x-request-id`, which the API echoes into its logs.
+
+### 10.3 Code layout and boundaries
+
+Mirrors Paper's folders so an adapted file sits where its source sits.
+
+```
+apps/storefront/
+  messages/{mn,en}.json          UI strings (next-intl); en is the key reference
+  codegen.ts                     client preset, documentMode "string" → src/gql/ (generated, committed)
+  next.config.ts                 cacheComponents, cacheLife profiles, standalone output, root .env
+  src/
+    proxy.ts                     next-intl locale routing + security headers (Next 16's middleware)
+    instrumentation.ts           validates env at boot; onRequestError → log
+    app/
+      [locale]/layout.tsx        <html lang>, fonts, NextIntlClientProvider
+      [locale]/(main)/…          browse, cart, auth, account: header + footer chrome
+      [locale]/(checkout)/…      checkout and order pages: minimal chrome (Paper's checkout surface)
+      api/health/route.ts        liveness for the container health check
+      robots.ts, sitemap.ts, global-error.tsx
+    graphql/*.graphql            every document the storefront sends
+    gql/                         generated types and TypedDocumentStrings (never edit)
+    lib/
+      api/                       the data kernel (§10.5); nothing else sends a request to the API
+      catalog/ content/          cached loaders + view mappers (products, listings, menus, pages, shop)
+      auth/ cart/ account/       session and cart cookies, loaders, Server Actions
+      env.ts client-ip.ts format.ts log.ts seo.ts safe-redirect.ts
+    checkout/                    step flow, Server Actions, payment provider registry, step sections
+    ui/atoms/ ui/components/{ui,shared,nav,plp,pdp,cart,auth,account}   presentational (Paper)
+    i18n/{routing,request,navigation}.ts
+    styles/brand.css             Paper's design tokens
+```
+
+Rules (Biome `noRestrictedImports` where it can express them, review otherwise):
+
+- `src/lib/api/**` starts with `import "server-only"`; only `src/lib/**` and `src/checkout/**`
+  server modules import it. `src/ui/**` never imports `@/lib/api`, `@/gql` or a Server Action
+  module directly; pages pass view data and actions in as props.
+- UI components receive **view models** (`ProductCardView`, `ProductView`, `CartView`,
+  `OrderView`…) defined in `src/lib/*/types.ts`, never generated GraphQL types. Mappers in
+  `src/lib/**` are the one place API `Money { amount: Float }` becomes a `@commerce/contracts`
+  `Money` (`parseDecimal`), so no component does money math.
+- Files adapted from Paper carry the ADR-0008 header; files that are ours carry none.
+
+### 10.4 Routes
+
+All pages live under `/{locale}` (`mn` default, `en`). `/` redirects to `/mn`; an unknown locale
+is a 404. Rendering: **S** = prerendered shell with cached data, **S+I** = shell plus dynamic islands
+(Suspense), **D** = dynamic (cookies or per-request data), `noindex` where marked.
+
+| URL | Data | Rendering |
+|---|---|---|
+| `/` | featured collection (`featured-products`), top-level categories | S |
+| `/products`, `/categories/[slug]`, `/collections/[slug]` | listing (§10.7) | S+I (grid reads `searchParams`) |
+| `/products/[slug]` | product, its category ancestors | S+I (variant from `?variant=`) |
+| `/pages/[slug]` | page (EditorJS) | S |
+| `/search?q=` | `products(search:)` | D, noindex |
+| `/cart` | checkout by cookie | D, noindex |
+| `/login`, `/signup`, `/reset-password`, `/set-password`, `/confirm-account` | none / Server Actions | S (forms are client islands), noindex |
+| `/account`, `/account/orders`, `/account/orders/[id]`, `/account/addresses`, `/account/settings` | `me`, `order(id)` (OWNER) | D behind the account auth gate, noindex |
+| `/checkout?step=contact\|shipping\|payment` | checkout by cookie, `me`, `shop.countries` | D, noindex |
+| `/order/[token]` | `orderByToken` | D, noindex |
+
+Header and footer (menus `navbar` and `footer`, shop name) are cached; the user menu and the cart
+button are dynamic islands inside them. Every route has a `loading` state sized like its content, and
+`[locale]/not-found.tsx` and `error.tsx` are translated.
+
+### 10.5 Data kernel (`src/lib/api/`)
+
+Every API call goes through one of three functions. Paper has the same kernel
+(`src/lib/saleor/access.ts`); we drop its operation registry and app token, which we don't have.
+
+| Function | Use | Sends session | Cached | On failure |
+|---|---|---|---|---|
+| `cachedQuery(doc, { variables, tags })` | catalog, menus, pages, shop: only inside a `"use cache"` function | never | shared, `catalog` profile | **throws** `ApiError` (transport, HTTP, or any GraphQL `errors`, even with partial data) so Next never caches an outage or a false 404. A missing entity without errors is `null`. |
+| `sessionQuery(doc, { variables })` | `me`, cart, checkout, orders, search, order by token | when present | per request only (React `cache`) | returns `{ ok: false, error }` |
+| `mutate(doc, { variables })` | Server Actions only | when present | never | returns `{ ok: false, error }` |
+
+- **Transport** (`client.ts`): `POST ${API_URL}/graphql`, timeout 8 s (`AbortSignal.timeout`), one
+  retry for queries only on a network error or 502/503/504; mutations are never retried
+  (idempotency is handled per flow, §10.9). Adds the client IP for `sessionQuery` and `mutate`.
+- **Results**: `ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError }` with
+  `error.kind: "network" | "timeout" | "http" | "graphql"`. Mutation payload errors
+  (`errors: [{ field, code, message }]`, Saleor's shape) are domain results, not `ApiError`s: each
+  action maps their `code` to a translated message (`src/lib/api/errors.ts`).
+- **Login only** needs the API's response headers (the `Set-Cookie` with the token): a
+  `mutateWithResponse` used by `src/lib/auth/` alone.
+- Every failure is logged once in the kernel with the operation name, duration, request id and
+  error kind; never with variables (they can hold passwords and addresses).
+
+### 10.6 GraphQL documents and codegen
+
+- Documents live in `src/graphql/*.graphql`, one file per area (`catalog`, `content`, `cart`,
+  `checkout`, `auth`, `account`), with fragments for the card, product, cart and order shapes.
+- `pnpm codegen` runs graphql-codegen's client preset (`documentMode: "string"`, enums as string
+  unions, type imports, no fragment masking) against `apps/api/schema.graphql` into `src/gql/`.
+  Generated files are committed and checked for drift in CI, like the dashboard's.
+- Codegen validates every document against the schema, so an API change that breaks the storefront
+  fails `pnpm codegen` in CI, not in production.
+
+### 10.7 Caching and rendering
+
+- `cacheComponents: true` (Partial Prerendering). Pages are synchronous shells; anything that
+  reads `cookies()`, `headers()` or `searchParams` lives in its own `<Suspense>` island with a
+  sized skeleton (Paper's `data-caching.md` page-boundary model). `"use cache"` functions never
+  read request data: they take explicit, normalized arguments, including `locale`.
+- **Profile** (`next.config.ts` `cacheLife`): `catalog` = stale 60 s, revalidate 120 s, expire
+  1 day (ADR-0015). Staff edits appear within about two minutes.
+- **Tags** (one builder in `src/lib/api/cache.ts`): `products`, `product:<slug>`,
+  `category:<slug>`, `collection:<slug>`, `page:<slug>`, `menu:<slug>`, `shop`. Nothing revalidates
+  them yet; they are there so on-demand revalidation (later) is a route, not a refactor.
+- **Listings**: `searchParams` are parsed and normalized in the island (unknown sort → default,
+  prices → non-negative integers, cursor kept as is), then passed to a cached loader. Page size 24.
+  Sort options: newest, price ascending/descending, name. Filters: category, collection, price range.
+- **Search** is `sessionQuery` (uncached): arbitrary text would fill the cache.
+- Stock and prices on cached pages can lag by two minutes; the cart and checkout always read live,
+  and the API rejects what is no longer possible (`INSUFFICIENT_STOCK`).
+- The cache is Next's in-process LRU (one instance, §10.15). More instances need a shared cache
+  handler first.
+
+### 10.8 Sessions and authentication
+
+**Cookies** (`src/lib/auth/cookies.ts`, `src/lib/cart/cookies.ts`), both `HttpOnly; SameSite=Lax;
+Path=/`, `Secure` whenever `STOREFRONT_URL` is https, and then named with the `__Host-` prefix so a
+sibling subdomain can't plant them:
+
+| Cookie | Value | Lifetime |
+|---|---|---|
+| `__Host-session` (`session` on http dev) | the API session token | the API cookie's `Expires` |
+| `__Host-checkout` (`checkout` on http dev) | the checkout token (UUID) | 30 days, renewed on each cart write |
+
+**Flows** (all Server Actions in `src/lib/auth/actions.ts`; Next checks each action's `Origin`
+against the host, which is our CSRF protection):
+
+- **Login**: validate input → `tokenCreate` with the client IP → read the token and `Expires` from
+  the API's `Set-Cookie: session=…` (a unit test pins the format against the API's `sessionCookie()`)
+  → **if the user is staff, call `logout` with that token and refuse** (the storefront never holds
+  staff credentials) → set the session cookie → merge the cart (below) → redirect to the validated
+  `next` path.
+- **Cart merge at login**: a non-empty guest checkout in the cookie is attached to the customer
+  (`checkoutCustomerAttach`); otherwise the customer's newest checkout (`me.checkouts(first: 1)`)
+  becomes the cookie's checkout. A checkout that can't be attached is dropped.
+- **Logout**: `logout` mutation, then clear both cookies (the cart stays on the account for the next
+  login, and the next person on a shared device starts empty). Hard navigation to home.
+- **Register** → `accountRegister` with `redirectUrl = STOREFRONT_URL/{locale}/confirm-account`;
+  **reset** → `requestPasswordReset` with `…/{locale}/set-password`; the email links land in the
+  shopper's language. Uniform success messages (the API does not reveal whether an email exists).
+  `confirm-account` and `set-password` read `email` and `token` from the link and call
+  `confirmAccount` / `setPassword`; a successful `setPassword` signs the customer in.
+- **Who is signed in**: `getCurrentUser()` (React `cache`, `sessionQuery` `me`) returns
+  `guest | authenticated | unavailable`. `unavailable` (API down) never shows "Sign in" as if the
+  user were logged out. A cookie whose session the API no longer knows reads as `guest`; the next
+  action that notices clears it.
+- **Redirect safety** (`src/lib/safe-redirect.ts`, Paper's `data-redirect-security.md`): `next`
+  must be a relative path that starts with `/{locale}/`; `//…`, `/\…`, schemes and anything else
+  fall back to the account page. URLs sent to the API are built only from `STOREFRONT_URL`, never
+  from `Host`, `Origin` or `X-Forwarded-*`.
+- The account area uses Paper's layout-shell gate: `account/layout.tsx` → Suspense →
+  `AccountShell` reads the user once; a guest sees the inline login form.
+
+### 10.9 Cart and checkout
+
+- **Cart actions** (`src/lib/cart/actions.ts`): `addToCart(variantId, quantity)`,
+  `updateLine(lineId, quantity)`, `removeLine(lineId)`. The first add creates the checkout
+  (`checkoutCreate`; the API makes a signed-in customer its owner) and sets the cookie. A cookie
+  whose checkout is missing or already completed is replaced. Each action ends with `refresh()` so
+  the header count and drawer re-render; the drawer opens after an add (Paper). Quantity changes
+  are optimistic (`useOptimistic`) and roll back on an API error.
+- **One route, three steps**: `/checkout?step=`. `src/checkout/flow.ts` (pure, unit-tested) gives
+  the furthest step the checkout allows: **contact** until it has an email; **shipping** until it
+  has a shipping address and, when `isShippingRequired`, a delivery method; then **payment**. A
+  requested step beyond that is clamped back. Step changes keep the cart in place (Paper's shallow
+  `updateCheckoutQuery`).
+- **Contact**: a signed-in customer's email is used as is; a guest gives an email
+  (`checkoutEmailUpdate`) or signs in (login returns to `/checkout`).
+- **Shipping**: customers pick a saved address or enter one; the form is ordered for Mongolia
+  (country MN preselected from `shop.countries`; aimag or capital → `countryArea`, sum or district →
+  `city`, bag or khoroo → `cityArea`, street, building and apartment → `streetAddress1`, phone).
+  The same `cleanAddress` rules as the API (`@commerce/contracts`) run in the browser for instant
+  errors; the API stays authoritative. Then `checkoutShippingAddressUpdate` and
+  `checkoutDeliveryMethodUpdate`.
+- **Payment**: billing address ("same as shipping" by default, `checkoutBillingAddressUpdate`) and
+  a payment method from the **provider registry** (`src/checkout/payment/providers.ts`): `{ id,
+  gatewayId, label, Component }`, with one entry, `dummy` (`saleor.io.dummy-payment-app`), enabled by
+  `PAYMENT_PROVIDERS`. While `dummy` is enabled, the payment step shows a "test payment, no money is
+  taken" notice.
+- **Place order** (`placeOrder` action): read the checkout live → if it is not yet fully paid,
+  `transactionInitialize` with `idempotencyKey` = the attempt id rendered into the form (a
+  double-submit or retry reuses it, and the API returns the first result) and gateway data built on
+  the server → `checkoutComplete` (idempotent in the API) → clear the checkout cookie → redirect to
+  `/{locale}/order/{order.token}`. `INSUFFICIENT_STOCK` and price changes are shown on the payment
+  step with a link back to the cart (§13).
+- **Order page** `/order/[token]`: `orderByToken`, uncached and `noindex`; the random token is the
+  credential (ARCHITECTURE §4, M15.3). Paper's order-confirmation view.
+
+### 10.10 Account
+
+Overview (welcome, default address, recent orders), orders list (`me.orders`, cursor pages),
+order detail at `/account/orders/[id]` through `order(id)` with the OWNER permission (our
+`CustomerOrderWhereInput` has no number filter), addresses (`accountAddressCreate/Update/Delete`,
+`accountSetDefaultAddress`), settings (`accountUpdate` for names, `passwordChange`). The order
+timeline is derived from the order's dates, fulfillments and status, not from staff-only events.
+Mutations end with `refresh()`.
+
+### 10.11 Locales, strings and formatting
+
+- next-intl 4: `src/i18n/routing.ts` (`locales: ["mn", "en"]`, `defaultLocale: "mn"`,
+  `localePrefix: "always"`, no Accept-Language detection, as ADR-0015), `navigation.ts` (locale-aware
+  `Link`, `redirect`, `useRouter`), `request.ts`. Layouts and pages call `setRequestLocale`; cached
+  functions get `locale` as an argument.
+- Every UI string is a key in `messages/en.json` and `messages/mn.json`, namespaced by area. Each
+  step adds its keys to both files (Mongolian may be a first draft, reviewed in M4.9). Message keys
+  are type-checked against `en.json`, and a unit test fails if the two files' keys differ.
+- Catalog content (names, descriptions, pages, menus) is shown as entered; the API has no
+  translations.
+- `src/lib/format.ts`: `formatMoney(money, locale)` with `Intl.NumberFormat` (`mn-MN` / `en-US`,
+  `currencyDisplay: "narrowSymbol"` so both show ₮, currency digits from `CURRENCIES`), dates with
+  time zone `Asia/Ulaanbaatar`. Nowhere else formats. Formatting runs on the server only; client
+  components get formatted strings, so a browser's ICU data can't cause a hydration mismatch.
+
+### 10.12 UI system
+
+- Paper's tokens (`src/styles/brand.css`, Tailwind config, `globals.css`) and primitives
+  (`src/ui/components/ui/*` on Radix), adapted file by file with the FSL header. Components use
+  tokens (`bg-background`, `text-foreground`), never hard-coded colors (Paper's rule).
+- **Fonts**: Paper's Geist Sans (`geist` package, self-hosted through `next/font`, no runtime
+  Google requests). Checked 2026-11-24: Geist 1.7.2 has the Mongolian Cyrillic letters Ө ө Ү ү
+  (U+04E8, U+04E9, U+04AE, U+04AF) but not ₮ (U+20AE), which the fallback stack draws.
+- **Logo**: the shop name as text (no Paper logo or "Paper sign", ADR-0008).
+- **Images** come from the API's stored WebP thumbnails, not the Next.js optimizer: queries request
+  `url(size: …, format: WEBP)` at the sizes a component needs (cards 256/512, gallery 1024/2048,
+  thumbnails 128), and `ProductImage` renders `<img srcset sizes>` with width, height, lazy loading,
+  and `fetchPriority="high"` for the one LCP image per page. The API generates each size once and
+  keeps it in S3, so the storefront container needs no image CPU or disk cache.
+- **Accessibility**: semantic landmarks, visible focus, labelled controls, keyboard-operable
+  drawer and menus (Radix), `aria-live` for cart and form errors, color contrast at WCAG AA. Biome's
+  a11y rules are on; M4.11 runs axe on the golden paths.
+
+### 10.13 Security
+
+- **Secrets**: the storefront container gets only `API_URL`, `STOREFRONT_URL`, `TRUST_PROXY`,
+  `IMAGE_ORIGINS`, `PAYMENT_PROVIDERS` and `NODE_ENV`, never the API's `.env.prod` (database
+  password, S3 keys, `SECRET_KEY`). `src/lib/env.ts` (server-only) validates them at boot and the
+  server refuses to start on a bad value.
+- **Headers**, set at runtime in `proxy.ts` on every document: a Content-Security-Policy
+  (`default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';
+  img-src 'self' data: <IMAGE_ORIGINS>; font-src 'self'; connect-src 'self'; frame-ancestors 'none';
+  base-uri 'self'; form-action 'self'; object-src 'none'`), `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy: strict-origin-when-cross-origin`, `X-Frame-Options: DENY`,
+  `Permissions-Policy` (camera, microphone, geolocation off). HSTS is Caddy's. Scripts need
+  `'unsafe-inline'` because per-request nonces would make every page dynamic and defeat the
+  prerendered catalog; the XSS defences are React's escaping and the rich-text rule below.
+- **Rich text** (EditorJS from products, categories, collections, pages) is rendered block by
+  block into React elements; the inline HTML inside a block passes an allowlist sanitizer (`xss`,
+  as Paper: `b i u s a br` only, `a` with `http(s)`/`mailto` hrefs and `rel="noopener noreferrer"`).
+  No other `dangerouslySetInnerHTML`.
+- **Server Actions** validate every input on the server, re-read state from the API, and return
+  typed results; they never trust a client-sent price, amount, owner or gateway outcome.
+- **Abuse**: login is throttled by the API per shopper IP (§10.2). `requestPasswordReset` and
+  `accountRegister` are not throttled by the API yet (follow-up in PLAN).
+
+### 10.14 SEO
+
+`generateMetadata` on every route: title template `%s | <shop name>`, a description (plain text
+from the first EditorJS paragraph, 160 characters), canonical URL from `STOREFRONT_URL`,
+`alternates.languages` for `mn`, `en` and `x-default` (→ `mn`), Open Graph with the product's
+1024 px thumbnail (a static default elsewhere; no generated OG images). JSON-LD `Product` (offers in
+MNT, availability) and `BreadcrumbList` on the PDP, `Organization` on home. `sitemap.ts` lists
+products, categories, collections and pages in both locales; `robots.ts` disallows cart, checkout,
+account, order, search and `/api/`.
+
+### 10.15 Operations
+
+- **Health**: `GET /api/health` → 200 (liveness only; the API has its own readiness).
+- **Logs**: JSON lines on stdout (`src/lib/log.ts`, no dependency): API failures from the kernel,
+  Server Action failures with their request id, and Next's `onRequestError`. No PII, no variables.
+- **Errors**: `[locale]/error.tsx` (retry button), `global-error.tsx`, translated 404s; error
+  pages never show stack traces or API messages.
+- **Deployment** (M4.12): `output: "standalone"` image (`Dockerfile` target `storefront`, built for
+  the instance's arm64), a `storefront` Compose service on the existing t4g.small with a memory
+  limit, a Caddy site block for `dino-craft.lol` (and `www.` redirecting to it), Route 53 records,
+  `dino-craft.lol` added to the API's `ALLOWED_CLIENT_HOSTS`, and the deploy workflow shipping the
+  image. One instance: the in-process cache is enough.
+
+### 10.16 Testing
+
+| Layer | What |
+|---|---|
+| Unit (Vitest, node) | kernel results and errors, `Set-Cookie` parsing, client IP, safe redirects, checkout flow, listing param normalization, money and date formatting, EditorJS rendering and sanitizing, message key parity |
+| Components (Vitest + Testing Library, jsdom) | forms' error states, cart quantity control, buy box variant selection |
+| Contract | `pnpm codegen` validates every document against the schema (CI drift check); the cookie parser's test uses the exact format of the API's `sessionCookie()` |
+| End-to-end (Playwright, `e2e/`, M4.11) | a guest buys; a customer registers, confirms by the Mailpit email, buys and sees the order; locale switch; axe on each page of those paths |
+| Performance (M4.10) | Lighthouse on mobile: ≥ 90 performance and accessibility on PLP and PDP against a production build |
+
+### 10.17 Performance budget
+
+LCP ≤ 2.5 s and CLS ≤ 0.1 on a mobile profile for home, PLP and PDP; first-load JavaScript of a
+catalog page ≤ 150 kB gzipped; every image has explicit dimensions; no client data fetching on
+catalog pages; fonts preloaded with `display: swap`.
+
+### 10.18 Deliberate differences from Paper
+
+| Paper | Here | Why |
+|---|---|---|
+| `/{locale}/{channel}/…`, channel picker | `/{locale}/…` | One channel (ADR-0005) |
+| `/checkout` and `/order/{hmac}` outside the locale, own checkout i18n | `/{locale}/checkout`, `/{locale}/order/{token}`, one next-intl catalog | Checkout in Mongolian with one string system; the order token is already random (M15.3) |
+| `/api/auth/*` route handlers, JWT cookies, refresh tokens | Server Actions, one opaque session token | ADR-0006 sessions; actions get Next's Origin check for free |
+| Kernel with operation registry, app token, data lock files | three functions, no app token | We have no app token; the boundary rule and review replace the lock files |
+| `next/image` over Saleor thumbnails | `<img srcset>` of the API's stored thumbnails | No optimizer CPU or cache on a 2 GB host; thumbnails are already resized and stored |
+| Attribute facets, matrix variant picker, PDP/PLP template registries | category, collection, price, sort; non-matrix buy box; one layout each | No attributes (owner, 2026-11-19); one shop needs one layout |
+| CMS sections from Saleor models, announcement bar | home: hero copy from messages, featured collection, category tiles | No page types/attributes in our API |
+| Stripe, analytics, Vercel cost tooling, `/order/find`, delete account, cross-tab chrome sync | not built | Not in M4 (later milestones or no API support) |
+| Webhook-driven revalidation | time-based (two minutes) | No webhooks yet (ADR-0015) |
 
 ---
 

@@ -1,6 +1,6 @@
 # ADR-0015: Storefront architecture: a BFF on Next.js 16, sessions in our own cookies
 
-Status: Accepted (2026-11-19)
+Status: Accepted (2026-11-19), amended 2026-11-24 (see "Amendment" at the end)
 
 ## Context
 The storefront (PLAN M4) must look like Saleor's Paper (`../saleor-storefront`, ADR-0008) but run
@@ -76,3 +76,41 @@ components}`, `src/checkout`, `src/lib`, `src/styles/brand.css`, `messages/`.
   one DB lookup per request (ADR-0006).
 - − Parsing `Set-Cookie` couples the BFF to the API's cookie name. A contract test pins it.
 - − Up to about two minutes of staleness for catalog edits, until on-demand revalidation lands.
+
+## Amendment (2026-11-24, approved by the owner with the M4 architecture; ARCHITECTURE §10)
+
+Designing M4 in detail against Paper's code and our production host changed these points. Each
+replaces the matching sentence above.
+
+1. **Auth writes are Server Actions, not `/api/auth/*` route handlers.** Login, logout, register,
+   confirm, reset and set password are actions in `src/lib/auth/actions.ts`. Next checks every
+   action's `Origin` against the host, which a hand-written route handler would have to repeat, and
+   forms get `useActionState` error states and work before hydration. Paper uses route handlers
+   because of its auth SDK and JWT refresh, which we don't have.
+2. **Cookie names.** On https the cookies are `__Host-session` and `__Host-checkout`
+   (`Secure`, `Path=/`, no `Domain`), so a sibling subdomain such as `admin.` can't set or shadow
+   them. Plain `session` / `checkout` on http development.
+3. **Staff can't sign in on the storefront.** If `tokenCreate` returns a staff user, the storefront
+   revokes that session (`logout` with its token) and refuses. Otherwise a staff session would sit in
+   a storefront cookie, against "the storefront holds no staff credentials".
+4. **Images are the API's stored thumbnails, not the Next.js optimizer.** Queries request
+   `url(size, format: WEBP)` at fixed sizes and a small `ProductImage` renders `<img srcset>`. The
+   production host is one t4g.small (2 GB) that already runs Postgres, the API and the worker; the
+   optimizer would resize every original again with sharp and lose its disk cache on each deploy,
+   while the API already generates each size once and keeps it in S3. `remotePatterns` is
+   therefore not needed; the CSP's `img-src` is the allowlist.
+5. **Client IP, decided now** (was deferred to M4.7): Caddy replaces any client-sent
+   `X-Forwarded-For` with the shopper's address; with `TRUST_PROXY=true` the storefront takes the
+   last entry and sends it to the API as the only `X-Forwarded-For` entry; the API, also with
+   `TRUST_PROXY=true`, reads the last entry. The API is reached only on the internal network.
+6. **Edge is Caddy, not nginx.** Production's HTTPS edge is Caddy (M10.3); the storefront gets a
+   Caddy site block for `dino-craft.lol`.
+7. **Kernel shape.** Three functions, `cachedQuery` (inside `"use cache"`, anonymous, throws on any
+   failure), `sessionQuery` (per request, sends the session) and `mutate` (Server Actions), plus a
+   login-only variant that returns the response headers. Paper's fourth mode (`liveQuery`) folds
+   into `sessionQuery`, and its operation registry and app token are not needed.
+8. **Runtime configuration only.** No `NEXT_PUBLIC_*` variables; security headers (CSP) are set
+   in `proxy.ts` at request time. One image runs in every environment, and the storefront container
+   gets only its own five variables, never the API's secrets.
+9. **Checkout path.** The checkout is `/{locale}/checkout?step=…` in its own route group with
+   minimal chrome (Paper's separate checkout surface, but localized), next to `/{locale}/order/{token}`.
