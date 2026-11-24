@@ -70,11 +70,21 @@ if [[ "$quick" == 0 ]]; then
   step test "$PNPM" test
   rm -rf "$lock"; trap - EXIT TERM INT HUP
 
-  # Generated, committed files must match their sources.
+  # Generated files must match their sources: regenerating them changes nothing. Compared by
+  # content before and after, so a worker's uncommitted (but correct) regeneration passes too.
+  generated=(apps/api/schema.graphql apps/dashboard/src/graphql apps/dashboard/locale/defaultMessages.json apps/storefront/src/gql)
+  generated_hash() { (cd "$dir" && find "${generated[@]}" -type f 2>/dev/null | LC_ALL=C sort | xargs shasum 2>/dev/null); }
+  before="$(generated_hash)"
   step schema-print "$PNPM" schema:print
   step codegen "$PNPM" codegen
   step extract-messages "$PNPM" extract-messages
-  step generated-files-in-sync git -C "$dir" diff --exit-code --stat -- apps/api/schema.graphql 'apps/dashboard/src/graphql/*.generated.ts' apps/dashboard/locale/defaultMessages.json apps/storefront/src/gql
+  generated_unchanged() {
+    local after; after="$(generated_hash)"
+    [[ "$before" == "$after" ]] && return 0
+    echo "regenerating changed these files:"; diff <(echo "$before") <(echo "$after") | grep '^>' | awk '{print $3}'
+    return 1
+  }
+  step generated-files-in-sync generated_unchanged
 fi
 
 if [[ "$build" == 1 ]]; then
