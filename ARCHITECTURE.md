@@ -645,8 +645,10 @@ Rules (Biome `noRestrictedImports` where it can express them, review otherwise):
 
 ### 10.4 Routes
 
-The storefront is in Mongolian only (owner, 2026-11-24), so URLs have no locale segment. Rendering: **S** = prerendered shell with cached data, **S+I** = shell plus dynamic islands
-(Suspense), **D** = dynamic (cookies or per-request data), `noindex` where marked.
+The storefront is in Mongolian only (owner, 2026-11-24), so URLs have no locale segment.
+Rendering: **S** = prerendered shell whose data islands render per request from the shared cache
+(§10.7), **S+I** = the same plus islands that read `searchParams`, **D** = dynamic (cookies or
+per-request data), `noindex` where marked.
 
 | URL | Data | Rendering |
 |---|---|---|
@@ -704,6 +706,12 @@ Every API call goes through one of three functions. Paper has the same kernel
   reads `cookies()`, `headers()` or `searchParams` lives in its own `<Suspense>` island with a
   sized skeleton (Paper's `data-caching.md` page-boundary model). `"use cache"` functions never
   read request data: they take explicit, normalized arguments.
+- **No API call at build time** (lead, 2026-11-24, M4.1b). CI and the deploy workflow build the
+  image without an API, and data baked in at build would tie an image to one database. So every
+  public loader is `await connection()` followed by its `"use cache"` inner function: the page's
+  shell is prerendered, its data islands render per request, and the data comes from the shared
+  cache (one API call per entity per revalidation, not per request). Paper instead fetches during
+  the build against a live Saleor.
 - **Profile** (`next.config.ts` `cacheLife`): `catalog` = stale 60 s, revalidate 120 s, expire
   1 day (ADR-0015). Staff edits appear within about two minutes.
 - **Tags** (one builder in `src/lib/api/cache.ts`): `products`, `product:<slug>`,
