@@ -1,5 +1,44 @@
-// Public surface of the `content` module (ARCHITECTURE.md §2): pages now, menus in M15.6b.
+// Public surface of the `content` module (ARCHITECTURE.md §2): pages and menus.
 
+export type {
+  MenuCreateInput,
+  MenuError,
+  MenuErrorCode,
+  MenuItemCreateInput,
+  MenuItemInput,
+  MenuItemMove,
+  MenuItemMoveResult,
+  MenuItemNode,
+  MenuItemResult,
+  MenuItemRow,
+  MenuItemUpdateInput,
+  MenuListArgs,
+  MenuListRow,
+  MenuPage,
+  MenuResult,
+  MenuRow,
+  MenuSortField,
+  MenuUpdateInput,
+} from "./menus.ts";
+export {
+  createMenu,
+  createMenuItem,
+  deleteMenu,
+  deleteMenuItem,
+  deleteMenuItems,
+  deleteMenus,
+  getMenu,
+  getMenuItem,
+  getMenuItems,
+  listMenus,
+  MAX_LEVEL,
+  MenuItemNotFoundError,
+  MenuNotFoundError,
+  moveMenuItems,
+  updateMenu,
+  updateMenuItem,
+  withLevels,
+} from "./menus.ts";
 export type {
   PageListArgs,
   PageListRow,

@@ -1400,6 +1400,307 @@ type Logout {
   errors: [AccountError!]!
 }
 
+"""
+Represents a single menu - an object that is used to help navigate through the store.
+"""
+type Menu implements Node {
+  """The ID of the menu."""
+  id: ID!
+
+  """Menu items associated with this menu."""
+  items: [MenuItem!]!
+
+  """The name of the menu."""
+  name: String!
+
+  """Slug of the menu."""
+  slug: String!
+}
+
+"""
+Deletes menus.
+
+Requires one of the following permissions: MANAGE_MENUS.
+"""
+type MenuBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  errors: [MenuError!]!
+}
+
+type MenuCountableConnection {
+  edges: [MenuCountableEdge!]!
+  pageInfo: PageInfo!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type MenuCountableEdge {
+  cursor: String!
+  node: Menu!
+}
+
+"""
+Creates a new Menu.
+
+Requires one of the following permissions: MANAGE_MENUS.
+"""
+type MenuCreate {
+  errors: [MenuError!]!
+
+  """Menu created or updated by the mutation."""
+  menu: Menu
+}
+
+input MenuCreateInput {
+  """List of menu items."""
+  items: [MenuItemInput!]
+
+  """Name of the menu."""
+  name: String!
+
+  """Slug of the menu. Will be generated if not provided."""
+  slug: String
+}
+
+"""
+Deletes a menu.
+
+Requires one of the following permissions: MANAGE_MENUS.
+"""
+type MenuDelete {
+  errors: [MenuError!]!
+
+  """Menu created or updated by the mutation."""
+  menu: Menu
+}
+
+"""Represents an error in the input of a mutation."""
+type MenuError {
+  """The error code."""
+  code: MenuErrorCode!
+
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String!
+}
+
+enum MenuErrorCode {
+  CANNOT_ASSIGN_NODE
+  GRAPHQL_ERROR
+  INVALID
+  INVALID_MENU_ITEM
+  NOT_FOUND
+  NO_MENU_ITEM_PROVIDED
+  REQUIRED
+  TOO_MANY_MENU_ITEMS
+  UNIQUE
+}
+
+input MenuFilterInput {
+  """Search menus by name or slug."""
+  search: String
+
+  """Filter menus by slug."""
+  slugs: [String!]
+}
+
+input MenuInput {
+  """Name of the menu."""
+  name: String
+
+  """Slug of the menu."""
+  slug: String
+}
+
+"""
+Represents a single item of the related menu. Can store categories, collection or pages.
+"""
+type MenuItem implements Node {
+  """Category associated with the menu item."""
+  category: Category
+
+  """Represents the child items of the current menu item."""
+  children: [MenuItem!]!
+
+  """
+  A collection associated with this menu item. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.
+  """
+  collection: Collection
+
+  """The ID of the menu item."""
+  id: ID!
+
+  """Indicates the position of the menu item within the menu structure."""
+  level: Int!
+
+  """Represents the menu to which the menu item belongs."""
+  menu: Menu!
+
+  """The name of the menu item."""
+  name: String!
+
+  """
+  A page associated with this menu item. Requires one of the following permissions to include the unpublished items: MANAGE_PAGES.
+  """
+  page: Page
+
+  """ID of parent menu item. If empty, menu will be top level menu."""
+  parent: MenuItem
+
+  """URL to the menu item."""
+  url: String
+}
+
+"""
+Deletes menu items.
+
+Requires one of the following permissions: MANAGE_MENUS.
+"""
+type MenuItemBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  errors: [MenuError!]!
+}
+
+"""
+Creates a new menu item.
+
+Requires one of the following permissions: MANAGE_MENUS.
+
+Fields required to update a menu item. Only one of `url`, `category`, `page`, `collection` is allowed per item.
+"""
+type MenuItemCreate {
+  errors: [MenuError!]!
+
+  """Menu item created or updated by the mutation."""
+  menuItem: MenuItem
+}
+
+input MenuItemCreateInput {
+  """Category to which item points."""
+  category: ID
+
+  """Collection to which item points."""
+  collection: ID
+
+  """Menu to which item belongs."""
+  menu: ID!
+
+  """Name of the menu item."""
+  name: String!
+
+  """Page to which item points."""
+  page: ID
+
+  """ID of the parent menu. If empty, menu will be top level menu."""
+  parent: ID
+
+  """URL of the pointed item."""
+  url: String
+}
+
+"""
+Deletes a menu item.
+
+Requires one of the following permissions: MANAGE_MENUS.
+"""
+type MenuItemDelete {
+  errors: [MenuError!]!
+
+  """Menu item created or updated by the mutation."""
+  menuItem: MenuItem
+}
+
+input MenuItemInput {
+  """Category to which item points."""
+  category: ID
+
+  """Collection to which item points."""
+  collection: ID
+
+  """Name of the menu item."""
+  name: String
+
+  """Page to which item points."""
+  page: ID
+
+  """URL of the pointed item."""
+  url: String
+}
+
+"""
+Moves items of menus.
+
+Requires one of the following permissions: MANAGE_MENUS.
+"""
+type MenuItemMove {
+  errors: [MenuError!]!
+
+  """Assigned menu to move within."""
+  menu: Menu
+}
+
+input MenuItemMoveInput {
+  """The menu item ID to move."""
+  itemId: ID!
+
+  """ID of the parent menu. If empty, menu will be top level menu."""
+  parentId: ID
+
+  """
+  The new relative sorting position of the item (from -inf to +inf). 1 moves the item one position forward, -1 moves the item one position backward, 0 leaves the item unchanged.
+  """
+  sortOrder: Int
+}
+
+"""
+Updates a menu item.
+
+Requires one of the following permissions: MANAGE_MENUS.
+
+Fields required to update a menu item. Only one of `url`, `category`, `page`, `collection` is allowed per item.
+"""
+type MenuItemUpdate {
+  errors: [MenuError!]!
+
+  """Menu item created or updated by the mutation."""
+  menuItem: MenuItem
+}
+
+enum MenuSortField {
+  """Sort menus by items count."""
+  ITEMS_COUNT
+
+  """Sort menus by name."""
+  NAME
+}
+
+input MenuSortingInput {
+  """Specifies the direction in which to sort menus."""
+  direction: OrderDirection!
+
+  """Sort menus by the selected field."""
+  field: MenuSortField!
+}
+
+"""
+Updates a menu.
+
+Requires one of the following permissions: MANAGE_MENUS.
+"""
+type MenuUpdate {
+  errors: [MenuError!]!
+
+  """Menu created or updated by the mutation."""
+  menu: Menu
+}
+
 """Represents amount of money in specific currency."""
 type Money {
   """Amount of money."""
@@ -1788,6 +2089,109 @@ type Mutation {
 
   """End the current session. Succeeds when there is none."""
   logout: Logout!
+
+  """
+  Deletes menus.
+  
+  Requires one of the following permissions: MANAGE_MENUS.
+  """
+  menuBulkDelete(
+    """List of menu IDs to delete."""
+    ids: [ID!]!
+  ): MenuBulkDelete
+
+  """
+  Creates a new Menu.
+  
+  Requires one of the following permissions: MANAGE_MENUS.
+  """
+  menuCreate(
+    """Fields required to create a menu."""
+    input: MenuCreateInput!
+  ): MenuCreate!
+
+  """
+  Deletes a menu.
+  
+  Requires one of the following permissions: MANAGE_MENUS.
+  """
+  menuDelete(
+    """ID of a menu to delete."""
+    id: ID!
+  ): MenuDelete!
+
+  """
+  Deletes menu items.
+  
+  Requires one of the following permissions: MANAGE_MENUS.
+  """
+  menuItemBulkDelete(
+    """List of menu item IDs to delete."""
+    ids: [ID!]!
+  ): MenuItemBulkDelete
+
+  """
+  Creates a new menu item.
+  
+  Requires one of the following permissions: MANAGE_MENUS.
+  
+  Fields required to update a menu item. Only one of `url`, `category`, `page`, `collection` is allowed per item.
+  """
+  menuItemCreate(
+    """Fields required to create a menu item."""
+    input: MenuItemCreateInput!
+  ): MenuItemCreate!
+
+  """
+  Deletes a menu item.
+  
+  Requires one of the following permissions: MANAGE_MENUS.
+  """
+  menuItemDelete(
+    """ID of a menu item to delete."""
+    id: ID!
+  ): MenuItemDelete!
+
+  """
+  Moves items of menus.
+  
+  Requires one of the following permissions: MANAGE_MENUS.
+  """
+  menuItemMove(
+    """ID of the menu."""
+    menu: ID!
+
+    """The menu position data."""
+    moves: [MenuItemMoveInput!]!
+  ): MenuItemMove!
+
+  """
+  Updates a menu item.
+  
+  Requires one of the following permissions: MANAGE_MENUS.
+  
+  Fields required to update a menu item. Only one of `url`, `category`, `page`, `collection` is allowed per item.
+  """
+  menuItemUpdate(
+    """ID of a menu item to update."""
+    id: ID!
+
+    """Fields required to update a menu item."""
+    input: MenuItemInput!
+  ): MenuItemUpdate!
+
+  """
+  Updates a menu.
+  
+  Requires one of the following permissions: MANAGE_MENUS.
+  """
+  menuUpdate(
+    """ID of a menu to update."""
+    id: ID!
+
+    """Fields required to update a menu."""
+    input: MenuInput!
+  ): MenuUpdate!
 
   """
   Cancel an order.
@@ -3612,6 +4016,42 @@ type Query {
 
   """Return the currently authenticated user."""
   me: User
+
+  """Look up a navigation menu by ID or name."""
+  menu(
+    """ID of the menu."""
+    id: ID
+
+    """The menu's name."""
+    name: String
+
+    """The menu's slug."""
+    slug: String
+  ): Menu
+
+  """Look up a menu item by ID."""
+  menuItem(
+    """ID of the menu item."""
+    id: ID!
+  ): MenuItem
+
+  """List of the storefront's menus."""
+  menus(
+    after: String
+    before: String
+
+    """
+    Filtering options for menus.
+    
+    `slug`: Use `slugs` instead.
+    """
+    filter: MenuFilterInput
+    first: Int
+    last: Int
+
+    """Sort menus."""
+    sortBy: MenuSortingInput
+  ): MenuCountableConnection
 
   """
   Look up an order by ID.
