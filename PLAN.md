@@ -8,15 +8,16 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 | Milestone | Title | Status |
 |---|---|---|
 | M11 | Dashboard in Mongolian and English | In progress |
-| M15 | API and dashboard for the storefront | In progress |
 | M4 | Storefront (Paper-like, production ready) | Approved |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
 (foundations), M1 (identity: staff auth & permissions), M2 (catalog, 2026-11-11), M3 (inventory, 2026-11-11), M5 (checkout API, 2026-11-11), M6 (orders, 2026-11-11), M7 (customer accounts, 2026-11-12), M8 (background jobs and email, 2026-11-12), M9 (hardening &
-deployability, 2026-11-12), M10 (deploy to AWS, 2026-11-13), M12 (continuous deployment, 2026-11-14), M13 (draft orders and order printing, 2026-11-14), M14 (simpler product creation, 2026-11-19), M4.0 (storefront programme setup: ADR-0008 amended, ADR-0015, multi-model AI team, 2026-11-19).
+deployability, 2026-11-12), M10 (deploy to AWS, 2026-11-13), M12 (continuous deployment, 2026-11-14), M13 (draft orders and order printing, 2026-11-14), M14 (simpler product creation, 2026-11-19), M4.0 (storefront programme setup: ADR-0008 amended, ADR-0015, multi-model AI team, 2026-11-19), M15 (API and dashboard for the storefront: password reset, address book, account settings, guest order lookup, collections, pages, menus, 2026-11-24).
 
 ## Open items from finished milestones
+
+- **M15 (owner actions):** give staff groups the new `MANAGE_PAGES` / `MANAGE_MENUS` permissions in Configuration → Permission Groups (superusers already have them), and fill the empty `navbar` and `footer` menus before the storefront's header and footer (M4.4) go live.
 
 Accepted by the owner as documented (2026-11-11); each is revisited when a milestone needs it:
 
@@ -490,22 +491,6 @@ The lead (Claude Code, Opus) owns architecture, ADRs, dependencies, briefs, the 
 - **Guardrails:** the OpenCode implementer rule that denies `apps/storefront/**` is lifted.
   `spawn.sh` gets `--model` so it can start GLM-5.3 or DeepSeek. Claude subagents get the same
   `AGENTS.md` rules in their brief, and the lead checks their diff exactly like an OpenCode diff.
-
-## M15 — API and dashboard for the storefront (DeepSeek V4.1 Flash)
-
-Saleor names throughout. Deviations go in ARCHITECTURE §4.
-
-| Step | What | Status |
-|---|---|---|
-| M15.1 | Password reset: `requestPasswordReset` (an email through the outbox, `redirectUrl` checked against `ALLOWED_CLIENT_HOSTS`, throttled, no account enumeration) and `setPassword` (single-use, expiring token; ends other sessions) | Done |
-| M15.2a | Address validation and the `Address` GraphQL types moved to `@commerce/contracts` and `apps/api/src/graphql/address.ts` (pure refactor, no schema change), so identity can use them without an import cycle [Haiku] | Done |
-| M15.2b | Address book: `address` table, `accountAddressCreate/Update/Delete`, `accountSetDefaultAddress`, `User.addresses`/`defaultShippingAddress`/`defaultBillingAddress`; completing a logged-in user's checkout stores its addresses, as Saleor's `store_user_address` (Saleor doesn't prefill checkout from the defaults) | Done |
-| M15.2c | Account settings: `accountUpdate` (names), `passwordChange` (ends the user's other sessions) | Done |
-| M15.3 | Guest order lookup: an unguessable `Order.token`, set at completion and returned by `checkoutComplete`, plus a public query to read one order by token (Saleor's `orderByToken`; deprecated in Saleor, a logged deviation) | Done |
-| M15.4 | Collections API: tables, `collectionCreate/Update/Delete`, `collectionAddProducts/RemoveProducts`, public `collections` / `collection(slug)` (published only), `Product.collections`, a `products` filter by collection and price range | Done |
-| M15.5 | Collections in the dashboard: list, detail and assigned products, matching `../saleor-dashboard/src/collections/` | Done |
-| M15.6 | Pages (rich text, Saleor's EditorJS JSON) and menus (`menu(slug)`, nested items linking to a category, collection, page or URL; `navbar` and `footer` seeded): API with public reads | Done |
-| M15.7 | Pages and menus in the dashboard, matching `../saleor-dashboard/src/pages/` and `src/navigation/` (the page-types simplification is explained when the step starts) | Done |
 
 ## M4 — Storefront (Paper-like, production ready)
 
