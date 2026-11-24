@@ -2,7 +2,8 @@
 // See THIRD_PARTY_LICENSES.md
 
 import { useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
+import { CopyrightSlot, ShopNameSkeleton, ShopNameSlot } from "@/app/chrome-slots";
 import { Footer } from "@/ui/components/footer";
 import { HeaderFrame } from "@/ui/components/header-frame";
 
@@ -12,6 +13,11 @@ import { HeaderFrame } from "@/ui/components/header-frame";
  */
 export function BrowseChrome({ children }: { children: ReactNode }) {
   const t = useTranslations("common");
+  const shopName = (
+    <Suspense fallback={<ShopNameSkeleton />}>
+      <ShopNameSlot />
+    </Suspense>
+  );
 
   return (
     <>
@@ -21,12 +27,20 @@ export function BrowseChrome({ children }: { children: ReactNode }) {
       >
         {t("skipToContent")}
       </a>
-      <HeaderFrame />
+      <HeaderFrame shopName={shopName} />
       <div className="flex min-h-[calc(100dvh-var(--header-height))] flex-col">
         <main id="main-content" className="flex-1">
           {children}
         </main>
-        <Footer />
+        <Footer
+          shopName={shopName}
+          copyright={
+            // The year is read at request time; the fallback keeps the line's height.
+            <Suspense fallback=" ">
+              <CopyrightSlot />
+            </Suspense>
+          }
+        />
       </div>
     </>
   );

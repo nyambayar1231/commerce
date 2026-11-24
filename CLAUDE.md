@@ -99,7 +99,7 @@ In short:
   Shared configs in `packages/tsconfig` (`base`, `node`, `react`).
 - Dependencies are pinned to exact versions (`pnpm add --save-exact`).
 - Generated, committed files — never edit by hand: `apps/api/schema.graphql` (`pnpm schema:print`),
-  `apps/dashboard/src/graphql/*.generated.ts` (`pnpm codegen`),
+  `apps/dashboard/src/graphql/*.generated.ts` and `apps/storefront/src/gql/**` (`pnpm codegen`),
   `apps/dashboard/locale/defaultMessages.json` (`pnpm extract-messages`),
   `packages/db/drizzle/**` (drizzle-kit; custom migrations are written inside the generated file).
 - GraphQL naming: Saleor's names by default; any deviation goes in ARCHITECTURE §4's

@@ -1,0 +1,5 @@
+query ShopInfo {
+  shop {
+    name
+  }
+}

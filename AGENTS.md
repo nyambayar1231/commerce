@@ -23,7 +23,7 @@ The team layout, roles and lifecycle are documented in `docs/ai-workflow/README.
    The lead commits after reviewing your diff.
 3. Never read, print or edit `.env` or any credential. `.env.example` is fine.
 4. Never hand-edit generated files: `apps/api/schema.graphql`, `**/*.generated.ts`,
-   `packages/db/drizzle/meta/**`. Regenerate them with the commands in `CLAUDE.md`.
+   `apps/storefront/src/gql/**`, `packages/db/drizzle/meta/**`. Regenerate them with the commands in `CLAUDE.md`.
 5. Never edit an applied migration. Never run `drizzle-kit push`.
 6. Never add, remove or upgrade a dependency unless the brief names it explicitly.
 7. Never edit project governance: `CLAUDE.md`, `AGENTS.md`, `PLAN.md`, `ARCHITECTURE.md`,

@@ -39,7 +39,7 @@ jobs:
           pnpm schema:print
           pnpm codegen
           pnpm extract-messages
-          git diff --exit-code -- apps/api/schema.graphql 'apps/dashboard/src/graphql/*.generated.ts' apps/dashboard/locale/defaultMessages.json
+          git diff --exit-code -- apps/api/schema.graphql 'apps/dashboard/src/graphql/*.generated.ts' apps/dashboard/locale/defaultMessages.json apps/storefront/src/gql
 
   e2e:
     name: Playwright golden path

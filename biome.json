@@ -13,7 +13,8 @@
       "!packages/db/drizzle",
       "!apps/api/schema.graphql",
       "!apps/dashboard/src/assets",
-      "!**/*.generated.ts"
+      "!**/*.generated.ts",
+      "!apps/storefront/src/gql"
     ]
   },
   "formatter": {
@@ -34,6 +35,26 @@
     }
   },
   "overrides": [
+    {
+      "includes": ["apps/storefront/src/ui/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["@/gql", "@/gql/**", "@/lib/**", "!@/lib/utils", "!@/lib/*/types"],
+                    "message": "src/ui imports only @/lib/utils and @/lib/*/types (view models): no API, generated types, loaders or Server Actions; pages pass data and actions as props (ARCHITECTURE §10.3)."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "includes": ["apps/storefront/**/*.css"],
       "css": { "parser": { "tailwindDirectives": true } },

@@ -2,14 +2,14 @@ import "@/styles/brand.css";
 import "@/app/globals.css";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
-import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { LOCALE } from "@/i18n/config";
+import { getShop } from "@/lib/content/shop";
 import { getRootHtmlFontProps } from "@/lib/fonts";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("common");
-  return { title: t("shopName") };
+  const shop = await getShop();
+  return { title: { template: `%s | ${shop.name}`, default: shop.name } };
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {

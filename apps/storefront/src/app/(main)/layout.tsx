@@ -2,7 +2,7 @@
 // See THIRD_PARTY_LICENSES.md
 
 import type { ReactNode } from "react";
-import { BrowseChrome } from "@/ui/components/browse-chrome";
+import { BrowseChrome } from "@/app/browse-chrome";
 
 /** Browse pages: header, `<main>` (never inside a Suspense) and footer. */
 export default function MainLayout({ children }: { children: ReactNode }) {

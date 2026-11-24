@@ -4,9 +4,10 @@
 import { Lock } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 /** Checkout header frame: shop name and "secure checkout". The steps come with the checkout. */
-export function CheckoutHeaderFrame() {
+export function CheckoutHeaderFrame({ shopName }: { shopName: ReactNode }) {
   const t = useTranslations();
 
   return (
@@ -14,7 +15,7 @@ export function CheckoutHeaderFrame() {
       <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 md:pb-4 md:pt-4 lg:px-8">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center text-xl font-semibold text-foreground">
-            {t("common.shopName")}
+            {shopName}
           </Link>
 
           <div className="flex items-center gap-1.5 text-muted-foreground">

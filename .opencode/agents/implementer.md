@@ -20,6 +20,7 @@ permissions:
   - { action: edit, resource: "scripts/ai/**", effect: deny }
   - { action: edit, resource: "apps/api/schema.graphql", effect: deny }
   - { action: edit, resource: "**/*.generated.ts", effect: deny }
+  - { action: edit, resource: "apps/storefront/src/gql/**", effect: deny }
   - { action: edit, resource: "packages/db/drizzle/meta/**", effect: deny }
   # Dependencies need the owner's approval: ask (Herdr shows the worker as blocked).
   - { action: edit, resource: "package.json", effect: ask }

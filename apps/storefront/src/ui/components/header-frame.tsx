@@ -3,12 +3,13 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 /**
  * Header frame: shop name and fixed-size slots for nav, search, user menu and cart (empty until
  * their steps, so later islands don't shift the layout).
  */
-export function HeaderFrame() {
+export function HeaderFrame({ shopName }: { shopName: ReactNode }) {
   const t = useTranslations();
 
   return (
@@ -19,7 +20,7 @@ export function HeaderFrame() {
       <div className="container-nav">
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="shrink-0 text-xl font-semibold text-foreground">
-            {t("common.shopName")}
+            {shopName}
           </Link>
 
           <nav

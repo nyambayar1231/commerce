@@ -74,7 +74,7 @@ if [[ "$quick" == 0 ]]; then
   step schema-print "$PNPM" schema:print
   step codegen "$PNPM" codegen
   step extract-messages "$PNPM" extract-messages
-  step generated-files-in-sync git -C "$dir" diff --exit-code --stat -- apps/api/schema.graphql 'apps/dashboard/src/graphql/*.generated.ts' apps/dashboard/locale/defaultMessages.json
+  step generated-files-in-sync git -C "$dir" diff --exit-code --stat -- apps/api/schema.graphql 'apps/dashboard/src/graphql/*.generated.ts' apps/dashboard/locale/defaultMessages.json apps/storefront/src/gql
 fi
 
 if [[ "$build" == 1 ]]; then
