@@ -70,9 +70,17 @@
     "context": "filter condition",
     "string": "дотор"
   },
+  "/x7Y7U": {
+    "context": "search models placeholder",
+    "string": "Модель хайх..."
+  },
   "0/Y0nG": {
     "context": "date group header",
     "string": "Сүүлийн 7 хоног"
+  },
+  "0B0HS2": {
+    "context": "dialog header",
+    "string": "Модель устгах"
   },
   "0OfZJA": {
     "context": "button",
@@ -81,6 +89,10 @@
   "0QG3GQ": {
     "context": "empty search results on the customer list",
     "string": "\"{query}\" хайлтаар харилцагч олдсонгүй"
+  },
+  "0XHXTZ": {
+    "context": "column header",
+    "string": "Гарчиг"
   },
   "0ix6PR": {
     "string": "Захиалга цуцлагдлаа"
@@ -159,6 +171,10 @@
   "3TAa8s": {
     "context": "TopNav destination link tooltip to collections list",
     "string": "Бүх коллекц"
+  },
+  "3dJ2Sc": {
+    "context": "model status",
+    "string": "Нийтлэгдээгүй"
   },
   "3zdm8A": {
     "context": "Dialog title",
@@ -312,6 +328,10 @@
     "context": "empty state message",
     "string": "Энэ захиалгад гүйлгээ хийгдээгүй байна."
   },
+  "7e3EYJ": {
+    "context": "TopNav destination link tooltip to models list",
+    "string": "Бүх модель"
+  },
   "7ejEbB": {
     "context": "Authorized (amount locked on card, not transfered to store owner) transaction amount, data display header",
     "string": "Зөвшөөрөгдсөн"
@@ -345,6 +365,10 @@
   "8RDDZP": {
     "context": "date group header when it is the only group on the timeline",
     "string": "30 хоногоос өмнөх"
+  },
+  "8a4uf/": {
+    "context": "dialog content",
+    "string": "{counter,plural,one{Та энэ моделиг устгахдаа итгэлтэй байна уу?} other{Та {displayQuantity} моделиг устгахдаа итгэлтэй байна уу?}}"
   },
   "8maISA": {
     "context": "deactivate customer dialog, header",
@@ -407,6 +431,10 @@
     "context": "button",
     "string": "Зураг сонгох"
   },
+  "9sXFd2": {
+    "context": "Save composition segment for the page title and content",
+    "string": "ерөнхий"
+  },
   "9wjl6Q": {
     "context": "bulk action button label with selected count",
     "string": "{action} ({count})"
@@ -424,6 +452,10 @@
   },
   "AQDJ1d": {
     "string": "Ноорог захиалга үүслээ"
+  },
+  "AgHhjW": {
+    "context": "dialog header",
+    "string": "Модель устгах"
   },
   "AiurXc": {
     "string": "Үлдэгдэл зөвшөөрөл"
@@ -475,6 +507,10 @@
   "CLy6Vn": {
     "context": "filter value validation error",
     "string": "Утга илүү их байх ёстой"
+  },
+  "CQKgD/": {
+    "context": "bulk actions button label",
+    "string": "Модель устгах"
   },
   "CWDuMj": {
     "context": "remaining quantity",
@@ -528,6 +564,9 @@
   },
   "E2uiWk": {
     "string": "Коллекц шинэчлэгдлээ"
+  },
+  "EAGfdH": {
+    "string": "Хуудас шинэчлэгдлээ"
   },
   "EHRXv4": {
     "context": "product media detail page header",
@@ -599,9 +638,17 @@
     "context": "dialog header",
     "string": "Хувилбарыг устгах"
   },
+  "GFioCC": {
+    "context": "models section name",
+    "string": "Модель"
+  },
   "GJAX0z": {
     "context": "order history message",
     "string": "Захиалга хийгдсэн"
+  },
+  "GhSB79": {
+    "context": "model status",
+    "string": "Нийтлэгдсэн"
   },
   "GrMiRT": {
     "context": "fallback product name in remove product confirmation dialog",
@@ -808,6 +855,10 @@
   },
   "NQgbYA": {
     "string": "Бүртгэлийн тохиргоо"
+  },
+  "NVp0fa": {
+    "context": "modeling section name",
+    "string": "Модельчлэл"
   },
   "NWA+MK": {
     "context": "dialog content",
@@ -1024,6 +1075,9 @@
   "VZsE96": {
     "string": "Коллекцын нэр"
   },
+  "VuqfI9": {
+    "string": "Хуудас устгагдлаа"
+  },
   "VyKl39": {
     "context": "Dialog warning text",
     "string": "Та энэ гүйлгээг {actionType} хийхдээ итгэлтэй байна уу?"
@@ -1134,6 +1188,9 @@
   },
   "ZpVtCa": {
     "string": "Хүргэлтийн хаяг"
+  },
+  "ZwtDkP": {
+    "string": "Хуудас үүслээ"
   },
   "a4iag6": {
     "context": "order header date, earlier today",
@@ -1333,9 +1390,21 @@
     "context": "dialog title",
     "string": "Зураг устгах"
   },
+  "gMwpNC": {
+    "context": "page content",
+    "string": "Контент"
+  },
   "gNm1li": {
     "context": "Refunded transaction amount, data display header",
     "string": "Буцаан олгосон"
+  },
+  "gOVext": {
+    "context": "Info box description for unpublished pages",
+    "string": "Харилцагчид энэ хуудсыг хайж олох, харах боломжгүй."
+  },
+  "ganla2": {
+    "context": "Save composition segment for the page's publish status",
+    "string": "боломжтой эсэх"
   },
   "genRi+": {
     "context": "deactivate customer dialog, content",
@@ -1343,6 +1412,10 @@
   },
   "glR0om": {
     "string": "Хүргэлт"
+  },
+  "gr+oXW": {
+    "context": "page title",
+    "string": "Гарчиг"
   },
   "hJZwTS": {
     "string": "И-мэйл хаяг"
@@ -1423,6 +1496,10 @@
   "kFsTMN": {
     "string": "Харилцагчдыг устгах"
   },
+  "kIcyUo": {
+    "context": "column header",
+    "string": "Слаг"
+  },
   "kKxHG9": {
     "string": "Харилцагч солих"
   },
@@ -1436,6 +1513,10 @@
   },
   "kgVqk1": {
     "string": "Ангиллын нэр"
+  },
+  "knO/IN": {
+    "context": "delete model",
+    "string": "Та {title} устгахдаа итгэлтэй байна уу?"
   },
   "l+GuSi": {
     "context": "assign product dialog, button",
@@ -1451,6 +1532,10 @@
   "lDPwGU": {
     "context": "short subcategory count column header in category sidebar",
     "string": "Дэд"
+  },
+  "lDdj6f": {
+    "context": "page header",
+    "string": "Модель үүсгэх"
   },
   "lL1HTg": {
     "string": "Захиалга төлөгдсөнөөр тэмдэглэгдлээ"
@@ -1586,6 +1671,10 @@
   "pmXN+Q": {
     "context": "TopNav destination link tooltip to products list",
     "string": "Бүх бүтээгдэхүүн"
+  },
+  "pyiyxe": {
+    "context": "button",
+    "string": "Модель үүсгэх"
   },
   "q7bXR4": {
     "string": "Төлбөрийн хураангуй"
@@ -1802,6 +1891,10 @@
   "vuKrlW": {
     "string": "Нөөц"
   },
+  "vwA9Fq": {
+    "context": "notification",
+    "string": "Сонгосон модель устгагдлаа."
+  },
   "vzgZ3U": {
     "context": "card header",
     "string": "Нэвтрэх"
@@ -1809,6 +1902,10 @@
   "wL850U": {
     "context": "draft order lines, section header",
     "string": "Захиалгын мөрүүд"
+  },
+  "wLB8B3": {
+    "context": "column header",
+    "string": "Харагдах байдал"
   },
   "wTHjt3": {
     "string": "Захиалга хайх..."
@@ -1946,5 +2043,8 @@
   "zrqtWp": {
     "context": "draft finalize error",
     "string": "Дуусгахаас өмнө дор хаяж нэг бүтээгдэхүүн нэмнэ үү."
+  },
+  "zv9OGI": {
+    "string": "Модель олдсонгүй"
   }
 }

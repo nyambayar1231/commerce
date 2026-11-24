@@ -505,7 +505,7 @@ Saleor names throughout. Deviations go in ARCHITECTURE §4.
 | M15.4 | Collections API: tables, `collectionCreate/Update/Delete`, `collectionAddProducts/RemoveProducts`, public `collections` / `collection(slug)` (published only), `Product.collections`, a `products` filter by collection and price range | Done |
 | M15.5 | Collections in the dashboard: list, detail and assigned products, matching `../saleor-dashboard/src/collections/` | Done |
 | M15.6 | Pages (rich text, Saleor's EditorJS JSON) and menus (`menu(slug)`, nested items linking to a category, collection, page or URL; `navbar` and `footer` seeded): API with public reads | Done |
-| M15.7 | Pages and menus in the dashboard, matching `../saleor-dashboard/src/pages/` and `src/navigation/` (the page-types simplification is explained when the step starts) | Draft |
+| M15.7 | Pages and menus in the dashboard, matching `../saleor-dashboard/src/pages/` and `src/navigation/` (the page-types simplification is explained when the step starts) | In progress (a: pages done) |
 
 ## M4 — Storefront (Paper-like, production ready)
 

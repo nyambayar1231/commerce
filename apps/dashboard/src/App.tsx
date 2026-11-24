@@ -12,6 +12,7 @@ import { PlaceholderPage } from "./components/PlaceholderPage/PlaceholderPage";
 import { CONFIGURATION_PERMISSIONS } from "./components/Sidebar/menu/hooks/useMenuStructure";
 import { CustomerSection } from "./customers";
 import { sectionNames } from "./intl";
+import { ModelingSection } from "./modeling";
 import { NotFound } from "./NotFound";
 import { OrderSection } from "./orders";
 import { ProductSection } from "./products";
@@ -84,6 +85,14 @@ function Dashboard() {
                 matchPermission="any"
               >
                 <CustomerSection />
+              </SectionRoute>
+            }
+          />
+          <Route
+            path="/models/*"
+            element={
+              <SectionRoute permissions={["MANAGE_PAGES"]}>
+                <ModelingSection />
               </SectionRoute>
             }
           />

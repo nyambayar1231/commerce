@@ -70,9 +70,17 @@
     "context": "filter condition",
     "string": "in"
   },
+  "/x7Y7U": {
+    "context": "search models placeholder",
+    "string": "Search models"
+  },
   "0/Y0nG": {
     "context": "date group header",
     "string": "Last 7 days"
+  },
+  "0B0HS2": {
+    "context": "dialog header",
+    "string": "Delete model"
   },
   "0OfZJA": {
     "context": "button",
@@ -81,6 +89,10 @@
   "0QG3GQ": {
     "context": "empty search results on the customer list",
     "string": "No customers found for {query}"
+  },
+  "0XHXTZ": {
+    "context": "column header",
+    "string": "Title"
   },
   "0ix6PR": {
     "string": "Order cancelled"
@@ -160,6 +172,10 @@
   "3TAa8s": {
     "context": "TopNav destination link tooltip to collections list",
     "string": "All collections"
+  },
+  "3dJ2Sc": {
+    "context": "model status",
+    "string": "Not published"
   },
   "3zdm8A": {
     "context": "Dialog title",
@@ -313,6 +329,10 @@
     "context": "empty state message",
     "string": "No transactions made for this order."
   },
+  "7e3EYJ": {
+    "context": "TopNav destination link tooltip to models list",
+    "string": "All models"
+  },
   "7ejEbB": {
     "context": "Authorized (amount locked on card, not transfered to store owner) transaction amount, data display header",
     "string": "Authorized"
@@ -346,6 +366,10 @@
   "8RDDZP": {
     "context": "date group header when it is the only group on the timeline",
     "string": "Older than 30 days"
+  },
+  "8a4uf/": {
+    "context": "dialog content",
+    "string": "{counter,plural,one{Are you sure you want to delete this model?} other{Are you sure you want to delete {displayQuantity} models?}}"
   },
   "8maISA": {
     "context": "deactivate customer dialog, header",
@@ -408,6 +432,10 @@
     "context": "button",
     "string": "Choose photos"
   },
+  "9sXFd2": {
+    "context": "Save composition segment for the page title and content",
+    "string": "general"
+  },
   "9wjl6Q": {
     "context": "bulk action button label with selected count",
     "string": "{action} ({count})"
@@ -425,6 +453,10 @@
   },
   "AQDJ1d": {
     "string": "Draft order created"
+  },
+  "AgHhjW": {
+    "context": "dialog header",
+    "string": "Delete models"
   },
   "AiurXc": {
     "string": "Outstanding authorized"
@@ -476,6 +508,10 @@
   "CLy6Vn": {
     "context": "filter value validation error",
     "string": "The value must be higher"
+  },
+  "CQKgD/": {
+    "context": "bulk actions button label",
+    "string": "Delete model"
   },
   "CWDuMj": {
     "context": "remaining quantity",
@@ -529,6 +565,9 @@
   },
   "E2uiWk": {
     "string": "Collection updated"
+  },
+  "EAGfdH": {
+    "string": "Page updated"
   },
   "EHRXv4": {
     "context": "product media detail page header",
@@ -600,9 +639,17 @@
     "context": "dialog header",
     "string": "Delete Variant"
   },
+  "GFioCC": {
+    "context": "models section name",
+    "string": "Models"
+  },
   "GJAX0z": {
     "context": "order history message",
     "string": "Order was placed"
+  },
+  "GhSB79": {
+    "context": "model status",
+    "string": "Published"
   },
   "GrMiRT": {
     "context": "fallback product name in remove product confirmation dialog",
@@ -809,6 +856,10 @@
   },
   "NQgbYA": {
     "string": "Account Settings"
+  },
+  "NVp0fa": {
+    "context": "modeling section name",
+    "string": "Modeling"
   },
   "NWA+MK": {
     "context": "dialog content",
@@ -1026,6 +1077,9 @@
   "VZsE96": {
     "string": "Collection Name"
   },
+  "VuqfI9": {
+    "string": "Page deleted"
+  },
   "VyKl39": {
     "context": "Dialog warning text",
     "string": "Are you sure you want to {actionType} this transaction?"
@@ -1136,6 +1190,9 @@
   },
   "ZpVtCa": {
     "string": "Shipping address"
+  },
+  "ZwtDkP": {
+    "string": "Page created"
   },
   "a4iag6": {
     "context": "order header date, earlier today",
@@ -1335,9 +1392,21 @@
     "context": "dialog title",
     "string": "Delete image"
   },
+  "gMwpNC": {
+    "context": "page content",
+    "string": "Content"
+  },
   "gNm1li": {
     "context": "Refunded transaction amount, data display header",
     "string": "Refunded"
+  },
+  "gOVext": {
+    "context": "Info box description for unpublished pages",
+    "string": "Customers cannot find or view this page."
+  },
+  "ganla2": {
+    "context": "Save composition segment for the page's publish status",
+    "string": "availability"
   },
   "genRi+": {
     "context": "deactivate customer dialog, content",
@@ -1345,6 +1414,10 @@
   },
   "glR0om": {
     "string": "Shipping"
+  },
+  "gr+oXW": {
+    "context": "page title",
+    "string": "Title"
   },
   "hJZwTS": {
     "string": "Email address"
@@ -1425,6 +1498,10 @@
   "kFsTMN": {
     "string": "Delete customers"
   },
+  "kIcyUo": {
+    "context": "column header",
+    "string": "Slug"
+  },
   "kKxHG9": {
     "string": "Change customer"
   },
@@ -1438,6 +1515,10 @@
   },
   "kgVqk1": {
     "string": "Category name"
+  },
+  "knO/IN": {
+    "context": "delete model",
+    "string": "Are you sure you want to delete {title}?"
   },
   "l+GuSi": {
     "context": "assign product dialog, button",
@@ -1453,6 +1534,10 @@
   "lDPwGU": {
     "context": "short subcategory count column header in category sidebar",
     "string": "Subs"
+  },
+  "lDdj6f": {
+    "context": "page header",
+    "string": "Create model"
   },
   "lL1HTg": {
     "string": "Order marked as paid"
@@ -1590,6 +1675,10 @@
   "pmXN+Q": {
     "context": "TopNav destination link tooltip to products list",
     "string": "All products"
+  },
+  "pyiyxe": {
+    "context": "button",
+    "string": "Create model"
   },
   "q7bXR4": {
     "string": "Payments summary"
@@ -1808,6 +1897,10 @@
   "vuKrlW": {
     "string": "Stock"
   },
+  "vwA9Fq": {
+    "context": "notification",
+    "string": "Selected models were deleted."
+  },
   "vzgZ3U": {
     "context": "card header",
     "string": "Sign In"
@@ -1815,6 +1908,10 @@
   "wL850U": {
     "context": "draft order lines, section header",
     "string": "Order lines"
+  },
+  "wLB8B3": {
+    "context": "column header",
+    "string": "Visibility"
   },
   "wTHjt3": {
     "string": "Search Orders..."
@@ -1952,5 +2049,8 @@
   "zrqtWp": {
     "context": "draft finalize error",
     "string": "Add at least one product before finalizing."
+  },
+  "zv9OGI": {
+    "string": "No models found"
   }
 }

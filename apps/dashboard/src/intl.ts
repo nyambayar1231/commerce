@@ -126,6 +126,16 @@ export const sectionNames = defineMessages({
     defaultMessage: "Home",
     description: "home section name",
   },
+  modeling: {
+    id: "NVp0fa",
+    defaultMessage: "Modeling",
+    description: "modeling section name",
+  },
+  models: {
+    id: "GFioCC",
+    defaultMessage: "Models",
+    description: "models section name",
+  },
   orders: {
     id: "Ta9j04",
     defaultMessage: "Orders",

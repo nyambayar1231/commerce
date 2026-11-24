@@ -10,6 +10,7 @@ import { HomeIcon } from "../../../../icons/Home";
 import { OrdersIcon } from "../../../../icons/Orders";
 import { ProductsIcon } from "../../../../icons/Products";
 import { sectionNames } from "../../../../intl";
+import { ModelingIcon } from "../../../../modeling/components/ModelingIcon/ModelingIcon";
 import { SidebarIconSlot } from "../../SidebarIconSlot";
 import type { SidebarMenuItem } from "../types";
 import { filterMenuItemsByPermissions } from "../utils";
@@ -104,6 +105,27 @@ export function useMenuStructure(): SidebarMenuItem[] {
       // the customers section (edit affordances inside it stay gated by the server).
       permissions: ["MANAGE_USERS", "MANAGE_ORDERS", "MANAGE_STAFF"],
       type: "item",
+    },
+    {
+      // Saleor's Modeling group: Models are the content pages (Structures, its menus, come in
+      // M15.7b under the same group). Saleor also gates it on MANAGE_MENUS and
+      // MANAGE_PAGE_TYPES_AND_ATTRIBUTES; we have no model types, and until part b the group
+      // holds only Models, so MANAGE_PAGES is the whole rule.
+      children: [
+        {
+          label: intl.formatMessage(sectionNames.models),
+          id: "models",
+          url: "/models/",
+          permissions: ["MANAGE_PAGES"],
+          type: "item",
+        },
+      ],
+      icon: renderIcon(<ModelingIcon />),
+      label: intl.formatMessage(sectionNames.modeling),
+      permissions: ["MANAGE_PAGES"],
+      id: "modeling",
+      url: "/models/",
+      type: "itemGroup",
     },
     {
       icon: renderIcon(<ConfigurationIcon />),
