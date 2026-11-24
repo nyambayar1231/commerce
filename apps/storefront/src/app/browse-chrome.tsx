@@ -3,7 +3,13 @@
 
 import { useTranslations } from "next-intl";
 import { type ReactNode, Suspense } from "react";
-import { CopyrightSlot, ShopNameSkeleton, ShopNameSlot } from "@/app/chrome-slots";
+import {
+  CopyrightSlot,
+  ShopNameSkeleton,
+  ShopNameSlot,
+  UserMenuSkeleton,
+  UserMenuSlot,
+} from "@/app/chrome-slots";
 import { Footer } from "@/ui/components/footer";
 import { HeaderFrame } from "@/ui/components/header-frame";
 
@@ -27,7 +33,14 @@ export function BrowseChrome({ children }: { children: ReactNode }) {
       >
         {t("skipToContent")}
       </a>
-      <HeaderFrame shopName={shopName} />
+      <HeaderFrame
+        shopName={shopName}
+        userMenu={
+          <Suspense fallback={<UserMenuSkeleton />}>
+            <UserMenuSlot />
+          </Suspense>
+        }
+      />
       <div className="flex min-h-[calc(100dvh-var(--header-height))] flex-col">
         <main id="main-content" className="flex-1">
           {children}

@@ -1,0 +1,104 @@
+fragment AuthUser on User {
+  id
+  email
+  firstName
+  lastName
+  isStaff
+}
+
+query Me {
+  me {
+    ...AuthUser
+  }
+}
+
+mutation TokenCreate($email: String!, $password: String!) {
+  tokenCreate(email: $email, password: $password) {
+    user {
+      ...AuthUser
+    }
+    errors {
+      code
+      field
+    }
+  }
+}
+
+mutation Logout {
+  logout {
+    errors {
+      code
+    }
+  }
+}
+
+mutation AccountRegister($input: AccountRegisterInput!) {
+  accountRegister(input: $input) {
+    errors {
+      code
+      field
+    }
+  }
+}
+
+mutation RequestPasswordReset($email: String!, $redirectUrl: String!) {
+  requestPasswordReset(email: $email, redirectUrl: $redirectUrl) {
+    errors {
+      code
+      field
+    }
+  }
+}
+
+mutation ConfirmAccount($email: String!, $token: String!) {
+  confirmAccount(email: $email, token: $token) {
+    user {
+      id
+    }
+    errors {
+      code
+      field
+    }
+  }
+}
+
+mutation SetPassword($email: String!, $token: String!, $password: String!) {
+  setPassword(email: $email, token: $token, password: $password) {
+    user {
+      ...AuthUser
+    }
+    errors {
+      code
+      field
+    }
+  }
+}
+
+query GuestCheckout($id: ID!) {
+  checkout(id: $id) {
+    id
+    lines {
+      id
+    }
+  }
+}
+
+mutation CheckoutCustomerAttach($id: ID!) {
+  checkoutCustomerAttach(id: $id) {
+    errors {
+      code
+    }
+  }
+}
+
+query MyNewestCheckout {
+  me {
+    checkouts(first: 1) {
+      edges {
+        node {
+          token
+        }
+      }
+    }
+  }
+}

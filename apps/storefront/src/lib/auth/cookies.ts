@@ -13,3 +13,31 @@ export function sessionCookieName(): string {
 export async function readSessionToken(): Promise<string | null> {
   return (await cookies()).get(sessionCookieName())?.value ?? null;
 }
+
+/** Flags shared by the session and checkout cookies (ARCHITECTURE §10.8). */
+export function cookieFlags(): {
+  httpOnly: true;
+  sameSite: "lax";
+  path: "/";
+  secure: boolean;
+} {
+  return {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    secure: getEnv().storefrontUrl.startsWith("https:"),
+  };
+}
+
+/** Stores the API session token, for as long as the API session lasts. */
+export async function setSessionCookie(token: string, expires: Date): Promise<void> {
+  (await cookies()).set(sessionCookieName(), token, { ...cookieFlags(), expires });
+}
+
+/**
+ * Deletes with the same flags it was set with: a browser ignores a `__Host-` cookie's deletion
+ * that lacks `Secure` and `Path=/`, which would leave the shopper signed in after signing out.
+ */
+export async function clearSessionCookie(): Promise<void> {
+  (await cookies()).delete({ name: sessionCookieName(), ...cookieFlags() });
+}

@@ -4,6 +4,53 @@ type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import type { DocumentTypeDecoration } from '@graphql-typed-document-node/core';
+export type AccountErrorCode =
+  | 'ACCOUNT_NOT_CONFIRMED'
+  | 'DELETE_OWN_ACCOUNT'
+  | 'DELETE_STAFF_ACCOUNT'
+  | 'DELETE_SUPERUSER_ACCOUNT'
+  | 'INACTIVE'
+  | 'INVALID'
+  | 'INVALID_CREDENTIALS'
+  | 'LOGIN_ATTEMPT_DELAYED'
+  | 'NOT_FOUND'
+  | 'OUT_OF_SCOPE_GROUP'
+  | 'PASSWORD_TOO_SHORT'
+  | 'REQUIRED'
+  | 'UNIQUE'
+  | 'UNKNOWN_IP_ADDRESS';
+
+/** Fields required to create a user. */
+export type AccountRegisterInput = {
+  /** The email address of the user. */
+  email: string;
+  /** Given name. */
+  firstName?: string | null | undefined;
+  /** Family name. */
+  lastName?: string | null | undefined;
+  /** Password. */
+  password: string;
+  /** Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled. */
+  redirectUrl?: string | null | undefined;
+};
+
+export type CheckoutErrorCode =
+  | 'BILLING_ADDRESS_NOT_SET'
+  | 'CHECKOUT_NOT_FULLY_PAID'
+  | 'DELIVERY_METHOD_NOT_APPLICABLE'
+  | 'EMAIL_NOT_SET'
+  | 'INSUFFICIENT_STOCK'
+  | 'INVALID'
+  | 'INVALID_SHIPPING_METHOD'
+  | 'NOT_FOUND'
+  | 'NO_LINES'
+  | 'PRODUCT_NOT_PUBLISHED'
+  | 'QUANTITY_GREATER_THAN_LIMIT'
+  | 'REQUIRED'
+  | 'SHIPPING_ADDRESS_NOT_SET'
+  | 'SHIPPING_METHOD_NOT_SET'
+  | 'ZERO_QUANTITY';
+
 export type DateTimeFilterInput = {
   /** The value equal to. */
   eq?: string | null | undefined;
@@ -107,6 +154,77 @@ export type StringFilterInput = {
   oneOf?: Array<string> | null | undefined;
 };
 
+export type AuthUserFragment = { id: string, email: string, firstName: string, lastName: string, isStaff: boolean };
+
+export type MeQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MeQuery = { me: { id: string, email: string, firstName: string, lastName: string, isStaff: boolean } | null };
+
+export type TokenCreateMutationVariables = Exact<{
+  email: string;
+  password: string;
+}>;
+
+
+export type TokenCreateMutation = { tokenCreate: { user: { id: string, email: string, firstName: string, lastName: string, isStaff: boolean } | null, errors: Array<{ code: AccountErrorCode, field: string | null }> } };
+
+export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type LogoutMutation = { logout: { errors: Array<{ code: AccountErrorCode }> } };
+
+export type AccountRegisterMutationVariables = Exact<{
+  input: AccountRegisterInput;
+}>;
+
+
+export type AccountRegisterMutation = { accountRegister: { errors: Array<{ code: AccountErrorCode, field: string | null }> } };
+
+export type RequestPasswordResetMutationVariables = Exact<{
+  email: string;
+  redirectUrl: string;
+}>;
+
+
+export type RequestPasswordResetMutation = { requestPasswordReset: { errors: Array<{ code: AccountErrorCode, field: string | null }> } };
+
+export type ConfirmAccountMutationVariables = Exact<{
+  email: string;
+  token: string;
+}>;
+
+
+export type ConfirmAccountMutation = { confirmAccount: { user: { id: string } | null, errors: Array<{ code: AccountErrorCode, field: string | null }> } };
+
+export type SetPasswordMutationVariables = Exact<{
+  email: string;
+  token: string;
+  password: string;
+}>;
+
+
+export type SetPasswordMutation = { setPassword: { user: { id: string, email: string, firstName: string, lastName: string, isStaff: boolean } | null, errors: Array<{ code: AccountErrorCode, field: string | null }> } };
+
+export type GuestCheckoutQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type GuestCheckoutQuery = { checkout: { id: string, lines: Array<{ id: string }> } | null };
+
+export type CheckoutCustomerAttachMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CheckoutCustomerAttachMutation = { checkoutCustomerAttach: { errors: Array<{ code: CheckoutErrorCode }> } | null };
+
+export type MyNewestCheckoutQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyNewestCheckoutQuery = { me: { checkouts: { edges: Array<{ node: { token: string } }> } | null } | null };
+
 export type ProductCardFragment = { id: string, name: string, slug: string, category: { name: string } | null, small: { url: string, alt: string | null } | null, large: { url: string } | null, minimalVariantPrice: { amount: number, currency: string } | null, variants: Array<{ id: string, quantityAvailable: number | null, price: { amount: number } }> };
 
 export type ProductListingQueryVariables = Exact<{
@@ -163,6 +281,15 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
+export const AuthUserFragmentDoc = new TypedDocumentString(`
+    fragment AuthUser on User {
+  id
+  email
+  firstName
+  lastName
+  isStaff
+}
+    `, {"fragmentName":"AuthUser"}) as unknown as TypedDocumentString<AuthUserFragment, unknown>;
 export const ProductCardFragmentDoc = new TypedDocumentString(`
     fragment ProductCard on Product {
   id
@@ -191,6 +318,131 @@ export const ProductCardFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ProductCard"}) as unknown as TypedDocumentString<ProductCardFragment, unknown>;
+export const MeDocument = new TypedDocumentString(`
+    query Me {
+  me {
+    ...AuthUser
+  }
+}
+    fragment AuthUser on User {
+  id
+  email
+  firstName
+  lastName
+  isStaff
+}`) as unknown as TypedDocumentString<MeQuery, MeQueryVariables>;
+export const TokenCreateDocument = new TypedDocumentString(`
+    mutation TokenCreate($email: String!, $password: String!) {
+  tokenCreate(email: $email, password: $password) {
+    user {
+      ...AuthUser
+    }
+    errors {
+      code
+      field
+    }
+  }
+}
+    fragment AuthUser on User {
+  id
+  email
+  firstName
+  lastName
+  isStaff
+}`) as unknown as TypedDocumentString<TokenCreateMutation, TokenCreateMutationVariables>;
+export const LogoutDocument = new TypedDocumentString(`
+    mutation Logout {
+  logout {
+    errors {
+      code
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<LogoutMutation, LogoutMutationVariables>;
+export const AccountRegisterDocument = new TypedDocumentString(`
+    mutation AccountRegister($input: AccountRegisterInput!) {
+  accountRegister(input: $input) {
+    errors {
+      code
+      field
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<AccountRegisterMutation, AccountRegisterMutationVariables>;
+export const RequestPasswordResetDocument = new TypedDocumentString(`
+    mutation RequestPasswordReset($email: String!, $redirectUrl: String!) {
+  requestPasswordReset(email: $email, redirectUrl: $redirectUrl) {
+    errors {
+      code
+      field
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<RequestPasswordResetMutation, RequestPasswordResetMutationVariables>;
+export const ConfirmAccountDocument = new TypedDocumentString(`
+    mutation ConfirmAccount($email: String!, $token: String!) {
+  confirmAccount(email: $email, token: $token) {
+    user {
+      id
+    }
+    errors {
+      code
+      field
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<ConfirmAccountMutation, ConfirmAccountMutationVariables>;
+export const SetPasswordDocument = new TypedDocumentString(`
+    mutation SetPassword($email: String!, $token: String!, $password: String!) {
+  setPassword(email: $email, token: $token, password: $password) {
+    user {
+      ...AuthUser
+    }
+    errors {
+      code
+      field
+    }
+  }
+}
+    fragment AuthUser on User {
+  id
+  email
+  firstName
+  lastName
+  isStaff
+}`) as unknown as TypedDocumentString<SetPasswordMutation, SetPasswordMutationVariables>;
+export const GuestCheckoutDocument = new TypedDocumentString(`
+    query GuestCheckout($id: ID!) {
+  checkout(id: $id) {
+    id
+    lines {
+      id
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<GuestCheckoutQuery, GuestCheckoutQueryVariables>;
+export const CheckoutCustomerAttachDocument = new TypedDocumentString(`
+    mutation CheckoutCustomerAttach($id: ID!) {
+  checkoutCustomerAttach(id: $id) {
+    errors {
+      code
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<CheckoutCustomerAttachMutation, CheckoutCustomerAttachMutationVariables>;
+export const MyNewestCheckoutDocument = new TypedDocumentString(`
+    query MyNewestCheckout {
+  me {
+    checkouts(first: 1) {
+      edges {
+        node {
+          token
+        }
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<MyNewestCheckoutQuery, MyNewestCheckoutQueryVariables>;
 export const ProductListingDocument = new TypedDocumentString(`
     query ProductListing($first: Int, $after: String, $last: Int, $before: String, $sortBy: ProductOrder, $where: ProductWhereInput) {
   products(

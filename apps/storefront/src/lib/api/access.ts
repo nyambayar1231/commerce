@@ -8,7 +8,14 @@ import { getClientIp } from "@/lib/client-ip";
 import { executeGraphQL } from "./client";
 import type { ApiResult } from "./types";
 
-type Options<V> = { variables?: V };
+type Options<V> = {
+  variables?: V;
+  /**
+   * Only for auth flows holding a token that is not yet in the cookie (a fresh login's token).
+   * Everything else uses the session cookie.
+   */
+  token?: string | null;
+};
 
 /**
  * Shared, cached read for public data. Call it only inside a `"use cache"` function. It sends no
@@ -60,7 +67,7 @@ export async function mutate<T, V>(
 ): Promise<ApiResult<T>> {
   const { result } = await executeGraphQL(document, {
     variables: options.variables,
-    token: await readSessionToken(),
+    token: options.token !== undefined ? options.token : await readSessionToken(),
     clientIp: await getClientIp(),
     retry: false,
   });
@@ -77,7 +84,7 @@ export async function mutateWithResponse<T, V>(
 ): Promise<{ result: ApiResult<T>; headers: Headers | null }> {
   return executeGraphQL(document, {
     variables: options.variables,
-    token: await readSessionToken(),
+    token: options.token !== undefined ? options.token : await readSessionToken(),
     clientIp: await getClientIp(),
     retry: false,
   });

@@ -3,7 +3,12 @@
 
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
+import { logout } from "@/lib/auth/actions";
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { getShop } from "@/lib/content/shop";
+import { UserMenu } from "@/ui/components/nav/user-menu/user-menu";
+import { UserMenuLoginLink } from "@/ui/components/nav/user-menu/user-menu-login-link";
+import { UserMenuUnavailable } from "@/ui/components/nav/user-menu/user-menu-unavailable";
 
 // The chrome's data islands. They live in src/app because they call loaders; the frames in
 // src/ui receive them as slots (ARCHITECTURE §10.3). Each one reads runtime data, so it is always
@@ -23,6 +28,20 @@ export function ShopNameSkeleton() {
       className="inline-block h-[1em] w-32 animate-pulse rounded bg-muted align-middle"
     />
   );
+}
+
+/** Sign-in link, the customer's menu, or the "unavailable" icon, from the session cookie. */
+export async function UserMenuSlot() {
+  const current = await getCurrentUser();
+  if (current.status === "authenticated") {
+    return <UserMenu user={current.user} logoutAction={logout} />;
+  }
+  return current.status === "unavailable" ? <UserMenuUnavailable /> : <UserMenuLoginLink />;
+}
+
+/** Skeleton for `UserMenuSlot`: the size of the sign-in link. */
+export function UserMenuSkeleton() {
+  return <div aria-hidden="true" className="h-10 w-24 animate-pulse rounded-md bg-muted" />;
 }
 
 /**

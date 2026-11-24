@@ -6,10 +6,10 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 /**
- * Header frame: shop name and fixed-size slots for nav, search, user menu and cart (empty until
+ * Header frame: shop name, the user menu and fixed-size slots for nav, search and cart (empty until
  * their steps, so later islands don't shift the layout).
  */
-export function HeaderFrame({ shopName }: { shopName: ReactNode }) {
+export function HeaderFrame({ shopName, userMenu }: { shopName: ReactNode; userMenu: ReactNode }) {
   const t = useTranslations();
 
   return (
@@ -31,7 +31,7 @@ export function HeaderFrame({ shopName }: { shopName: ReactNode }) {
           <div className="hidden md:flex md:max-w-md md:flex-1 md:justify-end lg:flex-none" />
 
           <div className="flex items-center gap-1">
-            <div className="h-10 w-10" aria-hidden="true" />
+            {userMenu}
             <div className="h-10 w-10" aria-hidden="true" />
           </div>
         </div>
