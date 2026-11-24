@@ -94,6 +94,10 @@
     "context": "column header",
     "string": "Title"
   },
+  "0dCGBW": {
+    "context": "button",
+    "string": "Create structure"
+  },
   "0ix6PR": {
     "string": "Order cancelled"
   },
@@ -123,6 +127,10 @@
   },
   "1X6HtI": {
     "string": "All Categories"
+  },
+  "21cJ+Z": {
+    "context": "structures section name",
+    "string": "Structures"
   },
   "2HfSiT": {
     "context": "pagination",
@@ -246,6 +254,9 @@
   },
   "577R2r": {
     "string": "Invalid value"
+  },
+  "5KS3f4": {
+    "string": "Structure title"
   },
   "5Nv7ig": {
     "context": "customer overview stat label: sum of recent orders net product sales",
@@ -497,6 +508,9 @@
   "BvGp1I": {
     "string": "between"
   },
+  "C4IOEN": {
+    "string": "Created structure"
+  },
   "C50ahv": {
     "context": "button",
     "string": "Add products"
@@ -646,6 +660,10 @@
   "GJAX0z": {
     "context": "order history message",
     "string": "Order was placed"
+  },
+  "GUeIcq": {
+    "context": "edit structure, header",
+    "string": "Edit Item"
   },
   "GhSB79": {
     "context": "model status",
@@ -904,6 +922,10 @@
   "PFnobO": {
     "string": "greater"
   },
+  "PWKArE": {
+    "context": "search structures placeholder",
+    "string": "Search structures"
+  },
   "PXatmC": {
     "string": "Customer Removed"
   },
@@ -1007,6 +1029,10 @@
   "T83iU7": {
     "string": "Search categories..."
   },
+  "TD/GhR": {
+    "context": "header",
+    "string": "Structure Items"
+  },
   "TDhHMi": {
     "string": "This needs to be unique"
   },
@@ -1029,6 +1055,9 @@
     "context": "product inventory, checkbox",
     "string": "Track Inventory"
   },
+  "U2DyeR": {
+    "string": "Are you sure you want to delete structure {menuName}?"
+  },
   "U2PF0d": {
     "context": "create category dialog description for root create",
     "string": "Add a top-level category. You can edit SEO, media, and metadata after creating it."
@@ -1040,6 +1069,10 @@
   "U5dMfQ": {
     "context": "Label for published toggle",
     "string": "Published"
+  },
+  "U86VKF": {
+    "context": "number of structures",
+    "string": "Items"
   },
   "ULBvyx": {
     "context": "order header date, yesterday",
@@ -1087,6 +1120,10 @@
   "W2glWk": {
     "context": "fulfilled fulfillment, warehouse info",
     "string": "From {warehouseName}"
+  },
+  "WDrC7e": {
+    "context": "label",
+    "string": "Link value"
   },
   "WE8IFE": {
     "context": "product name",
@@ -1140,6 +1177,13 @@
   "Xm9qOu": {
     "context": "product pricing, section header",
     "string": "Pricing"
+  },
+  "XvbjyW": {
+    "context": "add new structure",
+    "string": "Create new item"
+  },
+  "YEIFiI": {
+    "string": "Add new structure item to begin creating structure"
   },
   "YRe93Y": {
     "string": "Enter a valid email address"
@@ -1220,6 +1264,9 @@
     "context": "customer overview stat label: average order value of recent orders",
     "string": "Avg order value"
   },
+  "aWzvoq": {
+    "string": "{counter,plural,one{Are you sure you want to delete this structure?} other{Are you sure you want to delete {displayQuantity} structures?}}"
+  },
   "aYnI0N": {
     "context": "customer overview stat label",
     "string": "Last login"
@@ -1251,6 +1298,9 @@
   },
   "bVjFta": {
     "string": "Search customers"
+  },
+  "bj1U23": {
+    "string": "Are you sure you want to delete {menuName}?"
   },
   "bj6pTd": {
     "string": "Something's missing"
@@ -1284,6 +1334,9 @@
   },
   "cLcy6F": {
     "string": "Number of products"
+  },
+  "cRQ9hb": {
+    "string": "Deleted structure"
   },
   "cW1RIo": {
     "context": "section header",
@@ -1594,6 +1647,9 @@
     "context": "draft finalize error toast",
     "string": "The draft can't be finalized yet. Fix the fields marked in red."
   },
+  "mqwLmD": {
+    "string": "Menu updated"
+  },
   "n8tEIV": {
     "context": "customer overview, last login tooltip",
     "string": "Most recent time this customer signed in to their account."
@@ -1639,6 +1695,10 @@
     "context": "order status",
     "string": "Unfulfilled"
   },
+  "oNoehJ": {
+    "context": "TopNav destination link tooltip to structures/menus list",
+    "string": "All structures"
+  },
   "oUWADl": {
     "string": "No"
   },
@@ -1657,6 +1717,10 @@
   "p6ugX0": {
     "context": "button to keep order",
     "string": "Keep order"
+  },
+  "pSb46V": {
+    "context": "dialog header",
+    "string": "Create structure"
   },
   "pVFoOk": {
     "string": "Are you sure you want to delete {collectionName}?"
@@ -1693,6 +1757,9 @@
   "qKiqXs": {
     "context": "Date suffix for toggle controls",
     "string": "since {date}"
+  },
+  "qL9Oi9": {
+    "string": "Structure Title"
   },
   "qLbse5": {
     "context": "button",
@@ -1854,6 +1921,10 @@
     "context": "button label to cancel product removal",
     "string": "Keep product"
   },
+  "uZbYst": {
+    "context": "link option for a typed URL",
+    "string": "Link to"
+  },
   "ufmuTp": {
     "context": "button",
     "string": "Delete"
@@ -1873,8 +1944,19 @@
   "v0fBOU": {
     "string": "Collapse all"
   },
+  "v20Mra": {
+    "string": "Menus deleted"
+  },
+  "vDp2tH": {
+    "context": "all structures",
+    "string": "All structures"
+  },
   "vEYtiq": {
     "string": "Category Name"
+  },
+  "vN3qdA": {
+    "context": "button",
+    "string": "Undo"
   },
   "vW3tb6": {
     "context": "name",
@@ -1904,6 +1986,10 @@
   "vzgZ3U": {
     "context": "card header",
     "string": "Sign In"
+  },
+  "wAGThK": {
+    "context": "dialog header",
+    "string": "Delete structures"
   },
   "wL850U": {
     "context": "draft order lines, section header",
@@ -1953,12 +2039,20 @@
     "context": "unassign a product from the collection, row button tooltip",
     "string": "Unassign product"
   },
+  "x79cEk": {
+    "context": "dialog header",
+    "string": "Delete structure"
+  },
   "xEyXOV": {
     "context": "pagination next page button aria label",
     "string": "Next page"
   },
   "xRkj2h": {
     "string": "Are you sure you want to delete {categoryName}?"
+  },
+  "xccRhL": {
+    "context": "bulk actions button label",
+    "string": "Delete structures"
   },
   "xfGZsi": {
     "context": "configuration section name",
@@ -1977,6 +2071,9 @@
   "xo5UIb": {
     "context": "dialog title",
     "string": "Delete category"
+  },
+  "xrF9JK": {
+    "string": "No structures found"
   },
   "xrKHS6": {
     "string": "Success"
@@ -2018,6 +2115,14 @@
   "ytKTTO": {
     "context": "draft orders section name",
     "string": "Drafts"
+  },
+  "z/pKCq": {
+    "context": "structure name",
+    "string": "Name"
+  },
+  "zJpP1T": {
+    "context": "create new structure, header",
+    "string": "Add Item"
   },
   "zP3Rb6": {
     "context": "customer detail cogs menu, deactivates the customer account",

@@ -107,10 +107,9 @@ export function useMenuStructure(): SidebarMenuItem[] {
       type: "item",
     },
     {
-      // Saleor's Modeling group: Models are the content pages (Structures, its menus, come in
-      // M15.7b under the same group). Saleor also gates it on MANAGE_MENUS and
-      // MANAGE_PAGE_TYPES_AND_ATTRIBUTES; we have no model types, and until part b the group
-      // holds only Models, so MANAGE_PAGES is the whole rule.
+      // Saleor's Modeling group: Models are the content pages and Structures its menus. Saleor also
+      // gates it on MANAGE_PAGE_TYPES_AND_ATTRIBUTES; we have no model types, so either child's
+      // permission opens the group.
       children: [
         {
           label: intl.formatMessage(sectionNames.models),
@@ -119,10 +118,17 @@ export function useMenuStructure(): SidebarMenuItem[] {
           permissions: ["MANAGE_PAGES"],
           type: "item",
         },
+        {
+          label: intl.formatMessage(sectionNames.structures),
+          id: "structures",
+          url: "/structures/",
+          permissions: ["MANAGE_MENUS"],
+          type: "item",
+        },
       ],
       icon: renderIcon(<ModelingIcon />),
       label: intl.formatMessage(sectionNames.modeling),
-      permissions: ["MANAGE_PAGES"],
+      permissions: ["MANAGE_PAGES", "MANAGE_MENUS"],
       id: "modeling",
       url: "/models/",
       type: "itemGroup",

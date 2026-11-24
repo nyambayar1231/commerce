@@ -18,6 +18,11 @@ export const topNavDestinationMessages = defineMessages({
     id: "7e3EYJ",
     description: "TopNav destination link tooltip to models list",
   },
+  allStructures: {
+    defaultMessage: "All structures",
+    id: "oNoehJ",
+    description: "TopNav destination link tooltip to structures/menus list",
+  },
   order: {
     defaultMessage: "Order",
     id: "VOtpY0",

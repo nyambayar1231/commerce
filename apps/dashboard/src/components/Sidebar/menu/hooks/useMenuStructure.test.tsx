@@ -26,8 +26,8 @@ afterEach(() => {
 });
 
 describe("useMenuStructure", () => {
-  it("shows Modeling → Models after Customers for a user who can manage pages", () => {
-    state.permissions = ["MANAGE_PAGES", "MANAGE_PRODUCTS", "MANAGE_USERS"];
+  it("shows Modeling → Models and Structures after Customers for a superuser", () => {
+    state.permissions = ["MANAGE_PAGES", "MANAGE_MENUS", "MANAGE_PRODUCTS", "MANAGE_USERS"];
     const { result } = renderMenu();
     const ids = result.current.map((item) => item.id);
 
@@ -36,7 +36,7 @@ describe("useMenuStructure", () => {
       label: "Modeling",
       url: "/models/",
       type: "itemGroup",
-      permissions: ["MANAGE_PAGES"],
+      permissions: ["MANAGE_PAGES", "MANAGE_MENUS"],
     });
     expect(result.current.find((item) => item.id === "modeling")?.children).toEqual([
       {
@@ -46,21 +46,38 @@ describe("useMenuStructure", () => {
         type: "item",
         permissions: ["MANAGE_PAGES"],
       },
+      {
+        id: "structures",
+        label: "Structures",
+        url: "/structures/",
+        type: "item",
+        permissions: ["MANAGE_MENUS"],
+      },
     ]);
   });
 
-  it("hides the group without MANAGE_PAGES", () => {
+  it("shows the group and only Structures to a user who can manage menus", () => {
+    state.permissions = ["MANAGE_MENUS"];
+    const { result } = renderMenu();
+    const modeling = result.current.find((item) => item.id === "modeling");
+
+    expect(modeling?.children).toHaveLength(1);
+    expect(modeling?.children?.[0]).toMatchObject({ id: "structures", url: "/structures/" });
+  });
+
+  it("hides the group without either permission", () => {
     state.permissions = ["MANAGE_PRODUCTS", "MANAGE_ORDERS"];
     const { result } = renderMenu();
 
     expect(result.current.some((item) => item.id === "modeling")).toBe(false);
     expect(result.current.some((item) => item.id === "models")).toBe(false);
+    expect(result.current.some((item) => item.id === "structures")).toBe(false);
   });
 
   it("shows the group to a superuser, who has every permission", () => {
     state.permissions = ["MANAGE_PAGES", "MANAGE_PRODUCTS", "MANAGE_ORDERS", "MANAGE_MENUS"];
     const { result } = renderMenu();
 
-    expect(result.current.find((item) => item.id === "modeling")?.children).toHaveLength(1);
+    expect(result.current.find((item) => item.id === "modeling")?.children).toHaveLength(2);
   });
 });

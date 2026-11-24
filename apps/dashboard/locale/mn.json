@@ -94,6 +94,10 @@
     "context": "column header",
     "string": "Гарчиг"
   },
+  "0dCGBW": {
+    "context": "button",
+    "string": "Бүтэц үүсгэх"
+  },
   "0ix6PR": {
     "string": "Захиалга цуцлагдлаа"
   },
@@ -123,6 +127,10 @@
   },
   "1X6HtI": {
     "string": "Бүх ангилал"
+  },
+  "21cJ+Z": {
+    "context": "structures section name",
+    "string": "Бүтэц"
   },
   "2HfSiT": {
     "context": "pagination",
@@ -245,6 +253,9 @@
   },
   "577R2r": {
     "string": "Буруу утга"
+  },
+  "5KS3f4": {
+    "string": "Бүтцийн гарчиг"
   },
   "5Nv7ig": {
     "context": "customer overview stat label: sum of recent orders net product sales",
@@ -496,6 +507,9 @@
   "BvGp1I": {
     "string": "хооронд"
   },
+  "C4IOEN": {
+    "string": "Бүтэц үүсгэлээ"
+  },
   "C50ahv": {
     "context": "button",
     "string": "Бүтээгдэхүүн нэмэх"
@@ -645,6 +659,10 @@
   "GJAX0z": {
     "context": "order history message",
     "string": "Захиалга хийгдсэн"
+  },
+  "GUeIcq": {
+    "context": "edit structure, header",
+    "string": "Элемент засах"
   },
   "GhSB79": {
     "context": "model status",
@@ -903,6 +921,10 @@
   "PFnobO": {
     "string": "их"
   },
+  "PWKArE": {
+    "context": "search structures placeholder",
+    "string": "Бүтэц хайх"
+  },
   "PXatmC": {
     "string": "Харилцагч устгагдлаа"
   },
@@ -1005,6 +1027,10 @@
   "T83iU7": {
     "string": "Ангилал хайх..."
   },
+  "TD/GhR": {
+    "context": "header",
+    "string": "Бүтцийн элементүүд"
+  },
   "TDhHMi": {
     "string": "Энэ утга давхардахгүй байх ёстой"
   },
@@ -1027,6 +1053,9 @@
     "context": "product inventory, checkbox",
     "string": "Нөөцийг хянах"
   },
+  "U2DyeR": {
+    "string": "Та {menuName} бүтцийг устгахдаа итгэлтэй байна уу?"
+  },
   "U2PF0d": {
     "context": "create category dialog description for root create",
     "string": "Үндсэн ангилал нэмнэ. Үүсгэсний дараа SEO, медиа, мета өгөгдлийг засаж болно."
@@ -1038,6 +1067,10 @@
   "U5dMfQ": {
     "context": "Label for published toggle",
     "string": "Нийтлэгдсэн"
+  },
+  "U86VKF": {
+    "context": "number of structures",
+    "string": "Элементүүд"
   },
   "ULBvyx": {
     "context": "order header date, yesterday",
@@ -1085,6 +1118,10 @@
   "W2glWk": {
     "context": "fulfilled fulfillment, warehouse info",
     "string": "{warehouseName} агуулахаас"
+  },
+  "WDrC7e": {
+    "context": "label",
+    "string": "Холбоосын утга"
   },
   "WE8IFE": {
     "context": "product name",
@@ -1138,6 +1175,13 @@
   "Xm9qOu": {
     "context": "product pricing, section header",
     "string": "Үнэ"
+  },
+  "XvbjyW": {
+    "context": "add new structure",
+    "string": "Шинэ элемент үүсгэх"
+  },
+  "YEIFiI": {
+    "string": "Бүтэц үүсгэхийн тулд эхлээд шинэ элемент нэмнэ үү"
   },
   "YRe93Y": {
     "string": "Зөв и-мэйл хаяг оруулна уу"
@@ -1218,6 +1262,9 @@
     "context": "customer overview stat label: average order value of recent orders",
     "string": "Захиалгын дундаж үнэ"
   },
+  "aWzvoq": {
+    "string": "{counter,plural,one{Та энэ бүтцийг устгахдаа итгэлтэй байна уу?} other{Та {displayQuantity} бүтцийг устгахдаа итгэлтэй байна уу?}}"
+  },
   "aYnI0N": {
     "context": "customer overview stat label",
     "string": "Сүүлд нэвтэрсэн"
@@ -1249,6 +1296,9 @@
   },
   "bVjFta": {
     "string": "Харилцагч хайх"
+  },
+  "bj1U23": {
+    "string": "Та {menuName} устгахдаа итгэлтэй байна уу?"
   },
   "bj6pTd": {
     "string": "Ямар нэг зүйл дутуу байна"
@@ -1282,6 +1332,9 @@
   },
   "cLcy6F": {
     "string": "Бүтээгдэхүүний тоо"
+  },
+  "cRQ9hb": {
+    "string": "Бүтэц устгалаа"
   },
   "cW1RIo": {
     "context": "section header",
@@ -1591,6 +1644,9 @@
     "context": "draft finalize error toast",
     "string": "Ноорог захиалгыг одоогоор дуусгах боломжгүй. Улаанаар тэмдэглэсэн талбаруудыг засна уу."
   },
+  "mqwLmD": {
+    "string": "Цэс шинэчлэгдлээ"
+  },
   "n8tEIV": {
     "context": "customer overview, last login tooltip",
     "string": "Энэ харилцагч өөрийн бүртгэлд хамгийн сүүлд нэвтэрсэн хугацаа."
@@ -1635,6 +1691,10 @@
     "context": "order status",
     "string": "Биелүүлээгүй"
   },
+  "oNoehJ": {
+    "context": "TopNav destination link tooltip to structures/menus list",
+    "string": "Бүх бүтэц"
+  },
   "oUWADl": {
     "string": "Үгүй"
   },
@@ -1653,6 +1713,10 @@
   "p6ugX0": {
     "context": "button to keep order",
     "string": "Захиалгыг хэвээр үлдээх"
+  },
+  "pSb46V": {
+    "context": "dialog header",
+    "string": "Бүтэц үүсгэх"
   },
   "pVFoOk": {
     "string": "Та {collectionName} устгахдаа итгэлтэй байна уу?"
@@ -1689,6 +1753,9 @@
   "qKiqXs": {
     "context": "Date suffix for toggle controls",
     "string": "{date}-аас хойш"
+  },
+  "qL9Oi9": {
+    "string": "Бүтцийн гарчиг"
   },
   "qLbse5": {
     "context": "button",
@@ -1848,6 +1915,10 @@
     "context": "button label to cancel product removal",
     "string": "Бүтээгдэхүүнийг үлдээх"
   },
+  "uZbYst": {
+    "context": "link option for a typed URL",
+    "string": "Холбоос"
+  },
   "ufmuTp": {
     "context": "button",
     "string": "Устгах"
@@ -1867,8 +1938,19 @@
   "v0fBOU": {
     "string": "Бүгдийг хураах"
   },
+  "v20Mra": {
+    "string": "Цэснүүд устгагдлаа"
+  },
+  "vDp2tH": {
+    "context": "all structures",
+    "string": "Бүх бүтэц"
+  },
   "vEYtiq": {
     "string": "Ангиллын нэр"
+  },
+  "vN3qdA": {
+    "context": "button",
+    "string": "Буцаах"
   },
   "vW3tb6": {
     "context": "name",
@@ -1898,6 +1980,10 @@
   "vzgZ3U": {
     "context": "card header",
     "string": "Нэвтрэх"
+  },
+  "wAGThK": {
+    "context": "dialog header",
+    "string": "Бүтэц устгах"
   },
   "wL850U": {
     "context": "draft order lines, section header",
@@ -1947,12 +2033,20 @@
     "context": "unassign a product from the collection, row button tooltip",
     "string": "Бүтээгдэхүүн хасах"
   },
+  "x79cEk": {
+    "context": "dialog header",
+    "string": "Бүтэц устгах"
+  },
   "xEyXOV": {
     "context": "pagination next page button aria label",
     "string": "Дараагийн хуудас"
   },
   "xRkj2h": {
     "string": "Та {categoryName}-г устгахдаа итгэлтэй байна уу?"
+  },
+  "xccRhL": {
+    "context": "bulk actions button label",
+    "string": "Бүтэц устгах"
   },
   "xfGZsi": {
     "context": "configuration section name",
@@ -1971,6 +2065,9 @@
   "xo5UIb": {
     "context": "dialog title",
     "string": "Ангилал устгах"
+  },
+  "xrF9JK": {
+    "string": "Бүтэц олдсонгүй"
   },
   "xrKHS6": {
     "string": "Амжилттай"
@@ -2012,6 +2109,14 @@
   "ytKTTO": {
     "context": "draft orders section name",
     "string": "Ноорог"
+  },
+  "z/pKCq": {
+    "context": "structure name",
+    "string": "Нэр"
+  },
+  "zJpP1T": {
+    "context": "create new structure, header",
+    "string": "Элемент нэмэх"
   },
   "zP3Rb6": {
     "context": "customer detail cogs menu, deactivates the customer account",

@@ -146,6 +146,11 @@ export const sectionNames = defineMessages({
     defaultMessage: "Products",
     description: "products section name",
   },
+  structures: {
+    id: "21cJ+Z",
+    defaultMessage: "Structures",
+    description: "structures section name",
+  },
 });
 
 // Saleor's commonStatusMessages, orderStatusMessages and paymentStatusMessages, limited to the

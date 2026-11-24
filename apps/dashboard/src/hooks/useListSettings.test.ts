@@ -26,6 +26,12 @@ describe("useListSettings", () => {
     expect(result.current.settings).toEqual({ rowNumber: PAGINATE_BY });
   });
 
+  it("defaults the structure list to 20 rows and no stored columns (no column picker)", () => {
+    const { result } = renderHook(() => useListSettings("MENU_LIST"));
+
+    expect(result.current.settings).toEqual({ rowNumber: PAGINATE_BY });
+  });
+
   it("defaults the product list to 20 rows and its six columns in Saleor's order", () => {
     const { result } = renderHook(() => useListSettings("PRODUCT_LIST"));
 
@@ -57,6 +63,7 @@ describe("useListSettings", () => {
       ORDER_DRAFT_LIST: { columns: ORDER_DRAFT_LIST_DEFAULT_COLUMNS, rowNumber: PAGINATE_BY },
       ORDER_LIST: { columns: ORDER_LIST_DEFAULT_COLUMNS, rowNumber: PAGINATE_BY },
       PAGES_LIST: { rowNumber: PAGINATE_BY },
+      MENU_LIST: { rowNumber: PAGINATE_BY },
       PRODUCT_LIST: { columns: PRODUCT_LIST_DEFAULT_COLUMNS, rowNumber: PAGINATE_BY },
     });
   });

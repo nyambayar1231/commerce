@@ -59,6 +59,7 @@ export type ListViews =
   | "ORDER_DRAFT_LIST"
   | "ORDER_LIST"
   | "PAGES_LIST"
+  | "MENU_LIST"
   | "PRODUCT_LIST";
 
 export interface ListSettings {
@@ -99,6 +100,9 @@ const defaultListSettings: AppListViewSettings = {
   // Saleor's PAGES_LIST default columns minus contentType (no page types); we have no column
   // picker, so only the page size is stored.
   PAGES_LIST: { rowNumber: PAGINATE_BY },
+  // Saleor's NAVIGATION_LIST default columns (name, items); no column picker, so only the page
+  // size is stored.
+  MENU_LIST: { rowNumber: PAGINATE_BY },
   PRODUCT_LIST: {
     rowNumber: PAGINATE_BY,
     columns: PRODUCT_LIST_DEFAULT_COLUMNS,
