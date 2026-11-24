@@ -131,6 +131,10 @@ export const PERMISSIONS = [
   "MANAGE_SHIPPING",
   // Saleor's payment.handle_payments: requesting transaction actions (refunds, M6.4).
   "HANDLE_PAYMENTS",
+  // Saleor's page.manage_pages and menu.manage_menus (M15.6): content pages and the navigation
+  // menus that link to them.
+  "MANAGE_PAGES",
+  "MANAGE_MENUS",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];

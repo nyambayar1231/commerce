@@ -621,7 +621,9 @@ export type OrderWhereInput = {
 export type PermissionEnum =
   | 'HANDLE_PAYMENTS'
   | 'MANAGE_CHECKOUTS'
+  | 'MANAGE_MENUS'
   | 'MANAGE_ORDERS'
+  | 'MANAGE_PAGES'
   | 'MANAGE_PRODUCTS'
   | 'MANAGE_SETTINGS'
   | 'MANAGE_SHIPPING'

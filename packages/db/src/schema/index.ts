@@ -2,6 +2,7 @@
 
 export * from "./catalog.ts";
 export * from "./checkout.ts";
+export * from "./content.ts";
 export * from "./identity.ts";
 export * from "./inventory.ts";
 export * from "./orders.ts";

@@ -1862,6 +1862,49 @@ type Mutation {
   ): OrderMarkAsPaid
 
   """
+  Deletes pages.
+  
+  Requires one of the following permissions: MANAGE_PAGES.
+  """
+  pageBulkDelete(
+    """List of page IDs to delete."""
+    ids: [ID!]!
+  ): PageBulkDelete
+
+  """
+  Creates a new page.
+  
+  Requires one of the following permissions: MANAGE_PAGES.
+  """
+  pageCreate(
+    """Fields required to create a page."""
+    input: PageCreateInput!
+  ): PageCreate!
+
+  """
+  Deletes a page.
+  
+  Requires one of the following permissions: MANAGE_PAGES.
+  """
+  pageDelete(
+    """ID of a page to delete."""
+    id: ID!
+  ): PageDelete!
+
+  """
+  Updates an existing page.
+  
+  Requires one of the following permissions: MANAGE_PAGES.
+  """
+  pageUpdate(
+    """ID of a page to update."""
+    id: ID!
+
+    """Fields required to update a page."""
+    input: PageInput!
+  ): PageUpdate!
+
+  """
   Change the password of the logged in user.
   
   Requires one of the following permissions: AUTHENTICATED_USER.
@@ -2646,11 +2689,183 @@ input OrderWhereInput {
   status: OrderStatusEnumFilterInput
 }
 
+"""
+A static page that can be manually added by a shop operator through the dashboard.
+"""
+type Page implements Node {
+  """
+  Content of the page.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  content: JSONString
+
+  """Date and time at which page was created."""
+  created: DateTime!
+
+  """ID of the page."""
+  id: ID!
+
+  """Determines if the page is published."""
+  isPublished: Boolean!
+
+  """The page publication date."""
+  publishedAt: DateTime
+
+  """Slug of the page."""
+  slug: String!
+
+  """Title of the page."""
+  title: String!
+}
+
+"""
+Deletes pages.
+
+Requires one of the following permissions: MANAGE_PAGES.
+"""
+type PageBulkDelete {
+  """Returns how many objects were affected."""
+  count: Int!
+  errors: [PageError!]!
+}
+
+type PageCountableConnection {
+  edges: [PageCountableEdge!]!
+  pageInfo: PageInfo!
+
+  """A total count of items in the collection."""
+  totalCount: Int
+}
+
+type PageCountableEdge {
+  cursor: String!
+  node: Page!
+}
+
+"""
+Creates a new page.
+
+Requires one of the following permissions: MANAGE_PAGES.
+"""
+type PageCreate {
+  errors: [PageError!]!
+  page: Page
+}
+
+input PageCreateInput {
+  """
+  Page content.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  content: JSONString
+
+  """Determines if page is visible in the storefront."""
+  isPublished: Boolean
+
+  """Page internal name."""
+  slug: String
+
+  """Page title."""
+  title: String
+}
+
+"""
+Deletes a page.
+
+Requires one of the following permissions: MANAGE_PAGES.
+"""
+type PageDelete {
+  errors: [PageError!]!
+  page: Page
+}
+
+"""Represents an error in the input of a mutation."""
+type PageError {
+  """The error code."""
+  code: PageErrorCode!
+
+  """
+  Name of a field that caused the error. A value of `null` indicates that the error isn't associated with a particular field.
+  """
+  field: String
+
+  """The error message."""
+  message: String!
+}
+
+enum PageErrorCode {
+  GRAPHQL_ERROR
+  INVALID
+  NOT_FOUND
+  REQUIRED
+  UNIQUE
+}
+
+input PageFilterInput {
+  ids: [ID!]
+  search: String
+}
+
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   startCursor: String
+}
+
+input PageInput {
+  """
+  Page content.
+  
+  Rich text format. For reference see https://editorjs.io/
+  """
+  content: JSONString
+
+  """Determines if page is visible in the storefront."""
+  isPublished: Boolean
+
+  """Page internal name."""
+  slug: String
+
+  """Page title."""
+  title: String
+}
+
+enum PageSortField {
+  """Sort pages by creation date."""
+  CREATION_DATE
+
+  """Sort pages by publication date."""
+  PUBLICATION_DATE
+
+  """Sort pages by slug."""
+  SLUG
+
+  """Sort pages by title."""
+  TITLE
+
+  """Sort pages by visibility."""
+  VISIBILITY
+}
+
+input PageSortingInput {
+  """Specifies the direction in which to sort pages."""
+  direction: OrderDirection!
+
+  """Sort pages by the selected field."""
+  field: PageSortField!
+}
+
+"""
+Updates an existing page.
+
+Requires one of the following permissions: MANAGE_PAGES.
+"""
+type PageUpdate {
+  errors: [PageError!]!
+  page: Page
 }
 
 """
@@ -2685,7 +2900,9 @@ type Permission {
 enum PermissionEnum {
   HANDLE_PAYMENTS
   MANAGE_CHECKOUTS
+  MANAGE_MENUS
   MANAGE_ORDERS
+  MANAGE_PAGES
   MANAGE_PRODUCTS
   MANAGE_SETTINGS
   MANAGE_SHIPPING
@@ -3432,6 +3649,33 @@ type Query {
     """Where filtering options for orders."""
     where: OrderWhereInput
   ): OrderCountableConnection
+
+  """
+  Look up a page by ID or slug. Requires one of the following permissions to include the unpublished items: MANAGE_PAGES.
+  """
+  page(
+    """ID of the page."""
+    id: ID
+
+    """The slug of the page."""
+    slug: String
+  ): Page
+
+  """
+  List of the shop's pages. Requires one of the following permissions to include the unpublished items: MANAGE_PAGES.
+  """
+  pages(
+    after: String
+    before: String
+
+    """Filtering options for pages."""
+    filter: PageFilterInput
+    first: Int
+    last: Int
+
+    """Sort pages."""
+    sortBy: PageSortingInput
+  ): PageCountableConnection
 
   """
   Look up a product by ID or slug. Requires one of the following permissions to include the unpublished items: MANAGE_PRODUCTS.

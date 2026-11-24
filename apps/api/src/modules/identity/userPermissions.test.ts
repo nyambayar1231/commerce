@@ -52,6 +52,8 @@ describe("me.userPermissions", () => {
         { code: "MANAGE_SETTINGS" },
         { code: "MANAGE_SHIPPING" },
         { code: "HANDLE_PAYMENTS" },
+        { code: "MANAGE_PAGES" },
+        { code: "MANAGE_MENUS" },
       ],
     });
   });

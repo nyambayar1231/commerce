@@ -20,6 +20,8 @@ export const PERMISSION_NAMES: Record<Permission, string> = {
   MANAGE_SETTINGS: "Manage settings.",
   MANAGE_SHIPPING: "Manage shipping.",
   HANDLE_PAYMENTS: "Handle payments",
+  MANAGE_PAGES: "Manage pages.",
+  MANAGE_MENUS: "Manage navigation.",
 };
 
 /** The user's effective permissions in enum order; empty for an unknown or inactive user. */

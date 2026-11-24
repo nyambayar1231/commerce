@@ -52,6 +52,7 @@ export {
   updateCollection,
 } from "./collections.ts";
 export { DEMO_CATEGORIES, seedDemoCatalog } from "./demoCatalog.ts";
+export { parseDescription } from "./description.ts";
 export type { CatalogLoaders, ThumbnailLoaderKey } from "./loaders.ts";
 export { createCatalogLoaders } from "./loaders.ts";
 export type {

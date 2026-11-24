@@ -10,6 +10,7 @@ import "../modules/checkout/graphql.ts";
 import "../modules/checkout/shippingGraphql.ts";
 import "../modules/checkout/paymentGraphql.ts";
 import "../modules/checkout/completeGraphql.ts";
+import "../modules/content/pageGraphql.ts";
 import "../modules/payments/graphql.ts";
 import "../modules/identity/graphql.ts";
 import "../modules/identity/accountSettingsGraphql.ts";
