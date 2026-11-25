@@ -9,8 +9,15 @@ try {
 
 export const API_PORT = 4010;
 export const DASHBOARD_PORT = 5183;
+export const STOREFRONT_PORT = 3013;
 export const API_URL = `http://localhost:${API_PORT}/graphql`;
 export const DASHBOARD_URL = `http://localhost:${DASHBOARD_PORT}`;
+export const STOREFRONT_URL = `http://localhost:${STOREFRONT_PORT}`;
+/** Mailpit (docker-compose.yml): its HTTP API and the SMTP port the worker sends through. */
+export const MAILPIT_URL = "http://localhost:8026";
+export const SMTP_URL = "smtp://localhost:1026";
+/** Shared by the API and the worker, which signs and checks the same confirmation tokens. */
+export const E2E_SECRET_KEY = "e2e-secret-key-not-for-production-0123456789";
 
 /** The dev database's server, with the database name swapped for commerce_e2e. */
 export function e2eDatabaseUrl(): string {

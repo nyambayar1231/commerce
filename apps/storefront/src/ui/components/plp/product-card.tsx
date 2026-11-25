@@ -66,11 +66,7 @@ export function ProductCard({
         )}
       </div>
 
-      <ProductCardLink
-        href={product.href}
-        aria-label={product.name}
-        className="block no-underline hover:no-underline"
-      >
+      <ProductCardLink href={product.href} className="block no-underline hover:no-underline">
         <div className="space-y-1.5">
           {product.categoryName !== null && (
             <p className="text-eyebrow uppercase text-muted-foreground">{product.categoryName}</p>

@@ -501,7 +501,7 @@ canonical, `noindex` where §10.4 says) and its tests. The implementer is in bra
 | M4.8 | Account [Sonnet; GLM planned, OpenCode out of funds]: auth-gated layout, overview, orders list and detail with timeline, addresses, settings (name, password) (`src/ui/components/account/`) | M4.7 | Done |
 | M4.9 | Mongolian copy [Haiku]: audit for hard-coded strings, consistent terms across `messages/mn.json`, a list of every string for the owner's review | M4.2–M4.8 | Waiting on the owner's review: https://claude.ai/artifact/8mgognT6gPLgDig6TTaxNy |
 | M4.10 | SEO and performance [Haiku, Sonnet if it needs code changes]: `sitemap.ts`, `robots.ts`, metadata and JSON-LD audit, Lighthouse on mobile ≥ 90 performance and accessibility on PLP and PDP | M4.2–M4.4 | Done |
-| M4.11 | QA [Sonnet]: Playwright golden paths (a guest buys; a customer registers, confirms by email, buys and sees the order), axe on those pages, CI job; the lead compares screenshots side by side with Paper | M4.6, M4.8 | Draft |
+| M4.11 | QA [Sonnet]: Playwright golden paths (a guest buys; a customer registers, confirms by email, buys and sees the order), axe on those pages, CI job; the lead compares screenshots side by side with Paper | M4.6, M4.8 | In progress |
 | M4.12 | Deploy [Sonnet + lead]: arm64 standalone image, `storefront` Compose service (own env only, memory limit, health check), Caddy site block for `dino-craft.lol` and `www.`, Route 53 records (CDK), `ALLOWED_CLIENT_HOSTS`, deploy workflow, `docs/deploy.md` | M4.11, a real payment gateway | Waiting (owner, 2026-11-25: no go-live on the dummy gateway) |
 
 **Order and parallel lanes** (at most two implementers, file lists that don't overlap):
