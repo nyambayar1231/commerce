@@ -5,6 +5,12 @@ import { useTranslations } from "next-intl";
 import { type ReactNode, Suspense } from "react";
 import {
   CopyrightSlot,
+  FooterMenuSkeleton,
+  FooterMenuSlot,
+  MobileMenuSlot,
+  MobileMenuSlotSkeleton,
+  NavSlot,
+  NavSlotSkeleton,
   ShopNameSkeleton,
   ShopNameSlot,
   UserMenuSkeleton,
@@ -12,10 +18,12 @@ import {
 } from "@/app/chrome-slots";
 import { Footer } from "@/ui/components/footer";
 import { HeaderFrame } from "@/ui/components/header-frame";
+import { SearchBar } from "@/ui/components/nav/search-bar";
 
 /**
  * Skip link, header, `<main>` and footer. Shared by the browse layout and the top-level 404, which
- * renders outside every route group.
+ * renders outside every route group. The nav, mobile menu and footer menu are cached data
+ * islands; the search form reads no data, so it renders directly.
  */
 export function BrowseChrome({ children }: { children: ReactNode }) {
   const t = useTranslations("common");
@@ -35,9 +43,20 @@ export function BrowseChrome({ children }: { children: ReactNode }) {
       </a>
       <HeaderFrame
         shopName={shopName}
+        nav={
+          <Suspense fallback={<NavSlotSkeleton />}>
+            <NavSlot />
+          </Suspense>
+        }
+        search={<SearchBar id="header-search" />}
         userMenu={
           <Suspense fallback={<UserMenuSkeleton />}>
             <UserMenuSlot />
+          </Suspense>
+        }
+        mobileMenu={
+          <Suspense fallback={<MobileMenuSlotSkeleton />}>
+            <MobileMenuSlot />
           </Suspense>
         }
       />
@@ -47,6 +66,11 @@ export function BrowseChrome({ children }: { children: ReactNode }) {
         </main>
         <Footer
           shopName={shopName}
+          menu={
+            <Suspense fallback={<FooterMenuSkeleton />}>
+              <FooterMenuSlot />
+            </Suspense>
+          }
           copyright={
             // The year is read at request time; the fallback keeps the line's height.
             <Suspense fallback=" ">

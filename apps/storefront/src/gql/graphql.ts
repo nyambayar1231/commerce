@@ -258,6 +258,43 @@ export type FilterOptionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type FilterOptionsQuery = { categories: { edges: Array<{ node: { name: string, slug: string, level: number } }> } | null, collections: { edges: Array<{ node: { name: string, slug: string } }> } | null };
 
+export type MenuBySlugQueryVariables = Exact<{
+  slug: string;
+}>;
+
+
+export type MenuBySlugQuery = { menu: { items: Array<{ id: string, name: string, url: string | null, category: { slug: string } | null, collection: { slug: string } | null, page: { slug: string } | null, children: Array<{ id: string, name: string, url: string | null, category: { slug: string } | null, collection: { slug: string } | null, page: { slug: string } | null, children: Array<{ id: string, name: string, url: string | null, category: { slug: string } | null, collection: { slug: string } | null, page: { slug: string } | null }> }> }> } | null };
+
+export type PageBySlugQueryVariables = Exact<{
+  slug: string;
+}>;
+
+
+export type PageBySlugQuery = { page: { title: string, slug: string, content: string | null } | null };
+
+export type FeaturedCollectionQueryVariables = Exact<{
+  slug: string;
+}>;
+
+
+export type FeaturedCollectionQuery = { collection: { name: string, products: { edges: Array<{ node: { id: string, name: string, slug: string, category: { name: string } | null, small: { url: string, alt: string | null } | null, large: { url: string } | null, minimalVariantPrice: { amount: number, currency: string } | null, variants: Array<{ id: string, quantityAvailable: number | null, price: { amount: number } }> } }> } | null } | null };
+
+export type HomeCategoriesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HomeCategoriesQuery = { categories: { edges: Array<{ node: { name: string, slug: string } }> } | null };
+
+export type ProductSearchQueryVariables = Exact<{
+  q: string;
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  last?: number | null | undefined;
+  before?: string | null | undefined;
+}>;
+
+
+export type ProductSearchQuery = { products: { totalCount: number | null, edges: Array<{ cursor: string, node: { id: string, name: string, slug: string, category: { name: string } | null, small: { url: string, alt: string | null } | null, large: { url: string } | null, minimalVariantPrice: { amount: number, currency: string } | null, variants: Array<{ id: string, quantityAvailable: number | null, price: { amount: number } }> } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor: string | null, endCursor: string | null } } | null };
+
 export type ShopInfoQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -541,6 +578,158 @@ export const FilterOptionsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<FilterOptionsQuery, FilterOptionsQueryVariables>;
+export const MenuBySlugDocument = new TypedDocumentString(`
+    query MenuBySlug($slug: String!) {
+  menu(slug: $slug) {
+    items {
+      id
+      name
+      url
+      category {
+        slug
+      }
+      collection {
+        slug
+      }
+      page {
+        slug
+      }
+      children {
+        id
+        name
+        url
+        category {
+          slug
+        }
+        collection {
+          slug
+        }
+        page {
+          slug
+        }
+        children {
+          id
+          name
+          url
+          category {
+            slug
+          }
+          collection {
+            slug
+          }
+          page {
+            slug
+          }
+        }
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<MenuBySlugQuery, MenuBySlugQueryVariables>;
+export const PageBySlugDocument = new TypedDocumentString(`
+    query PageBySlug($slug: String!) {
+  page(slug: $slug) {
+    title
+    slug
+    content
+  }
+}
+    `) as unknown as TypedDocumentString<PageBySlugQuery, PageBySlugQueryVariables>;
+export const FeaturedCollectionDocument = new TypedDocumentString(`
+    query FeaturedCollection($slug: String!) {
+  collection(slug: $slug) {
+    name
+    products(first: 8) {
+      edges {
+        node {
+          ...ProductCard
+        }
+      }
+    }
+  }
+}
+    fragment ProductCard on Product {
+  id
+  name
+  slug
+  category {
+    name
+  }
+  small: thumbnail(size: 256, format: WEBP) {
+    url
+    alt
+  }
+  large: thumbnail(size: 512, format: WEBP) {
+    url
+  }
+  minimalVariantPrice {
+    amount
+    currency
+  }
+  variants {
+    id
+    price {
+      amount
+    }
+    quantityAvailable
+  }
+}`) as unknown as TypedDocumentString<FeaturedCollectionQuery, FeaturedCollectionQueryVariables>;
+export const HomeCategoriesDocument = new TypedDocumentString(`
+    query HomeCategories {
+  categories(level: 0, first: 12) {
+    edges {
+      node {
+        name
+        slug
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<HomeCategoriesQuery, HomeCategoriesQueryVariables>;
+export const ProductSearchDocument = new TypedDocumentString(`
+    query ProductSearch($q: String!, $first: Int, $after: String, $last: Int, $before: String) {
+  products(search: $q, first: $first, after: $after, last: $last, before: $before) {
+    totalCount
+    edges {
+      cursor
+      node {
+        ...ProductCard
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
+    fragment ProductCard on Product {
+  id
+  name
+  slug
+  category {
+    name
+  }
+  small: thumbnail(size: 256, format: WEBP) {
+    url
+    alt
+  }
+  large: thumbnail(size: 512, format: WEBP) {
+    url
+  }
+  minimalVariantPrice {
+    amount
+    currency
+  }
+  variants {
+    id
+    price {
+      amount
+    }
+    quantityAvailable
+  }
+}`) as unknown as TypedDocumentString<ProductSearchQuery, ProductSearchQueryVariables>;
 export const ShopInfoDocument = new TypedDocumentString(`
     query ShopInfo {
   shop {

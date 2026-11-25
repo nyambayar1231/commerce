@@ -1,0 +1,104 @@
+# The storefront's content and home documents (ARCHITECTURE §10.6): navigation menus, CMS pages,
+# the home page's featured collection and top-level categories, and product search. The search
+# document lives here because this brief could only add this one document file; its loader is
+# `src/lib/catalog/search.ts`.
+#
+# The card images request the API's stored WebP thumbnails at the two sizes the grid needs
+# (§10.12), through the `ProductCard` fragment shared with `catalog.graphql`.
+
+query MenuBySlug($slug: String!) {
+  menu(slug: $slug) {
+    items {
+      id
+      name
+      url
+      category {
+        slug
+      }
+      collection {
+        slug
+      }
+      page {
+        slug
+      }
+      children {
+        id
+        name
+        url
+        category {
+          slug
+        }
+        collection {
+          slug
+        }
+        page {
+          slug
+        }
+        children {
+          id
+          name
+          url
+          category {
+            slug
+          }
+          collection {
+            slug
+          }
+          page {
+            slug
+          }
+        }
+      }
+    }
+  }
+}
+
+query PageBySlug($slug: String!) {
+  page(slug: $slug) {
+    title
+    slug
+    content
+  }
+}
+
+query FeaturedCollection($slug: String!) {
+  collection(slug: $slug) {
+    name
+    products(first: 8) {
+      edges {
+        node {
+          ...ProductCard
+        }
+      }
+    }
+  }
+}
+
+query HomeCategories {
+  categories(level: 0, first: 12) {
+    edges {
+      node {
+        name
+        slug
+      }
+    }
+  }
+}
+
+query ProductSearch($q: String!, $first: Int, $after: String, $last: Int, $before: String) {
+  products(search: $q, first: $first, after: $after, last: $last, before: $before) {
+    totalCount
+    edges {
+      cursor
+      node {
+        ...ProductCard
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+  }
+}
