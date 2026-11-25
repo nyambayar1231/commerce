@@ -39,7 +39,13 @@ export function isLocale(value: unknown): value is Locale {
 
 /** Saleor's getKeyValueJson: the file's entries as react-intl's id → message map. */
 export function toIntlMessages(messages: LocaleMessages): Record<string, string> {
-  return Object.fromEntries(Object.entries(messages).map(([id, message]) => [id, message.string]));
+  const messageEntries = Object.fromEntries(
+    Object.entries(messages).map(([id, message]) => [id, message.string]),
+  );
+
+  console.log(messageEntries);
+
+  return messageEntries;
 }
 
 // English needs no translations. One shared object, so setting it again doesn't re-render.
