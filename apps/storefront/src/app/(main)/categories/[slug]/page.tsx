@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { addToCart } from "@/lib/cart/actions";
 import { getCategory } from "@/lib/catalog/categories";
+import { buildFilterBarView } from "@/lib/catalog/filter-bar-view";
 import { getFilterOptions, getProductListing } from "@/lib/catalog/listing";
 import {
   listingHref,
@@ -46,7 +47,7 @@ export default function CategoryPage({ params, searchParams }: PageProps) {
   return (
     <>
       <Suspense fallback={<PlpHeaderSkeleton />}>
-        <CategoryHeader params={params} searchParams={searchParams} />
+        <CategoryHeader params={params} />
       </Suspense>
       <Suspense fallback={<PlpListingSkeleton />}>
         <CategoryResults params={params} searchParams={searchParams} />
@@ -55,23 +56,16 @@ export default function CategoryPage({ params, searchParams }: PageProps) {
   );
 }
 
-/** The hero: the category's name, the count under the current filters, and its child links. */
-async function CategoryHeader({ params, searchParams }: PageProps) {
-  const [{ slug }, search, t] = await Promise.all([params, searchParams, getTranslations("plp")]);
+/** The hero: the category's name and its child links (the count is in the filter bar, as on Paper). */
+async function CategoryHeader({ params }: Pick<PageProps, "params">) {
+  const [{ slug }, t] = await Promise.all([params, getTranslations("plp")]);
   const category = await getCategory(slug);
   if (category === null) notFound();
-  const listing = await getProductListing(
-    { kind: "category", id: category.id, slug: category.slug },
-    parseListingParams(search),
-  );
 
   return (
     <CategoryHero title={category.name}>
-      <p className="text-lead text-muted-foreground">
-        {t("productCount", { count: listing.totalCount ?? 0 })}
-      </p>
-      {category.children.length > 0 && (
-        <nav aria-label={t("childCategories")} className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+      {category.children.length > 0 ? (
+        <nav aria-label={t("childCategories")} className="flex flex-wrap gap-x-5 gap-y-2">
           {category.children.map((child) => (
             <Link
               key={child.slug}
@@ -82,7 +76,7 @@ async function CategoryHeader({ params, searchParams }: PageProps) {
             </Link>
           ))}
         </nav>
-      )}
+      ) : undefined}
     </CategoryHero>
   );
 }
@@ -107,11 +101,9 @@ async function CategoryResults({ params, searchParams }: PageProps) {
 
   return (
     <PlpResults
-      basePath={basePath}
       params={listingParams}
-      options={options}
+      filterView={buildFilterBarView(basePath, listingParams, options, "category")}
       listing={listing}
-      hide="category"
       clearHref={clearHref}
       previousHref={previousHref}
       nextHref={nextHref}

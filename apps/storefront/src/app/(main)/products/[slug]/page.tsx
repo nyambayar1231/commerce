@@ -21,11 +21,12 @@ import {
   variantParam,
 } from "@/ui/components/pdp/gallery-utils";
 import { NonMatrixBuyBox } from "@/ui/components/pdp/non-matrix-buy-box";
+import { ProductDescription } from "@/ui/components/pdp/product-description";
+import { ProductEyebrow } from "@/ui/components/pdp/product-eyebrow";
 import { ProductGallery } from "@/ui/components/pdp/product-gallery";
 import { ProductGalleryFallback } from "@/ui/components/pdp/product-gallery-fallback";
 import { ProductRouteSkeleton } from "@/ui/components/pdp/product-route-skeleton";
 import { StickyBar } from "@/ui/components/pdp/sticky-bar";
-import { RichText } from "@/ui/components/rich-text";
 
 // The product page (M4.3, ARCHITECTURE §10.4): a synchronous shell with a `ProductDetails`
 // island (gallery, name, breadcrumbs, description) that holds two nested islands reading
@@ -128,6 +129,7 @@ async function ProductDetails({ params, searchParams }: PageProps) {
         </div>
 
         <div className={PDP_LAYOUT.infoColumn}>
+          <ProductEyebrow category={product.breadcrumbs.at(-1)?.name} />
           <h1 className="order-2 text-balance text-h1">{product.name}</h1>
           <Suspense
             fallback={
@@ -142,10 +144,11 @@ async function ProductDetails({ params, searchParams }: PageProps) {
           </Suspense>
         </div>
 
-        <div className={PDP_LAYOUT.attributesGalleryBlock}>
-          <h2 className="mb-4 text-h3">{tPdp("description")}</h2>
-          <RichText blocks={product.description} />
-        </div>
+        <ProductDescription
+          title={tPdp("description")}
+          blocks={product.description}
+          className={PDP_LAYOUT.attributesGalleryBlock}
+        />
       </div>
     </>
   );

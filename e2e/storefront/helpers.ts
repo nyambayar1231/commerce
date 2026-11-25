@@ -121,6 +121,8 @@ export async function checkAxe(page: Page, label: string) {
   await expect
     .poll(async () => (await page.locator('a[href="/"]').allTextContents()).every((t) => t.trim()))
     .toBe(true);
+  // After a client-side navigation Next sets the new <title> a moment later (streamed metadata).
+  await expect(page).toHaveTitle(/\S/);
   const { violations } = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
     .analyze();

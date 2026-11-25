@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { addToCart } from "@/lib/cart/actions";
+import { buildFilterBarView } from "@/lib/catalog/filter-bar-view";
 import { getFilterOptions, getProductListing } from "@/lib/catalog/listing";
 import {
   listingHref,
@@ -34,7 +35,7 @@ export default function ProductsPage({ searchParams }: { searchParams: SearchPar
   return (
     <>
       <Suspense fallback={<PlpHeaderSkeleton />}>
-        <ProductsHeader searchParams={searchParams} />
+        <ProductsHeader />
       </Suspense>
       <Suspense fallback={<PlpListingSkeleton />}>
         <ProductsResults searchParams={searchParams} />
@@ -43,15 +44,12 @@ export default function ProductsPage({ searchParams }: { searchParams: SearchPar
   );
 }
 
-/** The hero: the page's name and the count of what the current filters select. */
-async function ProductsHeader({ searchParams }: { searchParams: SearchParams }) {
-  const [t, search] = await Promise.all([getTranslations("plp"), searchParams]);
-  const listing = await getProductListing({ kind: "all" }, parseListingParams(search));
+/** The hero: the page's name and Paper's subtitle (the count is in the filter bar). */
+async function ProductsHeader() {
+  const t = await getTranslations("plp");
   return (
     <CategoryHero title={t("title")}>
-      <p className="text-lead text-muted-foreground">
-        {t("productCount", { count: listing.totalCount ?? 0 })}
-      </p>
+      <p className="text-lead text-muted-foreground">{t("description")}</p>
     </CategoryHero>
   );
 }
@@ -72,11 +70,9 @@ async function ProductsResults({ searchParams }: { searchParams: SearchParams })
   });
   return (
     <PlpResults
-      basePath={BASE_PATH}
       params={params}
-      options={options}
+      filterView={buildFilterBarView(BASE_PATH, params, options, null)}
       listing={listing}
-      hide={null}
       clearHref={clearHref}
       previousHref={previousHref}
       nextHref={nextHref}

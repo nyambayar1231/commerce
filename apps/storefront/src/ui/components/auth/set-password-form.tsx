@@ -46,6 +46,8 @@ export function SetPasswordForm({
         <Field
           name="password"
           type="password"
+          icon="lock"
+          placeholder={t("placeholders.password")}
           label={t("newPassword")}
           hint={t("passwordHint")}
           autoComplete="new-password"
@@ -56,6 +58,8 @@ export function SetPasswordForm({
         <Field
           name="confirm"
           type="password"
+          icon="lock"
+          placeholder={t("placeholders.password")}
           label={t("confirmPassword")}
           autoComplete="new-password"
           required

@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { addToCart } from "@/lib/cart/actions";
 import { getCollection } from "@/lib/catalog/collections";
+import { buildFilterBarView } from "@/lib/catalog/filter-bar-view";
 import { getFilterOptions, getProductListing } from "@/lib/catalog/listing";
 import {
   listingHref,
@@ -44,7 +45,7 @@ export default function CollectionPage({ params, searchParams }: PageProps) {
   return (
     <>
       <Suspense fallback={<PlpHeaderSkeleton />}>
-        <CollectionHeader params={params} searchParams={searchParams} />
+        <CollectionHeader params={params} />
       </Suspense>
       <Suspense fallback={<PlpListingSkeleton />}>
         <CollectionResults params={params} searchParams={searchParams} />
@@ -53,23 +54,13 @@ export default function CollectionPage({ params, searchParams }: PageProps) {
   );
 }
 
-/** The hero: the collection's name and the count under the current filters. */
-async function CollectionHeader({ params, searchParams }: PageProps) {
-  const [{ slug }, search] = await Promise.all([params, searchParams]);
-  const [collection, t] = await Promise.all([getCollection(slug), getTranslations("plp")]);
+/** The hero: the collection's name (the count is in the filter bar, as on Paper). */
+async function CollectionHeader({ params }: Pick<PageProps, "params">) {
+  const { slug } = await params;
+  const collection = await getCollection(slug);
   if (collection === null) notFound();
-  const listing = await getProductListing(
-    { kind: "collection", id: collection.id, slug: collection.slug },
-    parseListingParams(search),
-  );
 
-  return (
-    <CategoryHero title={collection.name}>
-      <p className="text-lead text-muted-foreground">
-        {t("productCount", { count: listing.totalCount ?? 0 })}
-      </p>
-    </CategoryHero>
-  );
+  return <CategoryHero title={collection.name} />;
 }
 
 /** The results, scoped to the collection: the collection select is hidden, the category one kept. */
@@ -92,11 +83,9 @@ async function CollectionResults({ params, searchParams }: PageProps) {
 
   return (
     <PlpResults
-      basePath={basePath}
       params={listingParams}
-      options={options}
+      filterView={buildFilterBarView(basePath, listingParams, options, "collection")}
       listing={listing}
-      hide="collection"
       clearHref={clearHref}
       previousHref={previousHref}
       nextHref={nextHref}

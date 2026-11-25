@@ -40,6 +40,8 @@ export function LoginForm({ action, next }: { action: AuthAction; next?: string 
         <Field
           name="email"
           type="email"
+          icon="mail"
+          placeholder={t("placeholders.email")}
           label={t("email")}
           autoComplete="email"
           spellCheck={false}
@@ -50,6 +52,8 @@ export function LoginForm({ action, next }: { action: AuthAction; next?: string 
         <Field
           name="password"
           type="password"
+          icon="lock"
+          placeholder={t("placeholders.password")}
           label={t("password")}
           autoComplete="current-password"
           required

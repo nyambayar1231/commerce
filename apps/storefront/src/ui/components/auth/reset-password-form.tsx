@@ -44,6 +44,8 @@ export function ResetPasswordForm({ action }: { action: AuthAction }) {
         <Field
           name="email"
           type="email"
+          icon="mail"
+          placeholder={t("placeholders.email")}
           label={t("email")}
           autoComplete="email"
           spellCheck={false}

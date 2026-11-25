@@ -158,3 +158,44 @@ export type ProductView = {
   /** The lowest and highest variant price, formatted; `max` is null when they are equal. */
   priceRange: { min: string; max: string | null };
 };
+
+// ---------------------------------------------------------------------------
+// Listing filter bar (M4.13a)
+// ---------------------------------------------------------------------------
+
+/** A price range's ends as formatted money ("₮ 50,000"); a missing end is open. */
+export type PriceRangeText = { min?: string; max?: string };
+
+/**
+ * One option of a filter pill, with its target URL. `kind` says how the UI words it: the "all"
+ * option, a named category or collection (`label`), or a price range (`price`).
+ */
+export type FilterChoiceView = {
+  key: string;
+  kind: "all" | "named" | "price";
+  label?: string;
+  price?: PriceRangeText;
+  href: string;
+  selected: boolean;
+  /** Indentation steps, for nested categories. */
+  level?: number;
+};
+
+export type FilterGroupView = {
+  id: "category" | "collection" | "price";
+  /** Paper's badge: how many values of this filter are set. */
+  count: number;
+  /** A hand-typed price range the presets don't know: the price pill shows it as its label. */
+  customPrice?: PriceRangeText;
+  choices: FilterChoiceView[];
+};
+
+export type SortChoiceView = { sort: ListingSort; href: string; selected: boolean };
+
+/** Everything the filter bar renders, with every URL built: the UI only words and lays it out. */
+export type FilterBarView = {
+  groups: FilterGroupView[];
+  sortChoices: SortChoiceView[];
+  /** Changes whenever the URL state does: the bar remounts, which closes an open panel. */
+  key: string;
+};

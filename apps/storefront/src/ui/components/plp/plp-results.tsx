@@ -3,21 +3,18 @@
 
 import { useTranslations } from "next-intl";
 import type { AddToCartAction } from "@/lib/cart/types";
-import type { FilterOptionsView, ListingParams, ListingView } from "@/lib/catalog/types";
+import type { FilterBarView, ListingParams, ListingView } from "@/lib/catalog/types";
 import { Pagination } from "@/ui/components/pagination";
 import { FilterBar, hasListingFilters } from "./filter-bar";
 import { PlpEmptyFilterResults } from "./plp-empty-filter-results";
 import { ProductGrid } from "./product-grid";
 
 interface PlpResultsProps {
-  /** The page's own path: the filter form's target. */
-  basePath: string;
-  /** The listing's current, normalized URL state (the selects' and inputs' values). */
+  /** The listing's current, normalized URL state (which options are selected). */
   params: ListingParams;
-  options: FilterOptionsView;
+  /** The filter bar's options and their URLs (`buildFilterBarView`). */
+  filterView: FilterBarView;
   listing: ListingView;
-  /** The select this page hides: the route is that category or collection. */
-  hide: "category" | "collection" | null;
   /** A URL that clears the filters but keeps the sort. */
   clearHref: string;
   previousHref: string | null;
@@ -32,11 +29,9 @@ interface PlpResultsProps {
  * view models in; nothing here calls a loader.
  */
 export function PlpResults({
-  basePath,
   params,
-  options,
+  filterView,
   listing,
-  hide,
   clearHref,
   previousHref,
   nextHref,
@@ -48,11 +43,10 @@ export function PlpResults({
   return (
     <>
       <FilterBar
-        basePath={basePath}
-        params={params}
-        options={options}
-        hide={hide}
+        view={filterView}
+        filtered={filtered}
         clearHref={clearHref}
+        totalCount={listing.totalCount}
       />
       <div className="w-full">
         <div className="container-content py-8">

@@ -29,6 +29,7 @@ export function ContactStep({
   logout: () => Promise<void>;
 }) {
   const t = useTranslations("checkout.contact");
+  const tAuth = useTranslations("auth");
   const [state, formAction] = useActionState(setEmail, idle);
   const signedIn = session.status === "authenticated";
 
@@ -61,6 +62,8 @@ export function ContactStep({
           <Field
             name="email"
             type="email"
+            icon="mail"
+            placeholder={tAuth("placeholders.email")}
             label={t("email")}
             hint={t("emailHint")}
             autoComplete="email"

@@ -52,12 +52,14 @@ export function SignUpForm({ action }: { action: AuthAction }) {
       <form action={formAction} className="space-y-4">
         <FormError state={state} />
         <div className="grid grid-cols-2 gap-4">
-          <Field name="lastName" label={t("lastName")} autoComplete="family-name" />
-          <Field name="firstName" label={t("firstName")} autoComplete="given-name" />
+          <Field name="lastName" icon="user" label={t("lastName")} autoComplete="family-name" />
+          <Field name="firstName" icon="user" label={t("firstName")} autoComplete="given-name" />
         </div>
         <Field
           name="email"
           type="email"
+          icon="mail"
+          placeholder={t("placeholders.email")}
           label={t("email")}
           autoComplete="email"
           spellCheck={false}
@@ -68,6 +70,8 @@ export function SignUpForm({ action }: { action: AuthAction }) {
         <Field
           name="password"
           type="password"
+          icon="lock"
+          placeholder={t("placeholders.password")}
           label={t("password")}
           hint={t("passwordHint")}
           autoComplete="new-password"
@@ -78,6 +82,8 @@ export function SignUpForm({ action }: { action: AuthAction }) {
         <Field
           name="confirm"
           type="password"
+          icon="lock"
+          placeholder={t("placeholders.password")}
           label={t("confirmPassword")}
           autoComplete="new-password"
           required

@@ -3,8 +3,9 @@
 // Adapted from saleor-storefront: src/ui/components/auth/auth-form-section.tsx, login-mode.tsx and sign-up-form.tsx (FSL-1.1-ALv2, Copyright 2026 Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 
+import { Eye, EyeOff, Lock, Mail, User } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { InputHTMLAttributes, ReactNode } from "react";
+import { type InputHTMLAttributes, type ReactNode, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { AuthActionState, AuthErrorKey, AuthField } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
@@ -56,20 +57,32 @@ export function fieldError(state: AuthActionState, field: AuthField): AuthErrorK
   return state.status === "error" ? state.fieldErrors?.[field] : undefined;
 }
 
-/** Label, input and its error message (linked with `aria-describedby`). */
+const FIELD_ICONS = { mail: Mail, lock: Lock, user: User } as const;
+
+/**
+ * Label, input and its error message (linked with `aria-describedby`). `icon` is Paper's leading
+ * icon; a `type="password"` field also gets Paper's eye button (it never submits the form).
+ */
 export function Field({
   name,
   label,
   error,
   hint,
+  icon,
+  type,
   ...input
 }: {
   name: string;
   label: string;
   error?: AuthErrorKey;
   hint?: string;
+  icon?: keyof typeof FIELD_ICONS;
 } & Omit<InputHTMLAttributes<HTMLInputElement>, "name" | "id">) {
   const t = useTranslations("errors");
+  const tAuth = useTranslations("auth");
+  const [visible, setVisible] = useState(false);
+  const isPassword = type === "password";
+  const Icon = icon ? FIELD_ICONS[icon] : null;
   const id = `field-${name}`;
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined;
   return (
@@ -77,20 +90,46 @@ export function Field({
       <label htmlFor={id} className="text-sm font-medium">
         {label}
       </label>
-      <input
-        id={id}
-        name={name}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy}
-        className={cn(
-          "flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base",
-          "ring-offset-background placeholder:text-muted-foreground md:text-sm",
-          "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          "disabled:cursor-not-allowed disabled:opacity-50",
-          error && "border-destructive",
-        )}
-        {...input}
-      />
+      <div className="relative">
+        {Icon ? (
+          <Icon
+            aria-hidden="true"
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
+        ) : null}
+        <input
+          id={id}
+          name={name}
+          type={isPassword && visible ? "text" : type}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={describedBy}
+          className={cn(
+            "flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base",
+            "ring-offset-background placeholder:text-muted-foreground md:text-sm",
+            "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "disabled:cursor-not-allowed disabled:opacity-50",
+            Icon && "pl-10",
+            isPassword && "pr-10",
+            error && "border-destructive",
+          )}
+          {...input}
+        />
+        {isPassword ? (
+          <button
+            type="button"
+            onClick={() => setVisible((v) => !v)}
+            aria-pressed={visible}
+            aria-label={visible ? tAuth("hidePassword") : tAuth("showPassword")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {visible ? (
+              <EyeOff aria-hidden="true" className="h-4 w-4" />
+            ) : (
+              <Eye aria-hidden="true" className="h-4 w-4" />
+            )}
+          </button>
+        ) : null}
+      </div>
       {error ? (
         <p id={`${id}-error`} className="text-sm text-destructive">
           {t(error)}

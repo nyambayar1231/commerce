@@ -44,8 +44,8 @@
     "filters": "Шүүлтүүр",
     "filterCategory": "Ангилал",
     "filterCollection": "Коллекц",
-    "filterPriceMin": "Хамгийн бага үнэ",
-    "filterPriceMax": "Хамгийн их үнэ",
+    "filterPrice": "Үнэ",
+    "closeFilters": "Шүүлтүүрийг хаах",
     "sortLabel": "Эрэмблэх",
     "sortOptions": {
       "newest": "Шинэ нь эхэнд",
@@ -55,7 +55,10 @@
     },
     "allCategories": "Бүх ангилал",
     "allCollections": "Бүх коллекц",
-    "apply": "Шүүх",
+    "allPrices": "Бүх үнэ",
+    "priceUpTo": "{max} хүртэл",
+    "priceBetween": "{min} – {max}",
+    "priceFromUp": "{min}-с дээш",
     "clearFilters": "Шүүлтүүрийг арилгах",
     "priceFrom": "Эхлэх үнэ: {price}",
     "soldOut": "Дууссан",
@@ -198,6 +201,12 @@
     "firstName": "Нэр",
     "lastName": "Овог",
     "passwordHint": "Хамгийн багадаа 8 тэмдэгт",
+    "showPassword": "Нууц үгийг харуулах",
+    "hidePassword": "Нууц үгийг нуух",
+    "placeholders": {
+      "email": "name@example.com",
+      "password": "Нууц үгээ оруулна уу"
+    },
     "login": {
       "title": "Нэвтрэх",
       "noAccount": "Бүртгэлгүй юу?",

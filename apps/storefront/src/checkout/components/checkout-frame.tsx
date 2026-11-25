@@ -9,11 +9,9 @@ export function CheckoutFrame({ children, summary }: { children: ReactNode; summ
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-8 md:flex-row">
         <div className="min-w-0 flex-1">
-          <div className="mx-auto max-w-xl rounded-lg border border-border bg-card p-6 md:p-8">
-            {children}
-          </div>
+          <div className="rounded-lg border border-border bg-card p-6 md:p-8">{children}</div>
         </div>
-        <aside className="md:shrink-0 md:basis-[34%]">
+        <aside className="md:shrink-0 md:basis-[30%]">
           <div className="overflow-hidden rounded-lg border border-border bg-card md:sticky md:top-8">
             {summary}
           </div>
