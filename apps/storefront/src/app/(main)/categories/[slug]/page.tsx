@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+import { addToCart } from "@/lib/cart/actions";
 import { getCategory } from "@/lib/catalog/categories";
 import { getFilterOptions, getProductListing } from "@/lib/catalog/listing";
 import {
@@ -108,6 +109,7 @@ async function CategoryResults({ params, searchParams }: PageProps) {
       clearHref={clearHref}
       previousHref={previousHref}
       nextHref={nextHref}
+      addAction={addToCart}
     />
   );
 }

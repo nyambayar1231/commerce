@@ -89,6 +89,24 @@ describe("toProductCard", () => {
     expect(toProductCard(cardNode()).soldOut).toBe(false);
   });
 
+  it("offers quick add only for a single variant that is not sold out", () => {
+    const one = (quantityAvailable: number | null) =>
+      cardNode({ variants: [{ id: "v1", price: { amount: 1000 }, quantityAvailable }] });
+    expect(toProductCard(one(5)).quickAddVariantId).toBe("v1");
+    // Untracked stock (null) is available.
+    expect(toProductCard(one(null)).quickAddVariantId).toBe("v1");
+    expect(toProductCard(one(0)).quickAddVariantId).toBeNull();
+    // Several variants: the shopper chooses on the product page.
+    const several = cardNode({
+      variants: [
+        { id: "v1", price: { amount: 1000 }, quantityAvailable: 5 },
+        { id: "v2", price: { amount: 1000 }, quantityAvailable: 5 },
+      ],
+    });
+    expect(toProductCard(several).quickAddVariantId).toBeNull();
+    expect(toProductCard(cardNode()).quickAddVariantId).toBeNull();
+  });
+
   it("builds the image srcSet from the two thumbnails and falls back to the name for alt", () => {
     const card = toProductCard(
       cardNode({

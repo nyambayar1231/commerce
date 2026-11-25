@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { type ReactNode, Suspense } from "react";
+import { addToCart } from "@/lib/cart/actions";
 import type { RawSearchParams } from "@/lib/catalog/listing-params";
 import { parseSearchPageParams, searchProducts } from "@/lib/catalog/search";
 import { Pagination } from "@/ui/components/pagination";
@@ -74,7 +75,7 @@ async function SearchResults({ searchParams }: { searchParams: SearchParams }) {
       </div>
       <div className="w-full">
         <div className="container-content py-8">
-          <ProductGrid items={listing.items} />
+          <ProductGrid items={listing.items} addAction={addToCart} />
           <Pagination previousHref={previousHref} nextHref={nextHref} />
         </div>
       </div>

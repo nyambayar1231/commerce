@@ -7,8 +7,8 @@ import type { ReactNode } from "react";
 
 /**
  * Header frame: shop name, fixed-size slots for nav, search and cart (filled by the app layer,
- * so later islands don't shift the layout), and the user menu. `nav` is the desktop links
- * (hidden below `lg`, where the mobile menu button takes over); `search` is the search form
+ * so later islands don't shift the layout), the user menu and the cart button. `nav` is the
+ * desktop links (hidden below `lg`, where the mobile menu button takes over); `search` is the search form
  * (hidden below `md`); `mobileMenu` is the menu button that opens the mobile dialog.
  */
 export function HeaderFrame({
@@ -16,12 +16,14 @@ export function HeaderFrame({
   nav,
   search,
   userMenu,
+  cart,
   mobileMenu,
 }: {
   shopName: ReactNode;
   nav: ReactNode;
   search: ReactNode;
   userMenu: ReactNode;
+  cart: ReactNode;
   mobileMenu: ReactNode;
 }) {
   const t = useTranslations();
@@ -50,7 +52,7 @@ export function HeaderFrame({
 
           <div className="flex items-center gap-1">
             {userMenu}
-            <div className="h-10 w-10" aria-hidden="true" />
+            {cart}
             {mobileMenu}
           </div>
         </div>

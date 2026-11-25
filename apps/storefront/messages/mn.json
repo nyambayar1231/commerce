@@ -9,7 +9,8 @@
     "viewAll": "Бүх {label} үзэх",
     "mobileOpen": "Цэс нээх",
     "mobileClose": "Цэс хаах",
-    "mobileTitle": "Навигацийн цэс"
+    "mobileTitle": "Навигацийн цэс",
+    "cartButton": "Сагс, {count} бараа"
   },
   "footer": {
     "copyright": "© {year} {shopName}. Бүх эрх хуулиар хамгаалагдсан."
@@ -59,7 +60,10 @@
     "soldOut": "Дууссан",
     "emptyCatalog": "Дэлгүүрт одоогоор бүтээгдэхүүн байхгүй байна.",
     "noMatchingFilters": "Таны шүүлтүүрт тохирох бүтээгдэхүүн олдсонгүй.",
-    "childCategories": "Дэд ангилалууд"
+    "childCategories": "Дэд ангилалууд",
+    "quickAdd": "Сагсанд хийх",
+    "quickAddLabel": "{name}-г сагсанд хийх",
+    "quickAdding": "Нэмж байна…"
   },
   "pagination": {
     "label": "Хуудаслах",
@@ -191,6 +195,37 @@
       "nextImage": "Дараах зураг",
       "imageAlt": "{name} — {index}-р зураг",
       "counter": "{current} / {total}"
+    },
+    "adding": "Нэмж байна…"
+  },
+  "cart": {
+    "title": "Сагс",
+    "description": "Таны сагсан дахь бараа.",
+    "drawerTitle": "Миний сагс",
+    "itemCount": "{count} бараа",
+    "close": "Сагс хаах",
+    "emptyTitle": "Сагс хоосон байна",
+    "emptyBody": "Таны сагсанд одоогоор бараа алга.",
+    "browseProducts": "Бүтээгдэхүүн үзэх",
+    "unavailableTitle": "Сагс түр хүрэхгүй байна",
+    "unavailableBody": "Сагсны мэдээллийг авч чадсангүй. Түр хүлээгээд дахин оролдоно уу.",
+    "variant": "Хувилбар: {name}",
+    "decrease": "{name}: тоо хасах",
+    "increase": "{name}: тоо нэмэх",
+    "quantity": "{name}: тоо ширхэг",
+    "remove": "{name}-г сагснаас хасах",
+    "subtotal": "Барааны дүн",
+    "shippingNote": "Хүргэлтийн төлбөрийг захиалга баталгаажуулах үед тооцно.",
+    "viewCart": "Сагс үзэх",
+    "checkout": "Захиалах",
+    "continueShopping": "Худалдан авалтаа үргэлжлүүлэх",
+    "errors": {
+      "insufficientStock": "Нөөцөд хангалттай бараа алга.",
+      "quantityLimit": "Нэг барааг энэ тооноос олноор нэмэх боломжгүй.",
+      "notAvailable": "Энэ бараа одоогоор худалдаанд байхгүй байна.",
+      "invalidQuantity": "Тоо ширхэг буруу байна.",
+      "unavailable": "Үйлчилгээ түр хүрэхгүй байна. Түр хүлээгээд дахин оролдоно уу.",
+      "generic": "Алдаа гарлаа. Дахин оролдоно уу."
     }
   }
 }

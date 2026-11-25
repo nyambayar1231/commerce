@@ -1,6 +1,7 @@
 // Adapted from saleor-storefront: src/ui/components/plp/product-grid.tsx (FSL-1.1-ALv2, Copyright 2026 Saleor Commerce)
 // See THIRD_PARTY_LICENSES.md
 
+import type { AddToCartAction } from "@/lib/cart/types";
 import type { ProductCardView } from "@/lib/catalog/types";
 import { cn } from "@/lib/utils";
 import { PLP_IMAGE_SIZES, ProductCard } from "./product-card";
@@ -12,13 +13,20 @@ interface ProductGridProps {
   items: ProductCardView[];
   imageSizes?: string;
   className?: string;
+  /** Passed to each card for its quick-add button. */
+  addAction?: AddToCartAction;
 }
 
 /**
  * The product grid as a `<ul>`: 2 columns, 3 from 640px, 4 from 1024px (matching the card's
  * `sizes`), each cell one card — one link whose accessible name is the product name.
  */
-export function ProductGrid({ items, imageSizes = PLP_IMAGE_SIZES, className }: ProductGridProps) {
+export function ProductGrid({
+  items,
+  imageSizes = PLP_IMAGE_SIZES,
+  className,
+  addAction,
+}: ProductGridProps) {
   return (
     <ul
       className={cn(
@@ -33,6 +41,7 @@ export function ProductGrid({ items, imageSizes = PLP_IMAGE_SIZES, className }: 
             product={product}
             priority={index < PRIORITY_CARDS}
             imageSizes={imageSizes}
+            addAction={addAction}
           />
         </li>
       ))}

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+import { addToCart } from "@/lib/cart/actions";
 import { buildBreadcrumbJsonLd, buildProductJsonLd, serializeJsonLd } from "@/lib/catalog/json-ld";
 import { getProduct } from "@/lib/catalog/product";
 import type { ProductView, VariantView } from "@/lib/catalog/types";
@@ -191,6 +192,7 @@ async function BuyBox({
         stock={selected === null ? null : { state: selected.stock, quantity: selected.quantity }}
         buttonState={buttonState}
         variantId={selected?.id ?? null}
+        addAction={addToCart}
       />
       <StickyBar
         productName={product.name}
@@ -198,6 +200,7 @@ async function BuyBox({
         show={stickyShow}
         buttonState={buttonState}
         variantId={selected?.id ?? null}
+        addAction={addToCart}
       />
     </form>
   );

@@ -5,7 +5,10 @@
 
 import { ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
+import type { AddToCartAction } from "@/lib/cart/types";
 import type { VariantStock } from "@/lib/catalog/types";
+import { cn } from "@/lib/utils";
+import { useAddToCart } from "@/ui/components/cart/use-add-to-cart";
 import { Button } from "@/ui/components/ui/button";
 
 /** The add-to-cart button's three states, Paper's set: nothing chosen, sold out, ready. */
@@ -13,36 +16,64 @@ export type AddToCartState = "chooseVariant" | "outOfStock" | "ready";
 
 interface AddToCartButtonProps {
   state: AddToCartState;
-  /** The variant the action would add (M4.5); on the button for the action to read. */
+  /** The variant the action adds; null while nothing is chosen. */
   variantId: string | null;
+  /** The `addToCart` Server Action, passed down from the page. */
+  addAction: AddToCartAction;
   className?: string;
+  /** Classes of the message under the button (the sticky bar floats it above the bar). */
+  messageClassName?: string;
 }
 
 /**
- * The add-to-cart button. M4.3 ships it as a placeholder: every state renders the button
- * Paper shows (choose a variant / out of stock / add to cart), always disabled — M4.5
- * replaces its body with the Server Action. No quantity input.
+ * The add-to-cart button, Paper's three states (choose a variant / out of stock / add to cart).
+ * Only a chosen, buyable variant enables it; one click adds one item, opens the cart drawer on
+ * success and shows the API's reason under the button when it fails. No quantity input.
  */
-export function AddToCartButton({ state, variantId, className }: AddToCartButtonProps) {
+export function AddToCartButton({
+  state,
+  variantId,
+  addAction,
+  className,
+  messageClassName,
+}: AddToCartButtonProps) {
   const t = useTranslations("pdp");
+  const tCart = useTranslations("cart");
+  const { add, pending, error } = useAddToCart(addAction);
   const label =
     state === "chooseVariant"
       ? t("selectVariant")
       : state === "outOfStock"
         ? t("outOfStock")
-        : t("addToCart");
+        : pending
+          ? t("adding")
+          : t("addToCart");
 
   return (
-    <Button
-      type="submit"
-      size="lg"
-      disabled
-      data-variant-id={variantId ?? undefined}
-      className={className}
-    >
-      <ShoppingBag className="mr-2 h-5 w-5" />
-      {label}
-    </Button>
+    <>
+      <Button
+        type="button"
+        size="lg"
+        disabled={state !== "ready" || variantId === null}
+        // Not `disabled` while pending: a disabled button loses focus, and the drawer that opens
+        // next returns focus to the element that had it.
+        aria-disabled={pending}
+        aria-busy={pending}
+        onClick={() => variantId !== null && add(variantId)}
+        data-variant-id={variantId ?? undefined}
+        className={cn(className, pending && "cursor-wait opacity-70")}
+      >
+        <ShoppingBag className="mr-2 h-5 w-5" aria-hidden="true" />
+        {label}
+      </Button>
+      <p
+        role="status"
+        aria-live="polite"
+        className={cn("text-sm text-destructive", messageClassName)}
+      >
+        {error === null ? null : tCart(`errors.${error}`)}
+      </p>
+    </>
   );
 }
 
@@ -53,6 +84,7 @@ interface AddToCartProps {
   stock: { state: VariantStock; quantity: number | null } | null;
   buttonState: AddToCartState;
   variantId: string | null;
+  addAction: AddToCartAction;
 }
 
 /**
@@ -60,7 +92,7 @@ interface AddToCartProps {
  * no data for): the price with the stock state beside it, the add-to-cart button, and the
  * secure-checkout trust row.
  */
-export function AddToCart({ price, stock, buttonState, variantId }: AddToCartProps) {
+export function AddToCart({ price, stock, buttonState, variantId, addAction }: AddToCartProps) {
   const t = useTranslations("pdp");
   const tCheckout = useTranslations("checkout");
 
@@ -82,6 +114,7 @@ export function AddToCart({ price, stock, buttonState, variantId }: AddToCartPro
       <AddToCartButton
         state={buttonState}
         variantId={variantId}
+        addAction={addAction}
         className="h-14 w-full text-base font-medium"
       />
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+import { addToCart } from "@/lib/cart/actions";
 import { getCollection } from "@/lib/catalog/collections";
 import { getFilterOptions, getProductListing } from "@/lib/catalog/listing";
 import {
@@ -93,6 +94,7 @@ async function CollectionResults({ params, searchParams }: PageProps) {
       clearHref={clearHref}
       previousHref={previousHref}
       nextHref={nextHref}
+      addAction={addToCart}
     />
   );
 }

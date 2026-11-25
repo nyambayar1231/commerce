@@ -34,6 +34,13 @@ export type AccountRegisterInput = {
   redirectUrl?: string | null | undefined;
 };
 
+export type CheckoutCreateInput = {
+  /** The customer's email address. */
+  email?: string | null | undefined;
+  /** A list of checkout lines, each containing information about an item in the checkout. */
+  lines: Array<CheckoutLineInput>;
+};
+
 export type CheckoutErrorCode =
   | 'BILLING_ADDRESS_NOT_SET'
   | 'CHECKOUT_NOT_FULLY_PAID'
@@ -50,6 +57,20 @@ export type CheckoutErrorCode =
   | 'SHIPPING_ADDRESS_NOT_SET'
   | 'SHIPPING_METHOD_NOT_SET'
   | 'ZERO_QUANTITY';
+
+export type CheckoutLineInput = {
+  /** The number of items purchased. */
+  quantity: number;
+  /** ID of the product variant. */
+  variantId: string | number;
+};
+
+export type CheckoutLineUpdateInput = {
+  /** ID of the line. */
+  lineId: string | number;
+  /** The number of items purchased. */
+  quantity: number;
+};
 
 export type DateTimeFilterInput = {
   /** The value equal to. */
@@ -231,6 +252,46 @@ export type MyNewestCheckoutQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MyNewestCheckoutQuery = { me: { checkouts: { edges: Array<{ node: { token: string } }> } | null } | null };
 
+export type CartFragment = { id: string, token: string, quantity: number, isShippingRequired: boolean, lines: Array<{ id: string, quantity: number, variant: { id: string, name: string, quantityAvailable: number | null, product: { name: string, slug: string, thumbnail: { url: string, alt: string | null } | null } }, unitPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } } }>, subtotalPrice: { gross: { amount: number, currency: string } } };
+
+export type CartByTokenQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CartByTokenQuery = { checkout: { id: string, token: string, quantity: number, isShippingRequired: boolean, lines: Array<{ id: string, quantity: number, variant: { id: string, name: string, quantityAvailable: number | null, product: { name: string, slug: string, thumbnail: { url: string, alt: string | null } | null } }, unitPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } } }>, subtotalPrice: { gross: { amount: number, currency: string } } } | null };
+
+export type CheckoutCreateMutationVariables = Exact<{
+  input: CheckoutCreateInput;
+}>;
+
+
+export type CheckoutCreateMutation = { checkoutCreate: { checkout: { id: string, token: string, quantity: number, isShippingRequired: boolean, lines: Array<{ id: string, quantity: number, variant: { id: string, name: string, quantityAvailable: number | null, product: { name: string, slug: string, thumbnail: { url: string, alt: string | null } | null } }, unitPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } } }>, subtotalPrice: { gross: { amount: number, currency: string } } } | null, errors: Array<{ field: string | null, code: CheckoutErrorCode, message: string }> } | null };
+
+export type CheckoutLinesAddMutationVariables = Exact<{
+  id: string | number;
+  lines: Array<CheckoutLineInput> | CheckoutLineInput;
+}>;
+
+
+export type CheckoutLinesAddMutation = { checkoutLinesAdd: { checkout: { id: string, token: string, quantity: number, isShippingRequired: boolean, lines: Array<{ id: string, quantity: number, variant: { id: string, name: string, quantityAvailable: number | null, product: { name: string, slug: string, thumbnail: { url: string, alt: string | null } | null } }, unitPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } } }>, subtotalPrice: { gross: { amount: number, currency: string } } } | null, errors: Array<{ field: string | null, code: CheckoutErrorCode, message: string }> } | null };
+
+export type CheckoutLinesUpdateMutationVariables = Exact<{
+  id: string | number;
+  lines: Array<CheckoutLineUpdateInput> | CheckoutLineUpdateInput;
+}>;
+
+
+export type CheckoutLinesUpdateMutation = { checkoutLinesUpdate: { checkout: { id: string, token: string, quantity: number, isShippingRequired: boolean, lines: Array<{ id: string, quantity: number, variant: { id: string, name: string, quantityAvailable: number | null, product: { name: string, slug: string, thumbnail: { url: string, alt: string | null } | null } }, unitPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } } }>, subtotalPrice: { gross: { amount: number, currency: string } } } | null, errors: Array<{ field: string | null, code: CheckoutErrorCode, message: string }> } | null };
+
+export type CheckoutLinesDeleteMutationVariables = Exact<{
+  id: string | number;
+  linesIds: Array<string | number> | string | number;
+}>;
+
+
+export type CheckoutLinesDeleteMutation = { checkoutLinesDelete: { checkout: { id: string, token: string, quantity: number, isShippingRequired: boolean, lines: Array<{ id: string, quantity: number, variant: { id: string, name: string, quantityAvailable: number | null, product: { name: string, slug: string, thumbnail: { url: string, alt: string | null } | null } }, unitPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } } }>, subtotalPrice: { gross: { amount: number, currency: string } } } | null, errors: Array<{ field: string | null, code: CheckoutErrorCode, message: string }> } | null };
+
 export type ProductCardFragment = { id: string, name: string, slug: string, category: { name: string } | null, small: { url: string, alt: string | null } | null, large: { url: string } | null, minimalVariantPrice: { amount: number, currency: string } | null, variants: Array<{ id: string, quantityAvailable: number | null, price: { amount: number } }> };
 
 export type ProductListingQueryVariables = Exact<{
@@ -340,6 +401,49 @@ export const AuthUserFragmentDoc = new TypedDocumentString(`
   isStaff
 }
     `, {"fragmentName":"AuthUser"}) as unknown as TypedDocumentString<AuthUserFragment, unknown>;
+export const CartFragmentDoc = new TypedDocumentString(`
+    fragment Cart on Checkout {
+  id
+  token
+  quantity
+  isShippingRequired
+  lines {
+    id
+    quantity
+    variant {
+      id
+      name
+      quantityAvailable
+      product {
+        name
+        slug
+        thumbnail(size: 256, format: WEBP) {
+          url
+          alt
+        }
+      }
+    }
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotalPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+}
+    `, {"fragmentName":"Cart"}) as unknown as TypedDocumentString<CartFragment, unknown>;
 export const ProductCardFragmentDoc = new TypedDocumentString(`
     fragment ProductCard on Product {
   id
@@ -493,6 +597,269 @@ export const MyNewestCheckoutDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<MyNewestCheckoutQuery, MyNewestCheckoutQueryVariables>;
+export const CartByTokenDocument = new TypedDocumentString(`
+    query CartByToken($id: ID!) {
+  checkout(id: $id) {
+    ...Cart
+  }
+}
+    fragment Cart on Checkout {
+  id
+  token
+  quantity
+  isShippingRequired
+  lines {
+    id
+    quantity
+    variant {
+      id
+      name
+      quantityAvailable
+      product {
+        name
+        slug
+        thumbnail(size: 256, format: WEBP) {
+          url
+          alt
+        }
+      }
+    }
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotalPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+}`) as unknown as TypedDocumentString<CartByTokenQuery, CartByTokenQueryVariables>;
+export const CheckoutCreateDocument = new TypedDocumentString(`
+    mutation CheckoutCreate($input: CheckoutCreateInput!) {
+  checkoutCreate(input: $input) {
+    checkout {
+      ...Cart
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+    fragment Cart on Checkout {
+  id
+  token
+  quantity
+  isShippingRequired
+  lines {
+    id
+    quantity
+    variant {
+      id
+      name
+      quantityAvailable
+      product {
+        name
+        slug
+        thumbnail(size: 256, format: WEBP) {
+          url
+          alt
+        }
+      }
+    }
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotalPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+}`) as unknown as TypedDocumentString<CheckoutCreateMutation, CheckoutCreateMutationVariables>;
+export const CheckoutLinesAddDocument = new TypedDocumentString(`
+    mutation CheckoutLinesAdd($id: ID!, $lines: [CheckoutLineInput!]!) {
+  checkoutLinesAdd(id: $id, lines: $lines) {
+    checkout {
+      ...Cart
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+    fragment Cart on Checkout {
+  id
+  token
+  quantity
+  isShippingRequired
+  lines {
+    id
+    quantity
+    variant {
+      id
+      name
+      quantityAvailable
+      product {
+        name
+        slug
+        thumbnail(size: 256, format: WEBP) {
+          url
+          alt
+        }
+      }
+    }
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotalPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+}`) as unknown as TypedDocumentString<CheckoutLinesAddMutation, CheckoutLinesAddMutationVariables>;
+export const CheckoutLinesUpdateDocument = new TypedDocumentString(`
+    mutation CheckoutLinesUpdate($id: ID!, $lines: [CheckoutLineUpdateInput!]!) {
+  checkoutLinesUpdate(id: $id, lines: $lines) {
+    checkout {
+      ...Cart
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+    fragment Cart on Checkout {
+  id
+  token
+  quantity
+  isShippingRequired
+  lines {
+    id
+    quantity
+    variant {
+      id
+      name
+      quantityAvailable
+      product {
+        name
+        slug
+        thumbnail(size: 256, format: WEBP) {
+          url
+          alt
+        }
+      }
+    }
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotalPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+}`) as unknown as TypedDocumentString<CheckoutLinesUpdateMutation, CheckoutLinesUpdateMutationVariables>;
+export const CheckoutLinesDeleteDocument = new TypedDocumentString(`
+    mutation CheckoutLinesDelete($id: ID!, $linesIds: [ID!]!) {
+  checkoutLinesDelete(id: $id, linesIds: $linesIds) {
+    checkout {
+      ...Cart
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+    fragment Cart on Checkout {
+  id
+  token
+  quantity
+  isShippingRequired
+  lines {
+    id
+    quantity
+    variant {
+      id
+      name
+      quantityAvailable
+      product {
+        name
+        slug
+        thumbnail(size: 256, format: WEBP) {
+          url
+          alt
+        }
+      }
+    }
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotalPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+}`) as unknown as TypedDocumentString<CheckoutLinesDeleteMutation, CheckoutLinesDeleteMutationVariables>;
 export const ProductListingDocument = new TypedDocumentString(`
     query ProductListing($first: Int, $after: String, $last: Int, $before: String, $sortBy: ProductOrder, $where: ProductWhereInput) {
   products(

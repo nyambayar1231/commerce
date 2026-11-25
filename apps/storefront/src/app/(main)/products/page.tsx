@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+import { addToCart } from "@/lib/cart/actions";
 import { getFilterOptions, getProductListing } from "@/lib/catalog/listing";
 import {
   listingHref,
@@ -75,6 +76,7 @@ async function ProductsResults({ searchParams }: { searchParams: SearchParams })
       clearHref={clearHref}
       previousHref={previousHref}
       nextHref={nextHref}
+      addAction={addToCart}
     />
   );
 }

@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import type { AddToCartAction } from "@/lib/cart/types";
 import type { ProductCardView } from "@/lib/catalog/types";
 import { cn } from "@/lib/utils";
 import { ProductGrid } from "@/ui/components/plp/product-grid";
@@ -17,6 +18,8 @@ interface FeaturedCollectionSectionProps {
   items: ProductCardView[];
   /** The "view all" link's target: the collection page. */
   viewAllHref: string;
+  /** The `addToCart` Server Action for the cards' quick-add buttons. */
+  addAction: AddToCartAction;
   className?: string;
 }
 
@@ -25,6 +28,7 @@ export function FeaturedCollectionSection({
   name,
   items,
   viewAllHref,
+  addAction,
   className,
 }: FeaturedCollectionSectionProps) {
   const t = useTranslations("home");
@@ -48,7 +52,7 @@ export function FeaturedCollectionSection({
           </Link>
         </div>
         <div className="mt-10">
-          <ProductGrid items={items} />
+          <ProductGrid items={items} addAction={addAction} />
         </div>
       </div>
     </section>

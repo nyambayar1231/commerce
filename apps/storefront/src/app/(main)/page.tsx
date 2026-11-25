@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+import { addToCart } from "@/lib/cart/actions";
 import {
   FEATURED_COLLECTION_SLUG,
   getFeaturedCollection,
@@ -66,6 +67,7 @@ async function HomeFeatured() {
       name={featured.name}
       items={featured.items}
       viewAllHref={`/collections/${FEATURED_COLLECTION_SLUG}`}
+      addAction={addToCart}
     />
   );
 }

@@ -4,6 +4,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import type { AddToCartAction } from "@/lib/cart/types";
 import { cn } from "@/lib/utils";
 import type { AddToCartState } from "./add-to-cart";
 import { AddToCartButton } from "./add-to-cart";
@@ -31,12 +32,13 @@ interface StickyBarProps {
   show?: boolean;
   buttonState: AddToCartState;
   variantId: string | null;
+  addAction: AddToCartAction;
 }
 
 /**
  * The mobile sticky bar: name and price with the add-to-cart button, fixed to the bottom once
  * the shopper has scrolled past the buy box. It renders inside the buy box's form, so its
- * button shares the form (and, from M4.5, the action).
+ * button shares the form and the add-to-cart action.
  */
 export function StickyBar({
   productName,
@@ -44,6 +46,7 @@ export function StickyBar({
   show = false,
   buttonState,
   variantId,
+  addAction,
 }: StickyBarProps) {
   const scrolledPastThreshold = useSyncExternalStore(
     subscribeToScroll,
@@ -68,7 +71,9 @@ export function StickyBar({
         <AddToCartButton
           state={buttonState}
           variantId={variantId}
+          addAction={addAction}
           className="min-w-[130px] shrink-0"
+          messageClassName="absolute bottom-full left-0 right-0 border-t bg-background px-4 py-1"
         />
       </div>
     </div>

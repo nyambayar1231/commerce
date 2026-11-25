@@ -50,6 +50,11 @@ export type ProductCardView = {
   priceFrom: boolean;
   /** True when every variant is tracked and out of stock; untracked (`null`) counts as available. */
   soldOut: boolean;
+  /**
+   * The variant the card's quick-add button adds: set only when the product has exactly one
+   * variant and it is not sold out. Otherwise null: the shopper chooses on the product page.
+   */
+  quickAddVariantId: string | null;
 };
 
 export type PageInfoView = {

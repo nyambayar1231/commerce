@@ -2,10 +2,12 @@
 // See THIRD_PARTY_LICENSES.md
 
 import { useTranslations } from "next-intl";
+import type { AddToCartAction } from "@/lib/cart/types";
 import type { ProductCardView } from "@/lib/catalog/types";
 import { cn } from "@/lib/utils";
 import { ProductImage } from "@/ui/atoms/product-image";
 import { ProductCardLink } from "./product-card-link";
+import { QuickAddButton } from "./quick-add-button";
 
 /** The card grid's `sizes`: 4 columns ≥1024px, 3 ≥640px, 2 below. */
 export const PLP_IMAGE_SIZES = "(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw";
@@ -19,28 +21,33 @@ interface ProductCardProps {
   /** Eager, high-priority image: the first four cards of a page (the LCP rung). */
   priority?: boolean;
   imageSizes?: string;
+  /** The `addToCart` Server Action; with it, a card whose product has a quick-add variant shows the button. */
+  addAction?: AddToCartAction;
 }
 
 /**
- * One grid cell, adapted from Paper's card: image and text inside ONE link (its accessible
- * name is the product name), price and availability as text — never colour alone. Sold-out
- * products are shown (M4.5 adds the cart button).
+ * One grid cell, adapted from Paper's card: the image is a link (hidden from assistive tech and
+ * the tab order, the text link below is the one that counts), then a text link whose accessible
+ * name is the product name, price and availability as text — never colour alone. Sold-out
+ * products are shown. The quick-add button sits over the image, outside both links.
  */
 export function ProductCard({
   product,
   priority = false,
   imageSizes = PLP_IMAGE_SIZES,
+  addAction,
 }: ProductCardProps) {
   const t = useTranslations("plp");
 
   return (
     <article className="group">
-      <ProductCardLink
-        href={product.href}
-        aria-label={product.name}
-        className="block no-underline hover:no-underline"
-      >
-        <div className="relative mb-4 aspect-[3/4] overflow-hidden rounded-card bg-secondary">
+      <div className="relative mb-4 aspect-[3/4] overflow-hidden rounded-card bg-secondary">
+        <ProductCardLink
+          href={product.href}
+          tabIndex={-1}
+          aria-hidden="true"
+          className="absolute inset-0 z-0 block"
+        >
           <ProductImage
             image={product.image}
             sizes={imageSizes}
@@ -49,8 +56,21 @@ export function ProductCard({
             priority={priority}
             className="transition-all duration-500 ease-out md:group-hover:scale-105"
           />
-        </div>
+        </ProductCardLink>
+        {addAction !== undefined && product.quickAddVariantId !== null && (
+          <QuickAddButton
+            variantId={product.quickAddVariantId}
+            productName={product.name}
+            addAction={addAction}
+          />
+        )}
+      </div>
 
+      <ProductCardLink
+        href={product.href}
+        aria-label={product.name}
+        className="block no-underline hover:no-underline"
+      >
         <div className="space-y-1.5">
           {product.categoryName !== null && (
             <p className="text-eyebrow uppercase text-muted-foreground">{product.categoryName}</p>

@@ -5,9 +5,15 @@ import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
 import { logout } from "@/lib/auth/actions";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { removeLine, updateLine } from "@/lib/cart/actions";
+import { getCart } from "@/lib/cart/cart";
+import { isCartUnavailable } from "@/lib/cart/types";
 import { getMenu } from "@/lib/content/menus";
 import { getShop } from "@/lib/content/shop";
 import type { MenuItemView } from "@/lib/content/types";
+import { CartButton } from "@/ui/components/cart/cart-button";
+import { CartDrawer } from "@/ui/components/cart/cart-drawer";
+import { CartDrawerContents } from "@/ui/components/cart/cart-drawer-contents";
 import { FooterMenuColumns } from "@/ui/components/footer";
 import { MobileMenu } from "@/ui/components/nav/mobile-menu";
 import { NavLinksDesktop } from "@/ui/components/nav/nav-links-desktop";
@@ -115,6 +121,23 @@ export async function UserMenuSlot() {
 /** Skeleton for `UserMenuSlot`: the size of the sign-in link. */
 export function UserMenuSkeleton() {
   return <div aria-hidden="true" className="h-10 w-24 animate-pulse rounded-md bg-muted" />;
+}
+
+/** The header's cart button with the item count, from the checkout cookie. */
+export async function CartButtonSlot() {
+  const cart = await getCart();
+  return <CartButton count={cart === null || isCartUnavailable(cart) ? 0 : cart.quantity} />;
+}
+
+/** The cart drawer: a client shell around contents rendered here from the cart. */
+export async function CartDrawerSlot() {
+  const cart = await getCart();
+  const itemCount = cart === null || isCartUnavailable(cart) ? 0 : cart.quantity;
+  return (
+    <CartDrawer itemCount={itemCount}>
+      <CartDrawerContents cart={cart} updateLine={updateLine} removeLine={removeLine} />
+    </CartDrawer>
+  );
 }
 
 /**

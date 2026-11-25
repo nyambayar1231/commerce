@@ -2,6 +2,7 @@
 // See THIRD_PARTY_LICENSES.md
 
 import { useTranslations } from "next-intl";
+import type { AddToCartAction } from "@/lib/cart/types";
 import type { FilterOptionsView, ListingParams, ListingView } from "@/lib/catalog/types";
 import { Pagination } from "@/ui/components/pagination";
 import { FilterBar, hasListingFilters } from "./filter-bar";
@@ -21,6 +22,8 @@ interface PlpResultsProps {
   clearHref: string;
   previousHref: string | null;
   nextHref: string | null;
+  /** The `addToCart` Server Action for the cards' quick-add buttons. */
+  addAction: AddToCartAction;
 }
 
 /**
@@ -37,6 +40,7 @@ export function PlpResults({
   clearHref,
   previousHref,
   nextHref,
+  addAction,
 }: PlpResultsProps) {
   const t = useTranslations("plp");
   const filtered = hasListingFilters(params);
@@ -59,7 +63,7 @@ export function PlpResults({
               <p className="py-12 text-center text-lg text-muted-foreground">{t("emptyCatalog")}</p>
             )
           ) : (
-            <ProductGrid items={listing.items} />
+            <ProductGrid items={listing.items} addAction={addAction} />
           )}
           <Pagination previousHref={previousHref} nextHref={nextHref} />
         </div>

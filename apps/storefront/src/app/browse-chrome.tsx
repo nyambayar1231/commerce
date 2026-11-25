@@ -4,6 +4,8 @@
 import { useTranslations } from "next-intl";
 import { type ReactNode, Suspense } from "react";
 import {
+  CartButtonSlot,
+  CartDrawerSlot,
   CopyrightSlot,
   FooterMenuSkeleton,
   FooterMenuSlot,
@@ -16,6 +18,8 @@ import {
   UserMenuSkeleton,
   UserMenuSlot,
 } from "@/app/chrome-slots";
+import { CartButtonSkeleton } from "@/ui/components/cart/cart-button";
+import { CartUIProvider } from "@/ui/components/cart/cart-context";
 import { Footer } from "@/ui/components/footer";
 import { HeaderFrame } from "@/ui/components/header-frame";
 import { SearchBar } from "@/ui/components/nav/search-bar";
@@ -23,7 +27,8 @@ import { SearchBar } from "@/ui/components/nav/search-bar";
 /**
  * Skip link, header, `<main>` and footer. Shared by the browse layout and the top-level 404, which
  * renders outside every route group. The nav, mobile menu and footer menu are cached data
- * islands; the search form reads no data, so it renders directly.
+ * islands; the search form reads no data, so it renders directly. The cart drawer and the header's
+ * cart button share the open state through `CartUIProvider`.
  */
 export function BrowseChrome({ children }: { children: ReactNode }) {
   const t = useTranslations("common");
@@ -34,7 +39,7 @@ export function BrowseChrome({ children }: { children: ReactNode }) {
   );
 
   return (
-    <>
+    <CartUIProvider>
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-button focus:bg-background focus:px-4 focus:py-2"
@@ -54,12 +59,20 @@ export function BrowseChrome({ children }: { children: ReactNode }) {
             <UserMenuSlot />
           </Suspense>
         }
+        cart={
+          <Suspense fallback={<CartButtonSkeleton />}>
+            <CartButtonSlot />
+          </Suspense>
+        }
         mobileMenu={
           <Suspense fallback={<MobileMenuSlotSkeleton />}>
             <MobileMenuSlot />
           </Suspense>
         }
       />
+      <Suspense fallback={null}>
+        <CartDrawerSlot />
+      </Suspense>
       <div className="flex min-h-[calc(100dvh-var(--header-height))] flex-col">
         <main id="main-content" className="flex-1">
           {children}
@@ -79,6 +92,6 @@ export function BrowseChrome({ children }: { children: ReactNode }) {
           }
         />
       </div>
-    </>
+    </CartUIProvider>
   );
 }

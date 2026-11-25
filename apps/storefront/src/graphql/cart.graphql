@@ -1,0 +1,102 @@
+# The storefront's cart documents (ARCHITECTURE §10.9). The cart is the API's checkout, found by
+# the token in the checkout cookie; every price here comes from the API, never from the client.
+
+fragment Cart on Checkout {
+  id
+  token
+  quantity
+  isShippingRequired
+  lines {
+    id
+    quantity
+    variant {
+      id
+      name
+      quantityAvailable
+      product {
+        name
+        slug
+        thumbnail(size: 256, format: WEBP) {
+          url
+          alt
+        }
+      }
+    }
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotalPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+}
+
+query CartByToken($id: ID!) {
+  checkout(id: $id) {
+    ...Cart
+  }
+}
+
+mutation CheckoutCreate($input: CheckoutCreateInput!) {
+  checkoutCreate(input: $input) {
+    checkout {
+      ...Cart
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+
+mutation CheckoutLinesAdd($id: ID!, $lines: [CheckoutLineInput!]!) {
+  checkoutLinesAdd(id: $id, lines: $lines) {
+    checkout {
+      ...Cart
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+
+mutation CheckoutLinesUpdate($id: ID!, $lines: [CheckoutLineUpdateInput!]!) {
+  checkoutLinesUpdate(id: $id, lines: $lines) {
+    checkout {
+      ...Cart
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+
+mutation CheckoutLinesDelete($id: ID!, $linesIds: [ID!]!) {
+  checkoutLinesDelete(id: $id, linesIds: $linesIds) {
+    checkout {
+      ...Cart
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}

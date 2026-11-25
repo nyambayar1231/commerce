@@ -22,6 +22,7 @@ const CARD_IMAGE_SIZES = { small: 256, large: 512 } as const;
 
 /** A product as the grid shows it: one link, one image, a price string, stock as text. */
 export function toProductCard(node: ProductCardFragment): ProductCardView {
+  const onlyVariant = node.variants.length === 1 ? node.variants[0] : undefined;
   const prices = new Set(node.variants.map((variant) => variant.price.amount));
   return {
     id: node.id,
@@ -46,6 +47,8 @@ export function toProductCard(node: ProductCardFragment): ProductCardView {
     // nothing to sell out.
     soldOut:
       node.variants.length > 0 && node.variants.every((variant) => variant.quantityAvailable === 0),
+    quickAddVariantId:
+      onlyVariant !== undefined && onlyVariant.quantityAvailable !== 0 ? onlyVariant.id : null,
   };
 }
 
