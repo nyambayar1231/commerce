@@ -1,0 +1,72 @@
+# Documents for the sitemap and for category/collection meta descriptions (ARCHITECTURE §10.14).
+# Minimal fields only: the sitemap needs slugs and, where the API has one, `updatedAt`.
+
+query SitemapProducts($first: Int!, $after: String) {
+  products(first: $first, after: $after) {
+    edges {
+      node {
+        slug
+        updatedAt
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query SitemapCategories($first: Int!, $after: String) {
+  categories(first: $first, after: $after) {
+    edges {
+      node {
+        slug
+        updatedAt
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query SitemapCollections($first: Int!, $after: String) {
+  collections(first: $first, after: $after) {
+    edges {
+      node {
+        slug
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query SitemapPages($first: Int!, $after: String) {
+  pages(first: $first, after: $after) {
+    edges {
+      node {
+        slug
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+query CategorySeo($slug: String!) {
+  category(slug: $slug) {
+    description
+  }
+}
+
+query CollectionSeo($slug: String!) {
+  collection(slug: $slug) {
+    description
+  }
+}

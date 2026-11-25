@@ -873,6 +873,52 @@ export type ProductDetailsQueryVariables = Exact<{
 
 export type ProductDetailsQuery = { product: { id: string, name: string, slug: string, description: string | null, updatedAt: string, category: { name: string, slug: string, ancestors: { edges: Array<{ node: { name: string, slug: string } }> } | null } | null, media: Array<{ id: string, alt: string, type: ProductMediaType, thumb: string, medium: string, large: string }>, variants: Array<{ id: string, name: string, sku: string | null, quantityAvailable: number | null, price: { amount: number, currency: string }, media: Array<{ id: string }> }> } | null };
 
+export type SitemapProductsQueryVariables = Exact<{
+  first: number;
+  after?: string | null | undefined;
+}>;
+
+
+export type SitemapProductsQuery = { products: { edges: Array<{ node: { slug: string, updatedAt: string } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } | null };
+
+export type SitemapCategoriesQueryVariables = Exact<{
+  first: number;
+  after?: string | null | undefined;
+}>;
+
+
+export type SitemapCategoriesQuery = { categories: { edges: Array<{ node: { slug: string, updatedAt: string } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } | null };
+
+export type SitemapCollectionsQueryVariables = Exact<{
+  first: number;
+  after?: string | null | undefined;
+}>;
+
+
+export type SitemapCollectionsQuery = { collections: { edges: Array<{ node: { slug: string } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } | null };
+
+export type SitemapPagesQueryVariables = Exact<{
+  first: number;
+  after?: string | null | undefined;
+}>;
+
+
+export type SitemapPagesQuery = { pages: { edges: Array<{ node: { slug: string } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } | null };
+
+export type CategorySeoQueryVariables = Exact<{
+  slug: string;
+}>;
+
+
+export type CategorySeoQuery = { category: { description: string | null } | null };
+
+export type CollectionSeoQueryVariables = Exact<{
+  slug: string;
+}>;
+
+
+export type CollectionSeoQuery = { collection: { description: string | null } | null };
+
 export type ShopInfoQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -2514,6 +2560,82 @@ export const ProductDetailsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<ProductDetailsQuery, ProductDetailsQueryVariables>;
+export const SitemapProductsDocument = new TypedDocumentString(`
+    query SitemapProducts($first: Int!, $after: String) {
+  products(first: $first, after: $after) {
+    edges {
+      node {
+        slug
+        updatedAt
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<SitemapProductsQuery, SitemapProductsQueryVariables>;
+export const SitemapCategoriesDocument = new TypedDocumentString(`
+    query SitemapCategories($first: Int!, $after: String) {
+  categories(first: $first, after: $after) {
+    edges {
+      node {
+        slug
+        updatedAt
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<SitemapCategoriesQuery, SitemapCategoriesQueryVariables>;
+export const SitemapCollectionsDocument = new TypedDocumentString(`
+    query SitemapCollections($first: Int!, $after: String) {
+  collections(first: $first, after: $after) {
+    edges {
+      node {
+        slug
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<SitemapCollectionsQuery, SitemapCollectionsQueryVariables>;
+export const SitemapPagesDocument = new TypedDocumentString(`
+    query SitemapPages($first: Int!, $after: String) {
+  pages(first: $first, after: $after) {
+    edges {
+      node {
+        slug
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<SitemapPagesQuery, SitemapPagesQueryVariables>;
+export const CategorySeoDocument = new TypedDocumentString(`
+    query CategorySeo($slug: String!) {
+  category(slug: $slug) {
+    description
+  }
+}
+    `) as unknown as TypedDocumentString<CategorySeoQuery, CategorySeoQueryVariables>;
+export const CollectionSeoDocument = new TypedDocumentString(`
+    query CollectionSeo($slug: String!) {
+  collection(slug: $slug) {
+    description
+  }
+}
+    `) as unknown as TypedDocumentString<CollectionSeoQuery, CollectionSeoQueryVariables>;
 export const ShopInfoDocument = new TypedDocumentString(`
     query ShopInfo {
   shop {

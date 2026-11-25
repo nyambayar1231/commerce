@@ -6,6 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { type ReactNode, Suspense } from "react";
 import { login, logout } from "@/lib/auth/actions";
 import { getCurrentUser } from "@/lib/auth/current-user";
+import { getShop } from "@/lib/content/shop";
 import { AccountLogin } from "@/ui/components/account/account-login";
 import { AccountNav } from "@/ui/components/account/account-nav";
 import { AccountSkeleton } from "@/ui/components/account/account-skeleton";
@@ -19,8 +20,12 @@ export const prefetch = "force-disabled";
 
 /** Every account page is private: dynamic (it reads the session) and never indexed. */
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("account.metadata");
-  return { title: t("title"), robots: { index: false, follow: false } };
+  const [t, shop] = await Promise.all([getTranslations("account.metadata"), getShop()]);
+  // A plain string title would drop the root's template for the pages below, so restate it.
+  return {
+    title: { default: t("title"), template: `%s | ${shop.name}` },
+    robots: { index: false, follow: false },
+  };
 }
 
 /**

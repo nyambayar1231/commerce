@@ -7,7 +7,9 @@ import { addToCart } from "@/lib/cart/actions";
 import { buildBreadcrumbJsonLd, buildProductJsonLd, serializeJsonLd } from "@/lib/catalog/json-ld";
 import { getProduct } from "@/lib/catalog/product";
 import type { ProductView, VariantView } from "@/lib/catalog/types";
+import { getShop } from "@/lib/content/shop";
 import { getEnv } from "@/lib/env";
+import { openGraphFor } from "@/lib/seo/metadata";
 import { Breadcrumbs } from "@/ui/components/breadcrumbs";
 import { AddToCart, type AddToCartState } from "@/ui/components/pdp/add-to-cart";
 import { BuyBoxFallback } from "@/ui/components/pdp/buy-box-fallback";
@@ -38,7 +40,7 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProduct(slug);
+  const [product, shop] = await Promise.all([getProduct(slug), getShop()]);
   if (product === null) notFound();
   const first = product.images[0];
   return {
@@ -46,7 +48,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description: product.descriptionText === "" ? undefined : product.descriptionText,
     alternates: { canonical: `${getEnv().storefrontUrl}${product.url}` },
     // Open Graph: the first image's 1024 rung (§10.12).
-    openGraph: first === undefined ? undefined : { images: [first.src] },
+    openGraph: openGraphFor(shop.name, {
+      url: `${getEnv().storefrontUrl}${product.url}`,
+      ...(first === undefined ? {} : { images: [first.src] }),
+    }),
   };
 }
 

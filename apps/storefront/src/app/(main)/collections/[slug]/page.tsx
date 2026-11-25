@@ -12,6 +12,8 @@ import {
   type RawSearchParams,
 } from "@/lib/catalog/listing-params";
 import { getEnv } from "@/lib/env";
+import { descriptionOrUndefined } from "@/lib/seo/description";
+import { getCollectionDescription } from "@/lib/seo/descriptions-data";
 import { CategoryHero } from "@/ui/components/plp/category-hero";
 import { PlpHeaderSkeleton, PlpListingSkeleton } from "@/ui/components/plp/plp-page-loading";
 import { PlpResults } from "@/ui/components/plp/plp-results";
@@ -26,10 +28,14 @@ type PageProps = {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const collection = await getCollection(slug);
+  const [collection, description] = await Promise.all([
+    getCollection(slug),
+    getCollectionDescription(slug),
+  ]);
   if (collection === null) notFound();
   return {
     title: collection.name,
+    description: descriptionOrUndefined(description),
     alternates: { canonical: `${getEnv().storefrontUrl}/collections/${collection.slug}` },
   };
 }

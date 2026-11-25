@@ -23,7 +23,11 @@ type SearchParams = Promise<RawSearchParams>;
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("plp");
-  return { title: t("title"), alternates: { canonical: `${getEnv().storefrontUrl}${BASE_PATH}` } };
+  return {
+    title: t("title"),
+    description: t("description"),
+    alternates: { canonical: `${getEnv().storefrontUrl}${BASE_PATH}` },
+  };
 }
 
 export default function ProductsPage({ searchParams }: { searchParams: SearchParams }) {

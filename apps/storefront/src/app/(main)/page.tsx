@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { addToCart } from "@/lib/cart/actions";
+import { serializeJsonLd } from "@/lib/catalog/json-ld";
 import {
   FEATURED_COLLECTION_SLUG,
   getFeaturedCollection,
@@ -9,6 +10,7 @@ import {
 } from "@/lib/content/home";
 import { getShop } from "@/lib/content/shop";
 import { getEnv } from "@/lib/env";
+import { buildOrganizationJsonLd } from "@/lib/seo/organization";
 import {
   CategoryTileGrid,
   CategoryTileGridSkeleton,
@@ -33,6 +35,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function HomePage() {
   return (
     <>
+      <Suspense fallback={null}>
+        <OrganizationJsonLd />
+      </Suspense>
       <Suspense fallback={<HeroBannerSkeleton />}>
         <HomeHero />
       </Suspense>
@@ -43,6 +48,20 @@ export default function HomePage() {
         <HomeCategories />
       </Suspense>
     </>
+  );
+}
+
+/** `Organization` structured data (§10.14): the shop's name and the storefront origin. */
+async function OrganizationJsonLd() {
+  const shop = await getShop();
+  return (
+    <script
+      type="application/ld+json"
+      // biome-ignore lint/security/noDangerouslySetInnerHtml: escaped by serializeJsonLd (< > &), so the shop name cannot break out of the script element (ARCHITECTURE §10.13)
+      dangerouslySetInnerHTML={{
+        __html: serializeJsonLd(buildOrganizationJsonLd(shop.name, getEnv().storefrontUrl)),
+      }}
+    />
   );
 }
 
