@@ -141,7 +141,7 @@ export async function login(_state: AuthActionState, formData: FormData): Promis
   }
   const refused = await startSession(headers, user, email);
   if (refused) return refused;
-  redirect(safeNextPath(textField(formData, "next"), "/"));
+  redirect(safeNextPath(textField(formData, "next"), "/account"));
 }
 
 /** A form action: ends the API session, clears both cookies, goes home. */

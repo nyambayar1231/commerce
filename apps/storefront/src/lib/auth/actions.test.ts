@@ -151,11 +151,11 @@ describe("login", () => {
   });
 
   it.each(["//evil.example", "https://evil.example", "/\\evil", "/login"])(
-    "goes home instead of %s",
+    "goes to the account page instead of %s",
     async (next) => {
       loginOk();
       const { redirect } = await run(actions.login(idle, loginForm({ next })));
-      expect(redirect).toBe("/");
+      expect(redirect).toBe("/account");
     },
   );
 
@@ -226,7 +226,7 @@ describe("cart merge at login", () => {
     const { redirect } = await run(actions.login(idle, loginForm()));
     expect(clearCheckoutCookie).toHaveBeenCalled();
     expect(setCheckoutCookie).not.toHaveBeenCalled();
-    expect(redirect).toBe("/");
+    expect(redirect).toBe("/account");
   });
 
   it("never fails the login when the merge throws", async () => {
@@ -235,7 +235,7 @@ describe("cart merge at login", () => {
     readCheckoutToken.mockResolvedValue(GUEST);
     const { redirect } = await run(actions.login(idle, loginForm()));
     expect(setSessionCookie).toHaveBeenCalled();
-    expect(redirect).toBe("/");
+    expect(redirect).toBe("/account");
   });
 });
 

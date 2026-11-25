@@ -102,7 +102,9 @@
     "inactive": "Энэ бүртгэл идэвхгүй болсон байна.",
     "tooManyAttempts": "Нэвтрэх оролдлого хэт олон боллоо. Түр хүлээгээд дахин оролдоно уу.",
     "staffNotAllowed": "Энэ хаягаар дэлгүүрт нэвтрэх боломжгүй.",
-    "linkInvalid": "Холбоос хүчингүй эсвэл хугацаа нь дууссан байна."
+    "linkInvalid": "Холбоос хүчингүй эсвэл хугацаа нь дууссан байна.",
+    "tooLong": "Утга хэт урт байна.",
+    "wrongPassword": "Одоогийн нууц үг буруу байна."
   },
   "checkout": {
     "secureCheckout": "Аюулгүй төлбөр"
@@ -226,6 +228,134 @@
       "invalidQuantity": "Тоо ширхэг буруу байна.",
       "unavailable": "Үйлчилгээ түр хүрэхгүй байна. Түр хүлээгээд дахин оролдоно уу.",
       "generic": "Алдаа гарлаа. Дахин оролдоно уу."
+    }
+  },
+  "account": {
+    "metadata": {
+      "title": "Миний бүртгэл"
+    },
+    "unavailable": {
+      "title": "Бүртгэлийн мэдээлэл түр хүрэхгүй байна",
+      "body": "Бүртгэлийн мэдээллийг ачаалж чадсангүй. Түр хүлээгээд хуудсаа дахин ачаална уу."
+    },
+    "loadFailed": "Мэдээллийг ачаалж чадсангүй. Хуудсаа дахин ачаална уу.",
+    "nav": {
+      "ariaLabel": "Бүртгэлийн цэс",
+      "overview": "Нийтлэг мэдээлэл",
+      "orders": "Захиалгууд",
+      "addresses": "Хаягууд",
+      "settings": "Тохиргоо",
+      "signOut": "Гарах",
+      "backToStore": "Дэлгүүр рүү буцах"
+    },
+    "overview": {
+      "welcome": "Сайн байна уу, {name}",
+      "subtitle": "Захиалга, хаяг болон бүртгэлийн тохиргоогоо эндээс удирдана уу.",
+      "defaultShipping": "Хүргэлтийн үндсэн хаяг",
+      "defaultBilling": "Төлбөрийн үндсэн хаяг",
+      "manage": "Удирдах",
+      "noAddress": "Үндсэн хаяг сонгоогүй байна.",
+      "recentOrders": "Сүүлийн захиалгууд",
+      "viewAll": "Бүгдийг үзэх",
+      "noOrders": "Та одоогоор захиалга хийгээгүй байна."
+    },
+    "settings": {
+      "title": "Тохиргоо",
+      "subtitle": "Нэр болон нууц үгээ эндээс шинэчилнэ үү.",
+      "email": "Имэйл",
+      "nameTitle": "Нэр",
+      "nameSaved": "Нэр хадгалагдлаа.",
+      "save": "Хадгалах",
+      "saving": "Хадгалж байна…",
+      "passwordTitle": "Нууц үг солих",
+      "oldPassword": "Одоогийн нууц үг",
+      "newPassword": "Шинэ нууц үг",
+      "confirmPassword": "Шинэ нууц үгээ давтах",
+      "passwordHint": "Хамгийн багадаа 8 тэмдэгт",
+      "passwordSubmit": "Нууц үг солих",
+      "passwordSaving": "Солиж байна…",
+      "passwordChanged": "Нууц үг амжилттай солигдлоо."
+    }
+  },
+  "address": {
+    "fields": {
+      "firstName": "Нэр",
+      "lastName": "Овог",
+      "companyName": "Байгууллага",
+      "country": "Улс",
+      "countryArea": "Аймаг / нийслэл",
+      "city": "Сум / дүүрэг",
+      "cityArea": "Баг / хороо",
+      "streetAddress1": "Гудамж, байр, тоот",
+      "streetAddress2": "Нэмэлт хаяг (заавал биш)",
+      "postalCode": "Шуудангийн код (заавал биш)",
+      "phone": "Утасны дугаар"
+    },
+    "defaultShipping": "Хүргэлтийн үндсэн",
+    "defaultBilling": "Төлбөрийн үндсэн",
+    "phoneLabel": "Утас: {phone}",
+    "book": {
+      "title": "Хаягууд",
+      "subtitle": "Хүргэлт болон төлбөрийн хаягаа хадгалж, удирдана уу.",
+      "empty": "Хадгалсан хаяг байхгүй байна.",
+      "add": "Хаяг нэмэх",
+      "edit": "Засах",
+      "editAria": "{name} хаягийг засах",
+      "addTitle": "Шинэ хаяг",
+      "editTitle": "Хаяг засах",
+      "save": "Хадгалах",
+      "saving": "Хадгалж байна…",
+      "cancel": "Болих",
+      "close": "Хаах",
+      "delete": "Устгах",
+      "deleteConfirm": "Энэ хаягийг устгах уу?",
+      "deleteYes": "Тийм, устгах",
+      "deleting": "Устгаж байна…",
+      "makeDefaultShipping": "Хүргэлтийн үндсэн болгох",
+      "makeDefaultBilling": "Төлбөрийн үндсэн болгох",
+      "settingDefault": "Хадгалж байна…"
+    }
+  },
+  "orders": {
+    "title": "Захиалгууд",
+    "empty": "Та одоогоор захиалга хийгээгүй байна.",
+    "browse": "Бүтээгдэхүүн үзэх",
+    "number": "Захиалга №{number}",
+    "items": "{count} бараа",
+    "itemsHeading": "Бараанууд ({count})",
+    "view": "Захиалгыг үзэх",
+    "placedOn": "{date}-нд захиалсан",
+    "quantity": "Тоо ширхэг: {count}",
+    "unitPrice": "Нэгж үнэ: {price}",
+    "subtotal": "Барааны дүн",
+    "shipping": "Хүргэлт",
+    "total": "Нийт дүн",
+    "shippingMethod": "Хүргэлтийн арга",
+    "shippingAddress": "Хүргэх хаяг",
+    "billingAddress": "Төлбөрийн хаяг",
+    "payment": "Төлбөр",
+    "timeline": "Захиалгын явц",
+    "notFoundBack": "Захиалгууд руу буцах",
+    "status": {
+      "UNFULFILLED": "Боловсруулж байна",
+      "PARTIALLY_FULFILLED": "Хэсэгчлэн хүргэсэн",
+      "FULFILLED": "Хүргэгдсэн",
+      "CANCELED": "Цуцлагдсан"
+    },
+    "paymentState": {
+      "none": "Төлөгдөөгүй",
+      "partial": "Хэсэгчлэн төлсөн",
+      "full": "Төлсөн",
+      "overcharged": "Илүү төлсөн"
+    },
+    "timelineEntry": {
+      "placed": "Захиалга баталгаажлаа",
+      "placedDescription": "Таны захиалгыг хүлээн авлаа.",
+      "fulfilled": "Хүргэлтэнд гарсан",
+      "fulfilledDescription": "{count} бараа хүргэлтэнд гарлаа.",
+      "tracking": "Хяналтын дугаар: {number}",
+      "canceled": "Захиалга цуцлагдсан",
+      "canceledDescription": "Энэ захиалга цуцлагдсан."
     }
   }
 }

@@ -1,0 +1,210 @@
+fragment AccountAddress on Address {
+  id
+  firstName
+  lastName
+  companyName
+  streetAddress1
+  streetAddress2
+  city
+  cityArea
+  postalCode
+  countryArea
+  phone
+  country {
+    code
+    country
+  }
+  isDefaultShippingAddress
+  isDefaultBillingAddress
+}
+
+fragment AccountOrderSummary on Order {
+  id
+  number
+  created
+  status
+  total {
+    gross {
+      amount
+      currency
+    }
+  }
+  lines {
+    id
+    quantity
+  }
+}
+
+fragment AccountOrderDetail on Order {
+  id
+  number
+  created
+  updatedAt
+  status
+  chargeStatus
+  shippingMethodName
+  lines {
+    id
+    productName
+    variantName
+    quantity
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotal {
+    gross {
+      amount
+      currency
+    }
+  }
+  shippingPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+  total {
+    gross {
+      amount
+      currency
+    }
+  }
+  shippingAddress {
+    ...AccountAddress
+  }
+  billingAddress {
+    ...AccountAddress
+  }
+  fulfillments {
+    id
+    created
+    status
+    trackingNumber
+    lines {
+      quantity
+    }
+  }
+}
+
+query AccountOverview {
+  me {
+    id
+    defaultShippingAddress {
+      ...AccountAddress
+    }
+    defaultBillingAddress {
+      ...AccountAddress
+    }
+    orders(first: 3) {
+      edges {
+        node {
+          ...AccountOrderSummary
+        }
+      }
+    }
+  }
+}
+
+query AccountOrders($first: Int, $after: String, $last: Int, $before: String) {
+  me {
+    id
+    orders(first: $first, after: $after, last: $last, before: $before) {
+      edges {
+        node {
+          ...AccountOrderSummary
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+}
+
+query AccountOrder($id: ID!) {
+  order(id: $id) {
+    ...AccountOrderDetail
+  }
+}
+
+query AccountAddresses {
+  me {
+    id
+    addresses {
+      ...AccountAddress
+    }
+  }
+  shop {
+    countries {
+      code
+      country
+    }
+  }
+}
+
+mutation AccountAddressCreate($input: AddressInput!) {
+  accountAddressCreate(input: $input) {
+    errors {
+      code
+      field
+    }
+  }
+}
+
+mutation AccountAddressUpdate($id: ID!, $input: AddressInput!) {
+  accountAddressUpdate(id: $id, input: $input) {
+    errors {
+      code
+      field
+    }
+  }
+}
+
+mutation AccountAddressDelete($id: ID!) {
+  accountAddressDelete(id: $id) {
+    errors {
+      code
+      field
+    }
+  }
+}
+
+mutation AccountSetDefaultAddress($id: ID!, $type: AddressTypeEnum!) {
+  accountSetDefaultAddress(id: $id, type: $type) {
+    errors {
+      code
+      field
+    }
+  }
+}
+
+mutation AccountUpdate($input: AccountInput!) {
+  accountUpdate(input: $input) {
+    errors {
+      code
+      field
+    }
+  }
+}
+
+mutation PasswordChange($oldPassword: String!, $newPassword: String!) {
+  passwordChange(oldPassword: $oldPassword, newPassword: $newPassword) {
+    errors {
+      code
+      field
+    }
+  }
+}

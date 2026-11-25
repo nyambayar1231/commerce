@@ -20,6 +20,14 @@ export type AccountErrorCode =
   | 'UNIQUE'
   | 'UNKNOWN_IP_ADDRESS';
 
+/** Fields required to update the user. */
+export type AccountInput = {
+  /** Given name. */
+  firstName?: string | null | undefined;
+  /** Family name. */
+  lastName?: string | null | undefined;
+};
+
 /** Fields required to create a user. */
 export type AccountRegisterInput = {
   /** The email address of the user. */
@@ -33,6 +41,35 @@ export type AccountRegisterInput = {
   /** Base of frontend URL that will be needed to create confirmation URL. Required when account confirmation is enabled. */
   redirectUrl?: string | null | undefined;
 };
+
+export type AddressInput = {
+  /** City. */
+  city?: string | null | undefined;
+  /** District. */
+  cityArea?: string | null | undefined;
+  /** Company or organization. */
+  companyName?: string | null | undefined;
+  /** Country. */
+  country?: CountryCode | null | undefined;
+  /** State or province. */
+  countryArea?: string | null | undefined;
+  /** Given name. */
+  firstName?: string | null | undefined;
+  /** Family name. */
+  lastName?: string | null | undefined;
+  /** Phone number. */
+  phone?: string | null | undefined;
+  /** Postal code. */
+  postalCode?: string | null | undefined;
+  /** Address. */
+  streetAddress1?: string | null | undefined;
+  /** Address. */
+  streetAddress2?: string | null | undefined;
+};
+
+export type AddressTypeEnum =
+  | 'BILLING'
+  | 'SHIPPING';
 
 export type CheckoutCreateInput = {
   /** The customer's email address. */
@@ -72,6 +109,259 @@ export type CheckoutLineUpdateInput = {
   quantity: number;
 };
 
+export type CountryCode =
+  | 'AD'
+  | 'AE'
+  | 'AF'
+  | 'AG'
+  | 'AI'
+  | 'AL'
+  | 'AM'
+  | 'AO'
+  | 'AQ'
+  | 'AR'
+  | 'AS'
+  | 'AT'
+  | 'AU'
+  | 'AW'
+  | 'AX'
+  | 'AZ'
+  | 'BA'
+  | 'BB'
+  | 'BD'
+  | 'BE'
+  | 'BF'
+  | 'BG'
+  | 'BH'
+  | 'BI'
+  | 'BJ'
+  | 'BL'
+  | 'BM'
+  | 'BN'
+  | 'BO'
+  | 'BQ'
+  | 'BR'
+  | 'BS'
+  | 'BT'
+  | 'BV'
+  | 'BW'
+  | 'BY'
+  | 'BZ'
+  | 'CA'
+  | 'CC'
+  | 'CD'
+  | 'CF'
+  | 'CG'
+  | 'CH'
+  | 'CI'
+  | 'CK'
+  | 'CL'
+  | 'CM'
+  | 'CN'
+  | 'CO'
+  | 'CR'
+  | 'CU'
+  | 'CV'
+  | 'CW'
+  | 'CX'
+  | 'CY'
+  | 'CZ'
+  | 'DE'
+  | 'DJ'
+  | 'DK'
+  | 'DM'
+  | 'DO'
+  | 'DZ'
+  | 'EC'
+  | 'EE'
+  | 'EG'
+  | 'EH'
+  | 'ER'
+  | 'ES'
+  | 'ET'
+  | 'EU'
+  | 'FI'
+  | 'FJ'
+  | 'FK'
+  | 'FM'
+  | 'FO'
+  | 'FR'
+  | 'GA'
+  | 'GB'
+  | 'GD'
+  | 'GE'
+  | 'GF'
+  | 'GG'
+  | 'GH'
+  | 'GI'
+  | 'GL'
+  | 'GM'
+  | 'GN'
+  | 'GP'
+  | 'GQ'
+  | 'GR'
+  | 'GS'
+  | 'GT'
+  | 'GU'
+  | 'GW'
+  | 'GY'
+  | 'HK'
+  | 'HM'
+  | 'HN'
+  | 'HR'
+  | 'HT'
+  | 'HU'
+  | 'ID'
+  | 'IE'
+  | 'IL'
+  | 'IM'
+  | 'IN'
+  | 'IO'
+  | 'IQ'
+  | 'IR'
+  | 'IS'
+  | 'IT'
+  | 'JE'
+  | 'JM'
+  | 'JO'
+  | 'JP'
+  | 'KE'
+  | 'KG'
+  | 'KH'
+  | 'KI'
+  | 'KM'
+  | 'KN'
+  | 'KP'
+  | 'KR'
+  | 'KW'
+  | 'KY'
+  | 'KZ'
+  | 'LA'
+  | 'LB'
+  | 'LC'
+  | 'LI'
+  | 'LK'
+  | 'LR'
+  | 'LS'
+  | 'LT'
+  | 'LU'
+  | 'LV'
+  | 'LY'
+  | 'MA'
+  | 'MC'
+  | 'MD'
+  | 'ME'
+  | 'MF'
+  | 'MG'
+  | 'MH'
+  | 'MK'
+  | 'ML'
+  | 'MM'
+  | 'MN'
+  | 'MO'
+  | 'MP'
+  | 'MQ'
+  | 'MR'
+  | 'MS'
+  | 'MT'
+  | 'MU'
+  | 'MV'
+  | 'MW'
+  | 'MX'
+  | 'MY'
+  | 'MZ'
+  | 'NA'
+  | 'NC'
+  | 'NE'
+  | 'NF'
+  | 'NG'
+  | 'NI'
+  | 'NL'
+  | 'NO'
+  | 'NP'
+  | 'NR'
+  | 'NU'
+  | 'NZ'
+  | 'OM'
+  | 'PA'
+  | 'PE'
+  | 'PF'
+  | 'PG'
+  | 'PH'
+  | 'PK'
+  | 'PL'
+  | 'PM'
+  | 'PN'
+  | 'PR'
+  | 'PS'
+  | 'PT'
+  | 'PW'
+  | 'PY'
+  | 'QA'
+  | 'RE'
+  | 'RO'
+  | 'RS'
+  | 'RU'
+  | 'RW'
+  | 'SA'
+  | 'SB'
+  | 'SC'
+  | 'SD'
+  | 'SE'
+  | 'SG'
+  | 'SH'
+  | 'SI'
+  | 'SJ'
+  | 'SK'
+  | 'SL'
+  | 'SM'
+  | 'SN'
+  | 'SO'
+  | 'SR'
+  | 'SS'
+  | 'ST'
+  | 'SV'
+  | 'SX'
+  | 'SY'
+  | 'SZ'
+  | 'TC'
+  | 'TD'
+  | 'TF'
+  | 'TG'
+  | 'TH'
+  | 'TJ'
+  | 'TK'
+  | 'TL'
+  | 'TM'
+  | 'TN'
+  | 'TO'
+  | 'TR'
+  | 'TT'
+  | 'TV'
+  | 'TW'
+  | 'TZ'
+  | 'UA'
+  | 'UG'
+  | 'UM'
+  | 'US'
+  | 'UY'
+  | 'UZ'
+  | 'VA'
+  | 'VC'
+  | 'VE'
+  | 'VG'
+  | 'VI'
+  | 'VN'
+  | 'VU'
+  | 'WF'
+  | 'WS'
+  | 'XK'
+  | 'YE'
+  | 'YT'
+  | 'ZA'
+  | 'ZM'
+  | 'ZW';
+
 export type DateTimeFilterInput = {
   /** The value equal to. */
   eq?: string | null | undefined;
@@ -104,6 +394,15 @@ export type DecimalRangeInput = {
   lte?: number | null | undefined;
 };
 
+export type FulfillmentStatus =
+  | 'CANCELED'
+  | 'FULFILLED'
+  | 'REFUNDED'
+  | 'REFUNDED_AND_RETURNED'
+  | 'REPLACED'
+  | 'RETURNED'
+  | 'WAITING_FOR_APPROVAL';
+
 export type GlobalIdFilterInput = {
   /** The value equal to. */
   eq?: string | number | null | undefined;
@@ -111,11 +410,24 @@ export type GlobalIdFilterInput = {
   oneOf?: Array<string | number> | null | undefined;
 };
 
+export type OrderChargeStatusEnum =
+  | 'FULL'
+  | 'NONE'
+  | 'OVERCHARGED'
+  | 'PARTIAL';
+
 export type OrderDirection =
   /** Specifies an ascending sort order. */
   | 'ASC'
   /** Specifies a descending sort order. */
   | 'DESC';
+
+export type OrderStatus =
+  | 'CANCELED'
+  | 'DRAFT'
+  | 'FULFILLED'
+  | 'PARTIALLY_FULFILLED'
+  | 'UNFULFILLED';
 
 export type ProductMediaType =
   /** An uploaded image or an URL to an image */
@@ -180,6 +492,84 @@ export type StringFilterInput = {
   /** The value included in. */
   oneOf?: Array<string> | null | undefined;
 };
+
+export type AccountAddressFragment = { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } };
+
+export type AccountOrderSummaryFragment = { id: string, number: string, created: string, status: OrderStatus, total: { gross: { amount: number, currency: string } }, lines: Array<{ id: string, quantity: number }> };
+
+export type AccountOrderDetailFragment = { id: string, number: string, created: string, updatedAt: string, status: OrderStatus, chargeStatus: OrderChargeStatusEnum, shippingMethodName: string | null, lines: Array<{ id: string, productName: string, variantName: string, quantity: number, unitPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } } }>, subtotal: { gross: { amount: number, currency: string } }, shippingPrice: { gross: { amount: number, currency: string } }, total: { gross: { amount: number, currency: string } }, shippingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, billingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, fulfillments: Array<{ id: string, created: string, status: FulfillmentStatus, trackingNumber: string, lines: Array<{ quantity: number }> | null }> };
+
+export type AccountOverviewQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AccountOverviewQuery = { me: { id: string, defaultShippingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, defaultBillingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, orders: { edges: Array<{ node: { id: string, number: string, created: string, status: OrderStatus, total: { gross: { amount: number, currency: string } }, lines: Array<{ id: string, quantity: number }> } }> } | null } | null };
+
+export type AccountOrdersQueryVariables = Exact<{
+  first?: number | null | undefined;
+  after?: string | null | undefined;
+  last?: number | null | undefined;
+  before?: string | null | undefined;
+}>;
+
+
+export type AccountOrdersQuery = { me: { id: string, orders: { edges: Array<{ node: { id: string, number: string, created: string, status: OrderStatus, total: { gross: { amount: number, currency: string } }, lines: Array<{ id: string, quantity: number }> } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor: string | null, endCursor: string | null } } | null } | null };
+
+export type AccountOrderQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AccountOrderQuery = { order: { id: string, number: string, created: string, updatedAt: string, status: OrderStatus, chargeStatus: OrderChargeStatusEnum, shippingMethodName: string | null, lines: Array<{ id: string, productName: string, variantName: string, quantity: number, unitPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } } }>, subtotal: { gross: { amount: number, currency: string } }, shippingPrice: { gross: { amount: number, currency: string } }, total: { gross: { amount: number, currency: string } }, shippingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, billingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, fulfillments: Array<{ id: string, created: string, status: FulfillmentStatus, trackingNumber: string, lines: Array<{ quantity: number }> | null }> } | null };
+
+export type AccountAddressesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AccountAddressesQuery = { me: { id: string, addresses: Array<{ id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } }> } | null, shop: { countries: Array<{ code: string, country: string }> } };
+
+export type AccountAddressCreateMutationVariables = Exact<{
+  input: AddressInput;
+}>;
+
+
+export type AccountAddressCreateMutation = { accountAddressCreate: { errors: Array<{ code: AccountErrorCode, field: string | null }> } };
+
+export type AccountAddressUpdateMutationVariables = Exact<{
+  id: string | number;
+  input: AddressInput;
+}>;
+
+
+export type AccountAddressUpdateMutation = { accountAddressUpdate: { errors: Array<{ code: AccountErrorCode, field: string | null }> } };
+
+export type AccountAddressDeleteMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AccountAddressDeleteMutation = { accountAddressDelete: { errors: Array<{ code: AccountErrorCode, field: string | null }> } };
+
+export type AccountSetDefaultAddressMutationVariables = Exact<{
+  id: string | number;
+  type: AddressTypeEnum;
+}>;
+
+
+export type AccountSetDefaultAddressMutation = { accountSetDefaultAddress: { errors: Array<{ code: AccountErrorCode, field: string | null }> } };
+
+export type AccountUpdateMutationVariables = Exact<{
+  input: AccountInput;
+}>;
+
+
+export type AccountUpdateMutation = { accountUpdate: { errors: Array<{ code: AccountErrorCode, field: string | null }> } };
+
+export type PasswordChangeMutationVariables = Exact<{
+  oldPassword: string;
+  newPassword: string;
+}>;
+
+
+export type PasswordChangeMutation = { passwordChange: { errors: Array<{ code: AccountErrorCode, field: string | null }> } };
 
 export type AuthUserFragment = { id: string, email: string, firstName: string, lastName: string, isStaff: boolean };
 
@@ -392,6 +782,125 @@ export class TypedDocumentString<TResult, TVariables>
     return this.value;
   }
 }
+export const AccountOrderSummaryFragmentDoc = new TypedDocumentString(`
+    fragment AccountOrderSummary on Order {
+  id
+  number
+  created
+  status
+  total {
+    gross {
+      amount
+      currency
+    }
+  }
+  lines {
+    id
+    quantity
+  }
+}
+    `, {"fragmentName":"AccountOrderSummary"}) as unknown as TypedDocumentString<AccountOrderSummaryFragment, unknown>;
+export const AccountAddressFragmentDoc = new TypedDocumentString(`
+    fragment AccountAddress on Address {
+  id
+  firstName
+  lastName
+  companyName
+  streetAddress1
+  streetAddress2
+  city
+  cityArea
+  postalCode
+  countryArea
+  phone
+  country {
+    code
+    country
+  }
+  isDefaultShippingAddress
+  isDefaultBillingAddress
+}
+    `, {"fragmentName":"AccountAddress"}) as unknown as TypedDocumentString<AccountAddressFragment, unknown>;
+export const AccountOrderDetailFragmentDoc = new TypedDocumentString(`
+    fragment AccountOrderDetail on Order {
+  id
+  number
+  created
+  updatedAt
+  status
+  chargeStatus
+  shippingMethodName
+  lines {
+    id
+    productName
+    variantName
+    quantity
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotal {
+    gross {
+      amount
+      currency
+    }
+  }
+  shippingPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+  total {
+    gross {
+      amount
+      currency
+    }
+  }
+  shippingAddress {
+    ...AccountAddress
+  }
+  billingAddress {
+    ...AccountAddress
+  }
+  fulfillments {
+    id
+    created
+    status
+    trackingNumber
+    lines {
+      quantity
+    }
+  }
+}
+    fragment AccountAddress on Address {
+  id
+  firstName
+  lastName
+  companyName
+  streetAddress1
+  streetAddress2
+  city
+  cityArea
+  postalCode
+  countryArea
+  phone
+  country {
+    code
+    country
+  }
+  isDefaultShippingAddress
+  isDefaultBillingAddress
+}`, {"fragmentName":"AccountOrderDetail"}) as unknown as TypedDocumentString<AccountOrderDetailFragment, unknown>;
 export const AuthUserFragmentDoc = new TypedDocumentString(`
     fragment AuthUser on User {
   id
@@ -472,6 +981,274 @@ export const ProductCardFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"ProductCard"}) as unknown as TypedDocumentString<ProductCardFragment, unknown>;
+export const AccountOverviewDocument = new TypedDocumentString(`
+    query AccountOverview {
+  me {
+    id
+    defaultShippingAddress {
+      ...AccountAddress
+    }
+    defaultBillingAddress {
+      ...AccountAddress
+    }
+    orders(first: 3) {
+      edges {
+        node {
+          ...AccountOrderSummary
+        }
+      }
+    }
+  }
+}
+    fragment AccountAddress on Address {
+  id
+  firstName
+  lastName
+  companyName
+  streetAddress1
+  streetAddress2
+  city
+  cityArea
+  postalCode
+  countryArea
+  phone
+  country {
+    code
+    country
+  }
+  isDefaultShippingAddress
+  isDefaultBillingAddress
+}
+fragment AccountOrderSummary on Order {
+  id
+  number
+  created
+  status
+  total {
+    gross {
+      amount
+      currency
+    }
+  }
+  lines {
+    id
+    quantity
+  }
+}`) as unknown as TypedDocumentString<AccountOverviewQuery, AccountOverviewQueryVariables>;
+export const AccountOrdersDocument = new TypedDocumentString(`
+    query AccountOrders($first: Int, $after: String, $last: Int, $before: String) {
+  me {
+    id
+    orders(first: $first, after: $after, last: $last, before: $before) {
+      edges {
+        node {
+          ...AccountOrderSummary
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+}
+    fragment AccountOrderSummary on Order {
+  id
+  number
+  created
+  status
+  total {
+    gross {
+      amount
+      currency
+    }
+  }
+  lines {
+    id
+    quantity
+  }
+}`) as unknown as TypedDocumentString<AccountOrdersQuery, AccountOrdersQueryVariables>;
+export const AccountOrderDocument = new TypedDocumentString(`
+    query AccountOrder($id: ID!) {
+  order(id: $id) {
+    ...AccountOrderDetail
+  }
+}
+    fragment AccountAddress on Address {
+  id
+  firstName
+  lastName
+  companyName
+  streetAddress1
+  streetAddress2
+  city
+  cityArea
+  postalCode
+  countryArea
+  phone
+  country {
+    code
+    country
+  }
+  isDefaultShippingAddress
+  isDefaultBillingAddress
+}
+fragment AccountOrderDetail on Order {
+  id
+  number
+  created
+  updatedAt
+  status
+  chargeStatus
+  shippingMethodName
+  lines {
+    id
+    productName
+    variantName
+    quantity
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotal {
+    gross {
+      amount
+      currency
+    }
+  }
+  shippingPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+  total {
+    gross {
+      amount
+      currency
+    }
+  }
+  shippingAddress {
+    ...AccountAddress
+  }
+  billingAddress {
+    ...AccountAddress
+  }
+  fulfillments {
+    id
+    created
+    status
+    trackingNumber
+    lines {
+      quantity
+    }
+  }
+}`) as unknown as TypedDocumentString<AccountOrderQuery, AccountOrderQueryVariables>;
+export const AccountAddressesDocument = new TypedDocumentString(`
+    query AccountAddresses {
+  me {
+    id
+    addresses {
+      ...AccountAddress
+    }
+  }
+  shop {
+    countries {
+      code
+      country
+    }
+  }
+}
+    fragment AccountAddress on Address {
+  id
+  firstName
+  lastName
+  companyName
+  streetAddress1
+  streetAddress2
+  city
+  cityArea
+  postalCode
+  countryArea
+  phone
+  country {
+    code
+    country
+  }
+  isDefaultShippingAddress
+  isDefaultBillingAddress
+}`) as unknown as TypedDocumentString<AccountAddressesQuery, AccountAddressesQueryVariables>;
+export const AccountAddressCreateDocument = new TypedDocumentString(`
+    mutation AccountAddressCreate($input: AddressInput!) {
+  accountAddressCreate(input: $input) {
+    errors {
+      code
+      field
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<AccountAddressCreateMutation, AccountAddressCreateMutationVariables>;
+export const AccountAddressUpdateDocument = new TypedDocumentString(`
+    mutation AccountAddressUpdate($id: ID!, $input: AddressInput!) {
+  accountAddressUpdate(id: $id, input: $input) {
+    errors {
+      code
+      field
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<AccountAddressUpdateMutation, AccountAddressUpdateMutationVariables>;
+export const AccountAddressDeleteDocument = new TypedDocumentString(`
+    mutation AccountAddressDelete($id: ID!) {
+  accountAddressDelete(id: $id) {
+    errors {
+      code
+      field
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<AccountAddressDeleteMutation, AccountAddressDeleteMutationVariables>;
+export const AccountSetDefaultAddressDocument = new TypedDocumentString(`
+    mutation AccountSetDefaultAddress($id: ID!, $type: AddressTypeEnum!) {
+  accountSetDefaultAddress(id: $id, type: $type) {
+    errors {
+      code
+      field
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<AccountSetDefaultAddressMutation, AccountSetDefaultAddressMutationVariables>;
+export const AccountUpdateDocument = new TypedDocumentString(`
+    mutation AccountUpdate($input: AccountInput!) {
+  accountUpdate(input: $input) {
+    errors {
+      code
+      field
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<AccountUpdateMutation, AccountUpdateMutationVariables>;
+export const PasswordChangeDocument = new TypedDocumentString(`
+    mutation PasswordChange($oldPassword: String!, $newPassword: String!) {
+  passwordChange(oldPassword: $oldPassword, newPassword: $newPassword) {
+    errors {
+      code
+      field
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<PasswordChangeMutation, PasswordChangeMutationVariables>;
 export const MeDocument = new TypedDocumentString(`
     query Me {
   me {
