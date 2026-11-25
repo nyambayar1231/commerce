@@ -675,7 +675,7 @@ Every API call goes through one of three functions. Paper has the same kernel
 | Function | Use | Sends session | Cached | On failure |
 |---|---|---|---|---|
 | `cachedQuery(doc, { variables, tags })` | catalog, menus, pages, shop: only inside a `"use cache"` function | never | shared, `catalog` profile | **throws** `ApiError` (transport, HTTP, or any GraphQL `errors`, even with partial data) so Next never caches an outage or a false 404. A missing entity without errors is `null`. |
-| `sessionQuery(doc, { variables })` | `me`, cart, checkout, orders, search, order by token | when present | per request only (React `cache`) | returns `{ ok: false, error }` |
+| `sessionQuery(doc, { variables })` | `me`, cart, checkout, orders, search, order by token; render code only (it awaits `connection()`, so it never runs in a prerender pass) | when present | per request only (React `cache`) | returns `{ ok: false, error }` |
 | `mutate(doc, { variables })` | Server Actions only | when present | never | returns `{ ok: false, error }` |
 
 - **Transport** (`client.ts`): `POST ${API_URL}/graphql`, timeout 8 s (`AbortSignal.timeout`), one

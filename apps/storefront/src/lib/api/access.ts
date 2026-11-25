@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cacheLife, cacheTag } from "next/cache";
+import { connection } from "next/server";
 import { cache } from "react";
 import type { TypedDocumentString } from "@/gql/graphql";
 import { readSessionToken } from "@/lib/auth/cookies";
@@ -50,6 +51,9 @@ export async function sessionQuery<T, V>(
   document: TypedDocumentString<T, V>,
   options: Options<V> = {},
 ): Promise<ApiResult<T>> {
+  // Per-request work: keep it out of Next's prerender pass (the request id is random, and a
+  // prerender would start the fetch only to abandon it, logging a false network error).
+  await connection();
   const token = await readSessionToken();
   const clientIp = await getClientIp();
   return (await memoized(

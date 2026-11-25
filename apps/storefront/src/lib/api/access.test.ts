@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const cacheLife = vi.fn();
 const cacheTag = vi.fn();
 vi.mock("next/cache", () => ({ cacheLife, cacheTag }));
+vi.mock("next/server", () => ({ connection: async () => {} }));
 vi.mock("next/headers", () => ({
   cookies: async () => ({ get: () => ({ value: "tok" }) }),
   headers: async () => new Headers({ "x-forwarded-for": "198.51.100.7" }),
