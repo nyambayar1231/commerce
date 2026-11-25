@@ -48,8 +48,8 @@
     "sortLabel": "Эрэмблэх",
     "sortOptions": {
       "newest": "Шинэ нь эхэнд",
-      "price-asc": "Үнэ: багаас их",
-      "price-desc": "Үнэ: ихээс бага",
+      "price-asc": "Үнэ: бага нь эхэнд",
+      "price-desc": "Үнэ: их нь эхэнд",
       "name-asc": "Нэр: А-Я"
     },
     "allCategories": "Бүх ангилал",
