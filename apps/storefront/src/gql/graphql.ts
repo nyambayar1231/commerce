@@ -71,6 +71,12 @@ export type AddressTypeEnum =
   | 'BILLING'
   | 'SHIPPING';
 
+export type CheckoutChargeStatusEnum =
+  | 'FULL'
+  | 'NONE'
+  | 'OVERCHARGED'
+  | 'PARTIAL';
+
 export type CheckoutCreateInput = {
   /** The customer's email address. */
   email?: string | null | undefined;
@@ -493,6 +499,32 @@ export type StringFilterInput = {
   oneOf?: Array<string> | null | undefined;
 };
 
+export type TransactionEventTypeEnum =
+  | 'AUTHORIZATION_ACTION_REQUIRED'
+  | 'AUTHORIZATION_ADJUSTMENT'
+  | 'AUTHORIZATION_FAILURE'
+  | 'AUTHORIZATION_REQUEST'
+  | 'AUTHORIZATION_SUCCESS'
+  | 'CANCEL_FAILURE'
+  | 'CANCEL_REQUEST'
+  | 'CANCEL_SUCCESS'
+  | 'CHARGE_ACTION_REQUIRED'
+  | 'CHARGE_BACK'
+  | 'CHARGE_FAILURE'
+  | 'CHARGE_REQUEST'
+  | 'CHARGE_SUCCESS'
+  | 'INFO'
+  | 'REFUND_FAILURE'
+  | 'REFUND_REQUEST'
+  | 'REFUND_REVERSE'
+  | 'REFUND_SUCCESS';
+
+export type TransactionInitializeErrorCode =
+  | 'GRAPHQL_ERROR'
+  | 'INVALID'
+  | 'NOT_FOUND'
+  | 'UNIQUE';
+
 export type AccountAddressFragment = { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } };
 
 export type AccountOrderSummaryFragment = { id: string, number: string, created: string, status: OrderStatus, total: { gross: { amount: number, currency: string } }, lines: Array<{ id: string, quantity: number }> };
@@ -715,6 +747,88 @@ export type FilterOptionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type FilterOptionsQuery = { categories: { edges: Array<{ node: { name: string, slug: string, level: number } }> } | null, collections: { edges: Array<{ node: { name: string, slug: string } }> } | null };
 
+export type CheckoutDetailsFragment = { email: string | null, chargeStatus: CheckoutChargeStatusEnum, id: string, token: string, quantity: number, isShippingRequired: boolean, shippingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, billingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, delivery: { shippingMethod: { id: string } | null } | null, shippingMethods: Array<{ id: string, name: string, active: boolean, message: string | null, price: { amount: number, currency: string } }>, shippingPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } }, totalBalance: { amount: number, currency: string }, lines: Array<{ id: string, quantity: number, variant: { id: string, name: string, quantityAvailable: number | null, product: { name: string, slug: string, thumbnail: { url: string, alt: string | null } | null } }, unitPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } } }>, subtotalPrice: { gross: { amount: number, currency: string } } };
+
+export type CheckoutDetailsQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CheckoutDetailsQuery = { checkout: { email: string | null, chargeStatus: CheckoutChargeStatusEnum, id: string, token: string, quantity: number, isShippingRequired: boolean, shippingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, billingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, delivery: { shippingMethod: { id: string } | null } | null, shippingMethods: Array<{ id: string, name: string, active: boolean, message: string | null, price: { amount: number, currency: string } }>, shippingPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } }, totalBalance: { amount: number, currency: string }, lines: Array<{ id: string, quantity: number, variant: { id: string, name: string, quantityAvailable: number | null, product: { name: string, slug: string, thumbnail: { url: string, alt: string | null } | null } }, unitPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } } }>, subtotalPrice: { gross: { amount: number, currency: string } } } | null };
+
+export type CheckoutCountriesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CheckoutCountriesQuery = { shop: { countries: Array<{ code: string, country: string }> } };
+
+export type CheckoutSavedAddressesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type CheckoutSavedAddressesQuery = { me: { id: string, addresses: Array<{ id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } }> } | null };
+
+export type CheckoutPaymentStateQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CheckoutPaymentStateQuery = { checkout: { id: string, email: string | null, chargeStatus: CheckoutChargeStatusEnum, lines: Array<{ id: string }>, shippingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, billingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, delivery: { shippingMethod: { id: string } | null } | null } | null };
+
+export type CheckoutEmailUpdateMutationVariables = Exact<{
+  id: string | number;
+  email: string;
+}>;
+
+
+export type CheckoutEmailUpdateMutation = { checkoutEmailUpdate: { checkout: { id: string } | null, errors: Array<{ field: string | null, code: CheckoutErrorCode, message: string }> } | null };
+
+export type CheckoutShippingAddressUpdateMutationVariables = Exact<{
+  id: string | number;
+  address: AddressInput;
+}>;
+
+
+export type CheckoutShippingAddressUpdateMutation = { checkoutShippingAddressUpdate: { checkout: { id: string } | null, errors: Array<{ field: string | null, code: CheckoutErrorCode, message: string }> } | null };
+
+export type CheckoutBillingAddressUpdateMutationVariables = Exact<{
+  id: string | number;
+  address: AddressInput;
+}>;
+
+
+export type CheckoutBillingAddressUpdateMutation = { checkoutBillingAddressUpdate: { checkout: { id: string } | null, errors: Array<{ field: string | null, code: CheckoutErrorCode, message: string }> } | null };
+
+export type CheckoutDeliveryMethodUpdateMutationVariables = Exact<{
+  id: string | number;
+  deliveryMethodId: string | number;
+}>;
+
+
+export type CheckoutDeliveryMethodUpdateMutation = { checkoutDeliveryMethodUpdate: { checkout: { id: string } | null, errors: Array<{ field: string | null, code: CheckoutErrorCode, message: string }> } | null };
+
+export type TransactionInitializeMutationVariables = Exact<{
+  id: string | number;
+  gatewayId: string;
+  data?: unknown;
+  idempotencyKey: string;
+}>;
+
+
+export type TransactionInitializeMutation = { transactionInitialize: { transaction: { id: string } | null, transactionEvent: { type: TransactionEventTypeEnum | null } | null, errors: Array<{ field: string | null, code: TransactionInitializeErrorCode, message: string }> } | null };
+
+export type CheckoutCompleteMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type CheckoutCompleteMutation = { checkoutComplete: { order: { id: string, token: string } | null, errors: Array<{ field: string | null, code: CheckoutErrorCode, message: string }> } | null };
+
+export type OrderByTokenQueryVariables = Exact<{
+  token: string;
+}>;
+
+
+export type OrderByTokenQuery = { orderByToken: { userEmail: string | null, id: string, number: string, created: string, updatedAt: string, status: OrderStatus, chargeStatus: OrderChargeStatusEnum, shippingMethodName: string | null, lines: Array<{ id: string, productName: string, variantName: string, quantity: number, unitPrice: { gross: { amount: number, currency: string } }, totalPrice: { gross: { amount: number, currency: string } } }>, subtotal: { gross: { amount: number, currency: string } }, shippingPrice: { gross: { amount: number, currency: string } }, total: { gross: { amount: number, currency: string } }, shippingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, billingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, fulfillments: Array<{ id: string, created: string, status: FulfillmentStatus, trackingNumber: string, lines: Array<{ quantity: number }> | null }> } | null };
+
 export type MenuBySlugQueryVariables = Exact<{
   slug: string;
 }>;
@@ -910,6 +1024,34 @@ export const AuthUserFragmentDoc = new TypedDocumentString(`
   isStaff
 }
     `, {"fragmentName":"AuthUser"}) as unknown as TypedDocumentString<AuthUserFragment, unknown>;
+export const ProductCardFragmentDoc = new TypedDocumentString(`
+    fragment ProductCard on Product {
+  id
+  name
+  slug
+  category {
+    name
+  }
+  small: thumbnail(size: 256, format: WEBP) {
+    url
+    alt
+  }
+  large: thumbnail(size: 512, format: WEBP) {
+    url
+  }
+  minimalVariantPrice {
+    amount
+    currency
+  }
+  variants {
+    id
+    price {
+      amount
+    }
+    quantityAvailable
+  }
+}
+    `, {"fragmentName":"ProductCard"}) as unknown as TypedDocumentString<ProductCardFragment, unknown>;
 export const CartFragmentDoc = new TypedDocumentString(`
     fragment Cart on Checkout {
   id
@@ -953,34 +1095,109 @@ export const CartFragmentDoc = new TypedDocumentString(`
   }
 }
     `, {"fragmentName":"Cart"}) as unknown as TypedDocumentString<CartFragment, unknown>;
-export const ProductCardFragmentDoc = new TypedDocumentString(`
-    fragment ProductCard on Product {
-  id
-  name
-  slug
-  category {
+export const CheckoutDetailsFragmentDoc = new TypedDocumentString(`
+    fragment CheckoutDetails on Checkout {
+  ...Cart
+  email
+  shippingAddress {
+    ...AccountAddress
+  }
+  billingAddress {
+    ...AccountAddress
+  }
+  delivery {
+    shippingMethod {
+      id
+    }
+  }
+  shippingMethods {
+    id
     name
+    active
+    message
+    price {
+      amount
+      currency
+    }
   }
-  small: thumbnail(size: 256, format: WEBP) {
-    url
-    alt
+  shippingPrice {
+    gross {
+      amount
+      currency
+    }
   }
-  large: thumbnail(size: 512, format: WEBP) {
-    url
+  totalPrice {
+    gross {
+      amount
+      currency
+    }
   }
-  minimalVariantPrice {
+  totalBalance {
     amount
     currency
   }
-  variants {
-    id
-    price {
-      amount
-    }
-    quantityAvailable
-  }
+  chargeStatus
 }
-    `, {"fragmentName":"ProductCard"}) as unknown as TypedDocumentString<ProductCardFragment, unknown>;
+    fragment AccountAddress on Address {
+  id
+  firstName
+  lastName
+  companyName
+  streetAddress1
+  streetAddress2
+  city
+  cityArea
+  postalCode
+  countryArea
+  phone
+  country {
+    code
+    country
+  }
+  isDefaultShippingAddress
+  isDefaultBillingAddress
+}
+fragment Cart on Checkout {
+  id
+  token
+  quantity
+  isShippingRequired
+  lines {
+    id
+    quantity
+    variant {
+      id
+      name
+      quantityAvailable
+      product {
+        name
+        slug
+        thumbnail(size: 256, format: WEBP) {
+          url
+          alt
+        }
+      }
+    }
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotalPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+}`, {"fragmentName":"CheckoutDetails"}) as unknown as TypedDocumentString<CheckoutDetailsFragment, unknown>;
 export const AccountOverviewDocument = new TypedDocumentString(`
     query AccountOverview {
   me {
@@ -1735,6 +1952,372 @@ export const FilterOptionsDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<FilterOptionsQuery, FilterOptionsQueryVariables>;
+export const CheckoutDetailsDocument = new TypedDocumentString(`
+    query CheckoutDetails($id: ID!) {
+  checkout(id: $id) {
+    ...CheckoutDetails
+  }
+}
+    fragment AccountAddress on Address {
+  id
+  firstName
+  lastName
+  companyName
+  streetAddress1
+  streetAddress2
+  city
+  cityArea
+  postalCode
+  countryArea
+  phone
+  country {
+    code
+    country
+  }
+  isDefaultShippingAddress
+  isDefaultBillingAddress
+}
+fragment Cart on Checkout {
+  id
+  token
+  quantity
+  isShippingRequired
+  lines {
+    id
+    quantity
+    variant {
+      id
+      name
+      quantityAvailable
+      product {
+        name
+        slug
+        thumbnail(size: 256, format: WEBP) {
+          url
+          alt
+        }
+      }
+    }
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotalPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+}
+fragment CheckoutDetails on Checkout {
+  ...Cart
+  email
+  shippingAddress {
+    ...AccountAddress
+  }
+  billingAddress {
+    ...AccountAddress
+  }
+  delivery {
+    shippingMethod {
+      id
+    }
+  }
+  shippingMethods {
+    id
+    name
+    active
+    message
+    price {
+      amount
+      currency
+    }
+  }
+  shippingPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+  totalPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+  totalBalance {
+    amount
+    currency
+  }
+  chargeStatus
+}`) as unknown as TypedDocumentString<CheckoutDetailsQuery, CheckoutDetailsQueryVariables>;
+export const CheckoutCountriesDocument = new TypedDocumentString(`
+    query CheckoutCountries {
+  shop {
+    countries {
+      code
+      country
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<CheckoutCountriesQuery, CheckoutCountriesQueryVariables>;
+export const CheckoutSavedAddressesDocument = new TypedDocumentString(`
+    query CheckoutSavedAddresses {
+  me {
+    id
+    addresses {
+      ...AccountAddress
+    }
+  }
+}
+    fragment AccountAddress on Address {
+  id
+  firstName
+  lastName
+  companyName
+  streetAddress1
+  streetAddress2
+  city
+  cityArea
+  postalCode
+  countryArea
+  phone
+  country {
+    code
+    country
+  }
+  isDefaultShippingAddress
+  isDefaultBillingAddress
+}`) as unknown as TypedDocumentString<CheckoutSavedAddressesQuery, CheckoutSavedAddressesQueryVariables>;
+export const CheckoutPaymentStateDocument = new TypedDocumentString(`
+    query CheckoutPaymentState($id: ID!) {
+  checkout(id: $id) {
+    id
+    email
+    chargeStatus
+    lines {
+      id
+    }
+    shippingAddress {
+      ...AccountAddress
+    }
+    billingAddress {
+      ...AccountAddress
+    }
+    delivery {
+      shippingMethod {
+        id
+      }
+    }
+  }
+}
+    fragment AccountAddress on Address {
+  id
+  firstName
+  lastName
+  companyName
+  streetAddress1
+  streetAddress2
+  city
+  cityArea
+  postalCode
+  countryArea
+  phone
+  country {
+    code
+    country
+  }
+  isDefaultShippingAddress
+  isDefaultBillingAddress
+}`) as unknown as TypedDocumentString<CheckoutPaymentStateQuery, CheckoutPaymentStateQueryVariables>;
+export const CheckoutEmailUpdateDocument = new TypedDocumentString(`
+    mutation CheckoutEmailUpdate($id: ID!, $email: String!) {
+  checkoutEmailUpdate(id: $id, email: $email) {
+    checkout {
+      id
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<CheckoutEmailUpdateMutation, CheckoutEmailUpdateMutationVariables>;
+export const CheckoutShippingAddressUpdateDocument = new TypedDocumentString(`
+    mutation CheckoutShippingAddressUpdate($id: ID!, $address: AddressInput!) {
+  checkoutShippingAddressUpdate(id: $id, shippingAddress: $address) {
+    checkout {
+      id
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<CheckoutShippingAddressUpdateMutation, CheckoutShippingAddressUpdateMutationVariables>;
+export const CheckoutBillingAddressUpdateDocument = new TypedDocumentString(`
+    mutation CheckoutBillingAddressUpdate($id: ID!, $address: AddressInput!) {
+  checkoutBillingAddressUpdate(id: $id, billingAddress: $address) {
+    checkout {
+      id
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<CheckoutBillingAddressUpdateMutation, CheckoutBillingAddressUpdateMutationVariables>;
+export const CheckoutDeliveryMethodUpdateDocument = new TypedDocumentString(`
+    mutation CheckoutDeliveryMethodUpdate($id: ID!, $deliveryMethodId: ID!) {
+  checkoutDeliveryMethodUpdate(id: $id, deliveryMethodId: $deliveryMethodId) {
+    checkout {
+      id
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<CheckoutDeliveryMethodUpdateMutation, CheckoutDeliveryMethodUpdateMutationVariables>;
+export const TransactionInitializeDocument = new TypedDocumentString(`
+    mutation TransactionInitialize($id: ID!, $gatewayId: String!, $data: JSON, $idempotencyKey: String!) {
+  transactionInitialize(
+    id: $id
+    action: CHARGE
+    paymentGateway: {id: $gatewayId, data: $data}
+    idempotencyKey: $idempotencyKey
+  ) {
+    transaction {
+      id
+    }
+    transactionEvent {
+      type
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<TransactionInitializeMutation, TransactionInitializeMutationVariables>;
+export const CheckoutCompleteDocument = new TypedDocumentString(`
+    mutation CheckoutComplete($id: ID!) {
+  checkoutComplete(id: $id) {
+    order {
+      id
+      token
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<CheckoutCompleteMutation, CheckoutCompleteMutationVariables>;
+export const OrderByTokenDocument = new TypedDocumentString(`
+    query OrderByToken($token: UUID!) {
+  orderByToken(token: $token) {
+    ...AccountOrderDetail
+    userEmail
+  }
+}
+    fragment AccountAddress on Address {
+  id
+  firstName
+  lastName
+  companyName
+  streetAddress1
+  streetAddress2
+  city
+  cityArea
+  postalCode
+  countryArea
+  phone
+  country {
+    code
+    country
+  }
+  isDefaultShippingAddress
+  isDefaultBillingAddress
+}
+fragment AccountOrderDetail on Order {
+  id
+  number
+  created
+  updatedAt
+  status
+  chargeStatus
+  shippingMethodName
+  lines {
+    id
+    productName
+    variantName
+    quantity
+    unitPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+    totalPrice {
+      gross {
+        amount
+        currency
+      }
+    }
+  }
+  subtotal {
+    gross {
+      amount
+      currency
+    }
+  }
+  shippingPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+  total {
+    gross {
+      amount
+      currency
+    }
+  }
+  shippingAddress {
+    ...AccountAddress
+  }
+  billingAddress {
+    ...AccountAddress
+  }
+  fulfillments {
+    id
+    created
+    status
+    trackingNumber
+    lines {
+      quantity
+    }
+  }
+}`) as unknown as TypedDocumentString<OrderByTokenQuery, OrderByTokenQueryVariables>;
 export const MenuBySlugDocument = new TypedDocumentString(`
     query MenuBySlug($slug: String!) {
   menu(slug: $slug) {

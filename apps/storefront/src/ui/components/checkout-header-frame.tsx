@@ -6,8 +6,20 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
-/** Checkout header frame: shop name and "secure checkout". The steps come with the checkout. */
-export function CheckoutHeaderFrame({ shopName }: { shopName: ReactNode }) {
+/**
+ * Checkout header frame: shop name, the steps (a slot: they read the URL) and "secure checkout".
+ * `steps` is the desktop row between the name and the badge, `mobileSteps` the progress bar under
+ * them (ARCHITECTURE §10.3).
+ */
+export function CheckoutHeaderFrame({
+  shopName,
+  steps,
+  mobileSteps,
+}: {
+  shopName: ReactNode;
+  steps?: ReactNode;
+  mobileSteps?: ReactNode;
+}) {
   const t = useTranslations();
 
   return (
@@ -18,11 +30,14 @@ export function CheckoutHeaderFrame({ shopName }: { shopName: ReactNode }) {
             {shopName}
           </Link>
 
+          {steps}
+
           <div className="flex items-center gap-1.5 text-muted-foreground">
             <Lock className="h-3.5 w-3.5" />
             <span className="text-xs">{t("checkout.secureCheckout")}</span>
           </div>
         </div>
+        {mobileSteps}
       </div>
     </header>
   );

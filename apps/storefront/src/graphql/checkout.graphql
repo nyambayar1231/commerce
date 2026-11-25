@@ -1,0 +1,191 @@
+# The storefront's checkout documents (ARCHITECTURE §10.9). The checkout is the cart found by the
+# token in the checkout cookie; prices, totals and payment status all come from the API.
+
+fragment CheckoutDetails on Checkout {
+  ...Cart
+  email
+  shippingAddress {
+    ...AccountAddress
+  }
+  billingAddress {
+    ...AccountAddress
+  }
+  delivery {
+    shippingMethod {
+      id
+    }
+  }
+  shippingMethods {
+    id
+    name
+    active
+    message
+    price {
+      amount
+      currency
+    }
+  }
+  shippingPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+  totalPrice {
+    gross {
+      amount
+      currency
+    }
+  }
+  totalBalance {
+    amount
+    currency
+  }
+  chargeStatus
+}
+
+query CheckoutDetails($id: ID!) {
+  checkout(id: $id) {
+    ...CheckoutDetails
+  }
+}
+
+query CheckoutCountries {
+  shop {
+    countries {
+      code
+      country
+    }
+  }
+}
+
+query CheckoutSavedAddresses {
+  me {
+    id
+    addresses {
+      ...AccountAddress
+    }
+  }
+}
+
+# The live read `placeOrder` makes before it charges anything (a mutation context, never cached).
+query CheckoutPaymentState($id: ID!) {
+  checkout(id: $id) {
+    id
+    email
+    chargeStatus
+    lines {
+      id
+    }
+    shippingAddress {
+      ...AccountAddress
+    }
+    billingAddress {
+      ...AccountAddress
+    }
+    delivery {
+      shippingMethod {
+        id
+      }
+    }
+  }
+}
+
+mutation CheckoutEmailUpdate($id: ID!, $email: String!) {
+  checkoutEmailUpdate(id: $id, email: $email) {
+    checkout {
+      id
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+
+mutation CheckoutShippingAddressUpdate($id: ID!, $address: AddressInput!) {
+  checkoutShippingAddressUpdate(id: $id, shippingAddress: $address) {
+    checkout {
+      id
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+
+mutation CheckoutBillingAddressUpdate($id: ID!, $address: AddressInput!) {
+  checkoutBillingAddressUpdate(id: $id, billingAddress: $address) {
+    checkout {
+      id
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+
+mutation CheckoutDeliveryMethodUpdate($id: ID!, $deliveryMethodId: ID!) {
+  checkoutDeliveryMethodUpdate(id: $id, deliveryMethodId: $deliveryMethodId) {
+    checkout {
+      id
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+
+mutation TransactionInitialize(
+  $id: ID!
+  $gatewayId: String!
+  $data: JSON
+  $idempotencyKey: String!
+) {
+  transactionInitialize(
+    id: $id
+    action: CHARGE
+    paymentGateway: { id: $gatewayId, data: $data }
+    idempotencyKey: $idempotencyKey
+  ) {
+    transaction {
+      id
+    }
+    transactionEvent {
+      type
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+
+mutation CheckoutComplete($id: ID!) {
+  checkoutComplete(id: $id) {
+    order {
+      id
+      token
+    }
+    errors {
+      field
+      code
+      message
+    }
+  }
+}
+
+query OrderByToken($token: UUID!) {
+  orderByToken(token: $token) {
+    ...AccountOrderDetail
+    userEmail
+  }
+}

@@ -36,7 +36,7 @@
   },
   "overrides": [
     {
-      "includes": ["apps/storefront/src/ui/**"],
+      "includes": ["apps/storefront/src/ui/**", "apps/storefront/src/checkout/components/**"],
       "linter": {
         "rules": {
           "style": {
@@ -46,7 +46,7 @@
                 "patterns": [
                   {
                     "group": ["@/gql", "@/gql/**", "@/lib/**", "!@/lib/utils", "!@/lib/*/types"],
-                    "message": "src/ui imports only @/lib/utils and @/lib/*/types (view models): no API, generated types, loaders or Server Actions; pages pass data and actions as props (ARCHITECTURE §10.3)."
+                    "message": "src/ui and src/checkout/components import only @/lib/utils and @/lib/*/types (view models): no API, generated types, loaders or Server Actions; pages pass data and actions as props (ARCHITECTURE §10.3)."
                   }
                 ]
               }

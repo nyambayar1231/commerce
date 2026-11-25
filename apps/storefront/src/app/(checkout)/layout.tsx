@@ -3,6 +3,7 @@
 
 import { type ReactNode, Suspense } from "react";
 import { ShopNameSkeleton, ShopNameSlot } from "@/app/chrome-slots";
+import { CheckoutSteps } from "@/checkout/components/checkout-steps";
 import { CheckoutHeaderFrame } from "@/ui/components/checkout-header-frame";
 
 /** Checkout surface: minimal chrome, no footer navigation (ARCHITECTURE §10.3). */
@@ -15,8 +16,18 @@ export default function CheckoutLayout({ children }: { children: ReactNode }) {
             <ShopNameSlot />
           </Suspense>
         }
+        steps={
+          <Suspense fallback={null}>
+            <CheckoutSteps variant="desktop" />
+          </Suspense>
+        }
+        mobileSteps={
+          <Suspense fallback={null}>
+            <CheckoutSteps variant="mobile" />
+          </Suspense>
+        }
       />
-      <main className="min-h-dvh">{children}</main>
+      <main className="min-h-dvh bg-secondary">{children}</main>
     </>
   );
 }
