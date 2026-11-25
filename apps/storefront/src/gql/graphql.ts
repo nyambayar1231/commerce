@@ -96,6 +96,12 @@ export type OrderDirection =
   /** Specifies a descending sort order. */
   | 'DESC';
 
+export type ProductMediaType =
+  /** An uploaded image or an URL to an image */
+  | 'IMAGE'
+  /** A URL to an external video */
+  | 'VIDEO';
+
 export type ProductOrder = {
   /** Specifies the direction in which to sort products. */
   direction: OrderDirection;
@@ -294,6 +300,13 @@ export type ProductSearchQueryVariables = Exact<{
 
 
 export type ProductSearchQuery = { products: { totalCount: number | null, edges: Array<{ cursor: string, node: { id: string, name: string, slug: string, category: { name: string } | null, small: { url: string, alt: string | null } | null, large: { url: string } | null, minimalVariantPrice: { amount: number, currency: string } | null, variants: Array<{ id: string, quantityAvailable: number | null, price: { amount: number } }> } }>, pageInfo: { hasNextPage: boolean, hasPreviousPage: boolean, startCursor: string | null, endCursor: string | null } } | null };
+
+export type ProductDetailsQueryVariables = Exact<{
+  slug: string;
+}>;
+
+
+export type ProductDetailsQuery = { product: { id: string, name: string, slug: string, description: string | null, updatedAt: string, category: { name: string, slug: string, ancestors: { edges: Array<{ node: { name: string, slug: string } }> } | null } | null, media: Array<{ id: string, alt: string, type: ProductMediaType, thumb: string, medium: string, large: string }>, variants: Array<{ id: string, name: string, sku: string | null, quantityAvailable: number | null, price: { amount: number, currency: string }, media: Array<{ id: string }> }> } | null };
 
 export type ShopInfoQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -730,6 +743,50 @@ export const ProductSearchDocument = new TypedDocumentString(`
     quantityAvailable
   }
 }`) as unknown as TypedDocumentString<ProductSearchQuery, ProductSearchQueryVariables>;
+export const ProductDetailsDocument = new TypedDocumentString(`
+    query ProductDetails($slug: String!) {
+  product(slug: $slug) {
+    id
+    name
+    slug
+    description
+    updatedAt
+    category {
+      name
+      slug
+      ancestors(first: 10) {
+        edges {
+          node {
+            name
+            slug
+          }
+        }
+      }
+    }
+    media {
+      id
+      alt
+      type
+      thumb: url(size: 128, format: WEBP)
+      medium: url(size: 1024, format: WEBP)
+      large: url(size: 2048, format: WEBP)
+    }
+    variants {
+      id
+      name
+      sku
+      price {
+        amount
+        currency
+      }
+      quantityAvailable
+      media {
+        id
+      }
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<ProductDetailsQuery, ProductDetailsQueryVariables>;
 export const ShopInfoDocument = new TypedDocumentString(`
     query ShopInfo {
   shop {

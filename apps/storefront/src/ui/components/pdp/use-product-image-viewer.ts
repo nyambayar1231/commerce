@@ -1,0 +1,25 @@
+// Adapted from saleor-storefront: src/ui/components/pdp/use-product-image-viewer.ts (FSL-1.1-ALv2, Copyright 2026 Saleor Commerce)
+// See THIRD_PARTY_LICENSES.md
+
+"use client";
+
+import * as React from "react";
+
+/** Local open/close state for the fullscreen product image viewer. */
+export function useProductImageViewer(imagesKey: string) {
+  const [viewerIndex, setViewerIndex] = React.useState<number | null>(null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: imagesKey is an intentional reset trigger (Paper's pattern), not a value the effect reads
+  React.useEffect(() => {
+    setViewerIndex(null);
+  }, [imagesKey]);
+
+  return {
+    viewerIndex,
+    isViewerOpen: viewerIndex !== null,
+    openViewer: setViewerIndex,
+    onViewerOpenChange: (open: boolean) => {
+      if (!open) setViewerIndex(null);
+    },
+  };
+}

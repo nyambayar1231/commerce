@@ -2,6 +2,8 @@
 // types (and only these from `src/lib`); `src/lib/catalog` turns generated GraphQL types into
 // them, so no component ever sees an API shape, and money reaches the UI already formatted.
 
+import type { RichTextBlock } from "@/lib/content/types";
+
 /** The sort orders a listing page offers. */
 export type ListingSort = "newest" | "price-asc" | "price-desc" | "name-asc";
 
@@ -84,4 +86,70 @@ export type CollectionView = {
 export type FilterOptionsView = {
   categories: { name: string; slug: string; level: number }[];
   collections: { name: string; slug: string }[];
+};
+
+// ---------------------------------------------------------------------------
+// Product page (M4.3)
+// ---------------------------------------------------------------------------
+
+/**
+ * One gallery image, ready for `<img src srcSet sizes>`: the API's stored WebP thumbnails
+ * (ARCHITECTURE §10.12) — the 128 rung for the thumbnail strip, the 1024 rung as the stage's
+ * `src`, and the 2048 rung for the fullscreen viewer.
+ */
+export type ProductViewImage = {
+  /** The product media id; a variant's selected images are matched by it. */
+  id: string;
+  /** The media's alt text, falling back to the product name. */
+  alt: string;
+  /** The 128px rung (the thumbnail strip). */
+  thumb: string;
+  /** The 1024px rung: the main stage's `src`. */
+  src: string;
+  /** `"<medium> 1024w, <large> 2048w"`. */
+  srcSet: string;
+  /** The 2048px rung: the fullscreen viewer's image. */
+  large: string;
+};
+
+/** A variant's stock state, from `quantityAvailable` (ARCHITECTURE §3: available = quantity − allocated). */
+export type VariantStock = "inStock" | "lowStock" | "outOfStock";
+
+/** One variant as the buy box shows it. Money is already a formatted string (server-side). */
+export type VariantView = {
+  id: string;
+  name: string;
+  sku: string | null;
+  /** The variant's price, formatted on the server (§10.11). */
+  price: string;
+  /** The price in major units, for JSON-LD only. */
+  priceAmount: number;
+  stock: VariantStock;
+  /** How many are left; present only when `stock` is `lowStock`. */
+  quantity: number | null;
+  /** The product media ids assigned to this variant (the gallery puts them first). */
+  mediaIds: string[];
+};
+
+/**
+ * A product page's data (M4.3). `breadcrumbs` holds the category trail — the ancestors from the
+ * root down, then the product's own category; the page adds the translated Home crumb in front
+ * and the product itself as the current crumb.
+ */
+export type ProductView = {
+  id: string;
+  name: string;
+  slug: string;
+  /** The canonical path, `/products/<slug>`. */
+  url: string;
+  /** The description as sanitized blocks; rendered with `RichText`, never raw HTML. */
+  description: RichTextBlock[];
+  /** Plain text of the description, cut at 160 characters, for metadata. */
+  descriptionText: string;
+  /** The category trail: ancestors root first, then the category; empty without a category. */
+  breadcrumbs: { name: string; href: string }[];
+  images: ProductViewImage[];
+  variants: VariantView[];
+  /** The lowest and highest variant price, formatted; `max` is null when they are equal. */
+  priceRange: { min: string; max: string | null };
 };

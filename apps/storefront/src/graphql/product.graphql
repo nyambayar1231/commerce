@@ -1,0 +1,46 @@
+# The product page's document (ARCHITECTURE §10.6): the full PDP shape — the media rungs the
+# gallery needs (128 thumbs, 1024/2048 stage and viewer, §10.12), the variant prices and stock
+# the buy box shows, and the category trail for the breadcrumbs.
+
+query ProductDetails($slug: String!) {
+  product(slug: $slug) {
+    id
+    name
+    slug
+    description
+    updatedAt
+    category {
+      name
+      slug
+      ancestors(first: 10) {
+        edges {
+          node {
+            name
+            slug
+          }
+        }
+      }
+    }
+    media {
+      id
+      alt
+      type
+      thumb: url(size: 128, format: WEBP)
+      medium: url(size: 1024, format: WEBP)
+      large: url(size: 2048, format: WEBP)
+    }
+    variants {
+      id
+      name
+      sku
+      price {
+        amount
+        currency
+      }
+      quantityAvailable
+      media {
+        id
+      }
+    }
+  }
+}

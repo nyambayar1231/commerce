@@ -162,5 +162,35 @@
     "signOut": "Гарах",
     "unavailableTitle": "Бүртгэлийн мэдээлэл түр хүрэхгүй байна",
     "unavailableLabel": "Бүртгэлийн мэдээлэл түр хүрэхгүй байна"
+  },
+  "breadcrumbs": {
+    "home": "Нүүр хуудас",
+    "ariaLabel": "Шилжих зам"
+  },
+  "pdp": {
+    "loading": "Бүтээгдэхүүн ачааллаж байна",
+    "description": "Тайлбар",
+    "variantsLabel": "Хувилбар",
+    "selectVariant": "Хувилбар сонгоно уу",
+    "priceFrom": "Эхлэх үнэ: {price}",
+    "inStock": "Бэлэн байна",
+    "lowStock": "Цөөн үлдсэн: {count}",
+    "outOfStock": "Дууссан",
+    "addToCart": "Сагсанд хийх",
+    "noImage": "Зураг байхгүй",
+    "gallery": {
+      "viewImage": "{name} — {index}-р зургийг харах",
+      "goToImage": "{index}-р зураг руу шилжих",
+      "previousImage": "Өмнөх зураг",
+      "nextImage": "Дараах зураг"
+    },
+    "viewer": {
+      "title": "{name} — зургийн харагдац",
+      "close": "Хаах",
+      "previousImage": "Өмнөх зураг",
+      "nextImage": "Дараах зураг",
+      "imageAlt": "{name} — {index}-р зураг",
+      "counter": "{current} / {total}"
+    }
   }
 }
