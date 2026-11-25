@@ -19,8 +19,7 @@ deployability, 2026-11-12), M10 (deploy to AWS, 2026-11-13), M12 (continuous dep
 
 - **M15 (owner actions):** give staff groups the new `MANAGE_PAGES` / `MANAGE_MENUS` permissions in Configuration → Permission Groups (superusers already have them), and fill the empty `navbar` and `footer` menus before the storefront's header and footer (M4.4) go live.
 
-- **M4.10 (follow-ups, need the owner):** the storefront has no favicon (`/favicon.ico` 404s; an
-  icon from the owner goes in `src/app/icon.*`); the PDP's mobile LCP is 3.1–3.4 s in Lighthouse
+- **M4.10 (follow-ups, need the owner):** the PDP's mobile LCP is 3.1–3.4 s in Lighthouse
   (budget 2.5 s) because a thumbnail size not yet generated is a `302` from the API's `/thumbnail`
   to storage and the image arrives in a streamed island; Lighthouse's a11y notes for M4.11's axe
   pass: footer text contrast, product card heading order (`h3` without `h2`) and card link labels
