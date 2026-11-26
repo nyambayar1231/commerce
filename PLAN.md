@@ -9,6 +9,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 |---|---|---|
 | M11 | Dashboard in Mongolian and English | In progress |
 | M4 | Storefront (Paper-like, production ready) | In progress |
+| M16 | Real payments (Wire first, QPay direct later) | Draft |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
@@ -525,3 +526,30 @@ domain.
 
 **Later, not in this programme:** a real payment gateway, attributes and the matrix variant picker,
 multiple channels, analytics, on-demand cache revalidation.
+
+## M16 — Real payments (Wire first, QPay direct later)
+
+**Draft** (owner, 2026-11-26): replace the dummy gateway with real money before the storefront goes
+live (M4.12 waits for M16.1–M16.5). The owner applies to Wire now and to QPay officially after
+deployment; QPay direct then replaces Wire, which sits between the shop and the banks. Research
+and fees: the lead's comparison of 2026-11-25 (Wire "from 1%", no monthly fee, online onboarding
+with DAN; Bonum 1% domestic as the fallback; UniPay rejected: 500,000₮ registration, no API docs).
+
+Design (to be written into an ADR and ARCHITECTURE §10.9 in M16.1, before any code): a gateway
+adapter behind the existing Saleor-style transaction API (`transactionInitialize` with a
+`gatewayId`, transaction events), so a gateway is one API adapter plus one storefront registry
+entry and switching gateways is configuration (`PAYMENT_PROVIDERS`). Card data never touches our
+servers (hosted pages and QR only).
+
+| Step | What | Needs | Status |
+|---|---|---|---|
+| M16.1 | ADR and design [lead]: asynchronous payments (pending transaction, redirect and return, webhook as the source of truth, idempotent event handling, a reconciliation job for pending payments, refunds), the adapter interface, secrets in AWS, what the dashboard shows | Wire's docs and answers (fees per method, test mode, refund API, payout timing) | Draft |
+| M16.2 | Async payment core [Sonnet]: pending transactions, webhook route with signature check and replay protection, idempotent event processing, pg-boss reconciliation job, refund through the adapter, tests with a fake gateway | M16.1 | Draft |
+| M16.3 | Wire adapter [Sonnet]: checkout session or payment intent, `WirePayment-Signature` verification (HMAC-SHA256, 300 s window), `Idempotency-Key` on every POST, refunds, config and secrets | M16.2, Wire test or live keys | Draft |
+| M16.4 | Storefront [Sonnet]: Wire in the provider registry, redirect to the hosted checkout, return page that shows pending / paid / failed, the dummy gateway off in production | M16.3 | Draft |
+| M16.5 | Dashboard and QA [Sonnet]: transaction state and refund on the order page, e2e against a fake Wire server, a real small payment and refund on production by the owner | M16.4 | Draft |
+| M16.6 | QPay direct [Sonnet]: QPay merchant API adapter (invoice, QR and bank-app deeplinks shown on our payment step, payment check by API because QPay's callback is unsigned), alongside Wire, then the owner decides whether to switch Wire off | M16.2, a signed QPay merchant contract | Draft |
+
+**Owner actions:** apply to Wire and send the lead its answers (fee per method, test mode,
+refund API, payout timing, onboarding time); apply to QPay after the storefront is deployed;
+optionally a bank's card e-commerce contract later for foreign Visa/Mastercard.
