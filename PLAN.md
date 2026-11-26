@@ -550,6 +550,16 @@ servers (hosted pages and QR only).
 | M16.5 | Dashboard and QA [Sonnet]: transaction state and refund on the order page, e2e against a fake Wire server, a real small payment and refund on production by the owner | M16.4 | Draft |
 | M16.6 | QPay direct [Sonnet]: QPay merchant API adapter (invoice, QR and bank-app deeplinks shown on our payment step, payment check by API because QPay's callback is unsigned), alongside Wire, then the owner decides whether to switch Wire off | M16.2, a signed QPay merchant contract | Draft |
 
-**Owner actions:** apply to Wire and send the lead its answers (fee per method, test mode,
+**Wire contract (signed by the owner on 2026-11-26, DAN e-signature):** a QPay (QuickQR) sub-merchant
+contract with KKTT LLC (QPay) through wire.mn as the "customer system supplier" (ХСН). Facts
+that shape M16: fees 1.0% domestic account (deducted at payment, paid out in real time to the
+owner's own bank account), 1.0% domestic card (paid out next day), 3.0% international card, 2.0%
+international account, plus VAT on fees; no refund clause (QR payments count as cash), so refunds
+are likely manual until Wire says otherwise; transaction evidence and system logs kept 1 year
+(§4.2.5: check CloudWatch retention); API keys confidential (§2.7: Secrets Manager); the
+contract ends if Wire's partnership with QPay ends (§4.1.5), the reason for M16.6. QPay only:
+no cards outside bank apps, no wallets.
+
+**Owner actions:** apply to Wire (done 2026-11-26) and send the lead its answers (fee per method, test mode,
 refund API, payout timing, onboarding time); apply to QPay after the storefront is deployed;
 optionally a bank's card e-commerce contract later for foreign Visa/Mastercard.
