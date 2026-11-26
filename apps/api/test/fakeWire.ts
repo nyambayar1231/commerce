@@ -46,6 +46,7 @@ export function createFakeWire(options: { checkoutBaseUrl?: string } = {}) {
   const intents = new Map<string, Intent>();
   const charges = new Map<string, Charge>();
   const refunds = new Map<string, Refund>();
+  const sessions = new Map<string, { intent: string; successUrl: string; cancelUrl: string }>();
   const replays = new Map<string, { body: string; status: number; response: unknown }>();
   const failures: { path: RegExp; status: number; code: string }[] = [];
   const requests: { method: string; path: string; body: unknown; idempotencyKey: string | null }[] =
@@ -83,6 +84,11 @@ export function createFakeWire(options: { checkoutBaseUrl?: string } = {}) {
         return [400, { error: { code: "payment_intent_unexpected_state" } }];
       }
       const sessionId = id("cs");
+      sessions.set(sessionId, {
+        intent: intent.id,
+        successUrl: String(body.success_url ?? ""),
+        cancelUrl: String(body.cancel_url ?? ""),
+      });
       return [
         200,
         {
@@ -192,6 +198,7 @@ export function createFakeWire(options: { checkoutBaseUrl?: string } = {}) {
     requests,
     intents,
     refunds,
+    sessions,
     /** The shopper pays an intent on Wire's page: a succeeded charge. */
     pay(paymentIntentId: string, amount?: number) {
       const intent = intents.get(paymentIntentId);

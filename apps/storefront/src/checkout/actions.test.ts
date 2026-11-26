@@ -634,7 +634,7 @@ describe("placeOrder with a gateway the shopper pays on its own page (Wire, ADR-
     getEnv.mockReturnValue({
       paymentProviders: ["wire"],
       storefrontUrl: "https://dino-craft.lol",
-      production: true,
+      wireCheckoutOrigin: "https://pay.wire.mn",
     });
   });
 

@@ -25,9 +25,11 @@ describe("provider registry", () => {
     expect(findProvider("dummy", ["dummy"])?.gatewayData(context)).toEqual({
       event: { type: "CHARGE_SUCCESS" },
     });
-    expect(findProvider("dummy", ["dummy"])?.allowsRedirect("https://pay.wire.mn/c/1", false)).toBe(
-      false,
-    );
+    expect(
+      findProvider("dummy", ["dummy"])?.allowsRedirect("https://pay.wire.mn/c/1", {
+        wireCheckoutOrigin: "https://pay.wire.mn",
+      }),
+    ).toBe(false);
   });
 
   it("sends Wire the shop's return page and follows only Wire's own pages in production", () => {
@@ -36,12 +38,15 @@ describe("provider registry", () => {
     expect(wire?.gatewayData(context)).toEqual({
       returnUrl: "https://dino-craft.lol/checkout/return",
     });
-    expect(wire?.allowsRedirect("https://pay.wire.mn/c/cs_1", true)).toBe(true);
-    expect(wire?.allowsRedirect("http://pay.wire.mn/c/cs_1", true)).toBe(false);
-    expect(wire?.allowsRedirect("https://pay.wire.mn.evil.example/c", true)).toBe(false);
-    expect(wire?.allowsRedirect("https://evil.example/c", true)).toBe(false);
-    expect(wire?.allowsRedirect("javascript:alert(1)", false)).toBe(false);
-    // Development and e2e use a fake Wire on localhost.
-    expect(wire?.allowsRedirect("http://localhost:4099/c/cs_1", false)).toBe(true);
+    const real = { wireCheckoutOrigin: "https://pay.wire.mn" };
+    expect(wire?.allowsRedirect("https://pay.wire.mn/c/cs_1", real)).toBe(true);
+    expect(wire?.allowsRedirect("http://pay.wire.mn/c/cs_1", real)).toBe(false);
+    expect(wire?.allowsRedirect("https://pay.wire.mn.evil.example/c", real)).toBe(false);
+    expect(wire?.allowsRedirect("https://evil.example/c", real)).toBe(false);
+    expect(wire?.allowsRedirect("javascript:alert(1)", real)).toBe(false);
+    // The e2e run's fake Wire, configured explicitly.
+    const fake = { wireCheckoutOrigin: "http://localhost:4099" };
+    expect(wire?.allowsRedirect("http://localhost:4099/c/cs_1", fake)).toBe(true);
+    expect(wire?.allowsRedirect("https://pay.wire.mn/c/cs_1", fake)).toBe(false);
   });
 });

@@ -133,6 +133,49 @@ Both are served by the API on port 4000; the `web` image does not expose them.
    front of a private bucket) and set `MEDIA_PUBLIC_URL` to that public base URL.
 4. Remove the `/media/` block from the nginx config if nothing else uses it.
 
+## Payments: Wire (QPay), ADR-0016
+
+Real payments go through Wire (wire.mn): the shopper pays with QPay on Wire's page, Wire calls
+`POST /webhooks/wire` on the API, and the API makes the order. **Wire has no test mode**: every
+call with the key moves real money, so the only check before customers is a small real payment.
+
+1. **Business in Wire.** The payment channel takes the business it was opened for, and Wire can't
+   change it after the first payment (a person vs. a company). Settle that in Wire's dashboard
+   first.
+2. **API key.** Wire dashboard → the project → *API key* → *Key үүсгэх*. It is shown once: store it
+   at once, never in chat, a file in the repository or a shell history:
+   ```sh
+   read -rs WIRE_KEY && aws ssm put-parameter --profile commerce --region ap-northeast-2 \
+     --name /commerce/wire-api-key --type SecureString --value "$WIRE_KEY" && unset WIRE_KEY
+   ```
+3. **Webhook.** Wire dashboard → *Webhook* → *Endpoint нэмэх*: URL
+   `https://admin.dino-craft.lol/webhooks/wire`, all events. Store the signing secret (`whsec_…`,
+   shown once) the same way as `/commerce/wire-webhook-secret`. The endpoint stays *pending* until
+   step 5.
+4. **Server.** In a Session Manager shell (*Running a command on the server*), add to
+   `/home/ubuntu/commerce/.env.prod` (mode 600):
+   ```
+   PAYMENT_GATEWAYS=wire
+   WIRE_API_KEY=sk_live_…
+   WIRE_WEBHOOK_SECRET=whsec_…
+   STAFF_NOTIFICATION_EMAILS=<who hears about refunded paid checkouts>
+   ```
+   then `docker compose --env-file .env.prod -f docker-compose.prod.yml --profile https up -d api worker`.
+   The API and the worker refuse to start with a missing or test key and say why
+   (`docker compose … logs api`). The storefront's `.env` gets `PAYMENT_PROVIDERS=wire` (M4.12).
+5. **Verify the webhook.** Wire dashboard → *Webhook* → *Баталгаажуулах*: Wire sends a signed
+   ping; the API answers 200 and the endpoint becomes *enabled*.
+6. **One real payment.** On the storefront: buy something cheap with QPay, check the order in the
+   dashboard (a `CHARGE_SUCCESS` transaction), then refund it from the order page. QPay refunds may
+   be *completed by hand* at Wire: the transaction shows the refund as pending with that message
+   until Wire confirms it (`charge.refunded`), which the API records by itself.
+
+**Keeping it honest.** Every Wire notification is kept in the `payment_gateway_event` table (the
+contract's one-year evidence; the database backups keep it). The worker re-reads every unfinished
+payment and refund at Wire every 2 minutes (`payments-reconcile`), so a lost notification or a
+restart loses nothing. To switch Wire off for new payments, remove it from `PAYMENT_GATEWAYS`; keep
+`WIRE_API_KEY` set while its orders may still need refunds.
+
 ## AWS (production)
 
 Everything is in `ap-northeast-2` (Seoul), CLI profile `commerce` (`aws login --profile commerce`;

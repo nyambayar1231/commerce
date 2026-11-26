@@ -293,7 +293,7 @@ export async function placeOrder(
         const url = gatewayPageUrl(payload.data);
         // No page: this attempt's payment expired (a retry of an old attempt). Start a new one.
         if (url === null) return spent("paymentExpired");
-        if (!provider.allowsRedirect(url, getEnv().production)) {
+        if (!provider.allowsRedirect(url, getEnv())) {
           log.error("checkout.payment_redirect_refused", { provider: provider.id });
           return failure("generic", { values: billingValues });
         }

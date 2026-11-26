@@ -12,6 +12,8 @@ export type Env = {
   trustProxy: boolean;
   imageOrigins: string[];
   paymentProviders: string[];
+  /** The origin of Wire's hosted payment page; the only place a Wire payment may send a shopper. */
+  wireCheckoutOrigin: string;
   production: boolean;
 };
 
@@ -86,6 +88,12 @@ export function parseEnv(source: Source): Env {
     );
   }
 
+  const wireCheckoutOrigin = source.WIRE_CHECKOUT_ORIGIN?.trim() || "https://pay.wire.mn";
+  const wireCheckout = isHttpUrl(wireCheckoutOrigin);
+  if (!wireCheckout || wireCheckout.origin !== wireCheckoutOrigin) {
+    problems.push("WIRE_CHECKOUT_ORIGIN must be an http(s) origin (scheme://host[:port], no path)");
+  }
+
   if (problems.length > 0) {
     throw new Error(`Invalid storefront configuration:\n- ${problems.join("\n- ")}`);
   }
@@ -95,6 +103,7 @@ export function parseEnv(source: Source): Env {
     trustProxy: trust === "true",
     imageOrigins,
     paymentProviders,
+    wireCheckoutOrigin,
     production,
   };
 }

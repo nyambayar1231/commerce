@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { FAKE_WIRE_KEY, FAKE_WIRE_SECRET } from "../apps/api/test/fakeWire.ts";
 import {
   API_PORT,
   API_URL,
@@ -6,10 +7,21 @@ import {
   DASHBOARD_URL,
   E2E_SECRET_KEY,
   e2eDatabaseUrl,
+  FAKE_WIRE_PORT,
+  FAKE_WIRE_URL,
   SMTP_URL,
   STOREFRONT_PORT,
   STOREFRONT_URL,
 } from "./env.ts";
+
+// Payments (ADR-0016): the API and the worker take payments through the test gateway (the API
+// golden path) and through Wire — here the fake Wire server, the storefront's only provider.
+const PAYMENTS = {
+  PAYMENT_GATEWAYS: "dummy,wire",
+  WIRE_API_KEY: FAKE_WIRE_KEY,
+  WIRE_WEBHOOK_SECRET: FAKE_WIRE_SECRET,
+  WIRE_API_URL: `${FAKE_WIRE_URL}/v1`,
+};
 
 // Golden paths (PLAN M9.7): the real API and the dashboard's dev server on their own ports, against
 // a fresh commerce_e2e database (prepare.ts). `pnpm e2e` from the root; needs `pnpm db:up` and, once,
@@ -39,6 +51,17 @@ export default defineConfig({
   ],
   webServer: [
     {
+      // Wire's API and hosted payment page, faked (storefront/fakeWireServer.ts).
+      command: "node storefront/fakeWireServer.ts",
+      url: `${FAKE_WIRE_URL}/health`,
+      env: {
+        FAKE_WIRE_PORT: String(FAKE_WIRE_PORT),
+        FAKE_WIRE_WEBHOOK_URL: `http://localhost:${API_PORT}/webhooks/wire`,
+      },
+      reuseExistingServer: false,
+      timeout: 30_000,
+    },
+    {
       command: "node prepare.ts && node --env-file-if-exists=../.env ../apps/api/src/server.ts",
       url: `http://localhost:${API_PORT}/health/ready`,
       env: {
@@ -47,6 +70,7 @@ export default defineConfig({
         ALLOWED_GRAPHQL_ORIGINS: DASHBOARD_URL,
         PUBLIC_URL: `http://localhost:${API_PORT}`,
         SECRET_KEY: E2E_SECRET_KEY,
+        ...PAYMENTS,
       },
       reuseExistingServer: false,
       timeout: 120_000,
@@ -62,7 +86,12 @@ export default defineConfig({
       // The background jobs (M8): the confirmation email of the storefront's sign-up goes out here.
       command: "node --env-file-if-exists=../.env ../apps/api/src/worker.ts",
       wait: { stdout: /Worker running/ },
-      env: { DATABASE_URL: e2eDatabaseUrl(), EMAIL_URL: SMTP_URL, SECRET_KEY: E2E_SECRET_KEY },
+      env: {
+        DATABASE_URL: e2eDatabaseUrl(),
+        EMAIL_URL: SMTP_URL,
+        SECRET_KEY: E2E_SECRET_KEY,
+        ...PAYMENTS,
+      },
       reuseExistingServer: false,
       timeout: 120_000,
     },
@@ -75,9 +104,9 @@ export default defineConfig({
         API_URL: `http://localhost:${API_PORT}`,
         STOREFRONT_URL,
         IMAGE_ORIGINS: `http://localhost:${API_PORT},http://localhost:8333`,
-        PAYMENT_PROVIDERS: "dummy",
-        // A production build with the test payment: allowed explicitly (ADR-0016).
-        ALLOW_DUMMY_PAYMENTS: "true",
+        // QPay through Wire, as in production; the fake Wire's payment page instead of pay.wire.mn.
+        PAYMENT_PROVIDERS: "wire",
+        WIRE_CHECKOUT_ORIGIN: FAKE_WIRE_URL,
         HOSTNAME: "127.0.0.1",
         PORT: String(STOREFRONT_PORT),
         NEXT_TELEMETRY_DISABLED: "1",

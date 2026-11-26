@@ -15,6 +15,7 @@ describe("parseEnv", () => {
       trustProxy: false,
       imageOrigins: ["http://localhost:4000", "http://localhost:8333"],
       paymentProviders: ["dummy"],
+      wireCheckoutOrigin: "https://pay.wire.mn",
       production: false,
     });
   });

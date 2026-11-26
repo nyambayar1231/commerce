@@ -13,6 +13,9 @@ export const STOREFRONT_PORT = 3013;
 export const API_URL = `http://localhost:${API_PORT}/graphql`;
 export const DASHBOARD_URL = `http://localhost:${DASHBOARD_PORT}`;
 export const STOREFRONT_URL = `http://localhost:${STOREFRONT_PORT}`;
+/** The fake Wire (QPay) server (storefront/fakeWireServer.ts): Wire has no test mode, ADR-0016. */
+export const FAKE_WIRE_PORT = 4099;
+export const FAKE_WIRE_URL = `http://localhost:${FAKE_WIRE_PORT}`;
 /** Mailpit (docker-compose.yml): its HTTP API and the SMTP port the worker sends through. */
 export const MAILPIT_URL = "http://localhost:8026";
 export const SMTP_URL = "smtp://localhost:1026";

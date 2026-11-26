@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import mn from "../../apps/storefront/messages/mn.json" with { type: "json" };
-import { STOREFRONT_URL } from "../env.ts";
+import { FAKE_WIRE_URL, STOREFRONT_URL } from "../env.ts";
 import {
   checkAxe,
   confirmationLink,
@@ -85,7 +85,12 @@ async function buy(page: Page, { email }: { email?: string }) {
   ).toBeVisible();
   await expect(page.getByLabel(mn.checkout.payment.sameAsShipping)).toBeChecked();
   await checkAxe(page, "checkout payment");
+  // QPay through Wire (ADR-0016): the shopper is sent to Wire's page (the fake Wire here), pays
+  // there, and Wire sends them back to /checkout/return, which lands on the order.
+  await expect(page.getByText(mn.checkout.payment.providers.wire).first()).toBeVisible();
   await page.getByRole("button", { name: mn.checkout.payment.placeOrder }).click();
+  await expect(page).toHaveURL(new RegExp(`^${FAKE_WIRE_URL}/c/cs_`));
+  await page.getByRole("button", { name: "Pay with QPay" }).click();
 
   await expect(page).toHaveURL(/\/order\/[0-9a-f-]{36}/);
   await expect(page.getByRole("heading", { level: 1, name: mn.order.thankYou })).toBeVisible();

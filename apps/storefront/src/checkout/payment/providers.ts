@@ -13,6 +13,9 @@ export type ProviderId = "dummy" | "wire";
 /** What the server knows when it builds a provider's gateway data. */
 export type GatewayDataContext = { storefrontUrl: string };
 
+/** Where providers' payment pages may be (configuration, `getEnv()`). */
+export type RedirectContext = { wireCheckoutOrigin: string };
+
 export type PaymentProvider = {
   id: ProviderId;
   /** The API's identifier of the payment gateway. */
@@ -23,10 +26,10 @@ export type PaymentProvider = {
   /** The `paymentGateway.data` of `transactionInitialize`, built on the server. */
   gatewayData: (context: GatewayDataContext) => unknown;
   /**
-   * Whether the shopper may be sent to `url` (the gateway's payment page from the API's `data`).
-   * Only the provider's own hosts in production; any http(s) page in development (a fake).
+   * Whether the shopper may be sent to `url` (the gateway's payment page from the API's `data`):
+   * only the provider's own payment page origin (WIRE_CHECKOUT_ORIGIN; the e2e run's fake Wire).
    */
-  allowsRedirect: (url: string, production: boolean) => boolean;
+  allowsRedirect: (url: string, context: RedirectContext) => boolean;
 };
 
 const httpUrl = (value: string): URL | null => {
@@ -38,14 +41,9 @@ const httpUrl = (value: string): URL | null => {
   }
 };
 
-/** Wire's hosted payment page (pay.wire.mn) in production. */
-function isWirePage(value: string, production: boolean): boolean {
-  const url = httpUrl(value);
-  if (!url) return false;
-  if (!production) return true;
-  return (
-    url.protocol === "https:" && (url.hostname === "wire.mn" || url.hostname.endsWith(".wire.mn"))
-  );
+/** Wire's hosted payment page: exactly the configured origin (https://pay.wire.mn by default). */
+function isWirePage(value: string, { wireCheckoutOrigin }: RedirectContext): boolean {
+  return httpUrl(value)?.origin === wireCheckoutOrigin;
 }
 
 const REGISTRY: readonly PaymentProvider[] = [
