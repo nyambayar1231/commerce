@@ -792,6 +792,15 @@ against the host, which is our CSRF protection):
   gatewayId, label, Component }`, with one entry, `dummy` (`saleor.io.dummy-payment-app`), enabled by
   `PAYMENT_PROVIDERS`. While `dummy` is enabled, the payment step shows a "test payment, no money is
   taken" notice.
+- **Real gateways (ADR-0016, M16, replaces the next bullet's synchronous flow for them):**
+  `placeOrder` calls `transactionInitialize` and redirects the shopper to the returned
+  `data.url` (Wire's hosted page). The API completes the checkout into an order itself when the
+  payment succeeds (webhook, re-checked with Wire, or the reconciliation job), so the order exists
+  even if the shopper never returns. Wire sends the shopper back to
+  `/checkout/return?transaction=<id>`: a dynamic, `noindex` page that reads the transaction and
+  shows pending (with a refresh), failed (back to the payment step) or redirects to
+  `/order/{token}` once the order exists. The dummy gateway keeps the synchronous flow below and is
+  off in production.
 - **Place order** (`placeOrder` action): read the checkout live → if it is not yet fully paid,
   `transactionInitialize` with `idempotencyKey` = the attempt id rendered into the form (a
   double-submit or retry reuses it, and the API returns the first result) and gateway data built on

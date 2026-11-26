@@ -9,7 +9,7 @@ Status legend: `Draft` → `Approved` → `In progress` → `Done` (or `Deferred
 |---|---|---|
 | M11 | Dashboard in Mongolian and English | In progress |
 | M4 | Storefront (Paper-like, production ready) | In progress |
-| M16 | Real payments (Wire first, QPay direct later) | Draft |
+| M16 | Real payments (Wire first, QPay direct later) | In progress |
 
 Finished milestones are removed from this file; their specs, results and decisions are in git
 history (`git log -- PLAN.md`), the ADRs and ARCHITECTURE.md. Done so far: P0 (planning), M0
@@ -529,7 +529,7 @@ multiple channels, analytics, on-demand cache revalidation.
 
 ## M16 — Real payments (Wire first, QPay direct later)
 
-**Draft** (owner, 2026-11-26): replace the dummy gateway with real money before the storefront goes
+**Approved by the owner on 2026-11-26**: replace the dummy gateway with real money before the storefront goes
 live (M4.12 waits for M16.1–M16.5). The owner applies to Wire now and to QPay officially after
 deployment; QPay direct then replaces Wire, which sits between the shop and the banks. Research
 and fees: the lead's comparison of 2026-11-25 (Wire "from 1%", no monthly fee, online onboarding
@@ -543,11 +543,11 @@ servers (hosted pages and QR only).
 
 | Step | What | Needs | Status |
 |---|---|---|---|
-| M16.1 | ADR and design [lead]: asynchronous payments (pending transaction, redirect and return, webhook as the source of truth, idempotent event handling, a reconciliation job for pending payments, refunds), the adapter interface, secrets in AWS, what the dashboard shows | Wire's docs and answers (fees per method, test mode, refund API, payout timing) | Draft |
-| M16.2 | Async payment core [Sonnet]: pending transactions, webhook route with signature check and replay protection, idempotent event processing, pg-boss reconciliation job, refund through the adapter, tests with a fake gateway | M16.1 | Draft |
-| M16.3 | Wire adapter [Sonnet]: checkout session or payment intent, `WirePayment-Signature` verification (HMAC-SHA256, 300 s window), `Idempotency-Key` on every POST, refunds, config and secrets | M16.2, Wire test or live keys | Draft |
-| M16.4 | Storefront [Sonnet]: Wire in the provider registry, redirect to the hosted checkout, return page that shows pending / paid / failed, the dummy gateway off in production | M16.3 | Draft |
-| M16.5 | Dashboard and QA [Sonnet]: transaction state and refund on the order page, e2e against a fake Wire server, a real small payment and refund on production by the owner | M16.4 | Draft |
+| M16.1 | ADR and design [lead]: ADR-0016 (Proposed) and ARCHITECTURE §10.9 | Wire's docs and dashboard (read 2026-11-26) | Waiting on the owner's review of ADR-0016 |
+| M16.2 | Async payment core [Sonnet]: gateway adapter interface with the dummy gateway behind it, Saleor's new event types and `payment_gateway_event` (migration), `CHARGE_ACTION_REQUIRED` with `data.url`, validation before paying, automatic completion of paid checkouts and refund on failure (pg-boss), reconciliation job, refunds through the adapter, tests with a fake gateway | M16.1 | Draft |
+| M16.3 | Wire adapter [Sonnet]: PaymentIntent (15 min) and checkout session, `/webhooks/wire` with `WirePayment-Signature` (HMAC-SHA256, 300 s) and re-read of the intent, events catch-up, refunds incl. `manual_required`, `Idempotency-Key` on every POST, config and secrets, Caddy/nginx path, a fake Wire server for tests | M16.2 | Draft |
+| M16.4 | Storefront [Sonnet]: Wire in the provider registry, redirect to `data.url`, `/checkout/return` (pending / failed / redirect to the order), the dummy gateway off in production | M16.3 | Draft |
+| M16.5 | Dashboard, QA and go-live [Sonnet + lead]: transaction states and pending/manual refunds on the order page, e2e against the fake Wire server, secrets in Parameter Store, webhook endpoint created and verified, then the owner's small real payment and refund on production | M16.4, Wire API key | Draft |
 | M16.6 | QPay direct [Sonnet]: QPay merchant API adapter (invoice, QR and bank-app deeplinks shown on our payment step, payment check by API because QPay's callback is unsigned), alongside Wire, then the owner decides whether to switch Wire off | M16.2, a signed QPay merchant contract | Draft |
 
 **Wire contract (signed by the owner on 2026-11-26, DAN e-signature):** a QPay (QuickQR) sub-merchant
@@ -559,6 +559,21 @@ are likely manual until Wire says otherwise; transaction evidence and system log
 (§4.2.5: check CloudWatch retention); API keys confidential (§2.7: Secrets Manager); the
 contract ends if Wire's partnership with QPay ends (§4.1.5), the reason for M16.6. QPay only:
 no cards outside bank apps, no wallets.
+
+**Wire account and API (read by the lead in the owner's dashboard and docs, 2026-11-26):** project
+"Dino home store" is active with QPay on and one settlement account; no API key or webhook yet.
+**No test mode**: only `sk_live_` keys (a `sk_test_` key gets `401 test_mode_unavailable`), so
+tests use a fake Wire server and the final check is the owner's small real payment and refund.
+Flow: create PaymentIntent (expires after 1 h by default, 5 min to 24 h) → checkout session
+(hosted page, `success_url` / `cancel_url`) → `payment_intent.succeeded` webhook, re-read the
+intent before fulfilling; `GET /v1/events` to catch up after downtime. Refunds:
+`POST /v1/refunds` on a charge, full or partial; the status may be `manual_required` (Wire
+operations complete it outside the API), `pending`, `succeeded` or `failed`. Webhook: one
+endpoint per project, verified by a signed `endpoint.verification` ping, from IP
+65.109.117.186. `Idempotency-Key` on every POST. No SDK needed: plain `fetch`.
+**Owner decision before the first real payment:** the QPay channel is registered to the owner
+as an individual, and Wire cannot change the business after payments are received; register the
+company first if the shop should be paid as a company.
 
 **Owner actions:** apply to Wire (done 2026-11-26) and send the lead its answers (fee per method, test mode,
 refund API, payout timing, onboarding time); apply to QPay after the storefront is deployed;
