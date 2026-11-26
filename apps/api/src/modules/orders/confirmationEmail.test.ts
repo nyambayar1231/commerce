@@ -1,6 +1,7 @@
 import { closeDb, getDb, schema } from "@commerce/db";
 import { sql } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { testGateways } from "../../../test/payments.ts";
 import {
   completeCheckout,
   createCheckout,
@@ -81,7 +82,7 @@ const jobsFor = async (orderId: string) =>
 describe("checkoutComplete", () => {
   it("adds one confirmation job with the order, and none on a retry", async () => {
     const id = await readyCheckout();
-    await initializeCheckoutTransaction(db, id, { gatewayId: DUMMY_GATEWAY_ID });
+    await initializeCheckoutTransaction(db, testGateways(), id, { gatewayId: DUMMY_GATEWAY_ID });
 
     const placed = await completeCheckout(db, id);
     if (!placed.ok) throw new Error("not placed");
@@ -111,7 +112,7 @@ describe("checkoutComplete", () => {
 describe("the confirmation email", () => {
   it("is sent to the order's email by the worker's handler", async () => {
     const id = await readyCheckout("Boots <b>& co</b>");
-    await initializeCheckoutTransaction(db, id, { gatewayId: DUMMY_GATEWAY_ID });
+    await initializeCheckoutTransaction(db, testGateways(), id, { gatewayId: DUMMY_GATEWAY_ID });
     const placed = await completeCheckout(db, id);
     if (!placed.ok) throw new Error("not placed");
     const sent: EmailMessage[] = [];
@@ -132,7 +133,7 @@ describe("the confirmation email", () => {
 
   it("renders Saleor's wording, summary and addresses", async () => {
     const id = await readyCheckout();
-    await initializeCheckoutTransaction(db, id, { gatewayId: DUMMY_GATEWAY_ID });
+    await initializeCheckoutTransaction(db, testGateways(), id, { gatewayId: DUMMY_GATEWAY_ID });
     const placed = await completeCheckout(db, id);
     if (!placed.ok) throw new Error("not placed");
     const lines = await getOrderLinesByOrderIds(db, [placed.order.id]);

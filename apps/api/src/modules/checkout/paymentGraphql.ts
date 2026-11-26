@@ -119,6 +119,8 @@ const TransactionInitializeErrorType = builder
 type TransactionInitializePayload = {
   transaction: PaymentTransactionRow | null;
   transactionEvent: PaymentEventRow | null;
+  /** Saleor's `data`: for a redirect gateway, the page the shopper must open (`{ url }`). */
+  data: { url: string } | null;
   errors: TransactionInitializeErrorData[];
 };
 
@@ -143,7 +145,7 @@ const TransactionInitialize = builder
         type: JSON_SCALAR,
         nullable: true,
         description: "The JSON data required to finalize the payment.",
-        resolve: () => null,
+        resolve: (payload) => payload.data,
       }),
       errors: t.field({
         type: [TransactionInitializeErrorType],
@@ -159,6 +161,7 @@ const failure = (
 ) => ({
   transaction: null,
   transactionEvent: null,
+  data: null,
   errors: [{ field, code, message }],
 });
 
@@ -199,16 +202,23 @@ builder.mutationField("transactionInitialize", (t) =>
         return failure("id", "INVALID", "Couldn't resolve to Checkout.");
       }
       try {
-        const result = await initializeCheckoutTransaction(ctx.db, decoded.id, {
+        const result = await initializeCheckoutTransaction(ctx.db, ctx.gateways, decoded.id, {
           amount,
           action,
           gatewayId: paymentGateway.id,
           gatewayData: paymentGateway.data,
           idempotencyKey,
         });
-        if (!result.ok) return { transaction: null, transactionEvent: null, errors: result.errors };
+        if (!result.ok) {
+          return { transaction: null, transactionEvent: null, data: null, errors: result.errors };
+        }
         ctx.paymentLoaders.transactionsByCheckoutId.clear(decoded.id);
-        return { transaction: result.transaction, transactionEvent: result.event, errors: [] };
+        return {
+          transaction: result.transaction,
+          transactionEvent: result.event,
+          data: result.data,
+          errors: [],
+        };
       } catch (error) {
         if (!(error instanceof CheckoutNotFoundError)) throw error;
         throw nodesNotFound(error.ids.map((checkoutId) => toGlobalId("Checkout", checkoutId)));

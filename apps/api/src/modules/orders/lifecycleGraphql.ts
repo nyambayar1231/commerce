@@ -535,7 +535,7 @@ builder.mutationField("transactionRequestAction", (t) =>
           return refundError("amount", "INVALID", "The amount is not a valid money value.");
         }
       }
-      const result = await refundOrderTransaction(ctx.db, {
+      const result = await refundOrderTransaction(ctx.db, ctx.gateways, {
         transactionId,
         amount: amountMinor,
         userId: ctx.user?.id ?? null,

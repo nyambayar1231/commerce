@@ -1,6 +1,7 @@
 import { closeDb, getDb, schema } from "@commerce/db";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { markCheckoutCompleted } from "../../../test/orders.ts";
+import { testGateways } from "../../../test/payments.ts";
 import type { PaymentTransactionRow } from "../payments/index.ts";
 import { DUMMY_GATEWAY_ID } from "../payments/index.ts";
 import {
@@ -76,7 +77,11 @@ describe("initializeCheckoutTransaction", () => {
 
   const pay = (
     request: { amount?: string; action?: "AUTHORIZATION" | "CHARGE"; idempotencyKey?: string } = {},
-  ) => initializeCheckoutTransaction(db, checkoutId, { gatewayId: DUMMY_GATEWAY_ID, ...request });
+  ) =>
+    initializeCheckoutTransaction(db, testGateways(), checkoutId, {
+      gatewayId: DUMMY_GATEWAY_ID,
+      ...request,
+    });
 
   it("charges the uncovered amount by default, then refuses a fully covered checkout", async () => {
     const partial = await pay({ amount: "1000" });

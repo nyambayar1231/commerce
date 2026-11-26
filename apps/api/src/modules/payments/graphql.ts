@@ -67,10 +67,9 @@ builder.node(TransactionEventType, {
     message: t.exposeString("message", {
       description: "Message related to the transaction's event.",
     }),
-    externalUrl: t.string({
+    externalUrl: t.exposeString("externalUrl", {
       description:
         "The url that will allow to redirect user to payment provider page with event details.",
-      resolve: () => "",
     }),
     amount: t.field({
       type: MoneyType,
@@ -118,7 +117,7 @@ builder.node(TransactionItemType, {
         type: [TransactionActionEnum],
         description:
           "List of actions that can be requested for the transaction. Our gateways support " +
-          "REFUND while a charged amount is left.",
+          "REFUND while a charged amount is left that no refund in flight has reserved.",
         resolve: (transaction) => transactionActions(transaction),
       }),
       authorizedAmount: t.field({
@@ -134,7 +133,11 @@ builder.node(TransactionItemType, {
         description: "Total amount refunded for this payment.",
         resolve: (transaction) => money(transaction.refundedAmount, transaction.currency),
       }),
-      refundPendingAmount: zero("Total amount of ongoing refund requests for the transaction."),
+      refundPendingAmount: t.field({
+        type: MoneyType,
+        description: "Total amount of ongoing refund requests for the transaction.",
+        resolve: (transaction) => money(transaction.refundPendingAmount, transaction.currency),
+      }),
       canceledAmount: zero("Total amount canceled for this payment."),
       cancelPendingAmount: zero("Total amount of ongoing cancel requests for the transaction."),
       chargedAmount: t.field({
@@ -142,16 +145,19 @@ builder.node(TransactionItemType, {
         description: "Total amount charged for this payment.",
         resolve: (transaction) => money(netCharged(transaction), transaction.currency),
       }),
-      chargePendingAmount: zero("Total amount of ongoing charge requests for the transaction."),
+      chargePendingAmount: t.field({
+        type: MoneyType,
+        description: "Total amount of ongoing charge requests for the transaction.",
+        resolve: (transaction) => money(transaction.chargePendingAmount, transaction.currency),
+      }),
       name: t.exposeString("name", { description: "Name of the transaction." }),
       message: t.string({ description: "Message related to the transaction.", resolve: () => "" }),
       pspReference: t.exposeString("pspReference", {
         description: "PSP reference of transaction.",
       }),
-      externalUrl: t.string({
+      externalUrl: t.exposeString("externalUrl", {
         description:
           "The url that will allow to redirect user to payment provider page with transaction details.",
-        resolve: () => "",
       }),
       events: t.field({
         type: [TransactionEventType],

@@ -9,7 +9,11 @@ import {
 } from "../modules/identity/index.ts";
 import { createInventoryLoaders, type InventoryLoaders } from "../modules/inventory/index.ts";
 import { createOrderLoaders, type OrderLoaders } from "../modules/orders/index.ts";
-import { createPaymentLoaders, type PaymentLoaders } from "../modules/payments/index.ts";
+import {
+  createPaymentLoaders,
+  type GatewayRegistry,
+  type PaymentLoaders,
+} from "../modules/payments/index.ts";
 
 // What every resolver receives as its third argument. Created once per request (see app.ts).
 export interface Context {
@@ -21,6 +25,9 @@ export interface Context {
   checkoutLoaders: CheckoutLoaders;
   paymentLoaders: PaymentLoaders;
   orderLoaders: OrderLoaders;
+  // The payment gateways this process may use (ADR-0016), built once at start from
+  // PAYMENT_GATEWAYS (server.ts); tests pass their own.
+  gateways: GatewayRegistry;
   // The logged-in user, or null for anonymous requests and ended sessions.
   user: SessionUser | null;
   // The token the request authenticated with (needed to revoke it on logout), or null.
@@ -64,7 +71,7 @@ export function clearedSessionCookie(): string {
 export async function createContext(
   db: Db,
   request: Request,
-): Promise<Omit<Context, "setCookie" | "clientIp">> {
+): Promise<Omit<Context, "setCookie" | "clientIp" | "gateways">> {
   const sessionToken = sessionTokenOf(request);
   const user = sessionToken === null ? null : await getSessionUser(db, sessionToken);
   let permissions: Promise<readonly Permission[]> | undefined;

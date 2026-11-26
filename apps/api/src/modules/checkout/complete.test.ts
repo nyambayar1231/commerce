@@ -1,6 +1,7 @@
 import { closeDb, getDb, schema } from "@commerce/db";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { testGateways } from "../../../test/payments.ts";
 import { updateProductVariant } from "../catalog/index.ts";
 import { updateVariantStocks } from "../inventory/index.ts";
 import { getOrderLinesByOrderIds } from "../orders/index.ts";
@@ -85,7 +86,9 @@ async function readyCheckout(
   await updateCheckoutAddress(db, id, "BILLING", ADDRESS);
   await updateCheckoutDeliveryMethod(db, id, shippingMethodId);
   if (pay) {
-    const paid = await initializeCheckoutTransaction(db, id, { gatewayId: DUMMY_GATEWAY_ID });
+    const paid = await initializeCheckoutTransaction(db, testGateways(), id, {
+      gatewayId: DUMMY_GATEWAY_ID,
+    });
     if (!paid.ok) throw new Error(JSON.stringify(paid.errors));
   }
   return id;

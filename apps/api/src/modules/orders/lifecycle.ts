@@ -9,11 +9,14 @@ import {
 } from "../inventory/index.ts";
 import {
   createManualOrderTransaction,
+  type GatewayRegistry,
   getTransaction,
   lockOrderTransactions,
   netCharged,
   type PaymentTransactionRow,
-  refundTransaction,
+  processRefundRequest,
+  recordRefundRequest,
+  refundableAmount,
 } from "../payments/index.ts";
 import type { OrderLineRow, OrderRow } from "./orders.ts";
 
@@ -444,13 +447,17 @@ export type RefundResult =
   | { ok: false; errors: RefundError[] };
 
 /**
- * Saleor's transactionRequestAction(REFUND) for an order's transaction (PLAN M6 decision 1): the
- * amount defaults to, and is capped at, what is charged and not yet refunded (Saleor's min()); the
- * gateway answers REFUND_SUCCESS at once; a TRANSACTION_REFUND_REQUESTED event goes on the order.
- * A checkout's transactions can't be refunded (ours; their checkout isn't locked here).
+ * Saleor's transactionRequestAction(REFUND) for an order's transaction (PLAN M6 decision 1,
+ * ADR-0016 §8): the amount defaults to, and is capped at, what is charged and not yet refunded or
+ * reserved by a refund in flight (Saleor's min()). Under the order's lock the REFUND_REQUEST is
+ * recorded and a TRANSACTION_REFUND_REQUESTED event goes on the order; then, outside the lock, the
+ * transaction's gateway is asked and its answer recorded (refunded, failed, or pending — e.g.
+ * completed by hand at Wire). A checkout's transactions can't be refunded (ours; their checkout
+ * isn't locked here).
  */
 export async function refundOrderTransaction(
   db: Db,
+  gateways: GatewayRegistry,
   input: { transactionId: string; amount: number | null; userId: string | null },
 ): Promise<RefundResult> {
   const found = await getTransaction(db, input.transactionId);
@@ -476,23 +483,40 @@ export async function refundOrderTransaction(
     };
   }
 
-  return db.transaction(async (tx) => {
+  if (gateways.forTransaction(found.provider) === null) {
+    return {
+      ok: false,
+      errors: [
+        {
+          field: "id",
+          code: "INVALID",
+          message: "The transaction's payment provider is not available to refund it.",
+        },
+      ],
+    };
+  }
+
+  const requested = await db.transaction(async (tx) => {
     const order = await lockOrder(tx, orderId);
     const transaction = (await lockOrderTransactions(tx, orderId)).find(
       (row) => row.id === found.id,
     );
     if (!order || !transaction) throw new Error(`transaction ${found.id} left its order`);
-    const refundable = netCharged(transaction);
+    const refundable = refundableAmount(transaction);
     if (refundable <= 0) {
       return {
-        ok: false,
+        ok: false as const,
         errors: [
-          { field: "id", code: "INVALID", message: "The transaction has nothing left to refund." },
+          {
+            field: "id",
+            code: "INVALID" as const,
+            message: "The transaction has nothing left to refund.",
+          },
         ],
       };
     }
     const amount = Math.min(input.amount ?? refundable, refundable);
-    const updated = await refundTransaction(tx, transaction, amount);
+    const { request } = await recordRefundRequest(tx, transaction, amount);
     await tx
       .update(schema.order)
       .set({ updatedAt: sql`now()` })
@@ -502,8 +526,17 @@ export async function refundOrderTransaction(
       currency: transaction.currency,
       transactionReference: transaction.pspReference || null,
     });
-    return { ok: true, transaction: updated };
+    return { ok: true as const, requestEventId: request.id };
   });
+  if (!requested.ok) return requested;
+
+  const { transaction } = await processRefundRequest(
+    db,
+    gateways,
+    found.id,
+    requested.requestEventId,
+  );
+  return { ok: true, transaction };
 }
 
 // ── Reads ────────────────────────────────────────────────────────────────────────────────────

@@ -96,4 +96,22 @@ describe("validateConfig", () => {
       'ALLOWED_CLIENT_HOSTS must not contain "*" in production',
     ]);
   });
+
+  it("keeps the dummy payment gateway out of production (ADR-0016)", () => {
+    expect(validateConfig("api", { ...DEV, PAYMENT_GATEWAYS: "dummy" })).toEqual([]);
+    expect(validateConfig("api", { ...PRODUCTION, PAYMENT_GATEWAYS: "dummy" })).toEqual([
+      'PAYMENT_GATEWAYS must not enable "dummy" in production (it marks orders as paid without ' +
+        "taking money); set ALLOW_DUMMY_GATEWAY=true only for a demo",
+    ]);
+    expect(
+      validateConfig("api", {
+        ...PRODUCTION,
+        PAYMENT_GATEWAYS: "dummy",
+        ALLOW_DUMMY_GATEWAY: "true",
+      }),
+    ).toEqual([]);
+    expect(validateConfig("api", { ...DEV, PAYMENT_GATEWAYS: "dummy, stripe" })).toEqual([
+      'PAYMENT_GATEWAYS: unknown gateway "stripe" (allowed: dummy)',
+    ]);
+  });
 });

@@ -4,6 +4,8 @@ import { createApp } from "../src/app.ts";
 import type { ServerContext } from "../src/clientIp.ts";
 import type { AuthorizationFilter } from "../src/graphql/permissions.ts";
 import { createSession, type Permission } from "../src/modules/identity/index.ts";
+import type { GatewayRegistry } from "../src/modules/payments/index.ts";
+import { testGateways } from "./payments.ts";
 
 // Shared helpers for GraphQL contract tests: requests go through the real app (Yoga, context,
 // CORS, error masking) against the real test database.
@@ -33,8 +35,8 @@ export function clientAt(ip: string = randomIp()): ServerContext {
 const randomIp = () =>
   `10.${Array.from({ length: 3 }, () => Math.floor(Math.random() * 256)).join(".")}`;
 
-export function createTestClient(db: Db) {
-  const app = createApp(db, { allowedOrigins: ["http://localhost:5173"] });
+export function createTestClient(db: Db, gateways: GatewayRegistry = testGateways()) {
+  const app = createApp(db, { allowedOrigins: ["http://localhost:5173"], gateways });
 
   /** POST a GraphQL document, authenticated with `token` as a Bearer token when given. */
   async function gql(query: string, variables: object = {}, token?: string): Promise<GqlResult> {

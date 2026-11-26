@@ -1,6 +1,7 @@
 import { closeDb, getDb, schema } from "@commerce/db";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createStaff, createTestClient, expectPermissionDenied } from "../../../test/graphql.ts";
+import { testGateways } from "../../../test/payments.ts";
 import { toGlobalId } from "../../graphql/globalId.ts";
 import {
   completeCheckout,
@@ -74,7 +75,7 @@ async function placeOrder() {
   await updateCheckoutAddress(db, id, "SHIPPING", address);
   await updateCheckoutAddress(db, id, "BILLING", address);
   await updateCheckoutDeliveryMethod(db, id, method.shippingMethod.id);
-  await initializeCheckoutTransaction(db, id, { gatewayId: DUMMY_GATEWAY_ID });
+  await initializeCheckoutTransaction(db, testGateways(), id, { gatewayId: DUMMY_GATEWAY_ID });
   const result = await completeCheckout(db, id);
   if (!result.ok) throw new Error("not placed");
   const [line] = await getOrderLinesByOrderIds(db, [result.order.id]);
@@ -233,6 +234,7 @@ describe("order lifecycle mutations", () => {
         refundedAmount: { amount: 1000 },
         actions: ["REFUND"],
         events: [
+          { type: "CHARGE_REQUEST", amount: { amount: 2500 } },
           { type: "CHARGE_SUCCESS", amount: { amount: 2500 } },
           { type: "REFUND_REQUEST", amount: { amount: 1000 } },
           { type: "REFUND_SUCCESS", amount: { amount: 1000 } },

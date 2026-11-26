@@ -1,7 +1,9 @@
 import { closeDb, getDb, schema } from "@commerce/db";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createTestClient, type GqlResult } from "../../../test/graphql.ts";
+import { testGateways } from "../../../test/payments.ts";
 import { toGlobalId } from "../../graphql/globalId.ts";
+import { createFakeGateway, FAKE_GATEWAY_ID } from "../payments/index.ts";
 
 // transactionInitialize and the checkout's payment fields through the app, anonymously (M5.3).
 const db = getDb();
@@ -59,7 +61,7 @@ type InitializeData = {
   } | null;
   transactionEvent: { type: string } | null;
   data: unknown;
-  errors: { field: string | null; code: string }[];
+  errors: { field: string | null; code: string; message?: string }[];
 };
 
 function initialized(result: GqlResult): InitializeData {
@@ -85,7 +87,10 @@ describe("transactionInitialize", () => {
       transaction: {
         name: "Dummy payment",
         chargedAmount: { amount: 500 },
-        events: [{ type: "CHARGE_SUCCESS", amount: { amount: 500 } }],
+        events: [
+          { type: "CHARGE_REQUEST", amount: { amount: 500 } },
+          { type: "CHARGE_SUCCESS", amount: { amount: 500 } },
+        ],
       },
       transactionEvent: { type: "CHARGE_SUCCESS" },
       data: null,
@@ -157,5 +162,78 @@ describe("transactionInitialize", () => {
     expect(result.body.errors?.[0]?.message).toBe(
       `Could not resolve to a node with the global id list of '${JSON.stringify([unknown])}'.`,
     );
+  });
+});
+
+describe("transactionInitialize with a redirect gateway (ADR-0016)", () => {
+  const fake = createFakeGateway();
+  const redirectClient = createTestClient(db, testGateways(fake));
+  const REDIRECT = `mutation($id: ID!, $gateway: PaymentGatewayToInitialize!, $key: String) {
+    transactionInitialize(id: $id, paymentGateway: $gateway, idempotencyKey: $key) {
+      transaction { id pspReference externalUrl chargedAmount { amount } chargePendingAmount { amount } }
+      transactionEvent { type externalUrl }
+      data
+      errors { field code message }
+    }
+  }`;
+  const redirect = (data?: unknown) => ({ id: FAKE_GATEWAY_ID, data });
+
+  it("returns the gateway's page in `data` and leaves the checkout unpaid until it settles", async () => {
+    const result = initialized(
+      await redirectClient.gql(REDIRECT, {
+        id: checkoutId,
+        gateway: redirect({ returnUrl: "http://localhost:3000/checkout/return" }),
+      }),
+    ) as unknown as {
+      transaction: {
+        externalUrl: string;
+        chargedAmount: { amount: number };
+        chargePendingAmount: { amount: number };
+      };
+      transactionEvent: { type: string; externalUrl: string };
+      data: { url: string };
+    };
+    expect(result.transactionEvent.type).toBe("CHARGE_ACTION_REQUIRED");
+    expect(result.data.url).toMatch(/^https:\/\/pay\.example\.test\//);
+    expect(result.transaction).toMatchObject({
+      externalUrl: result.data.url,
+      chargedAmount: { amount: 0 },
+      chargePendingAmount: { amount: 2000 },
+    });
+    expect(fake.calls.at(-1)).toMatchObject({
+      method: "initialize",
+      input: { amount: 2000, returnUrl: "http://localhost:3000/checkout/return" },
+    });
+    const status = await redirectClient.gql(STATUS, { id: checkoutId });
+    expect(status.body.data?.checkout).toMatchObject({ chargeStatus: "NONE" });
+  });
+
+  it("refuses a return URL on a host that isn't allowed", async () => {
+    const result = initialized(
+      await redirectClient.gql(REDIRECT, {
+        id: checkoutId,
+        gateway: redirect({ returnUrl: "https://evil.example/steal" }),
+      }),
+    );
+    expect(result).toMatchObject({
+      transaction: null,
+      errors: [{ field: "paymentGateway", code: "INVALID" }],
+    });
+    expect(result.errors[0]?.message).toMatch(/evil\.example is not allowed/);
+  });
+
+  it("is NOT_FOUND where the gateway isn't enabled", async () => {
+    const result = initialized(await client.gql(REDIRECT, { id: checkoutId, gateway: redirect() }));
+    expect(result).toMatchObject({ errors: [{ field: "paymentGateway", code: "NOT_FOUND" }] });
+  });
+
+  it("cancels the earlier unpaid attempt when the shopper starts another", async () => {
+    const first = initialized(
+      await redirectClient.gql(REDIRECT, { id: checkoutId, gateway: redirect(), key: "a" }),
+    ) as unknown as { transaction: { pspReference: string } };
+    initialized(
+      await redirectClient.gql(REDIRECT, { id: checkoutId, gateway: redirect(), key: "b" }),
+    );
+    expect(fake.calls).toContainEqual({ method: "cancel", input: first.transaction.pspReference });
   });
 });

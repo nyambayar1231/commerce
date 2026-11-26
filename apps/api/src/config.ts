@@ -1,5 +1,6 @@
 import { readSecretKey } from "./modules/identity/index.ts";
 import { readEmailConfig } from "./modules/jobs/index.ts";
+import { readPaymentGatewayNames } from "./modules/payments/index.ts";
 import { readStorageConfig } from "./storage/index.ts";
 
 // Startup configuration check (PLAN M9.1, decision 6). Each module keeps its own reader (they are
@@ -59,6 +60,7 @@ export function validateConfig(role: ProcessRole, env: Env = process.env): strin
     const port = env.PORT;
     if (port !== undefined && !/^\d+$/.test(port)) problems.push("PORT must be a number");
     check(problems, () => readStorageConfig(env));
+    check(problems, () => readPaymentGatewayNames(env));
     if (env.TRUST_PROXY !== undefined && !["true", "false"].includes(env.TRUST_PROXY)) {
       problems.push('TRUST_PROXY must be "true" or "false"');
     }

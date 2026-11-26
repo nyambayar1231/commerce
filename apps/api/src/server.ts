@@ -4,6 +4,7 @@ import { createApp } from "./app.ts";
 import { assertConfig } from "./config.ts";
 import { logger } from "./logger.ts";
 import { stopJobQueue } from "./modules/jobs/index.ts";
+import { gatewayRegistryFromEnv } from "./modules/payments/index.ts";
 
 // Fail at start with every configuration problem listed (PLAN M9.1).
 assertConfig("api");
@@ -18,7 +19,9 @@ const allowedOrigins = (process.env.ALLOWED_GRAPHQL_ORIGINS ?? "http://localhost
 // Behind our own reverse proxy (docker-compose.prod.yml's nginx), the client IP is the last
 // X-Forwarded-For entry; directly exposed, it is the socket's (PLAN M9.3).
 const trustProxy = process.env.TRUST_PROXY === "true";
-const server = createServer(createApp(getDb(), { allowedOrigins, trustProxy }));
+// The payment gateways that may start payments (PAYMENT_GATEWAYS, ADR-0016); checked at start.
+const gateways = gatewayRegistryFromEnv();
+const server = createServer(createApp(getDb(), { allowedOrigins, trustProxy, gateways }));
 
 server.listen(port, () => {
   logger.info({ port }, `GraphQL API on http://localhost:${port}/graphql`);

@@ -7,6 +7,7 @@ import { clientIpOf, type ServerContext } from "./clientIp.ts";
 import { type Context, createContext } from "./graphql/context.ts";
 import { schema } from "./graphql/schema.ts";
 import { logger } from "./logger.ts";
+import { createGatewayRegistry, type GatewayRegistry } from "./modules/payments/index.ts";
 import { thumbnailRoute } from "./thumbnailRoute.ts";
 
 // The GraphQL app as a request handler, with no HTTP server attached. server.ts serves it over
@@ -28,9 +29,17 @@ import { thumbnailRoute } from "./thumbnailRoute.ts";
 //
 // `trustProxy`: behind our own reverse proxy, the client IP comes from X-Forwarded-For
 // (clientIp.ts).
-export type AppOptions = { allowedOrigins: string[]; trustProxy?: boolean };
+export type AppOptions = {
+  allowedOrigins: string[];
+  trustProxy?: boolean;
+  /** The payment gateways (ADR-0016). Default: none may start payments (refunds still work). */
+  gateways?: GatewayRegistry;
+};
 
-export function createApp(db: Db, { allowedOrigins, trustProxy = false }: AppOptions) {
+export function createApp(
+  db: Db,
+  { allowedOrigins, trustProxy = false, gateways = createGatewayRegistry([]) }: AppOptions,
+) {
   // Explicit origins only. (whatwg-node's own list handling treats [] as "allow all" and echoes a
   // single listed origin to every caller, so the check below is done here instead.)
   if (allowedOrigins.length === 0 || allowedOrigins.includes("*")) {
@@ -52,6 +61,7 @@ export function createApp(db: Db, { allowedOrigins, trustProxy = false }: AppOpt
       cookiesByRequest.set(request, cookies);
       return {
         ...(await createContext(db, request)),
+        gateways,
         clientIp: clientIpOf(request, req, trustProxy),
         setCookie: (c) => cookies.push(c),
       };

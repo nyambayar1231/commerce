@@ -1,6 +1,7 @@
 import { closeDb, getDb, schema } from "@commerce/db";
-import { eq, sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
+import { testGateways } from "../../../test/payments.ts";
 import {
   completeCheckout,
   createCheckout,
@@ -10,7 +11,14 @@ import {
   updateCheckoutDeliveryMethod,
 } from "../checkout/index.ts";
 import { updateVariantStocks } from "../inventory/index.ts";
-import { DUMMY_GATEWAY_ID, getTransactionsByOrderIds } from "../payments/index.ts";
+import {
+  createGatewayRegistry,
+  DUMMY_GATEWAY_ID,
+  dummyGateway,
+  GatewayUnavailableError,
+  getTransactionsByOrderIds,
+  type PaymentGateway,
+} from "../payments/index.ts";
 import {
   cancelOrder,
   fulfillOrder,
@@ -93,7 +101,9 @@ async function placeOrder(lines: { variantId: string; quantity: number }[]) {
   await updateCheckoutAddress(db, id, "SHIPPING", ADDRESS);
   await updateCheckoutAddress(db, id, "BILLING", ADDRESS);
   await updateCheckoutDeliveryMethod(db, id, shippingMethodId);
-  const paid = await initializeCheckoutTransaction(db, id, { gatewayId: DUMMY_GATEWAY_ID });
+  const paid = await initializeCheckoutTransaction(db, testGateways(), id, {
+    gatewayId: DUMMY_GATEWAY_ID,
+  });
   if (!paid.ok) throw new Error(JSON.stringify(paid.errors));
   const result = await completeCheckout(db, id);
   if (!result.ok) throw new Error(JSON.stringify(result.errors));
@@ -325,12 +335,68 @@ describe("cancelOrder", () => {
 });
 
 describe("refundOrderTransaction", () => {
+  /** The dummy gateway, but its refunds answer `refund` (a gateway like Wire, ADR-0016 §8). */
+  const refundingWith = (refund: PaymentGateway["refund"]) =>
+    createGatewayRegistry([], [{ ...dummyGateway, refund }]);
+
+  it("keeps a refund the gateway hasn't finished reserved, so the next one can't exceed the charge", async () => {
+    const boots = await seedVariant(1000, 5);
+    const { order } = await placeOrder([{ variantId: boots.id, quantity: 2 }]);
+    const [transaction] = await getTransactionsByOrderIds(db, [order.id]);
+    const gateways = refundingWith(async () => ({
+      status: "manual_required",
+      refundReference: "re_1",
+      message: "",
+    }));
+
+    const first = await refundOrderTransaction(db, gateways, {
+      transactionId: transaction?.id ?? "",
+      amount: 2000,
+      userId: staffId,
+    });
+    expect(first).toMatchObject({
+      ok: true,
+      transaction: { chargedAmount: 2500, refundedAmount: 0, refundPendingAmount: 2000 },
+    });
+    // Only 500 is left to refund; asking for more is capped (Saleor's min()).
+    const second = await refundOrderTransaction(db, gateways, {
+      transactionId: transaction?.id ?? "",
+      amount: null,
+      userId: staffId,
+    });
+    expect(second).toMatchObject({ ok: true, transaction: { refundPendingAmount: 2500 } });
+    const third = await refundOrderTransaction(db, gateways, {
+      transactionId: transaction?.id ?? "",
+      amount: null,
+      userId: staffId,
+    });
+    expect(third).toMatchObject({ ok: false, errors: [{ code: "INVALID" }] });
+  });
+
+  it("keeps the request when the gateway can't be reached", async () => {
+    const boots = await seedVariant(1000, 5);
+    const { order } = await placeOrder([{ variantId: boots.id, quantity: 1 }]);
+    const [transaction] = await getTransactionsByOrderIds(db, [order.id]);
+    const gateways = refundingWith(async () => {
+      throw new GatewayUnavailableError("test", "timed out");
+    });
+    const result = await refundOrderTransaction(db, gateways, {
+      transactionId: transaction?.id ?? "",
+      amount: null,
+      userId: staffId,
+    });
+    expect(result).toMatchObject({
+      ok: true,
+      transaction: { refundedAmount: 0, refundPendingAmount: 1500 },
+    });
+  });
+
   it("refunds the whole charge by default, records both events and the order event", async () => {
     const boots = await seedVariant(1000, 5);
     const { order } = await placeOrder([{ variantId: boots.id, quantity: 2 }]);
     const [transaction] = await getTransactionsByOrderIds(db, [order.id]);
 
-    const result = await refundOrderTransaction(db, {
+    const result = await refundOrderTransaction(db, testGateways(), {
       transactionId: transaction?.id ?? "",
       amount: null,
       userId: staffId,
@@ -342,8 +408,10 @@ describe("refundOrderTransaction", () => {
     const paymentEvents = await db
       .select()
       .from(schema.paymentEvent)
-      .where(eq(schema.paymentEvent.transactionId, transaction?.id ?? ""));
+      .where(eq(schema.paymentEvent.transactionId, transaction?.id ?? ""))
+      .orderBy(asc(schema.paymentEvent.createdAt), asc(schema.paymentEvent.id));
     expect(paymentEvents.map((event) => [event.type, event.amount])).toEqual([
+      ["CHARGE_REQUEST", 2500],
       ["CHARGE_SUCCESS", 2500],
       ["REFUND_REQUEST", 2500],
       ["REFUND_SUCCESS", 2500],
@@ -361,7 +429,11 @@ describe("refundOrderTransaction", () => {
     const { order } = await placeOrder([{ variantId: boots.id, quantity: 2 }]);
     const [transaction] = await getTransactionsByOrderIds(db, [order.id]);
     const refund = (amount: number | null) =>
-      refundOrderTransaction(db, { transactionId: transaction?.id ?? "", amount, userId: staffId });
+      refundOrderTransaction(db, testGateways(), {
+        transactionId: transaction?.id ?? "",
+        amount,
+        userId: staffId,
+      });
 
     expect(await refund(1000)).toMatchObject({ ok: true, transaction: { refundedAmount: 1000 } });
     expect(await refund(9999)).toMatchObject({ ok: true, transaction: { refundedAmount: 2500 } });
@@ -379,20 +451,20 @@ describe("refundOrderTransaction", () => {
       email: "buyer@example.com",
     });
     if (!created.ok) throw new Error("no checkout");
-    const paid = await initializeCheckoutTransaction(db, created.checkout.id, {
+    const paid = await initializeCheckoutTransaction(db, testGateways(), created.checkout.id, {
       gatewayId: DUMMY_GATEWAY_ID,
     });
     if (!paid.ok) throw new Error("not paid");
 
     expect(
-      await refundOrderTransaction(db, {
+      await refundOrderTransaction(db, testGateways(), {
         transactionId: crypto.randomUUID(),
         amount: null,
         userId: staffId,
       }),
     ).toMatchObject({ errors: [{ code: "NOT_FOUND" }] });
     expect(
-      await refundOrderTransaction(db, {
+      await refundOrderTransaction(db, testGateways(), {
         transactionId: paid.transaction.id,
         amount: null,
         userId: staffId,
@@ -416,7 +488,7 @@ describe("markOrderAsPaid", () => {
     const boots = await seedVariant(1000, 5);
     const { order } = await placeOrder([{ variantId: boots.id, quantity: 2 }]);
     const [transaction] = await getTransactionsByOrderIds(db, [order.id]);
-    await refundOrderTransaction(db, {
+    await refundOrderTransaction(db, testGateways(), {
       transactionId: transaction?.id ?? "",
       amount: 1000,
       userId: staffId,
@@ -506,7 +578,7 @@ describe("order actions under concurrency", () => {
 
     const results = await Promise.all(
       Array.from({ length: 5 }, () =>
-        refundOrderTransaction(db, {
+        refundOrderTransaction(db, testGateways(), {
           transactionId: transaction?.id ?? "",
           amount: 1000,
           userId: staffId,
@@ -535,7 +607,9 @@ describe("order actions under concurrency", () => {
         await updateCheckoutAddress(db, id, "SHIPPING", ADDRESS);
         await updateCheckoutAddress(db, id, "BILLING", ADDRESS);
         await updateCheckoutDeliveryMethod(db, id, shippingMethodId);
-        await initializeCheckoutTransaction(db, id, { gatewayId: DUMMY_GATEWAY_ID });
+        await initializeCheckoutTransaction(db, testGateways(), id, {
+          gatewayId: DUMMY_GATEWAY_ID,
+        });
         return id;
       }),
     );

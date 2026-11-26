@@ -232,6 +232,13 @@
       "when": 1795489777249,
       "tag": "0032_menus",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1795696042367,
+      "tag": "0033_payment_gateways",
+      "breakpoints": true
     }
   ]
 }

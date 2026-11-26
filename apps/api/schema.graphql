@@ -4573,7 +4573,7 @@ enum TransactionInitializeErrorCode {
 """Represents a payment transaction."""
 type TransactionItem implements Node {
   """
-  List of actions that can be requested for the transaction. Our gateways support REFUND while a charged amount is left.
+  List of actions that can be requested for the transaction. Our gateways support REFUND while a charged amount is left that no refund in flight has reserved.
   """
   actions: [TransactionActionEnum!]!
 
