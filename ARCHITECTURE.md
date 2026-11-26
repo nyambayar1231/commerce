@@ -910,7 +910,7 @@ in M4.10 if Search Console reports soft 404s.
   pages never show stack traces or API messages.
 - **Deployment** (M4.12): `output: "standalone"` image (`Dockerfile` target `storefront`, built for
   the instance's arm64), a `storefront` Compose service on the existing t4g.small with a memory
-  limit, a Caddy site block for `dino-craft.lol` (and `www.` redirecting to it), Route 53 records,
+  limit, a Caddy site block for `dino-craft.lol` (and `www.` redirecting to it), DNS records at Porkbun,
   `dino-craft.lol` added to the API's `ALLOWED_CLIENT_HOSTS`, and the deploy workflow shipping the
   image. One instance: the in-process cache is enough.
 

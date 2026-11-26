@@ -9,7 +9,8 @@
 #
 # Steps: back up the database, load the commit's images (uploaded by the workflow to
 # s3://<artifacts-bucket>/images/<commit>.tar.gz), run the migrations, restart the stack, then
-# check that the API is healthy and that the dashboard and GraphQL answer through nginx. Any
+# check that the API is healthy and that the dashboard and GraphQL answer through nginx (and, when
+# the server has a .env.storefront, that the storefront is healthy). Any
 # failure exits non-zero, which turns the workflow red. By hand (docs/deploy.md), the same command.
 set -euo pipefail
 
@@ -32,6 +33,12 @@ if [ "$head" != "$commit" ]; then
 fi
 
 compose=(docker compose --env-file .env.prod -f docker-compose.prod.yml --profile https)
+# The storefront runs only on a server set up for it (docs/deploy.md, "Storefront").
+storefront=""
+if [ -f .env.storefront ]; then
+  storefront=yes
+  compose+=(--profile storefront)
+fi
 
 echo "== backup"
 sudo -u ubuntu env -i HOME=/home/ubuntu PATH=/usr/bin:/bin \
@@ -45,6 +52,9 @@ echo "== migrations"
 
 echo "== start"
 "${compose[@]}" up -d --no-build --remove-orphans
+# The Caddyfile may have changed with this commit: Caddy validates and applies it without
+# dropping connections (a broken file keeps the running config and fails the release).
+"${compose[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
 
 echo "== health"
 public_url="$(grep -E '^PUBLIC_URL=' .env.prod | cut -d= -f2-)"
@@ -65,6 +75,24 @@ if [ -z "$healthy" ]; then
   echo "the stack did not become healthy" >&2
   "${compose[@]}" logs --tail 30 api >&2
   exit 1
+fi
+
+if [ -n "$storefront" ]; then
+  echo "== storefront"
+  sf_healthy=""
+  for _ in $(seq 1 30); do
+    if [ "$(docker inspect -f '{{.State.Health.Status}}' "$("${compose[@]}" ps -q storefront)" 2>/dev/null)" = healthy ]; then
+      sf_healthy=yes
+      break
+    fi
+    sleep 3
+  done
+  if [ -z "$sf_healthy" ]; then
+    echo "the storefront did not become healthy" >&2
+    "${compose[@]}" logs --tail 30 storefront >&2
+    exit 1
+  fi
+  echo "storefront: healthy"
 fi
 
 echo "== released $commit"

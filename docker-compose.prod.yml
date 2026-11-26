@@ -97,6 +97,21 @@ services:
       api: { condition: service_healthy }
     restart: unless-stopped
 
+  # The storefront (PLAN M4.12): only with the `storefront` profile, which release.sh turns on when
+  # the server has a .env.storefront. Its own env file: it never sees .env.prod's secrets. No
+  # published port; Caddy reaches it as storefront:3000. See docs/deploy.md.
+  storefront:
+    image: commerce-storefront
+    build: { context: ., target: storefront }
+    profiles: [storefront]
+    env_file: .env.storefront
+    environment:
+      NODE_OPTIONS: --max-old-space-size=384
+    mem_limit: 512m
+    depends_on:
+      api: { condition: service_healthy }
+    restart: unless-stopped
+
   # The HTTPS edge (PLAN M10.3): a Let's Encrypt certificate for SITE_DOMAIN, kept in caddy-data.
   caddy:
     image: caddy:2.10.2-alpine
@@ -107,7 +122,9 @@ services:
       - "${HTTPS_PORT:-443}:443"
       - "${HTTPS_PORT:-443}:443/udp"
     volumes:
-      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # The directory, not the file: a release's git checkout replaces the Caddyfile, and a
+      # single-file bind mount would keep showing the old one (release.sh reloads Caddy).
+      - ./infra/caddy:/etc/caddy:ro
       - caddy-data:/data
       - caddy-config:/config
     depends_on:

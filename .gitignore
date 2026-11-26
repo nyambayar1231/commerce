@@ -9,6 +9,7 @@ coverage/
 .env.*
 !.env.example
 !.env.prod.example
+!.env.storefront.example
 .DS_Store
 
 # AI team runtime files (docs/ai-workflow) and per-user model choice

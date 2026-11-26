@@ -32,3 +32,22 @@
 		reverse_proxy web:80
 	}
 }
+
+# The storefront (PLAN M4.12). With STOREFRONT_DOMAIN unset Caddy serves a local name with its
+# internal CA (no ACME, no error), so this block can never break the admin site above. The
+# storefront sets its own security headers. Caddy sets X-Forwarded-For itself, so the storefront
+# runs with TRUST_PROXY=true (.env.storefront.example).
+{$STOREFRONT_DOMAIN:storefront.localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	reverse_proxy storefront:3000
+}
+
+www.{$STOREFRONT_DOMAIN:storefront.localhost} {
+	redir https://{$STOREFRONT_DOMAIN:storefront.localhost}{uri} permanent
+}

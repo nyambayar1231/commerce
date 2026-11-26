@@ -57,6 +57,7 @@ jobs:
         run: |
           docker build --target api -t commerce-api .
           docker build --target web -t commerce-web .
+          docker build --target storefront -t commerce-storefront .
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -65,7 +66,7 @@ jobs:
 
       - name: Upload the images
         run: |
-          docker save commerce-api commerce-web | gzip -1 \
+          docker save commerce-api commerce-web commerce-storefront | gzip -1 \
             | aws s3 cp - "s3://${{ vars.ARTIFACTS_BUCKET }}/images/${{ steps.commit.outputs.sha }}.tar.gz" --only-show-errors
 
       - name: Release on the server

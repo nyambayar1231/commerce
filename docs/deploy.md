@@ -265,7 +265,8 @@ the same command on the server as root through Session Manager:
 sha=$(git rev-parse HEAD)
 docker build --platform linux/arm64 --target api -t commerce-api .
 docker build --platform linux/arm64 --target web -t commerce-web .
-docker save commerce-api commerce-web | gzip -1 \
+docker build --platform linux/arm64 --target storefront -t commerce-storefront .
+docker save commerce-api commerce-web commerce-storefront | gzip -1 \
   | aws s3 cp - s3://<artifacts bucket>/images/$sha.tar.gz --profile commerce
 
 # on the server
@@ -275,6 +276,29 @@ cd /home/ubuntu/commerce && sudo -u ubuntu git fetch -q origin \
 ```
 
 The server's checkout is a detached commit, not the `main` branch.
+
+### Storefront (dino-craft.lol)
+
+The storefront (`apps/storefront`) runs as the `storefront` Compose service behind the same Caddy:
+`dino-craft.lol` serves it and `www.dino-craft.lol` redirects there. Every release builds and
+ships its image, but `release.sh` starts it only when `/home/ubuntu/commerce/.env.storefront`
+exists, so a server that is not set up for it is released exactly as before. Order of operations:
+
+1. **Owner, Porkbun DNS:** `dino-craft.lol` A → the Elastic IP (54.180.205.134), `www` CNAME →
+   `dino-craft.lol`; remove Porkbun's parking records.
+2. **Lead, on the server:** create `.env.storefront` (mode 600, owner `ubuntu`) from
+   `.env.storefront.example`; in `.env.prod` set `STOREFRONT_DOMAIN=dino-craft.lol` (Caddy reads
+   it) and add `dino-craft.lol` to `ALLOWED_CLIENT_HOSTS`. Caddy runs with the storefront block
+   even before this (a local name, no certificate request), so nothing breaks in between.
+3. **Release:** the next push to `main` starts it, or run `release.sh` by hand (*Releasing a new
+   version*). The script waits for the storefront container to be healthy and prints its log tail
+   if it is not.
+4. **Check:** `https://dino-craft.lol/api/health`, `https://www.dino-craft.lol` redirects to
+   `https://dino-craft.lol`, and a product page renders.
+
+`TRUST_PROXY=true` is right here: Caddy sets `X-Forwarded-For` itself. **Payments:** see
+"Payments: Wire". The storefront shows no payment method until `PAYMENT_PROVIDERS=wire` is set in
+`.env.storefront`, after Wire is configured and the API has `PAYMENT_GATEWAYS=wire`.
 
 ### Backups on the server
 
