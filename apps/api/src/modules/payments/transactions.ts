@@ -365,7 +365,7 @@ export type ApplyStatusResult = {
  * - succeeded → CHARGE_SUCCESS with the amount the gateway reports (a different amount than asked
  *   is still money received: recorded as it is and logged; the checkout's status shows the gap);
  * - failed → CHARGE_FAILURE, canceled → CANCEL_SUCCESS (the pending amount is released);
- * - pending → CHARGE_PENDING once; action_required → nothing yet.
+ * - pending → an INFO event once ("being processed"); action_required → nothing yet.
  * A payment that succeeds after we recorded a failure (paid on a page we tried to cancel) is
  * still recorded as charged: the money is real.
  */
@@ -431,16 +431,17 @@ export async function applyGatewayStatus(
       });
       return { transaction: updated, changed: true };
     }
-    if (
-      status.status === "pending" &&
-      !has("CHARGE_PENDING") &&
-      transaction.chargePendingAmount > 0
-    ) {
+    const processing = events.some(
+      (event) => event.type === "INFO" && event.requestEventId === request.id,
+    );
+    if (status.status === "pending" && !processing && transaction.chargePendingAmount > 0) {
       await insertEvent(tx, {
         ...base,
-        type: "CHARGE_PENDING",
+        type: "INFO",
         amount: transaction.chargePendingAmount,
         pspReference: transaction.pspReference,
+        message: "The payment is being processed by the payment provider.",
+        requestEventId: request.id,
       });
       return { transaction, changed: true };
     }
@@ -710,7 +711,8 @@ const MANUAL_REFUND_MESSAGE = "The refund is completed manually by the payment p
 /**
  * Phase 3 of a refund: records the gateway's answer to `requestEventId` once (a second call is a
  * no-op). Succeeded moves the amount from pending to refunded; failed releases it; pending and
- * manual_required keep it reserved (REFUND_PENDING, recorded once) until a later answer settles it.
+ * manual_required keep it reserved (an INFO event on the request, recorded once — Saleor has no
+ * pending event type) until a later answer settles it.
  */
 export async function recordRefundOutcome(
   db: Executor,
@@ -761,11 +763,10 @@ export async function recordRefundOutcome(
       });
       return { transaction: updated, event };
     }
-    if (answers.some((event) => event.type === "REFUND_PENDING"))
-      return { transaction, event: null };
+    if (answers.some((event) => event.type === "INFO")) return { transaction, event: null };
     const event = await insertEvent(tx, {
       ...base,
-      type: "REFUND_PENDING",
+      type: "INFO",
       amount: request.amount,
       message: result.status === "manual_required" ? MANUAL_REFUND_MESSAGE : result.message,
     });

@@ -4,7 +4,7 @@ import { createApp } from "./app.ts";
 import { assertConfig } from "./config.ts";
 import { logger } from "./logger.ts";
 import { stopJobQueue } from "./modules/jobs/index.ts";
-import { gatewayRegistryFromEnv } from "./modules/payments/index.ts";
+import { gatewayRegistryFromEnv, readWireConfig } from "./modules/payments/index.ts";
 
 // Fail at start with every configuration problem listed (PLAN M9.1).
 assertConfig("api");
@@ -21,7 +21,10 @@ const allowedOrigins = (process.env.ALLOWED_GRAPHQL_ORIGINS ?? "http://localhost
 const trustProxy = process.env.TRUST_PROXY === "true";
 // The payment gateways that may start payments (PAYMENT_GATEWAYS, ADR-0016); checked at start.
 const gateways = gatewayRegistryFromEnv();
-const server = createServer(createApp(getDb(), { allowedOrigins, trustProxy, gateways }));
+const wireWebhookSecret = process.env.WIRE_API_KEY ? readWireConfig().webhookSecret : null;
+const server = createServer(
+  createApp(getDb(), { allowedOrigins, trustProxy, gateways, wireWebhookSecret }),
+);
 
 server.listen(port, () => {
   logger.info({ port }, `GraphQL API on http://localhost:${port}/graphql`);

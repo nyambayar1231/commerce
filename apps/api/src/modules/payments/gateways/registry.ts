@@ -1,5 +1,6 @@
 import { dummyGateway, manualGateway } from "./builtIn.ts";
 import type { PaymentGateway } from "./types.ts";
+import { createWireGateway, readWireConfig } from "./wire.ts";
 
 // Which gateways this process uses (ADR-0016 §1). Built once at start (server.ts, worker.ts) from
 // `PAYMENT_GATEWAYS` and passed to every domain function that talks to a gateway — never read
@@ -37,8 +38,8 @@ export function createGatewayRegistry(
   };
 }
 
-/** The names `PAYMENT_GATEWAYS` accepts. Wire is added in M16.3. */
-export const PAYMENT_GATEWAY_NAMES = ["dummy"] as const;
+/** The names `PAYMENT_GATEWAYS` accepts. */
+export const PAYMENT_GATEWAY_NAMES = ["dummy", "wire"] as const;
 export type PaymentGatewayName = (typeof PAYMENT_GATEWAY_NAMES)[number];
 
 /**
@@ -69,11 +70,24 @@ export function readPaymentGatewayNames(env: Env = process.env): PaymentGatewayN
         "taking money); set ALLOW_DUMMY_GATEWAY=true only for a demo",
     );
   }
-  return [...new Set(names)] as PaymentGatewayName[];
+  const unique = [...new Set(names)] as PaymentGatewayName[];
+  // A gateway's own settings are checked with it, so a deployment fails at start, not at payment.
+  if (unique.includes("wire")) readWireConfig(env);
+  return unique;
 }
 
-/** The registry for this process, from `PAYMENT_GATEWAYS`. */
+/**
+ * The registry for this process, from `PAYMENT_GATEWAYS`. Wire stays known for refunds and status
+ * reads while its key is configured, even when it no longer starts payments (switched off for a
+ * successor such as QPay direct, M16.6).
+ */
 export function gatewayRegistryFromEnv(env: Env = process.env): GatewayRegistry {
-  const byName: Record<PaymentGatewayName, PaymentGateway> = { dummy: dummyGateway };
-  return createGatewayRegistry(readPaymentGatewayNames(env).map((name) => byName[name]));
+  const names = readPaymentGatewayNames(env);
+  const wire =
+    names.includes("wire") || env.WIRE_API_KEY ? createWireGateway(readWireConfig(env)) : null;
+  const enabled = names.map((name) => (name === "wire" ? wire : dummyGateway));
+  return createGatewayRegistry(
+    enabled.filter((gateway): gateway is PaymentGateway => gateway !== null),
+    wire && !names.includes("wire") ? [wire] : [],
+  );
 }

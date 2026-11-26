@@ -108,3 +108,21 @@ coming back. Facts that constrain the design:
 - ARCHITECTURE §10.9 changes: `placeOrder` redirects to the gateway's `url`; a return page
   `/checkout/return?transaction=` polls the state and redirects to `/order/{token}` once the order
   exists.
+
+## Amendment (2026-11-26, M16.2–M16.3, lead; to be confirmed by the owner)
+Two corrections found while building it; neither changes a decision above in substance.
+1. **Saleor's event names.** §2 listed `CHARGE_PENDING` and `REFUND_PENDING`, which Saleor does
+   not have. As in Saleor, a request without its outcome *is* pending; a gateway's interim news
+   ("being processed", "completed by hand at the provider") is an `INFO` event linked to its
+   request (`payment_event.request_event_id`). Recorded types: `AUTHORIZATION_REQUEST`,
+   `AUTHORIZATION_ACTION_REQUIRED`, `CHARGE_REQUEST`, `CHARGE_ACTION_REQUIRED`, `REFUND_FAILURE`,
+   `CANCEL_SUCCESS`, `INFO` in addition to the earlier ones. Pending amounts live on the
+   transaction (Saleor's `chargePendingAmount`, `refundPendingAmount`). Migration 0034.
+2. **No events catch-up from Wire.** §6's hourly `GET /v1/events` read adds nothing: the
+   reconciliation job already re-reads every unfinished payment and refund at Wire every 2 minutes
+   (Wire's events carry no information the objects don't). Dropped; fewer moving parts.
+   Implementation facts confirmed against docs.wire.mn: amounts are whole tögrög; a refund is made
+   on the *charge* (`GET /v1/charges?payment_intent=` finds it); `Idempotency-Key` on every POST
+   (Wire replays a key's 2xx/402 answer for 48 h; `409 idempotency_in_flight` is retried); unknown
+   outcomes (network, 5xx, 408, 424, 429) are retried with the same key. Gateway id
+   `mn.wire.payment`.

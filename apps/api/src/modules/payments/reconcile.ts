@@ -130,7 +130,7 @@ export async function reconcilePayments(
   );
 
   // 4. Refunds the gateway accepted but hadn't finished (pending, or completed by hand at the
-  // provider): read them again where the gateway can tell.
+  // provider; recorded as an INFO answer): read them again where the gateway can tell.
   const pendingRefunds = await db
     .select({
       requestId: event.requestEventId,
@@ -142,7 +142,11 @@ export async function reconcilePayments(
     .innerJoin(tx, eq(tx.id, event.transactionId))
     .where(
       and(
-        eq(event.type, "REFUND_PENDING"),
+        // A refund the provider accepted but hadn't finished: an INFO answer to a REFUND_REQUEST.
+        eq(event.type, "INFO"),
+        ne(event.pspReference, ""),
+        sql`EXISTS (SELECT 1 FROM payment_event AS request
+          WHERE request.id = ${event.requestEventId} AND request.type = 'REFUND_REQUEST')`,
         sql`NOT EXISTS (SELECT 1 FROM payment_event AS answer
           WHERE answer.request_event_id = ${event.requestEventId}
             AND answer.type IN ('REFUND_SUCCESS', 'REFUND_FAILURE'))`,

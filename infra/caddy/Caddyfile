@@ -19,7 +19,7 @@
 		-Server
 	}
 
-	@api path /graphql /thumbnail/*
+	@api path /graphql /thumbnail/* /webhooks/wire
 	handle @api {
 		# Product image uploads are capped at 10 MiB by the API (nginx allows 11m, as here).
 		request_body {

@@ -9,6 +9,7 @@ import { schema } from "./graphql/schema.ts";
 import { logger } from "./logger.ts";
 import { createGatewayRegistry, type GatewayRegistry } from "./modules/payments/index.ts";
 import { thumbnailRoute } from "./thumbnailRoute.ts";
+import { webhookRoute } from "./webhookRoute.ts";
 
 // The GraphQL app as a request handler, with no HTTP server attached. server.ts serves it over
 // HTTP; tests (M0.2.7) will call it directly.
@@ -34,11 +35,18 @@ export type AppOptions = {
   trustProxy?: boolean;
   /** The payment gateways (ADR-0016). Default: none may start payments (refunds still work). */
   gateways?: GatewayRegistry;
+  /** Wire's webhook signing secret; null leaves `/webhooks/wire` unrouted. */
+  wireWebhookSecret?: string | null;
 };
 
 export function createApp(
   db: Db,
-  { allowedOrigins, trustProxy = false, gateways = createGatewayRegistry([]) }: AppOptions,
+  {
+    allowedOrigins,
+    trustProxy = false,
+    gateways = createGatewayRegistry([]),
+    wireWebhookSecret = null,
+  }: AppOptions,
 ) {
   // Explicit origins only. (whatwg-node's own list handling treats [] as "allow all" and echoes a
   // single listed origin to every caller, so the check below is done here instead.)
@@ -101,6 +109,8 @@ export function createApp(
       // The image endpoint (ADR-0014) is anonymous and answers before every GraphQL concern;
       // placing it before CSRF is what lets an image URL be used without the CSRF header.
       thumbnailRoute(db, trustProxy),
+      // Payment gateway notifications (ADR-0016): signed by the gateway, so before CSRF too.
+      webhookRoute(db, gateways, wireWebhookSecret),
       // CSRF: rejects requests a browser could send cross-site without a CORS preflight
       // (GET, or POST with a form/text content type) unless they carry this header.
       useCSRFPrevention({ requestHeaders: ["x-graphql-yoga-csrf"] }),

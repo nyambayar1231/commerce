@@ -11,6 +11,13 @@ export {
 } from "./gateways/registry.ts";
 export type { PaymentGateway } from "./gateways/types.ts";
 export { GatewayUnavailableError } from "./gateways/types.ts";
+export type { WireConfig, WireEvent } from "./gateways/wire.ts";
+export {
+  createWireGateway,
+  readWireConfig,
+  verifyWireWebhook,
+  WIRE_GATEWAY_ID,
+} from "./gateways/wire.ts";
 export { paidCheckoutQueue, RECONCILE_CRON, reconcilePaymentsQueue } from "./jobs.ts";
 export type { PaymentLoaders } from "./loaders.ts";
 export { createPaymentLoaders } from "./loaders.ts";
@@ -51,3 +58,5 @@ export {
   refundableAmount,
   transactionActions,
 } from "./transactions.ts";
+export type { WebhookResponse } from "./webhooks.ts";
+export { handleWireWebhook } from "./webhooks.ts";

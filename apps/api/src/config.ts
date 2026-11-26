@@ -1,7 +1,7 @@
 import { readStaffNotificationEmails } from "./modules/checkout/index.ts";
 import { readSecretKey } from "./modules/identity/index.ts";
 import { readEmailConfig } from "./modules/jobs/index.ts";
-import { readPaymentGatewayNames } from "./modules/payments/index.ts";
+import { readPaymentGatewayNames, readWireConfig } from "./modules/payments/index.ts";
 import { readStorageConfig } from "./storage/index.ts";
 
 // Startup configuration check (PLAN M9.1, decision 6). Each module keeps its own reader (they are
@@ -62,6 +62,8 @@ export function validateConfig(role: ProcessRole, env: Env = process.env): strin
     if (port !== undefined && !/^\d+$/.test(port)) problems.push("PORT must be a number");
     check(problems, () => readStorageConfig(env));
     check(problems, () => readPaymentGatewayNames(env));
+    // Wire's settings are checked whenever its key is there (refunds of earlier Wire payments).
+    if (env.WIRE_API_KEY) check(problems, () => readWireConfig(env));
     if (env.TRUST_PROXY !== undefined && !["true", "false"].includes(env.TRUST_PROXY)) {
       problems.push('TRUST_PROXY must be "true" or "false"');
     }
@@ -94,9 +96,10 @@ export function validateConfig(role: ProcessRole, env: Env = process.env): strin
     check(problems, () => readEmailConfig(env));
     check(problems, () => readPaymentGatewayNames(env));
     check(problems, () => readStaffNotificationEmails(env));
+    if (env.WIRE_API_KEY) check(problems, () => readWireConfig(env));
   }
 
-  return problems;
+  return [...new Set(problems)];
 }
 
 /** Validates the environment for `role`; on any problem prints them all and exits. */

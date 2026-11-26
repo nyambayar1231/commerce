@@ -146,7 +146,7 @@ describe("reconcilePayments", () => {
       refundedAmount: 2000,
       refundPendingAmount: 0,
     });
-    expect((await types(transaction.id)).slice(-2)).toEqual(["REFUND_PENDING", "REFUND_SUCCESS"]);
+    expect((await types(transaction.id)).slice(-2)).toEqual(["INFO", "REFUND_SUCCESS"]);
   });
 
   it("queues paid checkouts that have no order yet, and not refunded ones", async () => {

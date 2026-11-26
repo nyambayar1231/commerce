@@ -35,8 +35,16 @@ export function clientAt(ip: string = randomIp()): ServerContext {
 const randomIp = () =>
   `10.${Array.from({ length: 3 }, () => Math.floor(Math.random() * 256)).join(".")}`;
 
-export function createTestClient(db: Db, gateways: GatewayRegistry = testGateways()) {
-  const app = createApp(db, { allowedOrigins: ["http://localhost:5173"], gateways });
+export function createTestClient(
+  db: Db,
+  gateways: GatewayRegistry = testGateways(),
+  wireWebhookSecret: string | null = null,
+) {
+  const app = createApp(db, {
+    allowedOrigins: ["http://localhost:5173"],
+    gateways,
+    wireWebhookSecret,
+  });
 
   /** POST a GraphQL document, authenticated with `token` as a Bearer token when given. */
   async function gql(query: string, variables: object = {}, token?: string): Promise<GqlResult> {
@@ -55,7 +63,11 @@ export function createTestClient(db: Db, gateways: GatewayRegistry = testGateway
     return { response, body: (await response.json()) as GqlBody };
   }
 
-  return { gql };
+  /** A plain HTTP request to the app (e.g. a payment gateway's webhook). */
+  const fetchApp = (path: string, init?: RequestInit) =>
+    app.fetch(new Request(`http://test${path}`, init), clientAt());
+
+  return { gql, fetch: fetchApp };
 }
 
 /**

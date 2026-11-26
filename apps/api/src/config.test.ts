@@ -111,7 +111,7 @@ describe("validateConfig", () => {
       }),
     ).toEqual([]);
     expect(validateConfig("api", { ...DEV, PAYMENT_GATEWAYS: "dummy, stripe" })).toEqual([
-      'PAYMENT_GATEWAYS: unknown gateway "stripe" (allowed: dummy)',
+      'PAYMENT_GATEWAYS: unknown gateway "stripe" (allowed: dummy, wire)',
     ]);
   });
 });

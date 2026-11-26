@@ -84,8 +84,9 @@ export const paymentTransaction = pgTable(
 
 // Saleor's TransactionEventTypeEnum values our gateways can record: authorize/charge requests and
 // outcomes (a real gateway may first need the shopper: CHARGE_ACTION_REQUIRED, ADR-0016), the
-// manual mark-as-paid charge, refunds (REFUND_REQUEST, then SUCCESS, FAILURE or PENDING) and the
-// cancellation of an unpaid attempt.
+// manual mark-as-paid charge, refunds (REFUND_REQUEST, then SUCCESS or FAILURE), the cancellation
+// of an unpaid attempt, and INFO for a gateway's news in between (Saleor has no "pending" event
+// types: a request without its outcome is pending).
 export const PAYMENT_EVENT_TYPES = [
   "AUTHORIZATION_REQUEST",
   "AUTHORIZATION_ACTION_REQUIRED",
@@ -93,14 +94,13 @@ export const PAYMENT_EVENT_TYPES = [
   "AUTHORIZATION_FAILURE",
   "CHARGE_REQUEST",
   "CHARGE_ACTION_REQUIRED",
-  "CHARGE_PENDING",
   "CHARGE_SUCCESS",
   "CHARGE_FAILURE",
   "REFUND_REQUEST",
-  "REFUND_PENDING",
   "REFUND_SUCCESS",
   "REFUND_FAILURE",
   "CANCEL_SUCCESS",
+  "INFO",
 ] as const;
 
 export const paymentEvent = pgTable(
@@ -124,7 +124,7 @@ export const paymentEvent = pgTable(
   (table) => [
     check("payment_event_amount_not_negative", sql`${table.amount} >= 0`),
     // One settling outcome per request (a retried webhook or job can't settle it twice); a
-    // REFUND_PENDING may precede it.
+    // an INFO (e.g. "completed by hand at the provider") may precede it.
     uniqueIndex("payment_event_request_settled_unique")
       .on(table.requestEventId)
       .where(sql`${table.type} IN ('REFUND_SUCCESS', 'REFUND_FAILURE')`),

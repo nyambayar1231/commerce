@@ -244,7 +244,7 @@ describe("applyGatewayStatus", () => {
     fake.setStatus(transaction.pspReference, { status: "pending" });
     expect((await applyGatewayStatus(db, gateways, transaction.id)).changed).toBe(true);
     expect((await applyGatewayStatus(db, gateways, transaction.id)).changed).toBe(false);
-    expect(await types(transaction.id)).toContain("CHARGE_PENDING");
+    expect(await types(transaction.id)).toContain("INFO");
     expect((await reload(transaction.id)).chargePendingAmount).toBe(5000);
   });
 
@@ -374,7 +374,7 @@ describe("refunds", () => {
     expect(after).toMatchObject({ refundedAmount: 0, refundPendingAmount: 2000 });
     expect(refundableAmount(after)).toBe(3000);
     expect((await getEventsByTransactionIds(db, [transaction.id])).at(-1)).toMatchObject({
-      type: "REFUND_PENDING",
+      type: "INFO",
       message,
     });
   });
