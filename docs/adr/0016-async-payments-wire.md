@@ -109,7 +109,7 @@ coming back. Facts that constrain the design:
   `/checkout/return?transaction=` polls the state and redirects to `/order/{token}` once the order
   exists.
 
-## Amendment (2026-11-26, M16.2–M16.3, lead; to be confirmed by the owner)
+## Amendment (2026-11-26, M16.2–M16.3, lead; approved by the owner on 2026-11-26)
 Two corrections found while building it; neither changes a decision above in substance.
 1. **Saleor's event names.** §2 listed `CHARGE_PENDING` and `REFUND_PENDING`, which Saleor does
    not have. As in Saleor, a request without its outcome *is* pending; a gateway's interim news
