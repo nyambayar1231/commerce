@@ -616,3 +616,49 @@ describe("chooseDelivery", () => {
     ).toMatchObject({ message: "unavailable" });
   });
 });
+
+describe("placeOrder with a gateway the shopper pays on its own page (Wire, ADR-0016)", () => {
+  const WIRE_PAGE = "https://pay.wire.mn/c/cs_1";
+  const actionRequired = (url: string | null) =>
+    ok({
+      transactionInitialize: {
+        transaction: { id: "t1" },
+        transactionEvent: { type: "CHARGE_ACTION_REQUIRED" },
+        data: url === null ? null : { url },
+        errors: [],
+      },
+    });
+  const wireForm = () => paymentForm({ providerId: "wire" });
+
+  beforeEach(() => {
+    getEnv.mockReturnValue({
+      paymentProviders: ["wire"],
+      storefrontUrl: "https://dino-craft.lol",
+      production: true,
+    });
+  });
+
+  it("sends the shopper to Wire's page with the shop's return page, making no order yet", async () => {
+    answers({ ...happy, TransactionInitialize: actionRequired(WIRE_PAGE) });
+    expect(await place(wireForm())).toEqual({ redirect: WIRE_PAGE });
+    expect(calls("TransactionInitialize")[0]?.[1].variables).toMatchObject({
+      gatewayId: "mn.wire.payment",
+      data: { returnUrl: "https://dino-craft.lol/checkout/return" },
+      idempotencyKey: ATTEMPT,
+    });
+    expect(calls("CheckoutComplete")).toHaveLength(0);
+    expect(clearCheckoutCookie).not.toHaveBeenCalled();
+  });
+
+  it("refuses to send the shopper anywhere but Wire", async () => {
+    answers({ ...happy, TransactionInitialize: actionRequired("https://evil.example/pay") });
+    expect(await place(wireForm())).toMatchObject({ status: "error", message: "generic" });
+  });
+
+  it("starts a new attempt when this one's page has expired", async () => {
+    answers({ ...happy, TransactionInitialize: actionRequired(null) });
+    const result = await place(wireForm());
+    expect(result).toMatchObject({ status: "error", message: "paymentExpired" });
+    expect((result as { nextAttemptId?: string }).nextAttemptId).toMatch(/^[0-9a-f-]{36}$/);
+  });
+});

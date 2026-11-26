@@ -28,16 +28,24 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("title"), robots: { index: false, follow: false } };
 }
 
-type SearchParams = Promise<{ step?: string | string[] }>;
+type SearchParams = Promise<{ step?: string | string[]; payment?: string | string[] }>;
+
+/** The return route's verdict on the last payment (ADR-0016), shown on the payment step. */
+const PAYMENT_NOTICES = { expired: "paymentExpired", notCompleted: "paymentNotCompleted" } as const;
 
 async function CheckoutContent({ searchParams }: { searchParams: SearchParams }) {
-  const [{ step }, page] = await Promise.all([searchParams, getCheckoutPage()]);
+  const [{ step, payment }, page] = await Promise.all([searchParams, getCheckoutPage()]);
   if (page.status !== "ready") return <CheckoutMessage kind={page.status} />;
 
   const { checkout, session, savedAddresses, countries } = page;
   const requested = Array.isArray(step) ? step[0] : step;
   const current = effectiveStep(requested, checkout);
   if (requested !== current) redirect(`/checkout?step=${current}`);
+  const paymentParam = Array.isArray(payment) ? payment[0] : payment;
+  const notice =
+    paymentParam === "expired" || paymentParam === "notCompleted"
+      ? PAYMENT_NOTICES[paymentParam]
+      : null;
 
   const providers = enabledProviders(getEnv().paymentProviders);
   const defaultShipping = savedAddresses.find((address) => address.isDefaultShipping) ?? null;
@@ -61,6 +69,7 @@ async function CheckoutContent({ searchParams }: { searchParams: SearchParams })
         <PaymentStep
           attemptId={crypto.randomUUID()}
           providerIds={providers.map((provider) => provider.id)}
+          notice={notice}
           countries={countries}
           placeOrder={placeOrder}
         />

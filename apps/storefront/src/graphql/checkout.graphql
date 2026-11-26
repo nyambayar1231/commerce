@@ -88,6 +88,12 @@ query CheckoutPaymentState($id: ID!) {
         id
       }
     }
+    transactions {
+      token
+      chargePendingAmount {
+        amount
+      }
+    }
   }
 }
 
@@ -161,10 +167,29 @@ mutation TransactionInitialize(
     transactionEvent {
       type
     }
+    data
     errors {
       field
       code
       message
+    }
+  }
+}
+
+# Saleor's transactionProcess: the return page asks the API to read the payment at its gateway now.
+mutation TransactionProcess($token: UUID!) {
+  transactionProcess(token: $token) {
+    transaction {
+      id
+      chargePendingAmount {
+        amount
+      }
+    }
+    transactionEvent {
+      type
+    }
+    errors {
+      code
     }
   }
 }

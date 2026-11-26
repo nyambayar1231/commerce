@@ -267,6 +267,60 @@ describe("a Wire payment end to end", () => {
   });
 });
 
+describe("transactionProcess (the storefront's return page)", () => {
+  const PROCESS = `mutation($token: UUID) {
+    transactionProcess(token: $token) {
+      transaction { id chargedAmount { amount } chargePendingAmount { amount } }
+      transactionEvent { type }
+      data
+      errors { field code }
+    }
+  }`;
+  type Processed = {
+    transaction: {
+      chargedAmount: { amount: number };
+      chargePendingAmount: { amount: number };
+    } | null;
+    transactionEvent: { type: string } | null;
+    data: { url: string } | null;
+    errors: { code: string }[];
+  };
+  const process = async (token: string) =>
+    (await client.gql(PROCESS, { token })).body.data?.transactionProcess as Processed;
+
+  it("records a payment the shopper just made, without waiting for the webhook", async () => {
+    const started = await startPayment();
+    const [transaction] = await getTransactionsByCheckoutIds(db, [checkoutId]);
+    const token = transaction?.id ?? "";
+
+    const waiting = await process(token);
+    expect(waiting).toMatchObject({
+      transactionEvent: { type: "CHARGE_ACTION_REQUIRED" },
+      data: { url: started.data.url },
+      errors: [],
+    });
+
+    wire.pay(started.transaction.pspReference);
+    const paid = await process(token);
+    expect(paid).toMatchObject({
+      transaction: { chargedAmount: { amount: 50000 }, chargePendingAmount: { amount: 0 } },
+      transactionEvent: { type: "CHARGE_SUCCESS" },
+      data: null,
+    });
+    // Settled: processing again reads nothing more from Wire.
+    const reads = wire.requests.length;
+    await process(token);
+    expect(wire.requests.length).toBe(reads);
+  });
+
+  it("reports an unknown transaction", async () => {
+    expect(await process(crypto.randomUUID())).toMatchObject({
+      transaction: null,
+      errors: [{ code: "NOT_FOUND" }],
+    });
+  });
+});
+
 it("queues the order with the checkout's id when Wire's notification records the payment", async () => {
   const started = await startPayment();
   wire.pay(started.transaction.pspReference);

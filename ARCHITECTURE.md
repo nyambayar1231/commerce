@@ -662,6 +662,8 @@ per-request data), `noindex` where marked.
 | `/account`, `/account/orders`, `/account/orders/[id]`, `/account/addresses`, `/account/settings` | `me`, `order(id)` (OWNER) | D behind the account auth gate, noindex |
 | `/checkout?step=contact\|shipping\|payment` | checkout by cookie, `me`, `shop.countries` | D, noindex |
 | `/order/[token]` | `orderByToken` | D, noindex |
+| `/checkout/return` | route handler: `transactionProcess`, `checkoutComplete` (ADR-0016) | D, redirect only |
+| `/checkout/pending` | none (meta refresh to `/checkout/return`) | S, noindex |
 
 Header and footer (menus `navbar` and `footer`, shop name) are cached; the user menu and the cart
 button are dynamic islands inside them. Every route has a `loading` state sized like its content, and
@@ -796,11 +798,15 @@ against the host, which is our CSRF protection):
   `placeOrder` calls `transactionInitialize` and redirects the shopper to the returned
   `data.url` (Wire's hosted page). The API completes the checkout into an order itself when the
   payment succeeds (webhook, re-checked with Wire, or the reconciliation job), so the order exists
-  even if the shopper never returns. Wire sends the shopper back to
-  `/checkout/return?transaction=<id>`: a dynamic, `noindex` page that reads the transaction and
-  shows pending (with a refresh), failed (back to the payment step) or redirects to
-  `/order/{token}` once the order exists. The dummy gateway keeps the synchronous flow below and is
-  off in production.
+  even if the shopper never returns. Wire sends the shopper back to `/checkout/return`, a route
+  handler (no page, no parameters: it reads the checkout cookie): it asks the API to read the
+  payment at Wire now (Saleor's `transactionProcess`), then redirects (303) to `/order/{token}`
+  once the order exists (`checkoutComplete` answers with it, idempotently), to `/checkout/pending`
+  while Wire hasn't confirmed (a `noindex` page that asks again every 4 s by meta refresh, no
+  JavaScript), or back to the payment step with a notice when the payment expired or the paid
+  checkout couldn't become an order (the API refunds it). `placeOrder` follows `data.url` only to
+  the provider's own host (`pay.wire.mn` in production). The dummy gateway keeps the synchronous
+  flow below and is off in production unless `ALLOW_DUMMY_PAYMENTS=true` (a demo).
 - **Place order** (`placeOrder` action): read the checkout live → if it is not yet fully paid,
   `transactionInitialize` with `idempotencyKey` = the attempt id rendered into the form (a
   double-submit or retry reuses it, and the API returns the first result) and gateway data built on

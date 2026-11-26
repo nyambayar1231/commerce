@@ -525,6 +525,15 @@ export type TransactionInitializeErrorCode =
   | 'NOT_FOUND'
   | 'UNIQUE';
 
+export type TransactionProcessErrorCode =
+  | 'CHECKOUT_COMPLETION_IN_PROGRESS'
+  | 'GRAPHQL_ERROR'
+  | 'INVALID'
+  | 'MISSING_PAYMENT_APP'
+  | 'MISSING_PAYMENT_APP_RELATION'
+  | 'NOT_FOUND'
+  | 'TRANSACTION_ALREADY_PROCESSED';
+
 export type AccountAddressFragment = { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } };
 
 export type AccountOrderSummaryFragment = { id: string, number: string, created: string, status: OrderStatus, total: { gross: { amount: number, currency: string } }, lines: Array<{ id: string, quantity: number }> };
@@ -771,7 +780,7 @@ export type CheckoutPaymentStateQueryVariables = Exact<{
 }>;
 
 
-export type CheckoutPaymentStateQuery = { checkout: { id: string, email: string | null, chargeStatus: CheckoutChargeStatusEnum, lines: Array<{ id: string }>, shippingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, billingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, delivery: { shippingMethod: { id: string } | null } | null } | null };
+export type CheckoutPaymentStateQuery = { checkout: { id: string, email: string | null, chargeStatus: CheckoutChargeStatusEnum, lines: Array<{ id: string }>, shippingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, billingAddress: { id: string | null, firstName: string, lastName: string, companyName: string, streetAddress1: string, streetAddress2: string, city: string, cityArea: string, postalCode: string, countryArea: string, phone: string | null, isDefaultShippingAddress: boolean | null, isDefaultBillingAddress: boolean | null, country: { code: string, country: string } } | null, delivery: { shippingMethod: { id: string } | null } | null, transactions: Array<{ token: string, chargePendingAmount: { amount: number } }> | null } | null };
 
 export type CheckoutEmailUpdateMutationVariables = Exact<{
   id: string | number;
@@ -813,7 +822,14 @@ export type TransactionInitializeMutationVariables = Exact<{
 }>;
 
 
-export type TransactionInitializeMutation = { transactionInitialize: { transaction: { id: string } | null, transactionEvent: { type: TransactionEventTypeEnum | null } | null, errors: Array<{ field: string | null, code: TransactionInitializeErrorCode, message: string }> } | null };
+export type TransactionInitializeMutation = { transactionInitialize: { data: unknown, transaction: { id: string } | null, transactionEvent: { type: TransactionEventTypeEnum | null } | null, errors: Array<{ field: string | null, code: TransactionInitializeErrorCode, message: string }> } | null };
+
+export type TransactionProcessMutationVariables = Exact<{
+  token: string;
+}>;
+
+
+export type TransactionProcessMutation = { transactionProcess: { transaction: { id: string, chargePendingAmount: { amount: number } } | null, transactionEvent: { type: TransactionEventTypeEnum | null } | null, errors: Array<{ code: TransactionProcessErrorCode }> } | null };
 
 export type CheckoutCompleteMutationVariables = Exact<{
   id: string | number;
@@ -2164,6 +2180,12 @@ export const CheckoutPaymentStateDocument = new TypedDocumentString(`
         id
       }
     }
+    transactions {
+      token
+      chargePendingAmount {
+        amount
+      }
+    }
   }
 }
     fragment AccountAddress on Address {
@@ -2255,6 +2277,7 @@ export const TransactionInitializeDocument = new TypedDocumentString(`
     transactionEvent {
       type
     }
+    data
     errors {
       field
       code
@@ -2263,6 +2286,24 @@ export const TransactionInitializeDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<TransactionInitializeMutation, TransactionInitializeMutationVariables>;
+export const TransactionProcessDocument = new TypedDocumentString(`
+    mutation TransactionProcess($token: UUID!) {
+  transactionProcess(token: $token) {
+    transaction {
+      id
+      chargePendingAmount {
+        amount
+      }
+    }
+    transactionEvent {
+      type
+    }
+    errors {
+      code
+    }
+  }
+}
+    `) as unknown as TypedDocumentString<TransactionProcessMutation, TransactionProcessMutationVariables>;
 export const CheckoutCompleteDocument = new TypedDocumentString(`
     mutation CheckoutComplete($id: ID!) {
   checkoutComplete(id: $id) {

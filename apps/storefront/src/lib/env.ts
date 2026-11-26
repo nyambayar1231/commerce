@@ -15,7 +15,7 @@ export type Env = {
   production: boolean;
 };
 
-const PAYMENT_PROVIDERS = ["dummy"];
+const PAYMENT_PROVIDERS = ["dummy", "wire"];
 
 function isHttpUrl(value: string): URL | null {
   try {
@@ -71,10 +71,18 @@ export function parseEnv(source: Source): Env {
     }
   }
 
-  const paymentProviders = list(source.PAYMENT_PROVIDERS ?? "dummy");
+  // The test payment marks orders paid without taking money: development only, unless a demo
+  // allows it explicitly (the API refuses it in production the same way, ADR-0016).
+  const paymentProviders = list(source.PAYMENT_PROVIDERS ?? (production ? "" : "dummy"));
   if (paymentProviders.some((name) => !PAYMENT_PROVIDERS.includes(name))) {
     problems.push(
       `PAYMENT_PROVIDERS has an unknown provider (allowed: ${PAYMENT_PROVIDERS.join(", ")})`,
+    );
+  }
+  if (production && paymentProviders.includes("dummy") && source.ALLOW_DUMMY_PAYMENTS !== "true") {
+    problems.push(
+      'PAYMENT_PROVIDERS must not enable "dummy" in production (no money is taken); set ' +
+        "ALLOW_DUMMY_PAYMENTS=true only for a demo",
     );
   }
 

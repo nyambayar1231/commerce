@@ -21,6 +21,7 @@ import { getCurrentUser } from "@/lib/auth/current-user";
 import { textField, validateEmail } from "@/lib/auth/validation";
 import { checkoutGlobalId, clearCheckoutCookie, readCheckoutToken } from "@/lib/cart/cookies";
 import { getEnv } from "@/lib/env";
+import { log } from "@/lib/log";
 import { findProvider } from "./payment/providers";
 import type {
   CheckoutActionState,
@@ -189,6 +190,13 @@ function missingStep(code: string): ReturnType<typeof stepUrl> | null {
 
 const isPaid = (chargeStatus: string) => chargeStatus === "FULL" || chargeStatus === "OVERCHARGED";
 
+/** The gateway page in `transactionInitialize`'s `data` (`{ url }`), or null. */
+function gatewayPageUrl(data: unknown): string | null {
+  if (data === null || typeof data !== "object") return null;
+  const url = (data as { url?: unknown }).url;
+  return typeof url === "string" && url !== "" ? url : null;
+}
+
 /**
  * Pays for the checkout and completes it into an order, exactly once (ARCHITECTURE §10.9):
  *  1. validate the attempt id (a UUID rendered into the form) and the provider (enabled);
@@ -252,7 +260,7 @@ export async function placeOrder(
       variables: {
         id,
         gatewayId: provider.gatewayId,
-        data: provider.gatewayData(),
+        data: provider.gatewayData({ storefrontUrl: getEnv().storefrontUrl }),
         idempotencyKey: attemptId,
       },
     });
@@ -277,7 +285,20 @@ export async function placeOrder(
       if (!paid) return failure("generic", { values: billingValues });
     } else {
       if (payload?.transaction == null) return failure("generic", { values: billingValues });
-      if (payload.transactionEvent?.type?.endsWith("_FAILURE")) return spent("paymentDeclined");
+      const type = payload.transactionEvent?.type;
+      if (type?.endsWith("_FAILURE")) return spent("paymentDeclined");
+      // A gateway the shopper pays on its own page (Wire, ADR-0016): send them there. The order is
+      // made by the API once the payment is in; they come back to /checkout/return.
+      if (type === "CHARGE_ACTION_REQUIRED") {
+        const url = gatewayPageUrl(payload.data);
+        // No page: this attempt's payment expired (a retry of an old attempt). Start a new one.
+        if (url === null) return spent("paymentExpired");
+        if (!provider.allowsRedirect(url, getEnv().production)) {
+          log.error("checkout.payment_redirect_refused", { provider: provider.id });
+          return failure("generic", { values: billingValues });
+        }
+        redirect(url);
+      }
     }
   }
 

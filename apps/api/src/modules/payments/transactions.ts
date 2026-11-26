@@ -129,11 +129,14 @@ async function updateTransaction(
   return row;
 }
 
+/** The gateway's page, while the payment on it can still be made (never an expired one). */
 const initializeData = (
   transaction: PaymentTransactionRow,
   event: PaymentEventRow,
 ): { url: string } | null =>
-  event.type.endsWith("_ACTION_REQUIRED") && transaction.externalUrl
+  event.type.endsWith("_ACTION_REQUIRED") &&
+  transaction.externalUrl &&
+  transaction.chargePendingAmount > 0
     ? { url: transaction.externalUrl }
     : null;
 

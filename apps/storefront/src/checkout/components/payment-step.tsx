@@ -12,7 +12,7 @@ import { clientAddressErrors, readAddressForm } from "@/ui/components/address/ad
 import { AddressFields } from "@/ui/components/address/address-fields";
 import { SubmitButton } from "@/ui/components/auth/auth-form-parts";
 import { enabledProviders } from "../payment/providers";
-import type { PlaceOrderAction, PlaceOrderState } from "../types";
+import type { CheckoutErrorKey, PlaceOrderAction, PlaceOrderState } from "../types";
 import { StepMessage } from "./step-message";
 
 const idle: PlaceOrderState = { status: "idle" };
@@ -31,12 +31,15 @@ export function PaymentStep({
   providerIds,
   countries,
   placeOrder,
+  notice = null,
 }: {
   attemptId: string;
   /** The enabled providers' ids (the registry's UI is looked up here, in the browser bundle). */
   providerIds: string[];
   countries: CountryOption[];
   placeOrder: PlaceOrderAction;
+  /** What became of the last payment (from the return page), until the shopper tries again. */
+  notice?: CheckoutErrorKey | null;
 }) {
   const t = useTranslations("checkout.payment");
   const [state, formAction] = useActionState(placeOrder, idle);
@@ -92,7 +95,7 @@ export function PaymentStep({
             <provider.Component />
           </div>
 
-          <StepMessage message={state.message} />
+          <StepMessage message={state.status === "error" ? state.message : (notice ?? undefined)} />
           <SubmitButton label={t("placeOrder")} pendingLabel={t("placing")} />
           <p
             role="note"

@@ -19,9 +19,29 @@ describe("provider registry", () => {
     expect(findProvider({ id: "dummy" }, ["dummy"])).toBeNull();
   });
 
+  const context = { storefrontUrl: "https://dino-craft.lol" };
+
   it("builds the dummy gateway's data on the server: a successful charge", () => {
-    expect(findProvider("dummy", ["dummy"])?.gatewayData()).toEqual({
+    expect(findProvider("dummy", ["dummy"])?.gatewayData(context)).toEqual({
       event: { type: "CHARGE_SUCCESS" },
     });
+    expect(findProvider("dummy", ["dummy"])?.allowsRedirect("https://pay.wire.mn/c/1", false)).toBe(
+      false,
+    );
+  });
+
+  it("sends Wire the shop's return page and follows only Wire's own pages in production", () => {
+    const wire = findProvider("wire", ["wire"]);
+    expect(wire?.gatewayId).toBe("mn.wire.payment");
+    expect(wire?.gatewayData(context)).toEqual({
+      returnUrl: "https://dino-craft.lol/checkout/return",
+    });
+    expect(wire?.allowsRedirect("https://pay.wire.mn/c/cs_1", true)).toBe(true);
+    expect(wire?.allowsRedirect("http://pay.wire.mn/c/cs_1", true)).toBe(false);
+    expect(wire?.allowsRedirect("https://pay.wire.mn.evil.example/c", true)).toBe(false);
+    expect(wire?.allowsRedirect("https://evil.example/c", true)).toBe(false);
+    expect(wire?.allowsRedirect("javascript:alert(1)", false)).toBe(false);
+    // Development and e2e use a fake Wire on localhost.
+    expect(wire?.allowsRedirect("http://localhost:4099/c/cs_1", false)).toBe(true);
   });
 });

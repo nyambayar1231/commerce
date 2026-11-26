@@ -76,6 +76,8 @@ export default defineConfig({
         STOREFRONT_URL,
         IMAGE_ORIGINS: `http://localhost:${API_PORT},http://localhost:8333`,
         PAYMENT_PROVIDERS: "dummy",
+        // A production build with the test payment: allowed explicitly (ADR-0016).
+        ALLOW_DUMMY_PAYMENTS: "true",
         HOSTNAME: "127.0.0.1",
         PORT: String(STOREFRONT_PORT),
         NEXT_TELEMETRY_DISABLED: "1",

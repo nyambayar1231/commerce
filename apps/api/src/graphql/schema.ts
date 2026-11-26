@@ -13,6 +13,7 @@ import "../modules/checkout/completeGraphql.ts";
 import "../modules/content/menuGraphql.ts";
 import "../modules/content/pageGraphql.ts";
 import "../modules/payments/graphql.ts";
+import "../modules/payments/processGraphql.ts";
 import "../modules/identity/graphql.ts";
 import "../modules/identity/accountSettingsGraphql.ts";
 import "../modules/identity/customerGraphql.ts";

@@ -26,6 +26,8 @@ export type CheckoutErrorKey =
   | "notFullyPaid"
   | "paymentDeclined"
   | "paymentChanged"
+  | "paymentExpired"
+  | "paymentNotCompleted"
   | "invalidDeliveryMethod"
   | "invalidEmail";
 

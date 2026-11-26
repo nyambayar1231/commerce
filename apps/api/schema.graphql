@@ -2607,6 +2607,20 @@ type Mutation {
   ): TransactionInitialize
 
   """
+  Processes a transaction session. It reads the payment at its gateway (e.g. after the customer returned from the gateway's page) and records what changed.
+  """
+  transactionProcess(
+    """The data that will be passed to the payment gateway."""
+    data: JSON
+
+    """The ID of the transaction. One of field id or token is required."""
+    id: ID
+
+    """The token of the transaction. One of field id or token is required."""
+    token: UUID
+  ): TransactionProcess
+
+  """
   Request an action for payment transaction.
   
   Requires one of the following permissions: HANDLE_PAYMENTS.
@@ -4635,6 +4649,40 @@ type TransactionItem implements Node {
 
   """The transaction token."""
   token: UUID!
+}
+
+"""Processes a transaction session."""
+type TransactionProcess {
+  """The json data required to finalize the payment."""
+  data: JSON
+  errors: [TransactionProcessError!]!
+
+  """The processed transaction."""
+  transaction: TransactionItem
+
+  """The event created for the processed transaction."""
+  transactionEvent: TransactionEvent
+}
+
+type TransactionProcessError {
+  """The error code."""
+  code: TransactionProcessErrorCode!
+
+  """Name of a field that caused the error."""
+  field: String
+
+  """The error message."""
+  message: String!
+}
+
+enum TransactionProcessErrorCode {
+  CHECKOUT_COMPLETION_IN_PROGRESS
+  GRAPHQL_ERROR
+  INVALID
+  MISSING_PAYMENT_APP
+  MISSING_PAYMENT_APP_RELATION
+  NOT_FOUND
+  TRANSACTION_ALREADY_PROCESSED
 }
 
 type TransactionRequestAction {

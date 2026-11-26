@@ -29,11 +29,22 @@ describe("parseEnv", () => {
       ...production,
       TRUST_PROXY: "true",
       IMAGE_ORIGINS: "https://a.example.com, http://localhost:8333",
-      PAYMENT_PROVIDERS: "dummy",
+      PAYMENT_PROVIDERS: "wire",
     });
     expect(env.trustProxy).toBe(true);
     expect(env.imageOrigins).toEqual(["https://a.example.com", "http://localhost:8333"]);
     expect(env.production).toBe(true);
+  });
+
+  it("keeps the test payment out of production unless a demo allows it", () => {
+    expect(parseEnv(production).paymentProviders).toEqual([]);
+    expect(() => parseEnv({ ...production, PAYMENT_PROVIDERS: "dummy" })).toThrow(
+      /must not enable "dummy" in production/,
+    );
+    expect(
+      parseEnv({ ...production, PAYMENT_PROVIDERS: "dummy", ALLOW_DUMMY_PAYMENTS: "true" })
+        .paymentProviders,
+    ).toEqual(["dummy"]);
   });
 
   it("requires API_URL and STOREFRONT_URL in production, naming both", () => {

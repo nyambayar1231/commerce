@@ -171,6 +171,15 @@ describe("transactionInitialize with a redirect gateway", () => {
     ]);
   });
 
+  it("doesn't hand out the page of a payment that has expired", async () => {
+    const first = await mustInitialize({ gateway: fake, idempotencyKey: "attempt-1" });
+    fake.setStatus(first.transaction.pspReference, { status: "canceled" });
+    await applyGatewayStatus(db, gateways, first.transaction.id);
+    const retry = await mustInitialize({ gateway: fake, idempotencyKey: "attempt-1" });
+    expect(retry.event.type).toBe("CHARGE_ACTION_REQUIRED");
+    expect(retry.data).toBeNull();
+  });
+
   it("returns the same page to a retry without calling the gateway again", async () => {
     const first = await mustInitialize({ gateway: fake, idempotencyKey: "attempt-1" });
     const retry = await mustInitialize({ gateway: fake, idempotencyKey: "attempt-1" });
