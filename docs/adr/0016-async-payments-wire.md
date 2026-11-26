@@ -1,6 +1,6 @@
 # ADR-0016: Asynchronous payments through a gateway adapter; Wire (QPay) first
 
-Status: Proposed (2026-11-26, M16.1). Owner decisions behind it: real payments before go-live,
+Status: Accepted by the owner on 2026-11-26 (M16.1). Owner decisions behind it: real payments before go-live,
 Wire first and QPay direct later (PLAN M16, 2026-11-25/26); the Wire/QPay sub-merchant contract
 signed on 2026-11-26.
 
