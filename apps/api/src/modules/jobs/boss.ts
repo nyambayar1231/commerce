@@ -31,7 +31,8 @@ export async function startJobQueue({ supervise }: { supervise: boolean }): Prom
     // A small pool of its own: the API's queries keep theirs (packages/db).
     max: supervise ? 5 : 2,
     supervise,
-    schedule: false,
+    // Cron schedules (the payment reconciliation, ADR-0016 §6) run in the worker only.
+    schedule: supervise,
     application_name: supervise ? "commerce-worker" : "commerce-api-jobs",
   });
   boss.on("error", (error) => logger.error({ err: error }, "pg-boss error"));

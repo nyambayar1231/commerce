@@ -20,6 +20,8 @@ import {
 } from "../payments/index.ts";
 import {
   type CheckoutError,
+  type CheckoutLineRow,
+  type CheckoutRow,
   getCheckoutLines,
   getCheckoutShippingMethod,
   isPublished,
@@ -59,6 +61,109 @@ const error = (
   variants: string[] | null = null,
 ): CheckoutError => ({ field, code, message, variants, lines: null });
 
+type LockedVariants = Map<string, Awaited<ReturnType<typeof lockVariantsForKeyShare>>[number]>;
+
+/**
+ * Step 2 of completion: email, addresses, a valid delivery method, lines whose products are
+ * published (variants locked FOR KEY SHARE). The caller holds the checkout's lock.
+ */
+async function checkOrderRequirements(
+  tx: Executor,
+  checkout: CheckoutRow,
+): Promise<
+  | {
+      ok: true;
+      email: string;
+      lines: CheckoutLineRow[];
+      variants: LockedVariants;
+      shippingMethod: NonNullable<Awaited<ReturnType<typeof getCheckoutShippingMethod>>>;
+    }
+  | { ok: false; errors: CheckoutError[] }
+> {
+  const checkoutId = checkout.id;
+  const errors: CheckoutError[] = [];
+  const lines = await getCheckoutLines(tx, checkoutId);
+  if (lines.length === 0) errors.push(error("lines", "NO_LINES", MESSAGES.noLines));
+  if (!checkout.email) errors.push(error("email", "EMAIL_NOT_SET", MESSAGES.emailNotSet));
+  if (checkout.shippingAddress === null) {
+    errors.push(
+      error("shippingAddress", "SHIPPING_ADDRESS_NOT_SET", MESSAGES.shippingAddressNotSet),
+    );
+  }
+  const shippingMethod = await getCheckoutShippingMethod(tx, checkout);
+  if (checkout.shippingMethodId === null) {
+    errors.push(error("shippingMethod", "SHIPPING_METHOD_NOT_SET", MESSAGES.shippingMethodNotSet));
+  } else if (!shippingMethod) {
+    errors.push(error("shippingMethod", "INVALID_SHIPPING_METHOD", MESSAGES.invalidShippingMethod));
+  }
+  if (checkout.billingAddress === null) {
+    errors.push(error("billingAddress", "BILLING_ADDRESS_NOT_SET", MESSAGES.billingAddressNotSet));
+  }
+
+  // Variants before stocks (ARCHITECTURE §2 rule 6): they can't be deleted or locked for update
+  // by a stock write until we commit, and their products' publication is read under the lock.
+  const variants: LockedVariants = new Map(
+    (
+      await lockVariantsForKeyShare(
+        tx,
+        lines.map((line) => line.variantId),
+      )
+    ).map((row) => [row.variant.id, row]),
+  );
+  const unpublished = lines
+    .filter((line) => {
+      const row = variants.get(line.variantId);
+      return !row || !isPublished(row.product);
+    })
+    .map((line) => line.variantId);
+  if (unpublished.length > 0) {
+    errors.push(error("lines", "PRODUCT_NOT_PUBLISHED", MESSAGES.notPublished, unpublished));
+  }
+  if (errors.length > 0 || !shippingMethod || !checkout.email) return { ok: false, errors };
+  return { ok: true, email: checkout.email, lines, variants, shippingMethod };
+}
+
+/** Step 5 of completion: enough stock for the tracked lines, under the stock rows' locks. */
+async function checkStock(tx: Executor, lines: CheckoutLineRow[], variants: LockedVariants) {
+  const tracked = lines.filter((line) => variants.get(line.variantId)?.variant.trackInventory);
+  const stocks = await lockStocksForVariants(
+    tx,
+    tracked.map((line) => line.variantId),
+  );
+  const insufficient = findInsufficientStock(stocks, tracked);
+  if (insufficient.length > 0) {
+    return {
+      ok: false as const,
+      errors: insufficient.map((item) => {
+        const variant = variants.get(item.variantId)?.variant;
+        const label = variant?.sku || variant?.name || item.variantId;
+        return error(
+          "quantity",
+          "INSUFFICIENT_STOCK",
+          MESSAGES.insufficientStock(label, item.available),
+          [item.variantId],
+        );
+      }),
+    };
+  }
+  return { ok: true as const, tracked, stocks };
+}
+
+/**
+ * What completion would refuse, checked before the shopper is sent to pay (ADR-0016 §7): a
+ * payment for a checkout that can't become an order would have to be refunded. Payment itself is
+ * not checked (that is what is about to happen). The caller holds the checkout's lock.
+ */
+export async function validateCheckoutForPayment(
+  tx: Executor,
+  checkout: CheckoutRow,
+): Promise<CheckoutError[]> {
+  const required = await checkOrderRequirements(tx, checkout);
+  if (!required.ok) return required.errors;
+  const stock = await checkStock(tx, required.lines, required.variants);
+  return stock.ok ? [] : stock.errors;
+}
+
 /**
  * Completes a checkout into an order. A checkout that is already completed returns its order
  * (`created: false`). An unknown checkout throws CheckoutNotFoundError.
@@ -77,51 +182,9 @@ export async function completeCheckout(
     }
 
     // 2. Validate what the order needs (Saleor's clean_checkout_* checks).
-    const errors: CheckoutError[] = [];
-    const lines = await getCheckoutLines(tx, checkoutId);
-    if (lines.length === 0) errors.push(error("lines", "NO_LINES", MESSAGES.noLines));
-    if (!checkout.email) errors.push(error("email", "EMAIL_NOT_SET", MESSAGES.emailNotSet));
-    if (checkout.shippingAddress === null) {
-      errors.push(
-        error("shippingAddress", "SHIPPING_ADDRESS_NOT_SET", MESSAGES.shippingAddressNotSet),
-      );
-    }
-    const shippingMethod = await getCheckoutShippingMethod(tx, checkout);
-    if (checkout.shippingMethodId === null) {
-      errors.push(
-        error("shippingMethod", "SHIPPING_METHOD_NOT_SET", MESSAGES.shippingMethodNotSet),
-      );
-    } else if (!shippingMethod) {
-      errors.push(
-        error("shippingMethod", "INVALID_SHIPPING_METHOD", MESSAGES.invalidShippingMethod),
-      );
-    }
-    if (checkout.billingAddress === null) {
-      errors.push(
-        error("billingAddress", "BILLING_ADDRESS_NOT_SET", MESSAGES.billingAddressNotSet),
-      );
-    }
-
-    // Variants before stocks (ARCHITECTURE §2 rule 6): they can't be deleted or locked for update
-    // by a stock write until we commit, and their products' publication is read under the lock.
-    const variants = new Map(
-      (
-        await lockVariantsForKeyShare(
-          tx,
-          lines.map((line) => line.variantId),
-        )
-      ).map((row) => [row.variant.id, row]),
-    );
-    const unpublished = lines
-      .filter((line) => {
-        const row = variants.get(line.variantId);
-        return !row || !isPublished(row.product);
-      })
-      .map((line) => line.variantId);
-    if (unpublished.length > 0) {
-      errors.push(error("lines", "PRODUCT_NOT_PUBLISHED", MESSAGES.notPublished, unpublished));
-    }
-    if (errors.length > 0 || !shippingMethod || !checkout.email) return { ok: false, errors };
+    const required = await checkOrderRequirements(tx, checkout);
+    if (!required.ok) return { ok: false, errors: required.errors };
+    const { email, lines, variants, shippingMethod } = required;
 
     // 3. Fresh totals at current prices (§5.2).
     const totals = await calculateCheckoutTotals(tx, checkoutId);
@@ -134,39 +197,19 @@ export async function completeCheckout(
     }
 
     // 5. Authoritative stock check under the stock rows' locks (tracked variants only).
-    const tracked = lines.filter((line) => variants.get(line.variantId)?.variant.trackInventory);
-    const stocks = await lockStocksForVariants(
-      tx,
-      tracked.map((line) => line.variantId),
-    );
-    const insufficient = findInsufficientStock(stocks, tracked);
-    if (insufficient.length > 0) {
-      return {
-        ok: false,
-        errors: insufficient.map((item) => {
-          const variant = variants.get(item.variantId)?.variant;
-          const label = variant?.sku || variant?.name || item.variantId;
-          return error(
-            "quantity",
-            "INSUFFICIENT_STOCK",
-            MESSAGES.insufficientStock(label, item.available),
-            [item.variantId],
-          );
-        }),
-      };
-    }
+    const stock = await checkStock(tx, lines, variants);
+    if (!stock.ok) return { ok: false, errors: stock.errors };
+    const { tracked, stocks } = stock;
 
     // 6. The order: a snapshot of names, prices and addresses. It belongs to the checkout's owner;
     // a guest checkout goes to the active account with its email, if any (Saleor's
     // assign_checkout_user), so a registered customer finds it in their orders.
-    const userId =
-      checkout.userId ??
-      (checkout.email === null ? null : await getActiveUserIdByEmail(tx, checkout.email));
+    const userId = checkout.userId ?? (await getActiveUserIdByEmail(tx, email));
     const priced = new Map(totals.lines.map((line) => [line.line.id, line]));
     const { order, lines: orderLines } = await createOrderFromCheckout(tx, {
       checkoutToken: checkout.id,
       userId,
-      userEmail: checkout.email,
+      userEmail: email,
       billingAddress: checkout.billingAddress,
       shippingAddress: checkout.shippingAddress,
       shippingMethodName: shippingMethod.name,

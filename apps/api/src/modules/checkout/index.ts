@@ -31,6 +31,12 @@ export type { CheckoutCompleteResult } from "./complete.ts";
 export { completeCheckout } from "./complete.ts";
 export type { CheckoutLoaders } from "./loaders.ts";
 export { createCheckoutLoaders } from "./loaders.ts";
+export type { PaidCheckoutResult } from "./paid.ts";
+export {
+  completePaidCheckout,
+  createPaidCheckoutHandler,
+  readStaffNotificationEmails,
+} from "./paid.ts";
 export type {
   CheckoutAuthorizeStatus,
   CheckoutChargeStatus,

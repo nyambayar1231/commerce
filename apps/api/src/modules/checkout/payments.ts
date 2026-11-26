@@ -20,6 +20,7 @@ import {
   type TransactionInitializeResult,
 } from "../payments/index.ts";
 import { lockCheckout } from "./checkouts.ts";
+import { validateCheckoutForPayment } from "./complete.ts";
 import { calculateCheckoutTotals } from "./totals.ts";
 
 // Paying for a checkout (M5.3): Saleor's transactionInitialize and the checkout's payment statuses
@@ -171,6 +172,21 @@ export async function initializeCheckoutTransaction(
         ok: false as const,
         errors: [{ field: "id", code: "INVALID" as const, message: MESSAGES.completed }],
       };
+    }
+
+    if (gateway.settlesLater) {
+      // ADR-0016 §7: never send a shopper to pay for a checkout that can't become an order.
+      const problems = await validateCheckoutForPayment(tx, checkout);
+      if (problems.length > 0) {
+        return {
+          ok: false as const,
+          errors: problems.map((problem) => ({
+            field: problem.field,
+            code: "INVALID" as const,
+            message: problem.message,
+          })),
+        };
+      }
     }
 
     const currency = checkout.currency as CurrencyCode;

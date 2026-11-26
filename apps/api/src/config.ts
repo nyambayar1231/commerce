@@ -1,3 +1,4 @@
+import { readStaffNotificationEmails } from "./modules/checkout/index.ts";
 import { readSecretKey } from "./modules/identity/index.ts";
 import { readEmailConfig } from "./modules/jobs/index.ts";
 import { readPaymentGatewayNames } from "./modules/payments/index.ts";
@@ -91,6 +92,8 @@ export function validateConfig(role: ProcessRole, env: Env = process.env): strin
 
   if (role === "worker") {
     check(problems, () => readEmailConfig(env));
+    check(problems, () => readPaymentGatewayNames(env));
+    check(problems, () => readStaffNotificationEmails(env));
   }
 
   return problems;

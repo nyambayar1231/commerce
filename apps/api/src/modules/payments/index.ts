@@ -11,8 +11,11 @@ export {
 } from "./gateways/registry.ts";
 export type { PaymentGateway } from "./gateways/types.ts";
 export { GatewayUnavailableError } from "./gateways/types.ts";
+export { paidCheckoutQueue, RECONCILE_CRON, reconcilePaymentsQueue } from "./jobs.ts";
 export type { PaymentLoaders } from "./loaders.ts";
 export { createPaymentLoaders } from "./loaders.ts";
+export type { ReconcileReport } from "./reconcile.ts";
+export { createReconcileHandler, reconcilePayments } from "./reconcile.ts";
 export type {
   ApplyStatusResult,
   ChargeRequestInput,
@@ -35,6 +38,7 @@ export {
   getTransactionsByCheckoutIds,
   getTransactionsByOrderIds,
   initializeReplay,
+  lockCheckoutTransactions,
   lockOrderTransactions,
   MANUAL_PROVIDER,
   moveCheckoutTransactionsToOrder,

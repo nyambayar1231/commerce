@@ -2,8 +2,14 @@ import { closeDb, getDb, schema } from "@commerce/db";
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { createTestClient, type GqlResult } from "../../../test/graphql.ts";
 import { testGateways } from "../../../test/payments.ts";
-import { toGlobalId } from "../../graphql/globalId.ts";
+import { fromGlobalId, toGlobalId } from "../../graphql/globalId.ts";
 import { createFakeGateway, FAKE_GATEWAY_ID } from "../payments/index.ts";
+import {
+  createShippingMethod,
+  updateCheckoutAddress,
+  updateCheckoutDeliveryMethod,
+  updateCheckoutEmail,
+} from "./index.ts";
 
 // transactionInitialize and the checkout's payment fields through the app, anonymously (M5.3).
 const db = getDb();
@@ -177,6 +183,24 @@ describe("transactionInitialize with a redirect gateway (ADR-0016)", () => {
     }
   }`;
   const redirect = (data?: unknown) => ({ id: FAKE_GATEWAY_ID, data });
+
+  // A gateway that settles later only takes checkouts that can become an order (ADR-0016 §7).
+  beforeEach(async () => {
+    const id = fromGlobalId("Checkout", checkoutId);
+    const address = {
+      firstName: "Bat",
+      lastName: "Dorj",
+      streetAddress1: "Peace Avenue 1",
+      city: "Ulaanbaatar",
+      country: "MN",
+    };
+    const method = await createShippingMethod(db, { name: "Standard", price: "0" });
+    if (!method.ok) throw new Error(JSON.stringify(method.errors));
+    await updateCheckoutEmail(db, id, "buyer@example.com");
+    await updateCheckoutAddress(db, id, "SHIPPING", address);
+    await updateCheckoutAddress(db, id, "BILLING", address);
+    await updateCheckoutDeliveryMethod(db, id, method.shippingMethod.id);
+  });
 
   it("returns the gateway's page in `data` and leaves the checkout unpaid until it settles", async () => {
     const result = initialized(

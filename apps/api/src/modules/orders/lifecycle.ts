@@ -12,6 +12,7 @@ import {
   type GatewayRegistry,
   getTransaction,
   lockOrderTransactions,
+  MANUAL_PROVIDER,
   netCharged,
   type PaymentTransactionRow,
   processRefundRequest,
@@ -537,6 +538,58 @@ export async function refundOrderTransaction(
     requested.requestEventId,
   );
   return { ok: true, transaction };
+}
+
+/**
+ * An order whose gateway payments exceed its total (two attempts both paid, ADR-0016 §5):
+ * refunds the difference from the newest gateway payments. The excess is worked out and the
+ * refund requests recorded under the order's lock, so two runs can never both refund it; the
+ * gateways are asked after the lock is released. Manual (mark-as-paid) transactions are left to
+ * staff. Returns the amount whose refund was requested.
+ */
+export async function refundOrderOverpayment(
+  db: Db,
+  gateways: GatewayRegistry,
+  orderId: string,
+): Promise<number> {
+  const reason = "Paid more than the order total; the difference is returned.";
+  const requests = await db.transaction(async (tx) => {
+    const order = await lockOrder(tx, orderId);
+    if (!order) return [];
+    const transactions = await lockOrderTransactions(tx, orderId);
+    const held = transactions.reduce(
+      (sum, t) => sum + t.chargedAmount - t.refundedAmount - t.refundPendingAmount,
+      0,
+    );
+    let excess = held - order.totalAmount;
+    const made: { transactionId: string; requestId: string; amount: number }[] = [];
+    for (const transaction of [...transactions].reverse()) {
+      if (excess <= 0) break;
+      if (transaction.provider === MANUAL_PROVIDER) continue;
+      if (gateways.forTransaction(transaction.provider) === null) continue;
+      const amount = Math.min(excess, refundableAmount(transaction));
+      if (amount <= 0) continue;
+      const { request } = await recordRefundRequest(tx, transaction, amount, reason);
+      await appendEvent(tx, order.id, "TRANSACTION_REFUND_REQUESTED", null, {
+        amount,
+        currency: transaction.currency,
+        transactionReference: transaction.pspReference || null,
+      });
+      made.push({ transactionId: transaction.id, requestId: request.id, amount });
+      excess -= amount;
+    }
+    if (made.length > 0) {
+      await tx
+        .update(schema.order)
+        .set({ updatedAt: sql`now()` })
+        .where(eq(schema.order.id, orderId));
+    }
+    return made;
+  });
+  for (const request of requests) {
+    await processRefundRequest(db, gateways, request.transactionId, request.requestId, reason);
+  }
+  return requests.reduce((sum, request) => sum + request.amount, 0);
 }
 
 // ── Reads ────────────────────────────────────────────────────────────────────────────────────

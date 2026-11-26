@@ -50,6 +50,7 @@ export {
   getOrderLinesByIds,
   lockOrder,
   markOrderAsPaid,
+  refundOrderOverpayment,
   refundOrderTransaction,
   uncoveredAmount,
 } from "./lifecycle.ts";

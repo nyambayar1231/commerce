@@ -67,6 +67,12 @@ export interface PaymentGateway {
   /** Saleor's TransactionItem.name for the transactions it creates, shown to staff. */
   readonly name: string;
   /**
+   * The shopper pays later, on the gateway's page (Wire). Such a payment is only started for a
+   * checkout that can become an order (ADR-0016 §7); one that settles at once (the dummy gateway)
+   * keeps Saleor's rule that any checkout may be paid.
+   */
+  readonly settlesLater?: boolean;
+  /**
    * Checks `gatewayData` before anything is recorded; a message rejects the request with
    * Saleor's INVALID error. Optional: most gateways accept any data.
    */
@@ -74,6 +80,11 @@ export interface PaymentGateway {
   initialize(input: InitializeInput): Promise<InitializeResult>;
   fetchStatus(pspReference: string): Promise<GatewayPaymentStatus>;
   refund(input: RefundInput): Promise<RefundResult>;
+  /**
+   * A refund's current state, for refunds left `pending` or `manual_required`. Optional: a gateway
+   * that settles refunds at once doesn't need it.
+   */
+  fetchRefund?(refundReference: string): Promise<RefundResult>;
   /**
    * Cancels an unpaid payment so the shopper can't pay it any more. Resolves when canceled or
    * when there was nothing to cancel; the caller reads `fetchStatus` afterwards for the truth

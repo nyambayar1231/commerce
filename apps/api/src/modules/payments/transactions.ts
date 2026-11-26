@@ -3,6 +3,7 @@ import { type Executor, schema } from "@commerce/db";
 import { and, asc, eq, inArray, type SQL, sql } from "drizzle-orm";
 import type { PgUpdateSetSource } from "drizzle-orm/pg-core";
 import { logger } from "../../logger.ts";
+import { enqueue } from "../jobs/index.ts";
 import { MANUAL_GATEWAY_ID } from "./gateways/builtIn.ts";
 import type { GatewayRegistry } from "./gateways/registry.ts";
 import {
@@ -12,6 +13,7 @@ import {
   type RefundResult,
   type TransactionAction,
 } from "./gateways/types.ts";
+import { paidCheckoutQueue } from "./jobs.ts";
 
 // Payment transactions and their append-only events (ARCHITECTURE.md §3 "Payments"): Saleor's
 // TransactionItem / TransactionEvent. A gateway (gateways/, ADR-0016) processes them; it may settle
@@ -268,6 +270,9 @@ export async function recordInitializeOutcome(
         type: types.success,
         pspReference: result.pspReference,
       });
+      if (action === "CHARGE" && updated.checkoutId !== null) {
+        await enqueue(tx, paidCheckoutQueue, { checkoutId: updated.checkoutId });
+      }
       return { transaction: updated, event };
     }
     if (result.kind === "action_required") {
@@ -404,6 +409,14 @@ export async function applyGatewayStatus(
         amount: status.amount,
         pspReference: transaction.pspReference,
       });
+      // The order is made by the server, not the shopper's browser (ADR-0016 §5): the job exists
+      // exactly when this payment does.
+      if (updated.checkoutId !== null) {
+        await enqueue(tx, paidCheckoutQueue, { checkoutId: updated.checkoutId });
+      } else if (updated.orderId !== null) {
+        // An older attempt paid after the order was made: the order may now be overpaid.
+        await enqueue(tx, paidCheckoutQueue, { orderId: updated.orderId });
+      }
       return { transaction: updated, changed: true };
     }
     if (status.status === "failed" || status.status === "canceled") {
@@ -603,6 +616,19 @@ export async function getTransaction(
     .from(schema.paymentTransaction)
     .where(eq(schema.paymentTransaction.id, id));
   return row ?? null;
+}
+
+/** A checkout's transactions, locked `FOR UPDATE` in id order. The caller holds its lock. */
+export async function lockCheckoutTransactions(
+  db: Executor,
+  checkoutId: string,
+): Promise<PaymentTransactionRow[]> {
+  return db
+    .select()
+    .from(schema.paymentTransaction)
+    .where(eq(schema.paymentTransaction.checkoutId, checkoutId))
+    .orderBy(asc(schema.paymentTransaction.id))
+    .for("update");
 }
 
 /** An order's transactions, locked `FOR UPDATE` in id order. The caller holds the order's lock. */

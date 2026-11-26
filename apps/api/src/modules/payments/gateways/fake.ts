@@ -25,7 +25,9 @@ export type FakeGateway = PaymentGateway & {
   /** The next refund answer; default: succeeded. */
   nextRefund: ((input: RefundInput) => RefundResult) | null;
   /** Makes the next call to `method` fail as unreachable. */
-  failNext(method: "initialize" | "fetchStatus" | "refund" | "cancel"): void;
+  failNext(method: "initialize" | "fetchStatus" | "refund" | "fetchRefund" | "cancel"): void;
+  /** A refund's later state (`fetchRefund`), by refund reference. */
+  setRefund(refundReference: string, result: Partial<RefundResult>): void;
 };
 
 export function createFakeGateway(): FakeGateway {
@@ -44,6 +46,7 @@ export function createFakeGateway(): FakeGateway {
   const gateway: FakeGateway = {
     id: FAKE_GATEWAY_ID,
     name: "Fake redirect gateway",
+    settlesLater: true,
     calls,
     nextInitialize: null,
     nextRefund: null,
@@ -54,6 +57,19 @@ export function createFakeGateway(): FakeGateway {
     },
     failNext(method) {
       failing.add(method);
+    },
+    setRefund(refundReference, result) {
+      for (const [key, refund] of refunds) {
+        if (refund.refundReference === refundReference) refunds.set(key, { ...refund, ...result });
+      }
+    },
+    async fetchRefund(refundReference) {
+      calls.push({ method: "fetchRefund", input: refundReference });
+      unreachable("fetchRefund");
+      for (const refund of refunds.values()) {
+        if (refund.refundReference === refundReference) return refund;
+      }
+      throw new Error(`fake gateway: no refund ${refundReference}`);
     },
     async initialize(input) {
       calls.push({ method: "initialize", input });
