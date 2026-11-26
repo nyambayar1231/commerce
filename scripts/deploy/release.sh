@@ -53,8 +53,19 @@ echo "== migrations"
 echo "== start"
 "${compose[@]}" up -d --no-build --remove-orphans
 # The Caddyfile may have changed with this commit: Caddy validates and applies it without
-# dropping connections (a broken file keeps the running config and fails the release).
-"${compose[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile
+# dropping connections (a broken file keeps the running config and fails the release). A Caddy
+# that `up` has just (re)created reads the file itself but needs a moment before its admin API
+# listens, so the reload is retried; the last try shows Caddy's own error.
+reload_caddy=("${compose[@]}" exec -T caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile)
+reloaded=""
+for _ in $(seq 1 15); do
+  if "${reload_caddy[@]}" >/dev/null 2>&1; then
+    reloaded=yes
+    break
+  fi
+  sleep 2
+done
+[ -n "$reloaded" ] || "${reload_caddy[@]}"
 
 echo "== health"
 public_url="$(grep -E '^PUBLIC_URL=' .env.prod | cut -d= -f2-)"
