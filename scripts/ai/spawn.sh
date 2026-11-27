@@ -2,6 +2,7 @@
 # Starts the OpenCode implementer in a persistent Herdr (hc) terminal and hands it a brief.
 #
 #   scripts/ai/spawn.sh <name> <brief.md> [--cwd <dir>] [--model implement|ui|<provider/model>]
+#                       [--role implementer|tester]
 #
 #   name   Herdr terminal name, 1-32 chars of a-z 0-9 - _ (also used for the evidence files)
 #   brief  Markdown task brief (template: docs/ai-workflow/prompts/). It is copied to
@@ -11,6 +12,9 @@
 #   --model which model runs the implementer agent (docs/ai-workflow/README.md, "The team"):
 #          implement = OC_MODEL_IMPLEMENT (API, DB, dashboard; the default),
 #          ui        = OC_MODEL_UI (storefront UI), or an explicit provider/model.
+#   --role which agent: implementer (default; writes code) or tester (.opencode/agents/tester.md:
+#          walks the QA environment in the browser and writes only .ai/test-reports/; it never
+#          counts as a writer, so it may run next to an implementer in the same directory).
 #
 # Run it from the orchestrator's terminal inside Herdr: the worker becomes its child, reports
 # with `hc send <orchestrator>`, and `hc wait --children any` returns when it finishes.
@@ -30,11 +34,13 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --cwd) cwd="${2:-}"; shift 2 ;;
     --model) model_choice="${2:-}"; shift 2 ;;
+    --role) role="${2:-}"; shift 2 ;;
     *) die "unknown option: $1" ;;
   esac
 done
 
 [[ "$name" =~ ^[a-z0-9][a-z0-9_-]{0,31}$ ]] || die "name must be 1-32 chars of a-z 0-9 - _"
+[[ "$role" == implementer || "$role" == tester ]] || die "--role must be implementer or tester"
 [[ -f "$brief" ]] || die "brief not found: $brief"
 
 if [[ -z "$cwd" ]]; then
@@ -53,8 +59,8 @@ if "$HC" get "$name" >/dev/null 2>&1; then
   die "a terminal named '$name' already exists (hc get $name); pick another name or stop it"
 fi
 
-# One writer per working directory.
-if true; then
+# One writer per working directory (a tester writes no code, so it is never refused here).
+if [[ "$role" == implementer ]]; then
   for addr in $("$HC" ls --json | "$JQ" -r '.terminals[].address'); do
     info="$("$HC" get --json "$addr" 2>/dev/null || true)"
     [[ -n "$info" ]] || continue
@@ -93,6 +99,7 @@ brief_copy="$AI_DIR/briefs/$name.md"
 [[ "$(cd "$(dirname "$brief")" && pwd)/$(basename "$brief")" == "$brief_copy" ]] || cp "$brief" "$brief_copy"
 
 writes=1
+[[ "$role" == tester ]] && writes=0
 config_content="$("$JQ" -cn --arg a "$role" --arg m "$model" '{default_agent: $a, model: $m}')"
 
 launch="$("$HC" run --bg --json --name "$name" --cwd "$cwd" \

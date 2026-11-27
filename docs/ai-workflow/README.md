@@ -77,6 +77,13 @@ scripts/ai/stop.sh <name>           # end it (worktrees are kept)
 
 Runtime files live in `.ai/` (gitignored): `briefs/`, `evidence/`, the worker's `.ai/report.md`.
 
+## Browser QA (tester agent)
+
+A local copy of the whole shop and an OpenCode **tester** agent (`--role tester`, DeepSeek) that
+walks the customer and staff journeys in the browser and reports; the lead reviews the report and
+re-checks every failure. How to run it: [testing.md](testing.md); the journeys:
+[test-plan.md](test-plan.md). Owner request, 2026-11-27.
+
 ## Browser checks
 
 The implementer may check its own UI work with `browse` (OpenCode's Chrome driver, through its

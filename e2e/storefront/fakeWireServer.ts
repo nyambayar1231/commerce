@@ -37,9 +37,19 @@ const html = (body: string) =>
     },
   );
 
+/** Delivers a signed notification to the shop's webhook, as Wire does. */
+async function notify(event: { body: string; signature: string }) {
+  const delivered = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json", "wirepayment-signature": event.signature },
+    body: event.body,
+  }).catch(() => null);
+  if (!delivered?.ok) console.error(`fake Wire: webhook delivery failed (${delivered?.status})`);
+}
+
 async function page(request: Request): Promise<Response> {
   const url = new URL(request.url);
-  const match = /^\/c\/(cs_[a-z0-9]+)(\/pay)?$/.exec(url.pathname);
+  const match = /^\/c\/(cs_[a-z0-9]+)(\/pay|\/cancel)?$/.exec(url.pathname);
   const session = match ? wire.sessions.get(match[1] ?? "") : undefined;
   if (!match || !session) return new Response("Not found", { status: 404 });
   const intent = wire.intents.get(session.intent);
@@ -49,9 +59,26 @@ async function page(request: Request): Promise<Response> {
     return html(
       `<main><h1>Wire test payment</h1><p>Amount: ${intent.amount} MNT</p>` +
         `<form method="post" action="${url.pathname}/pay"><button type="submit">Pay with QPay</button></form>` +
-        (session.cancelUrl ? `<a href="${session.cancelUrl}">Cancel</a>` : "") +
+        `<form method="post" action="${url.pathname}/cancel"><button type="submit">Cancel</button></form>` +
         "</main>",
     );
+  }
+  if (match[2] === "/cancel") {
+    // The shopper gave up: Wire cancels the payment, notifies the shop, returns to cancel_url.
+    wire.expire(intent.id);
+    await notify(
+      wire.webhook("payment_intent.canceled", {
+        id: intent.id,
+        object: "payment_intent",
+        status: "canceled",
+        amount: intent.amount,
+        currency: "MNT",
+      }),
+    );
+    return new Response(null, {
+      status: 303,
+      headers: { location: session.cancelUrl || session.successUrl || "/" },
+    });
   }
   // The shopper paid in their bank app: Wire records the charge and notifies the shop.
   const charge = wire.pay(intent.id);
@@ -63,12 +90,7 @@ async function page(request: Request): Promise<Response> {
     currency: "MNT",
     charge: charge.id,
   });
-  const delivered = await fetch(webhookUrl, {
-    method: "POST",
-    headers: { "content-type": "application/json", "wirepayment-signature": event.signature },
-    body: event.body,
-  }).catch(() => null);
-  if (!delivered?.ok) console.error(`fake Wire: webhook delivery failed (${delivered?.status})`);
+  await notify(event);
   return new Response(null, { status: 303, headers: { location: session.successUrl || "/" } });
 }
 
