@@ -190,6 +190,27 @@ function missingStep(code: string): ReturnType<typeof stepUrl> | null {
 
 const isPaid = (chargeStatus: string) => chargeStatus === "FULL" || chargeStatus === "OVERCHARGED";
 
+/**
+ * Why the API wouldn't start a payment (ADR-0016 §7), by the field it names: what the shopper
+ * should do, or null for anything else. Nothing was charged; the attempt id stays usable.
+ */
+function refusedBeforePayment(field: string | null | undefined): PlaceOrderState | null {
+  switch (field) {
+    case "quantity":
+      return failure("insufficientStock");
+    case "lines":
+      return failure("notAvailable");
+    case "email":
+      redirect(stepUrl("contact"));
+      break;
+    case "shippingAddress":
+    case "shippingMethod":
+      redirect(stepUrl("shipping"));
+      break;
+  }
+  return null;
+}
+
 /** The gateway page in `transactionInitialize`'s `data` (`{ url }`), or null. */
 function gatewayPageUrl(data: unknown): string | null {
   if (data === null || typeof data !== "object") return null;
@@ -281,6 +302,12 @@ export async function placeOrder(
         if (again === "unavailable") return failure("unavailable", { values: billingValues });
         if (again === null) return leaveCompleted();
         paid = isPaid(again.chargeStatus);
+      }
+      // A gateway the shopper pays on its own page (Wire) is only started for a checkout that can
+      // become an order (ADR-0016 §7): the API answers INVALID on the field completion would refuse.
+      if (!paid && first?.code === "INVALID") {
+        const refused = refusedBeforePayment(first.field);
+        if (refused !== null) return refused;
       }
       if (!paid) return failure("generic", { values: billingValues });
     } else {

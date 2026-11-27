@@ -662,3 +662,48 @@ describe("placeOrder with a gateway the shopper pays on its own page (Wire, ADR-
     expect((result as { nextAttemptId?: string }).nextAttemptId).toMatch(/^[0-9a-f-]{36}$/);
   });
 });
+
+describe("placeOrder when the API refuses to start a payment for a checkout that can't become an order (ADR-0016 §7)", () => {
+  // A gateway that settles later checks the checkout first and answers Saleor's INVALID on the
+  // field completion would have refused (QA run 2026-11-27, J6.3: the shopper saw "Алдаа гарлаа").
+  const refused = (field: string) =>
+    ok({
+      transactionInitialize: {
+        transaction: null,
+        transactionEvent: null,
+        data: null,
+        errors: [fault("INVALID", field)],
+      },
+    });
+
+  beforeEach(() => {
+    getEnv.mockReturnValue({
+      paymentProviders: ["wire"],
+      storefrontUrl: "https://dino-craft.lol",
+      wireCheckoutOrigin: "https://pay.wire.mn",
+    });
+  });
+  const wireForm = () => paymentForm({ providerId: "wire" });
+
+  it("says the stock ran out", async () => {
+    answers({ ...happy, TransactionInitialize: refused("quantity") });
+    expect(await place(wireForm())).toMatchObject({
+      status: "error",
+      message: "insufficientStock",
+    });
+  });
+
+  it("says a product is no longer sold", async () => {
+    answers({ ...happy, TransactionInitialize: refused("lines") });
+    expect(await place(wireForm())).toMatchObject({ status: "error", message: "notAvailable" });
+  });
+
+  it.each([
+    ["email", "/checkout?step=contact"],
+    ["shippingAddress", "/checkout?step=shipping"],
+    ["shippingMethod", "/checkout?step=shipping"],
+  ])("sends the shopper back to fix %s", async (field, url) => {
+    answers({ ...happy, TransactionInitialize: refused(field) });
+    expect(await place(wireForm())).toEqual({ redirect: url });
+  });
+});
